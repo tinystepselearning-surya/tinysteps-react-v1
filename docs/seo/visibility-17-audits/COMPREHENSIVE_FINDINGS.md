@@ -36,7 +36,7 @@
 
 ## 2. Workstream status register — 17 fixed IDs
 
-Current A01–A10 source reports are on main. **Integrated: A01, A02, A03, A04, A05, A06, A07, A08, A09**; **pending separate integration: A10**. A11–A17 are not yet filed. Existing A01–A08 evidence and cross-audit ownership remain intact.
+Current A01–A10 source reports are on main and **all ten have now been integrated with evidence limitations**. A11–A17 have not yet been filed in the last checked directory snapshot. Existing A01–A09 findings, historical integration log and cross-audit ownership remain intact.
 
 | ID | Subject | Primary owner(s) | Source report (expected) | Audit state | Integration state | Evidence coverage | Latest report/update |
 |---|---|---|---|---|---|---|---|
@@ -313,7 +313,7 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 |---|---|---|---|
 | GSC URL inspections and 7/28/90-day performance | Not available; 0 verified inspections for current period | Confirm Google status, selected canonical/query overlap for A03–A06, **especially A06 Confidence 2026-08-27 historical noindex**, not a current verdict | First-party current dated export/screenshot; A06/A17 |
 | Bing Webmaster inspection and performance | Not available | Independent Bing index/queries | Verified URL exports; A17 |
-| Native ChatGPT Search, Perplexity, Copilot, Google AI | **0 native sessions; 125 queued prompts**, A10 13 newly included | Real answers, cite links and accurate educational guidance not yet measurable | 448 four-engine possibilities if all executed; capture exact result and repeat |
+| Native ChatGPT Search, Perplexity, Copilot, Google AI | **0 native sessions; 125 queued prompts**, A10 13 newly included | Real answers, cite links and accurate educational guidance not yet measurable | Record engine-specific prompt/mode, session, exact answer and citation links; proposed runs are not completed |
 | Deployed raw HTML/status, redirects, headers, JSON-LD, robots/sitemap | Only source/retriever or tool errors, no reliable current wire evidence | Verify A01-F003, A03-U001, A04-U001, A05-U002, **A06-F001 deployment + E032 confidence indexing history**, **A07-F003 vocabulary served-sitemap verification**, actual sitemap lastmods | Raw network GET/headers + rendered-browser/Schema.org validation; A17 |
 | Founder/academic credentials, reach counts and testimonial permissions | Claim-support records not independently reviewed | A01-F001/F002, A02-F004, A03-F002, A06-F004 same reach/consent issue | Dated records, child privacy and qualified reviewer confirmation; owner/A16 |
 | Curriculum and programme-specific progression | Pages describe pathway but reviewed examples/actual Writing eligibility remain unresolved | A02-F002/F003, A04-F001, A05-F002/F003 | Academic review of approved milestones, Writing age/lesson structure and reading/grammar progress examples; A02/A04/A05 |
