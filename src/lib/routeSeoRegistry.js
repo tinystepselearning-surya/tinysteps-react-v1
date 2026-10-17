@@ -80,7 +80,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/resources': {
     title: 'English Learning Resources for Kids, Parents & Educators | Tiny Steps',
     description:
-      'Explore phonics and reading, grammar and writing, speaking and communication guides, parent help, free learning activities, and school resources from Tiny Steps.',
+      'Explore phonics and reading, grammar and writing, vocabulary, speaking and communication guides, parent help, free learning activities, and school resources from Tiny Steps.',
     canonicalPath: '/resources',
     ogType: 'website',
   },
