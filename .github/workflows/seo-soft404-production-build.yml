@@ -11,6 +11,13 @@ on:
       - 'scripts/seo-route-integrity.mjs'
       - 'scripts/soft404-prerender-policy.mjs'
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
+      - 'scripts/test/gsc735-resource-indexability.node-test.mjs'
+      - 'src/lib/phonicsPublicationRegistry.js'
+      - 'src/lib/grammarProgrammaticSeoManifest.js'
+      - 'src/lib/vocabularyAuthoritySeoManifest.js'
+      - 'src/pages/VocabularyHubPage.tsx'
+      - 'src/components/resources/PhonicsPilotGuideGrid.tsx'
+      - 'src/components/resources/GrammarProgrammaticGuideGrid.tsx'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/content/blog/posts/phonics/online-phonics-classes-vs-school.ts'
       - 'src/tests/seo/gsc735PhonicsComparisonIntent.spec.ts'
@@ -66,5 +73,7 @@ jobs:
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
         run: npm run build:deploy
+      - name: Verify GSC #735 affected resources from the generated artifact
+        run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
       - name: No deployment
         run: echo "Validation complete. This workflow cannot publish Firebase Hosting or change production."
