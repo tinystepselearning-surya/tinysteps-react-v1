@@ -30,10 +30,11 @@ describe('Resources R23 central resource reconciliation', () => {
     });
   });
 
-  it('keeps the three subject hubs under Resources and the existing ecosystem as content families', () => {
+  it('keeps the four subject hubs under Resources and the existing ecosystem as content families', () => {
     expect(CENTRAL_RESOURCE_SUBJECT_HUBS).toEqual([
       '/resources/phonics',
       '/resources/grammar',
+      '/resources/vocabulary',
       '/resources/speaking',
     ]);
 
