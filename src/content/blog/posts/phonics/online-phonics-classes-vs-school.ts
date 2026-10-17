@@ -19,7 +19,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'First separate three different decisions' },
     { type: 'h3', content: '1. Does the child currently need more phonics?' },
     { type: 'p', content: 'Look first at the reading behaviour. Is sound–letter knowledge unreliable? Does the child know sounds but struggle to blend them through a printed word? Are unfamiliar words guessed rather than decoded? Are previously taught spellings repeatedly confused? These are different from a child who decodes accurately but reads slowly or understands little of the text.' },
-    { type: 'p', content: 'If the bottleneck is blending, [How Kids Learn Blending](/blog/how-kids-learn-blending) owns the stage-by-stage explanation. If word reading is accurate but passage reading is slow, the more relevant next step may be [reading fluency](/blog/how-to-improve-reading-fluency-in-children), not another beginner phonics course.' },
+    { type: 'p', content: 'If the child knows individual letter sounds but cannot blend them into fresh words, start with [Why My Child Knows Letter Sounds But Cannot Read Words](/blog/why-child-knows-letter-sounds-but-cannot-read-words), then use [How Kids Learn Blending](/blog/how-kids-learn-blending) for the step-by-step practice sequence. If word reading is accurate but passage reading is slow, the more relevant next step may be [reading fluency](/blog/how-to-improve-reading-fluency-in-children), not another beginner phonics course.' },
     { type: 'h3', content: '2. Is the current teaching meeting that need?' },
     { type: 'p', content: 'School provision varies. Some children receive a systematic programme, appropriate matched reading practice and timely additional support within school. Others may still need more targeted teaching because their particular error receives too little individual response time, the class pace does not match their current stage, or the gap has persisted despite ordinary classroom teaching.' },
     { type: 'h3', content: '3. Would online delivery actually add the missing ingredient?' },
@@ -58,7 +58,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Practice on fresh examples so memorised cards do not masquerade as decoding.' },
     { type: 'li', content: 'Connected reading that is appropriately matched to the phonics the child has been taught.' },
     { type: 'li', content: 'Review of earlier learning so a new pattern does not replace an old one.' },
-    { type: 'p', content: 'Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), owns the full instructional mechanism. Blog #12 is about deciding whether the child needs that additional teaching outside ordinary school provision.' },
+    { type: 'p', content: 'For more on what systematic phonics lessons actually teach, see [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read). This guide focuses on whether additional teaching outside school is useful for the individual child.' },
 
     { type: 'h2', content: 'What school offers that supplemental online teaching should not pretend to replace' },
     { type: 'p', content: 'School reading provision sits inside a much wider literacy environment: classroom language, stories, vocabulary, writing, curriculum knowledge, peer discussion, reading across subjects and ongoing teacher observation. A supplemental phonics class has a narrower job. It can target a reading bottleneck, but it should not be described as a replacement for the child’s complete school literacy experience.' },
@@ -92,7 +92,7 @@ const post: BlogPost = {
     { type: 'li', content: '3. What specific extra ingredient would online teaching add?' },
     { type: 'li', content: '4. How will both settings avoid unnecessary conflict and check transfer?' },
     { type: 'li', content: '5. What evidence would tell us that extra phonics is no longer the right priority?' },
-    { type: 'p', content: 'If parents cannot answer question 3, choosing a provider is premature. First identify the educational job the extra class is supposed to do. Blog #10, [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes), then provides the full provider-comparison framework.' },
+    { type: 'p', content: 'If parents cannot answer question 3, choosing a provider is premature. First identify the educational job the extra class is supposed to do. [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes) then provides a detailed provider-comparison framework.' },
 
     { type: 'h2', content: 'How to judge whether supplemental support is working' },
     { type: 'p', content: 'Do not judge the decision by lesson count alone. Compare the same kinds of observable behaviour over time: fresh-word accuracy using taught patterns, amount of prompting, retention of earlier learning, spelling transfer and reading of appropriately matched connected text.' },
