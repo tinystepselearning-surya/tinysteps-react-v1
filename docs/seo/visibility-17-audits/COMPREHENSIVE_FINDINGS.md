@@ -1,7 +1,7 @@
 # Tiny Steps Learning — Comprehensive SEO, AEO & GEO Findings Register
 
 **Programme:** 17 independent audits / one consolidated evidence register / one eventual prioritised remediation plan  
-**Status:** 16/17 REPORTS INTEGRATED — A01 EVIDENCE COLLECTED, A02–A16 COMPLETE WITH LIMITATIONS; A17 SOURCE REPORT PUBLISHED / NOT INTEGRATED; NO FULL-PLATFORM ASSURANCE  
+**Status:** 17/17 REPORTS INTEGRATED — A01 EVIDENCE COLLECTED; A02–A17 COMPLETE WITH LIMITATIONS; NO FULL-PLATFORM ASSURANCE OR IMPLEMENTED FIXES  
 **Created:** 2026-10-17 (IST)  
 **Canonical scope and operating rules:** [MASTER_AUDIT_CHARTER.md](./MASTER_AUDIT_CHARTER.md)  
 **Individual report format:** [AUDIT_REPORT_TEMPLATE.md](./AUDIT_REPORT_TEMPLATE.md)  
@@ -15,20 +15,20 @@
 | Indicator | Current state | Rule |
 |---|---|---|
 | Planned audit workstreams | 17 | Fixed A01–A17 |
-| Workstreams with source reports on main | **17/17 — A01–A17** | All independent files exist; A17 is not yet integrated |
-| Integrated workstreams | **16/17 — A01–A16** | A16 merged; A17 requires its own technical/final reconciliation |
+| Workstreams with source reports on main | **17/17 — A01–A17** | All reports present, source-only audits do not prove index/rank |
+| Integrated workstreams | **17/17 — A01–A17** | A16 previously merged; A17 newly integrated with source SHA; only documentation changed |
 | Complete verified | **0/17** | No unqualified pass |
-| Complete with limitations | **15 integrated/17 — A02–A16** | A17 report also says COMPLETE WITH LIMITATIONS but is not integrated; A01 EVIDENCE COLLECTED |
+| Complete with limitations | **16/17 — A02–A17** | A01 remains EVIDENCE COLLECTED, 0 complete verified |
 | Evidence collected, still open | **1/17** — A01 | Live technical/AI/search verification unfinished |
-| Reproduced P0 / P1 failures | **0 confirmed live P0/P1 indexability/lead outages in 16 integrated audits**; A08-F001 still a P1 source editorial signoff gap | A16 P1-priority questions remain unverified |
-| High-priority *unverified* risks | Existing A17 sitemap, A15 blog origin, plus A16-H002/H005/H007/H008 (videos, deployed SEO, lead operations, privacy) | Shared P1 verification only, not proven failures |
-| Qualified source/content/link finding rows | **67 distinct canonical rows** — previous 61 plus A16-F001–F006 | A16 35-review corpus separate from generic A01/A03 reach proof; not a second fabricated-quote verdict |
-| Additional unverified candidates / evidence gaps | Prior queues plus **A16-H001–H009**, crossreferenced to A01/A03/A06/A11/A14/A17 | Nine unverified test tasks, not proven defects |
+| Reproduced P0 / P1 failures | **0 confirmed live P0/P1 outages across 17 integrated reports**; A08-F001 remains **P1 source educational signoff issue** | A17-H001/H003/H005/H008 P1 test priorities only, not reproduced outage |
+| High-priority *unverified* risks | **A17-H001/H003/H005/H008**, A03-U001, A06-E032, A07-F003/A09-H001/A10-F001 plus A16-H002/H005/H007/H008 | Check actual served origin/GSC/lead before declaring a defect |
+| Qualified source/content/link finding rows | **68 distinct qualified source observations** — 67 prior plus A17-F001 P3 source policy | Does not mean 68 confirmed deployed failures |
+| Additional unverified candidates / evidence gaps | Existing audit queues, A16-H001–H009 and **A17-H001–H010**; substantial cross-owner duplication of required technical proof | Hypotheses remain unverified, no search-index failure inferred |
 | Google/Bing indexed count | **UNKNOWN** | No first-party inspections |
-| Native AI-engine results | **0 tested; 208 queued prompts across 16 integrated reports** | Prior 192 plus A16 16; unknown actual citations |
+| Native AI-engine results | **0 native sessions tested; 220 prompts queued across 17 integrated reports** | Previous 208 + A17 12; theoretical 880 all-four-engine runs, actual 0 |
 | Lead conversion results | **UNTESTED** end-to-end; assessment request source and event logic inspected, no real parent lead created | No actual booked/paid conversion measured |
-| SEO/AEO/GEO composite | **NOT SCORABLE** | First-party Google/Bing and native AI results unverified |
-| Next work | **Integrate A17 report** (already published), then targeted origin/GSC/Bing, AI and safe lead tests | No live website implementation approved |
+| SEO/AEO/GEO composite | **NOT SCORABLE** | No current first-party GSC/BWT, real native AI answers or full production wire validation |
+| Next work | **Evidence validation**: deployed robots/sitemaps/headers, GSC/Bing, native AI, safe A16 lead/privacy/pricing test, qualified academic review; remediation separately approved later | Integration ≠ deployment |
 
 ### Definitions
 
@@ -36,7 +36,7 @@
 
 ## 2. Workstream status register — 17 fixed IDs
 
-On 2026-10-17 IST, **16/17** workstream reports are integrated (**A01–A16**); all 17 independent source reports exist. A16 cross-programme buying journey and lead evidence has been merged without real conversion/index/AI assertions. A17 remains **NOT INTEGRATED** and final technical reconciliation unverified. Prior findings and chronology remain preserved.
+On 2026-10-17 IST, **17/17 independent audit reports are present and integrated**. A01 remains EVIDENCE COLLECTED; A02–A17 COMPLETE WITH LIMITATIONS. Zero fully verified workstreams. Existing A01–A16 findings, ownership and dated integration history are preserved. No live indexing, SERP rankings, native AI citation or conversion results may be assumed.
 
 | ID | Subject | Primary owner(s) | Source report (expected) | Audit state | Integration state | Evidence coverage | Latest report/update |
 |---|---|---|---|---|---|---|---|
@@ -56,7 +56,7 @@ On 2026-10-17 IST, **16/17** workstream reports are integrated (**A01–A16**); 
 | A14 | Schools & Educators | /for-schools + eight school research blog owner URLs | [A14](./reports/A14.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | **9/9** public text/source representations reviewed; eight blogs are A15 article QA owners; GSC/Bing 0/9, native AI 0/14; live headers, XML, schema and leads unknown | 2026-10-17 11:49 IST; blob f32755b3f652 |
 | A15 | Every published blog article | /blog + 83 unique current published article URLs; 1 excluded hidden legacy file | [A15](./reports/A15.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 83/83 checked-in blog XML locs and individual sources, 84 source files incl. hidden, 27 weekly sources; **25/83 text-reader representations**, **0/83 raw HTTP/GSC/BWT**, 15 AI prompts **UNTESTED** | 2026-10-17; blob `7fe120a58c7e` |
 | A16 | Cross-programme commercial/lead conversion | /courses, /pricing, /book-demo, /contact, /class-samples, /testimonials and 41 related journey routes incl. 7 course levels | [A16](./reports/A16.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 41 source/reader routes, standard ₹400/35min source, 35 review excerpts, lead/price/attribution source checked; **0 real forms or payments, 0 GSC/BWT and native AI**, 16 prompts queued | 2026-10-17; blob `0547252f3a3c` |
-| A17 | Sitewide technical and reconciliation | bots/robots, sitemap XML, redirects, rendered source routes | [A17](./reports/A17.md) | **COMPLETE WITH LIMITATIONS (independent source report)** | **NOT INTEGRATED** | 205 checked-in sitemap routes plus 55 source-declared additional resources; actual current deployment and native index proof unavailable | 2026-10-17; blob `69ec322e8a4c` |
+| A17 | Sitewide technical and reconciliation | robots, sitemap index + four XML children, llms, canonical, redirects, prerender, all-workstream dependencies | [A17](./reports/A17.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | **205** checked-in XML locs, **55** index-intended grammar/vocabulary URLs additionally missing *from checked-in XML*, generated-build may include **260**; 10 robots groups, 134 source 301s; live HTTP/GSC/Bing/AI unverified | 2026-10-17; blob `69ec322e8a4c` |
 
 ### Pre-audit route and inventory notes (NOT defect findings)
 
@@ -156,6 +156,8 @@ The **ten IDs** in the original A13 report are preserved; only nine become new c
 | A16-F005 | A16 / P2 | /testimonials and programme review excerpts | Source displays **35 curated five-star first-party excerpts** across seven programmes; per-item source consent/date IDs absent from inspected display model and signed records unavailable. A consent policy and moderated submission form exist. **Not evidence of fake or unauthorized quotes** | [A16](./reports/A16.md) E006/E015 §8 | Privately reconcile each quote/rating/permission and approved display; separate from A01/A03 wider learner-count claims | 35/35 authentic approved publication records, child privacy protected; **SOURCE CURATION VERIFIED, CONSENT UNVERIFIED** |
 | A16-F006 | A16 / P2 | /courses step-one programme chooser | Initial choices include Public Speaking but no peer Everyday Spoken English conversation route. Other existing links/FAQ expose programme; **not a 404**. A11-F002 affects a *different resource hub* | [A16](./reports/A16.md) E001/E003/E017 §8 | Clarify reciprocal spoken conversation versus staged public-speaking performance from /courses | Conversation-specific parent gets correct programme within two mobile/keyboard interactions; **OPEN NAVIGATION IMPROVEMENT** |
 
+| A17-F001 | **A17 / P3 source robots/noindex governance only** | `public/robots.txt` Google/Bing/OAI/Perplexity and other bot groups vs Firebase X-Robots routes `/founder/`, `/school/`, `/login` | Ten source groups repeat 19 private disallows but omit those additional application families, while hosting sets noindex headers for portions of them. **This may be intentional to expose noindex to crawlers; it is NOT a verified data breach or private-page indexing** | [A17](./reports/A17.md) A17-E012/E013, §8 | Joint SEO/security private route matrix including robots, noindex headers and real authentication; do **not** automatically disallow crawlers before confirming noindex visibility | Policy owner approval plus raw live bot/header/GSC verification; **OPEN P3 SOURCE POLICY REVIEW** |
+
 ### Unverified candidate ledger — **not confirmed defects**
 | ID | Report evidence | What remains unknown | Priority / owner |
 |---|---|---|---|
@@ -235,6 +237,17 @@ The **ten IDs** in the original A13 report are preserved; only nine become new c
 | **A16-H008** | [A16](./reports/A16.md) E003/E011/E012/E016/E020 | Mobile/keyboard/screen-reader UX, draft localStorage removal, consent and legal privacy not independently checked | P1 safety/UX validation only, not a known breach |
 | **A16-H009** | [A16](./reports/A16.md) E019 | Stale Novakid competitor snippet and non-comparable third-party formats could mislead if reused as current price rank | P2 refresh same-day three-source comparison, no superiority claims |
 
+| A17-H001 (P1 verification ONLY) | [A17](./reports/A17.md) §8 H001 | HTTP/HTTPS apex/www redirects, TLS/HSTS/DNS unverified; web-reader and container DNS errors are not proven website outages | A17 origin wire status, certificate and Location chain |
+| A17-H002 | [A17](./reports/A17.md) §8 H002 | Live served robots and actual Googlebot/Bingbot/OAI-SearchBot/PerplexityBot/private page response unknown despite source allowlist | A17 real bot UA/header checks, P2 |
+| A17-H003 (shared P1 sitemap verification, NOT live outage) | [A17](./reports/A17.md) E009–E011, §8 H003; A07-F003/A09-H001/A10-F001 | Four checked-in XML child maps total **205 locs** (104 static, 83 blog, 7 courses, 11 parents), with **55** additional source-declared grammar/vocabulary resources missing checked-in static XML. Build generator runs before deploy and may include 260; **current served XML UNKNOWN** | One A17 root proof task, not three index failures or 55 proven deindexed URLs |
+| A17-H004 | [A17](./reports/A17.md) §8 H004 | 134 Hosting 301 aliases are configured in source; actual redirect chains, loops, destinations unmeasured | A17 read-only live status/Location matrix, P2 |
+| A17-H005 (P1 verification ONLY) | [A17](./reports/A17.md) §8 H005 | Prerender/canonical/meta/schema source safeguards exist, **actual initial live HTML**, rendered parity, schema and selected canonical across 260 build-intent candidate URLs not captured. Overlap A01-F003/A04-U001/A05-U002/A08-H001/A09-H002/A11-U001/A14-H003/A15-U001 | A17 raw HTML+rendered+GSC tests, not a demonstrated noindex issue |
+| A17-H006 | [A17](./reports/A17.md) §8 H006 | Web reader error on invented route cannot establish live 404 versus soft 404 | A17 genuine 404/noindex probe, P2 |
+| A17-H007 | [A17](./reports/A17.md) §8 H007 | Orphan/redirect links, current significant-edit lastmod dates, mobile WCAG/CrUX field metrics not actually measured | A17 plus subject owners, P2 QA |
+| A17-H008 (P1 historical validation ONLY) | [A17](./reports/A17.md) §8 H008 | A03-U001 older phonics comparison concern, and A06-E032 **2026-08-27** Confidence page noindex record: neither current exclusion nor current recovery verified | Fresh first-party current GSC selected canonical, Bing and raw initial head, preserve historic dates |
+| A17-H009 | [A17](./reports/A17.md) §8 H009 / A16 v1.1 addendum | A16-F001–F006 already integrated and the real live form, consent, pricing and booking events still untested | A16 owns lead funnel/commercial, A17 sitewide evidence only; no extra defect |
+| A17-H010 | [A17](./reports/A17.md) §8 H010 | No real Google/Bing controlled SERP or ChatGPT Search/Perplexity/Copilot/Google AI citation observations | Named native session proof and first-party metrics, not crawler allows |
+
 ### P0 / P1 escalation
 
 **0 confirmed live P0/P1 availability/indexing/lead outages across 16 integrated reports.** A08-F001 still concerns source-only educational review signoff. A16-H002/H005/H007/H008 are P1-priority **verification**, not reproduced outages, lost leads, payments or privacy breaches.
@@ -278,7 +291,7 @@ Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F
 | A14 | School hub+8 school blogs readable text/source, 0/9 GSC index inspections and native Google SERPs UNTESTED | Bing Webmaster 0/9, native SERPs UNTESTED | [A14](./reports/A14.md) §§2–4, no live index verdict |
 | A15 | Blog hub+83/83 source-defined article URLs, **0/83** GSC native inspections and rankings UNKNOWN | Bing native SERP/BWT **0/83**; untested | [A15](./reports/A15.md) §§2–4; source sitemap != live index proof |
 | A16 | 41 source/public-reader funnel routes inventoried; **0** GSC URL inspections, **20** Google/Bing test rows UNTESTED | **0** BWT inspections, native Bing SERPs UNTESTED | [A16](./reports/A16.md) §§2–4; real indexing unknown |
-| A17 | Source report published, not part of this A16 integration | No native Bing index evidence integrated | [A17](./reports/A17.md); pending final technical integration |
+| A17 | Actual GSC selected canonical and native Google SERPs **0 verified** for checked-in 205 + 55 source-expected pages; current served XML/HTTP/canonicals remain unknown | Bing 0 verified URL inspections, native Bing SERPs 0 | [A17](./reports/A17.md) §§2–4; no current indexed/deindexed verdict |
 
 **Reading-specific verification:** A04 needs independent indexed/excluded states for both owner URLs and raw live metadata; public text and GitHub source do not establish Google/Bing inclusion. A04-U001 is related to existing A01-F003/A17 technical validation, not an additional confirmed P1 failure.
 
@@ -304,7 +317,7 @@ Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F
 
 ## 5. Native answer-engine visibility summary
 
-**0 native sessions tested; 208 prompts queued across 16 integrated audits** (A15 15 prompts previously and A16 adds 16). A complete four-engine sweep would be 832 potential prompt×engine observations, but assigned platforms vary; **0 actually tested**. Citations/recommendations/absence are UNKNOWN.
+**0 native sessions tested; 220 queued prompts across 17 integrated audits** (208 prior + 12 A17); four-platform all-combinations = **880 hypothetical cells**, not performed. Actual engine citations, links, placements and omission remain **UNKNOWN**.
 
 | Engine | Actually tested? | Prompt results recorded | Tiny Steps cited / tested | Recommendations / tested | Evidence |
 |---|---|---:|---|---|---|
@@ -354,6 +367,8 @@ A03 includes a fee comparison and cited provider references, but third-party fig
 
 **A16 conversion trust and pricing summary:** Standard 1:1 ₹400 for 35 minutes and source 12/16/24-class totals reconcile. Source Ultra Premium package totals are ₹11 above 12× quoted unit across six formats, with a separate native rate constant; actual invoices/tier availability remain UNKNOWN (A16-F004). React booking collects parent and child identifiers and WhatsApp; localStorage persists drafts (F001), UI/backend validation differs (F002), and request-saved telemetry calls a booking-complete-named event before a slot is agreed (F003). Thirty-five static curated five-star reviews need item consent evidence (F005); false reviews not proven. /courses needs an explicit conversational Spoken English versus Public Speaking choice (F006). No live paid lead, privacy breach or SEO loss established.
 
+**A17 cross-site reconciliation:** Source XML lists **205 distinct locs** across four children; **55 grammar+vocabulary hub/guide paths** are separately index-intended but absent from checked-in static XML. `npm run build` regenerates sitemap inventory, so deployed XML may include 260; **no served exclusion, indexing loss or rank decline has been demonstrated**. A07-F003/A09-H001/A10-F001↔A17-H003 are **one** technical validation family. Robots groups intend public crawling by Google/Bing/OAI/Perplexity; A17-F001 flags P3 private route/noindex policy alignment, no proven security breach. Source 134 redirects, prerender and robots guards exist, but real wire responses/404/JSON-LD are unknown. Historical phonics comparison and 2026-08-27 Confidence noindex require current GSC/BWT reinspection. Ended Summer Camp 2026 pages appear archival; not automatic defects. A17's late A16 addendum retains distinct A16 commercial findings; no new lead/privacy root duplicated.
+
 ## 7. Cross-audit dependency and collision matrix
 
 | Scope overlap | Single canonical owner for primary finding | Other reporters reference it |
@@ -398,6 +413,8 @@ A01–A06 documented overlaps: A01-F001↔A03-F002 (reach), A02-F003↔A03 cours
 **A11 ownership resolution:** A11-F001 ↔ A07-F001 (same listed `/resources/speaking` mismatch) ↔ A13-F004 (game product), cross-reference only. A11-F002 ↔ A06 protected Spoken English/Public Speaking owners, with A16 only for actual demo flow; A11-F003 ↔ A12 child-safe wording but is **a distinct `/resources/speaking` card** from A12-F001 Parents Hub. A11-U001 ↔ A17 initial HTML/index; U002 ↔ A15 blog JS filter; U003 ↔ A06/A15/GSC search-query checks. No duplicate P0/P1 cause introduced.
 
 **A13 collision notes:** A13-F004 ↔ A07-F001 ↔ A11-F001 ↔ A06 §13 is **one known 0/4 speaking availability state** with separate gateway, hub and game shell observations. A13-F009 (worked shell example) differs from A10-F007 (unverified actual game play); A13-F010 concerns its own game templates rather than A08/A09/A10 educational guide provenance roots. A13-F003's optional WhatsApp O–Z payment and A13-H003 guest child privacy need A16/privacy verification, *not* a present billing or data-leak verdict. A13-H001/H006/H007 feed A17 origin/analytics/index verification. The 14 enabled tiles sharing 11 entry routes are not 14 separate canonicals.
+
+**A17 canonical overlaps:** A07-F003/A09-H001/A10-F001→A17-H003 one shared sitemap proof root; A01-F003/A04-U001/A05-U002/A08-H001/A09-H002/A11-U001/A14-H003/A15-U001→A17-H005 common initial HTML validation **without a verified common failure**. A03-U001/A06-E032→A17-H008 historic/current GSC recheck. A06-F001 stays A06 schema-source issue, actual emitted graph A17; A16-H005/H006/H007/H008 stay commercial/consent owners with technical support A17. No duplicate speaking-game or testimonial issue.
 
 If findings conflict, integration must preserve both evidence trails as DISPUTED until a dated live reproduction settles the issue. Never pick the newer finding purely by author preference.
 
@@ -480,6 +497,10 @@ If findings conflict, integration must preserve both evidence trails as DISPUTED
 | IA-A16-04 | A16-F005/H002 with existing A01/A03 trust work | P2 evidence | 35 review excerpts and real-class video | Privately validate actual parent rating/quote approval and child recording/channel consent; honest no-videos fallback | 35/35 substantiated or revised; approved media playback | NOT APPROVED |
 | IA-A16-05 | A16-F006 and distinct A11-F002 | P2 course discovery | /courses subject chooser | Add truthfully labelled conversation vs public-speaking choice without duplicating commercial pages | Relevant parent reaches right canonical in 2 steps; mobile/keyboard | NOT APPROVED |
 | IA-A16-06 | A16-H001/H004/H005/H006/H008/H009 | P1 checks ONLY / P2 ops | 41 conversion-linked and policy/seasonal URLs | A17 raw-origin/GSC/Bing and A16 safe privacy/mobile/contact/institutional policy verification | Dated proof before action, zero unsolicited leads or payments | NOT APPROVED |
+| IA-A17-01 | A07-F003/A09-H001/A10-F001, A17-H003 | **P1 verification only, not deployed error** | 4 served XMLs vs 205 checked-in locs plus 55 expected manifest paths | Compare deployed XML, gen:sitemaps dist artefact, build hash and GSC sitemap submission/selected canonical | Dated actual served URL roster + indexing proof before editing generator | NOT APPROVED |
+| IA-A17-02 | A17-H001/H002/H004/H005/H006/H008 | **P1 technical verification only** | apex/www, 134 source redirects, 200/404, crawler robots, initial HTML/JSON-LD, historical noindex | Run authorised read-only live verifier and current GSC/BWT URL Inspections | Exact status/meta/redirect and first-party proof, no guessed failures | NOT APPROVED |
+| IA-A17-03 | A17-F001 | P3 crawler/private route policy | /founder/ /school/ /login | SEO/security review whether allow crawler to read noindex headers is intentional, test auth and headers; no blind robots disallow | Signed private route policy, real user-agent and noindex results | NOT APPROVED |
+| IA-A17-04 | A17-H007/H009/H010 | P2 UX/native search research | Internal link graph, field CWV, source-meaningful lastmod, real AI answers | Verify live page UX and current native engines, preserve A16 lead/consent ownership | Measured denominators, owners and approved next implementation | NOT APPROVED |
 
 Final remediation requires user approval, scoped PRs, CI, deploy validation and post-change GSC/Bing observations.
 
@@ -489,7 +510,7 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 |---|---|---|---|
 | GSC URL inspections and 7/28/90-day performance | Not available; 0 verified inspections for current period | Confirm Google status, selected canonical/query overlap for A03–A06, **especially A06 Confidence 2026-08-27 historical noindex**, not a current verdict | First-party current dated export/screenshot; A06/A17 |
 | Bing Webmaster inspection and performance | Not available | Independent Bing index/queries | Verified URL exports; A17 |
-| Native ChatGPT Search, Perplexity, Copilot, Google AI | **0 tested, 208 queued prompts** across 16 integrated reports, including 16 A16 commercial queries | No actual citations/rankings; theoretical 832 if 4-platform complete | Dated platform tests with exact URLs/answers and locale |
+| Native ChatGPT Search, Perplexity, Copilot, Google AI | **0 tested; 220 queued questions** including 12 A17 | 880 theoretical four-engine cells, 0 actual tests; source citation rates unknown | Record platform/mode/locale/date and exact cited URLs in genuine native products |
 | Deployed raw HTML/status, redirects, headers, JSON-LD, robots/sitemap | A14 hub+8 research URLs have source SEO/sitemap design but no tested live headers/XML/schema; older gaps remain | Close A14-H003 and H001 age revision under A17 sitewide verification | 9 actual served URLs, redirects, X-Robots/initial DOM/canonicals, sitemap parsers and GSC/BWT |
 | Founder/academic credentials, reach counts and testimonial permissions | Claim-support records not independently reviewed | A01-F001/F002, A02-F004, A03-F002, A06-F004 same reach/consent issue | Dated records, child privacy and qualified reviewer confirmation; owner/A16 |
 | Curriculum and programme-specific progression | Pages describe pathway but reviewed examples/actual Writing eligibility remain unresolved | A02-F002/F003, A04-F001, A05-F002/F003 | Academic review of approved milestones, Writing age/lesson structure and reading/grammar progress examples; A02/A04/A05 |
@@ -498,7 +519,7 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 | Reading specialist evidence and parent decision navigation | Main A04 findings available, unimplemented | A04-F001–F003 and academic reviewer/progress sample | Academic owner and A04/A15 review, no code until remediation approved |
 | A06 course price-tier wording | Same-day A06 web text compares two course pages with central pricing | A06-F006: ₹400 named Premium on course pages vs Standard on pricing; amount unchanged | A16 commercial validation; fix only with approved copy/fee-source review |
 | Speaking games and past seasonal camp handoffs | A06 §13 E030/E031 and A07-F001 refer to **same 0/4 playable state**, E033 ended 2026 camps | Distinguish A07 promise/entry language from A13 game readiness, plus historical campaigns | A07 gateway text; A13 games; A16/A17 camps |
-| Remaining workstreams | **17/17 source reports on main, 16/17 integrated; A17 NOT INTEGRATED** | Final cross-audit live technical reconciliation and GSC/BWT/native AI blocked by evidence | Separate designated A17 integration; source reports untouched |
+| All source reports integrated, evidence still open | 17/17 source reports integrated with limitations, 0 fully verified | Live raw origin/GSC/Bing/native AI and A16 safe funnel/privacy/pricing evidence unverified | Dedicated evidence collection then separately approved remediation |
 | A16 actual lead/request/demo funnel | Source React/Firestore/WhatsApp/analytics pipeline read; no real lead submitted | Actual accepted leads, message delivery, confirmed slots, attended demos, enrolment and attribution unmeasured | A16 staging/emulator and authorized anonymized operational counts; no live parent message |
 | A16 identity/privacy | localStorage parent/child/WhatsApp and client/server field divergence in checked source | Current mobile/browser storage clearing, consent and valid international WhatsApp accessibility unverified | A16-F001/F002/H008, privacy and mobile QA |
 | A16 rates/fee trust | ₹400 standard source consistent; six Ultra rows ₹11 above ×12, native tier constants differ; 35 five-star static reviews | Finance-approved invoice/teacher rate, individual signed parent review proof unknown | A16-F004/F005 + A06-F006/A01/A03 crossrefs |
@@ -536,6 +557,8 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 **A15 manual gates:** 83-source URL XML list must be checked against the actual deployed sitemap and Google/Bing selected canonicals, not inferred indexed; 25/83 cached reader samples are not 83 current browser tests. All 27 weekly posts need qualified time-dose/research-vs-example review; current 'Blog 56' parent-facing phrase, all 83 archive link/citation targets and eight school article research approvals need reproducible current checks. **15 prompts queued, 0 native AI answers**. A15-F004 cross-references A14-F006; native AI, current render, privacy, content outcomes and rich results remain unverified.
 
 **A16 manual gates:** Validate Firestore client/rules, WhatsApp saved-request versus sent versus confirmed slot, GA4/CRM lifecycle, child identifiers/localStorage and international phone fields with synthetic staging identities only. Check live 6 Ultra price rows, 35 quote approvals, video records and child filming consent, 320/375px mobile/keyboard/error UX, refund/contact policies. 20 Google/Bing and 16 native AI prompts remain unexecuted; A17 owns origin/index deployment proof. No real parent lead/payment/message submitted.
+
+**A17 outstanding evidence:** Directly fetch HTTPS/HTTP apex+www, served robots.txt/llms.txt/sitemap.xml + four child XMLs, validate raw vs generated dist canonical inventory and release SHA (checked-in 205, 55 additional expected); inspect true 301/404 and privacy X-Robots, initial and hydrated HTML with schema, then fresh Google Search Console/Bing Webmaster for phonics comparison, historical Confidence noindex and key resource guides; mobile/CrUX and live 12 A17 AI prompts remain untested. No real form submissions, index submissions, site code changes or deployments were made.
 
 ## 10. Integration operating procedure — single writer
 
@@ -577,6 +600,9 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 | 2026-10-17 IST | **A14 Schools & Educators**, existing A13 retained | **6 qualified A14-F001–F006**; 4 unverified A14-H001–H004 (H003 A17 overlap, H004 existing reach root) | **14/17 integrated**, A14 COMPLETE WITH LIMITATIONS; no new verified live P0/P1; A08 source P1 retained | A14 report blob f32755b3f652306a39ab4db0eb4c72cb99a5e7ca; merged from current register SHA | 9/9 published school/resource reader representations, 8 A15 blog owners, 58 qualified unique rows, 177 AI prompts queued/0 native runs, no live GSC/BWT for 9; documentation only. |
 | 2026-10-17 IST | **A15 Entire Blog Editorial Catalogue** | **3 unique P2 source/public-editorial rows** A15-F001/F002/F003; **A15-F004 evidence joined with existing A14-F006** and not counted a second reviewer-root; **7 unverified checks A15-U001–U007** with A17/A13/A16/GSC handoffs | **15/17 integrated** (A01 EVIDENCE COLLECTED, A02–A15 COMPLETE WITH LIMITATIONS); **61 distinct** qualified roots (previous 58 + 3); zero newly reproduced live P0/P1 | A15 report blob `7fe120a58c7e7dc814434e5845772413c7f726bb`; optimistic-lock based on latest comprehensive blob immediately before write | 83/83 public sitemap-defined blog owners reconciled to 84 source files (one hidden), 27 historic week aliases, 25/83 reader samples, 0/83 raw origin, **192 AI prompts queued/0 native sessions**; no website or A15 report edits |
 | 2026-10-17 IST | **A16 Cross-Programme Commercial & Lead Journeys**; A17 report exists but unintegrated | **6 new P2 distinct rows** A16-F001–F006; **9 unverified** A16-H001–H009, with overlap ownership retained | **16/17 integrated**, **67 qualified rows**, 0 live P0/P1, **17/17 source reports published**, A17 pending integration | A16 blob `0547252f3a3cd25e4ff06a1a6e573f31b6b0ee5d`, A17 published blob `69ec322e8a4cb8f96589784db8b8d009c8bdcc41`; SHA-locked comprehensive update | 41 buyer/adjacent routes, 7 course levels, 35 curated reviews, Ultra ₹11 source arithmetic, 0 real leads/native index/AI; **208 native prompts queued/0 tested**; docs-only |
+| 2026-10-17 IST | **A17 Sitewide Technical & Reconciliation** | A17-F001 P3 source policy review; A17-H001–H010 unverified technical/engine/sitewide test queues, 55 source-intended additional locs checked against 205 source-listed in 4 maps; shared A07/A09/A10 sitemap root NOT double-counted | **17/17 integrated**, A01 EVIDENCE COLLECTED; A02–A17 COMPLETE WITH LIMITATIONS; no confirmed live P0/P1; A08 P1 source review signoff remains | A17 blob `69ec322e8a4cb8f96589784db8b8d009c8bdcc41`; read newest A16-integrated comprehensive SHA | **68** distinct qualified source findings/observations, **220** queued AI prompts/**0 actual native runs**, deployed HTTPS/sitemaps/index/real conversions unverified; audit-only Markdown write, no fixes |
+
+**Documentary integration complete: 17/17 reports saved and integrated.** This does **not** mean 17 SEO audits are fully verified or that fixes are approved. A01 remains evidence-collected, A02–A17 complete with limitations. The sitewide live Google/Bing index status, native AI citations, raw server/redirect/sitemap responses and booking/privacy/price measurements are outstanding; any code change requires separate prioritisation, authorization and production proof.
 
 ## 12. Reporting finish line
 
