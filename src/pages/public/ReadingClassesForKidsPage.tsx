@@ -173,7 +173,7 @@ const readingProblemRoutes = [
   {
     signal: 'Reads the words but cannot explain the story',
     likelyGap: 'Vocabulary, language comprehension, sequencing, or inference may need direct support.',
-    route: '/blog/phonics-comprehension',
+    route: '/blog/why-child-reads-words-but-does-not-understand-story',
     label: 'Read the comprehension guide',
   },
   {
