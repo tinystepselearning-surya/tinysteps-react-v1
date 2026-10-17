@@ -524,8 +524,8 @@ export default function GrammarPage() {
               <p className="mt-3 text-sm text-slate-700">
                 {grammarFacts.levels.beginner.lessonCount} lessons build core grammar, sentence formation, punctuation, tense foundations, and accurate use in meaningful sentences.
               </p>
-              <Link to="/curriculum?tab=grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                See Beginner Grammar curriculum
+              <Link to="/courses/grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
+                Explore Beginner Grammar course
               </Link>
             </article>
 
@@ -534,8 +534,8 @@ export default function GrammarPage() {
               <p className="mt-3 text-sm text-slate-700">
                 {grammarFacts.levels.advanced.lessonCount} lessons develop stronger tense control, sentence complexity, correction, grammar in context, and accurate written and spoken expression.
               </p>
-              <Link to="/curriculum?tab=grammar" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
-                See Advanced Grammar curriculum
+              <Link to="/courses/grammar-mastery" className="mt-4 inline-block text-sm font-semibold underline underline-offset-2">
+                Explore Advanced Grammar course
               </Link>
             </article>
 

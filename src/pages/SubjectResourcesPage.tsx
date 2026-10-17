@@ -62,7 +62,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
       'Find the right phonics or reading support by learning stage, practice need, or the difficulty you can see. Start with a guide, move into focused practice, or use a problem pathway when your child is stuck.',
     canonicalPath: '/resources/phonics',
     allGuidesTo: '/blog?topic=Phonics',
-    allGuidesLabel: 'Browse all phonics guides',
+    allGuidesLabel: 'Browse phonics articles',
     programmeTo: '/phonics',
     programmeLabel: 'Explore live phonics support',
     accent: 'from-sky-500/[0.18] via-blue-500/[0.08] to-transparent',
@@ -153,7 +153,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     allGuidesTo: '/blog?topic=Speaking%20%26%20Communication',
     allGuidesLabel: 'Browse all speaking guides',
     programmeTo: '/speaking',
-    programmeLabel: 'Explore live speaking support',
+    programmeLabel: 'Explore Public Speaking classes',
     accent: 'from-amber-500/[0.18] via-orange-500/[0.08] to-transparent',
     sections: [
       {
@@ -173,8 +173,8 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
         title: 'Use speaking practice that requires active expression',
         description: 'Choose a short speaking activity that requires the child to respond, explain or express an idea aloud.',
         links: [
-          { title: 'Speaking games', description: 'Use the free speaking collection for guided expression and response practice.', to: '/free-speaking-games-for-kids', label: 'Open speaking games' },
-          { title: 'Speaking practice game', description: 'Use a focused activity for short, repeatable communication practice.', to: '/free-speaking-practice-game-for-kids', label: 'Practise speaking' },
+          { title: 'Speaking games (coming soon)', description: 'Preview the digital speaking game collection; these activities are currently marked coming soon.', to: '/free-speaking-games-for-kids', label: 'Preview upcoming games' },
+          { title: 'Speaking practice game (coming soon)', description: 'Preview the planned digital speaking-practice game; it is not yet playable.', to: '/free-speaking-practice-game-for-kids', label: 'Preview speaking practice' },
         ],
       },
       {
@@ -185,6 +185,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
           { title: 'Very shy or reluctant to speak', description: 'Look at confidence, participation and low-pressure practice before forcing performance.', to: '/shy-child-speaking-confidence', label: 'Explore confidence help' },
           { title: 'Only one-word answers', description: 'Check sentence generation, vocabulary access and response habits.', to: '/blog/child-gives-one-word-answers', label: 'Check one-word answers' },
           { title: 'Understands but does not speak', description: 'Check whether the gap is confidence, retrieval or independent language production.', to: '/blog/child-understands-english-but-does-not-speak', label: 'Check this speaking gap' },
+          { title: 'Everyday Spoken English classes', description: 'For fuller conversational replies and independent everyday English rather than presentations or stage speaking.', to: '/spoken-english-classes-for-kids-online', label: 'Explore Spoken English classes' },
         ],
       },
     ],
@@ -288,6 +289,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
             </div>
 
             <div className="flex flex-wrap gap-2.5 lg:justify-end">
+              <a href="#focused-phonics-guides" className="rounded-full border border-sky-200 bg-sky-50 px-4 py-2.5 text-sm font-bold text-sky-900 hover:bg-sky-100">Browse 31 phonics pattern guides</a>
               <Link
                 to={config.allGuidesTo}
                 className="rounded-full bg-slate-950 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-slate-800"
@@ -517,6 +519,9 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           </div>
           <div className="flex flex-wrap gap-3 lg:justify-end">
             <Link to={config.programmeTo} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">{config.programmeLabel}</Link>
+            {subject === 'speaking' ? (
+              <Link to="/spoken-english-classes-for-kids-online" className="rounded-full border border-amber-300 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-950 hover:bg-amber-100">Spoken English for conversation</Link>
+            ) : null}
             <Link to="/book-demo" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50">Check My Child’s Level</Link>
           </div>
         </div>

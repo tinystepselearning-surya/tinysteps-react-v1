@@ -8,6 +8,7 @@ export const CENTRAL_RESOURCE_GATEWAY = '/resources';
 export const CENTRAL_RESOURCE_SUBJECT_HUBS = freezeList([
   '/resources/phonics',
   '/resources/grammar',
+  '/resources/vocabulary',
   '/resources/speaking',
 ]);
 
@@ -15,7 +16,7 @@ export const CENTRAL_RESOURCE_CONTENT_FAMILIES = freezeList([
   freeze({
     id: 'editorial-guides',
     label: 'Editorial guides',
-    description: 'Parent-friendly phonics, reading, grammar, writing, speaking and research articles.',
+    description: 'Parent-friendly phonics, reading, grammar, writing, vocabulary, speaking and research articles.',
     destination: '/blog',
     ownerRole: 'editorial-library',
     discoveryRole: 'resource-content',
