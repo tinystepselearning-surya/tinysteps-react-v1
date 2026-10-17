@@ -24,6 +24,12 @@ describe('closed teacher recruitment', () => {
     const seoRegistry = read('src/lib/routeSeoRegistry.js');
     const rules = read('firestore.rules');
     expect(careersSource).toContain('11 October 2026');
+    expect(careersSource).toContain("['Open teacher vacancies', '0']");
+    expect(careersSource).toContain("['Next recruitment', 'Not announced']");
+    expect(careersSource).toContain('<time dateTime={CAREERS_CLOSED_DATE_ISO}>');
+    expect(careersSource).toContain('No reopening date has been announced.');
+    expect(careersSource).toContain('not collecting new teacher applications');
+    expect(careersSource).toContain('When did Tiny Steps Learning close its 2026 teacher applications?');
     expect(careersSource).toContain('Teacher Recruitment Closed');
     expect(careersSource).not.toContain('CareerApplicationForm');
     expect(careersSource).not.toContain("',,");

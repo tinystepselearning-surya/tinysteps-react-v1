@@ -1,0 +1,54 @@
+name: Careers SEO & AEO Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/public/CareersPage.tsx'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/components/common/Header.tsx'
+      - 'index.html'
+      - 'firestore.rules'
+      - 'src/tests/seo/careersJobPostingBootstrap.spec.ts'
+      - 'src/pages/admin/teacherInquiriesGuardrails.spec.ts'
+      - 'scripts/verify-careers-live-visual.mjs'
+      - '.github/workflows/careers-seo-aeo-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-careers:
+    name: Careers metadata and closure validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install pinned dependencies
+        run: npm ci --ignore-scripts
+      - name: Validate public SEO registry JavaScript syntax
+        run: node --check src/lib/routeSeoRegistry.js
+      - name: Type-check public page
+        run: npm run typecheck
+      - name: Verify closure, schema removal and admin guardrails
+        run: >-
+          npx vitest run
+          src/tests/seo/careersJobPostingBootstrap.spec.ts
+          src/pages/admin/teacherInquiriesGuardrails.spec.ts
+      - name: Install Chromium for public-page visual verification
+        run: npx playwright install --with-deps chromium
+      - name: Capture production Careers page on desktop and mobile
+        run: node scripts/verify-careers-live-visual.mjs
+      - name: Upload read-only production page evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: careers-production-visual-check
+          path: artifacts/careers-production-visual-check/
+          retention-days: 14
+      - name: Confirm no Firebase writes or deployment
+        run: echo "Read-only public page check; no live Firestore, Hosting or Cloud Functions mutations."

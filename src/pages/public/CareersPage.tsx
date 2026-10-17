@@ -23,6 +23,7 @@ import { applySeo } from '../../lib/seo';
 const CAREERS_PATH = '/careers';
 const CAREERS_URL = 'https://tinystepslearning.com/careers';
 const CAREERS_CLOSED_DATE = '11 October 2026';
+const CAREERS_CLOSED_DATE_ISO = '2026-10-11';
 const CAREERS_TITLE = 'Tiny Steps Learning Careers | Teacher Recruitment Closed';
 const CAREERS_DESCRIPTION =
   'Tiny Steps Learning teacher positions are filled. Applications closed on 11 October 2026; no new teacher applications are being accepted.';
@@ -31,7 +32,9 @@ const AT_A_GLANCE = [
   ['Role', 'Online English Teacher'],
   ['Work mode', 'Fully remote / work from home'],
   ['Recruitment status', 'Positions filled'],
+  ['Open teacher vacancies', '0'],
   ['Applications closed', CAREERS_CLOSED_DATE],
+  ['Next recruitment', 'Not announced'],
   ['Learners', 'Children aged 3–12'],
   ['Subjects', 'Phonics, Grammar, Speaking'],
   ['Class format', 'Live 1:1 online classes'],
@@ -166,9 +169,24 @@ const PROCESS_STEPS = [
 
 const FAQS = [
   {
-    question: 'Is Tiny Steps hiring remote online English teachers in India?',
+    question: 'Is Tiny Steps Learning hiring online English teachers right now?',
     answer:
-      'No. Tiny Steps Learning filled its current online English teaching positions. Applications closed on 11 October 2026, and new applications are not being accepted at this time.',
+      'No. Tiny Steps Learning currently has zero open online English teacher vacancies. All positions in the 2026 Phonics, Grammar, Public Speaking and Spoken English recruitment cycle were filled, and applications closed on 11 October 2026.',
+  },
+  {
+    question: 'When did Tiny Steps Learning close its 2026 teacher applications?',
+    answer:
+      'The online English teacher recruitment cycle closed on 11 October 2026 because the advertised positions were filled.',
+  },
+  {
+    question: 'Can I send an application or CV by WhatsApp or email now?',
+    answer:
+      'No. Tiny Steps Learning is not collecting new teacher applications by website form, WhatsApp or email for this closed recruitment cycle. Existing candidate records remain with the HR team.',
+  },
+  {
+    question: 'When will Tiny Steps Learning advertise teacher vacancies again?',
+    answer:
+      'No reopening date has been announced. Any future vacancies will be published on this official Careers page. Please check the vacancy status here before contacting the team about recruitment.',
   },
   {
     question: 'Who was eligible for the most recent teaching roles?',
@@ -201,7 +219,7 @@ const FAQS = [
       'Selected teachers received preparation support, demo opportunities and scheduling assistance based on their availability and student demand. There are no open roles at present, and future onboarding terms may differ.',
   },
   {
-    question: 'What subjects can I teach at Tiny Steps?',
+    question: 'Which English programs were included in the closed teaching vacancies?',
     answer:
       'Tiny Steps teacher roles have covered Phonics, Grammar, Public Speaking and Spoken English. All positions in the current recruitment cycle have been filled.',
   },
@@ -286,7 +304,7 @@ export default function CareersPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
-              Teacher recruitment closed · 11 October 2026
+              Teacher recruitment closed · <time dateTime={CAREERS_CLOSED_DATE_ISO}>{CAREERS_CLOSED_DATE}</time>
             </div>
 
             <h1 className="mt-5 max-w-4xl text-4xl font-black tracking-tight text-slate-950 sm:text-5xl md:text-6xl md:leading-[1.02]">
