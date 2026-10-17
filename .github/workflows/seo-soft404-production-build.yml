@@ -13,7 +13,6 @@ on:
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
       - 'scripts/test/gsc735-resource-indexability.node-test.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
-      - 'scripts/diagnose-gsc735-live-assets.mjs'
       - 'src/lib/phonicsPublicationRegistry.js'
       - 'src/lib/grammarProgrammaticSeoManifest.js'
       - 'src/lib/vocabularyAuthoritySeoManifest.js'
@@ -79,7 +78,5 @@ jobs:
         run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
       - name: Guard cache policy on clean resource URLs
         run: node --test scripts/test/gsc735-resource-cache.node-test.mjs
-      - name: Diagnose owner-reported Googlebot asset loading (nonblocking)
-        run: node scripts/diagnose-gsc735-live-assets.mjs
       - name: No deployment
         run: echo "Validation complete. This workflow cannot publish Firebase Hosting or change production."
