@@ -11,6 +11,13 @@ on:
       - 'scripts/seo-route-integrity.mjs'
       - 'scripts/soft404-prerender-policy.mjs'
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/pages/grammar.tsx'
+      - 'src/pages/public/ReadingClassesForKidsPage.tsx'
+      - 'src/lib/centralResourceSystem.js'
+      - 'src/lib/centralResourceSystem.d.ts'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/tests/seo/resourcesR23CentralResourceReconciliation.spec.ts'
       - '.github/workflows/seo-soft404-production-build.yml'
   workflow_dispatch:
 
@@ -42,6 +49,10 @@ jobs:
         run: node --test scripts/test/seo-soft404-prerender.node-test.mjs
       - name: Verify GSC legacy games alias and preserve live child game
         run: node --test scripts/test/seo-free-games-redirect.node-test.mjs
+      - name: Verify resource hub taxonomy and canonical-owner preservation
+        run: npx vitest run src/tests/seo/resourcesR23CentralResourceReconciliation.spec.ts
+      - name: Check TypeScript source
+        run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
         run: npm run build:deploy
       - name: No deployment
