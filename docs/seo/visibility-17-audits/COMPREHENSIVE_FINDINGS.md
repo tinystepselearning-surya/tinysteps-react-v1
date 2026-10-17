@@ -23,12 +23,12 @@
 | Reproduced P0 / P1 failures | **0 confirmed live P0/P1 index or availability outages in 12 integrated reports**; A08-F001 P1 source editorial governance remains | Source signoff gap is not a proven crawler problem |
 | High-priority *unverified* risks | Earlier candidates plus **A07-F003 ↔ A10-F001 one Vocabulary sitemap mismatch** | Needs actual deployed XML/GSC proof from A17 |
 | Qualified source/content/link finding rows | **43** — prior 41 + A11-F002/F003; A11-F001 shared with A07-F001 | Unique root rows; cross-audit corroboration explicitly not counted twice |
-| Additional unverified candidates / evidence gaps | Prior A01–A10 queues plus **A12-H001–H007 (7 named verification checks)** | A12 technical/consent/trust/platform checks overlap A17, A16 and A01; **not seven independently proven problems** |
+| Additional unverified candidates / evidence gaps | A01–A10 and A12 original queues plus **A11-U001/U002/U003**; U001/U003 overlap A17/engine work, U002 needs browser test | No live deployed defect implied |
 | Google/Bing indexed count | **UNKNOWN** | No first-party inspections |
 | Native AI-engine results | **0 tested; 149 manual prompts queued across integrated reports** | +12 A11; no native product answer observed |
 | Lead conversion results | **UNTESTED** | No production lead submitted |
 | SEO/AEO/GEO composite | **NOT SCORABLE** | First-party index/AI/outcome evidence unavailable |
-| Next work | A13 report integration, A14–A17 independent audits; Google/Bing/AI direct evidence and child-facing academic review | No implementation authorised |
+| Next work | A13/A14 received reports await integration; A15–A17 independent audits; direct Google/Bing/AI and academic verification | No website changes approved |
 
 ### Definitions
 
@@ -36,7 +36,7 @@
 
 ## 2. Workstream status register — 17 fixed IDs
 
-On 2026-10-17 IST, **14/17 independent report files are present on main** and **12/17** are evidence-integrated (A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12). A11's own report is now integrated. A13 has a report file but remains NOT INTEGRATED. A14–A17 await reports. Each finding retains its source evidence and limitations; previous workstream ownership and integration logs are preserved.
+On 2026-10-17 IST, **14/17 independent report files are present on main** and **12/17** are evidence-integrated (A01, A02, A03, A04, A05, A06, A07, A08, A09, A10, A11, A12). A11's own report is now integrated. A13 has a report file but remains NOT INTEGRATED. A14 report received but awaits independent integration; A15–A17 await reports. Each finding retains its source evidence and limitations; previous workstream ownership and integration logs are preserved.
 
 | ID | Subject | Primary owner(s) | Source report (expected) | Audit state | Integration state | Evidence coverage | Latest report/update |
 |---|---|---|---|---|---|---|---|
@@ -53,7 +53,7 @@ On 2026-10-17 IST, **14/17 independent report files are present on main** and **
 | A11 | Speaking & Communication knowledge | /resources/speaking + 14 knowledge-owner /blog articles + 1 introduction | [A11](./reports/A11.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | Hub + 14/14 Tier-1 guides + featured intro retrievable by public reader; 0 source /resources/speaking/:slug children; GSC/BWT 0/16, AI 0 native | 2026-10-17; blob `3d0e7bf6db53` |
 | A12 | Parent Help | /parents + 10 guides + 3 concern owners | [A12](./reports/A12.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | **11/11** public /parents pages + **3/3** connected parent-problem texts reviewed; **11/11** checked-in parent sitemap locs; origin HTTP, GSC/Bing 0/14, native AI 0/48 runs | 2026-10-17 11:37 IST; blob `ed17dbb695e6` |
 | A13 | Free Learning Activities | /free-english-games-for-kids | [A13](./reports/A13.md) | **COMPLETE WITH LIMITATIONS (report received)** | **NOT INTEGRATED** | 20 source-approved public URLs described in published report; findings await independent merge | 2026-10-17; source received |
-| A14 | Schools & Educators | /for-schools | reports/A14.md | PLANNED | NOT INTEGRATED | — | — |
+| A14 | Schools & Educators | /for-schools + 8 research blog owners | [A14](./reports/A14.md) | **COMPLETE WITH LIMITATIONS (report received)** | **NOT INTEGRATED** | 9/9 text bodies reviewed in report; GSC/Bing 0/9, native AI 0 tested; details await integration | 2026-10-17; blob `f32755b3f652` |
 | A15 | Every published blog article | /blog + all /blog/... | reports/A15.md | PLANNED | NOT INTEGRATED | — | — |
 | A16 | Commercial and lead pages | /courses /pricing /book-demo /contact + more | reports/A16.md | PLANNED | NOT INTEGRATED | — | — |
 | A17 | Sitewide technical and reconciliation | robots / sitemaps / rendered routes | reports/A17.md | PLANNED | NOT INTEGRATED | — | — |
@@ -175,7 +175,7 @@ On 2026-10-17 IST, **14/17 independent report files are present on main** and **
 
 ### P0 / P1 escalation
 
-**0 confirmed live P0/P1 availability/indexing outages in 11 integrated reports.** A08-F001 is a **P1 source-only editorial governance gap**, reproduced as 31 pending records in the current main code and reported against 31 guide URLs; it does not establish lack of any offline review or search suppression. A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 and A07-F003 and A08-H001/H003 remain *P1 investigation priorities*, not reproduced production blocking. A12 adds five P2 content/navigation/policy observations, **no confirmed live P0/P1 incident**. No 11 integrated audit establishes full Google/Bing/AI coverage.
+**0 confirmed live P0/P1 availability/indexing outages in 12 integrated reports.** A08-F001 is a **P1 source-only editorial governance gap**, reproduced as 31 pending records in the current main code and reported against 31 guide URLs; it does not establish lack of any offline review or search suppression. A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 and A07-F003 and A08-H001/H003 remain *P1 investigation priorities*, not reproduced production blocking. A12 adds five P2 content/navigation/policy observations, **no confirmed live P0/P1 incident**. No 11 integrated audit establishes full Google/Bing/AI coverage.
 
 ### Proposed P2/P3 backlog
 
