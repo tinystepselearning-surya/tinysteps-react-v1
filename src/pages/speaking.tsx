@@ -477,7 +477,7 @@ export default function SpeakingPage() {
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#tiny-steps-positioning`,
       name: 'Why families shortlist Tiny Steps for public speaking and communication',
-      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      itemListOrder: 'https://schema.org/ItemListUnordered',
       numberOfItems: speakingPositioningProof.length,
       itemListElement: speakingPositioningProof.map((item, index) => ({
         '@type': 'ListItem',
@@ -593,7 +593,7 @@ export default function SpeakingPage() {
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#parent-programme-fit`,
       name: 'Tiny Steps parent speaking-needs routing guide',
-      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      itemListOrder: 'https://schema.org/ItemListUnordered',
       numberOfItems: speakingParentFitScenarios.length,
       itemListElement: speakingParentFitScenarios.map((scenario, index) => ({
         '@type': 'ListItem',
@@ -629,7 +629,7 @@ export default function SpeakingPage() {
       '@type': 'ItemList',
       '@id': `${canonicalUrl}#evidence-sources`,
       name: 'Tiny Steps Speaking evidence sources',
-      itemListOrder: 'https://schema.org/ItemListOrderUnordered',
+      itemListOrder: 'https://schema.org/ItemListUnordered',
       numberOfItems: SPEAKING_EVIDENCE_SURFACES.length,
       itemListElement: SPEAKING_EVIDENCE_SURFACES.map((item, index) => ({
         '@type': 'ListItem',
