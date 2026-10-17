@@ -38,11 +38,11 @@ for (const [label, agent] of agents) {
       row.location = response.headers.get('location') || null;
       if (pathname === '/resources/grammar') {
         const html = await response.text();
-        row.hasExpectedGrammarH1 = /<h1\\b[^>]*>\\s*Grammar (?:&amp;|&) Writing Resources/i.test(html);
+        row.hasExpectedGrammarH1 = /<h1\b[^>]*>\s*Grammar (?:&amp;|&) Writing Resources/i.test(html);
         row.hasPrerenderedSequence = html.includes('grammar-programmatic-sequence');
         row.hasRootErrorFallback = html.includes("We've been notified and will fix it soon");
       } else if (!response.ok || !/javascript|ecmascript/i.test(row.contentType || '')) {
-        row.bodyPrefix = (await response.text()).replace(/\\s+/g, ' ').slice(0, 160);
+        row.bodyPrefix = (await response.text()).replace(/\s+/g, ' ').slice(0, 160);
       } else {
         await response.body?.cancel();
       }
