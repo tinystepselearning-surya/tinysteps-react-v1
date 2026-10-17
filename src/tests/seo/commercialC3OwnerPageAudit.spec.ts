@@ -79,6 +79,20 @@ describe('Commercial C3 final canonical-owner reconciliation', () => {
     expect(confidence).toContain('/shy-child-speaking-confidence');
   });
 
+  it('keeps illustrative grammar transfer visible and uses valid unordered schema values', () => {
+    const grammar = read('src/pages/grammar.tsx');
+    const speaking = read('src/pages/speaking.tsx');
+    expect(grammar).toContain('id="grammar-worked-example"');
+    expect(grammar).toContain('Illustrative teaching example');
+    expect(grammar).toContain('Yesterday, she went to school.');
+    expect(grammar).toContain('Last weekend, we went to the library');
+    expect(grammar).toContain('/resources/grammar');
+    expect(grammar).toContain('https://schema.org/ItemListUnordered');
+    expect(speaking.match(/https:\/\/schema.org\/ItemListUnordered/g)?.length).toBe(3);
+    expect(grammar).not.toContain('https://schema.org/ItemListOrderUnordered');
+    expect(speaking).not.toContain('https://schema.org/ItemListOrderUnordered');
+  });
+
   it('keeps broad English as one global chooser plus generic tutor owner', () => {
     const source = lower('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
     for (const token of [
