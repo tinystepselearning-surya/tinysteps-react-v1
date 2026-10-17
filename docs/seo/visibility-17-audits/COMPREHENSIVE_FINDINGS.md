@@ -1,7 +1,7 @@
 # Tiny Steps Learning — Comprehensive SEO, AEO & GEO Findings Register
 
 **Programme:** 17 independent audits / one consolidated evidence register / one eventual prioritised remediation plan  
-**Status:** 7/17 REPORTS INTEGRATED — A01 EVIDENCE COLLECTED, A02–A06/A08 COMPLETE WITH LIMITATIONS; A07/A09/A10 REPORTS AVAILABLE AND AWAITING INTEGRATION; NO FULL-PLATFORM ASSURANCE  
+**Status:** 8/17 REPORTS INTEGRATED — A01 EVIDENCE COLLECTED, A02–A08 COMPLETE WITH LIMITATIONS; A09/A10 REPORTS AWAITING INTEGRATION; NO FULL-PLATFORM ASSURANCE  
 **Created:** 2026-10-17 (IST)  
 **Canonical scope and operating rules:** [MASTER_AUDIT_CHARTER.md](./MASTER_AUDIT_CHARTER.md)  
 **Individual report format:** [AUDIT_REPORT_TEMPLATE.md](./AUDIT_REPORT_TEMPLATE.md)  
@@ -15,20 +15,20 @@
 | Indicator | Current state | Rule |
 |---|---|---|
 | Planned audit workstreams | 17 | Fixed A01–A17 |
-| Workstreams with source reports on main | **10/17** — A01–A10 | Directory inspected 2026-10-17; A07/A09/A10 received but not yet integrated |
-| Integrated workstreams | **7/17** — A01–A06 and A08 | Source evidence summarized in this register; A07/A09/A10 remain unintegrated |
+| Workstreams with source reports on main | **10/17** — A01–A10 | Directory verified 2026-10-17; A09/A10 remain unintegrated |
+| Integrated workstreams | **8/17** — A01–A08 | A09/A10 remain unintegrated |
 | Complete verified | **0/17** | No unqualified pass |
-| Complete with limitations | **6 integrated/17** — A02–A06 and A08 | This row counts integrated reports only; received A07/A09/A10 are not counted as integrated |
+| Complete with limitations | **7 integrated/17** — A02–A08 | A09/A10 published but not evidence-integrated; no full-platform assurance |
 | Evidence collected, still open | **1/17** — A01 | Live technical/AI/search verification unfinished |
-| Reproduced P0 / P1 failures | **0 confirmed live P0/P1 outages in 7 integrated reports**; **1 P1 source-only governance gap** (A08-F001) | A08-F001 is not a demonstrated Google/Bing indexing or production availability failure |
-| High-priority *unverified* risks | A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 historical Confidence recheck, A08-H001/H003; separate source P1 A08-F001 | **Not proven live P1 faults**; source governance status independently checked, raw-head/index selection remain A17 |
-| Qualified source/content findings | **23** — prior 15 plus A08-F001–F008 | Includes 1 P1 **source-only** review-governance finding, 7 P2/P3 content/UX/terminology notes; no newly verified live indexing fault |
-| Additional unverified candidates / evidence gaps | **Prior 16 + A08-H001–H006 (6 flagged queues)** | Some overlap A17 and existing root technical checks; these are follow-up items, **not 22 independently confirmed defects** |
+| Reproduced P0 / P1 failures | **0 confirmed live P0/P1 outages in 8 integrated reports**; **1 P1 source-only governance gap** (A08-F001) | A07-F003 is verification-only, not proved live sitemap omission or indexing failure |
+| High-priority *unverified* risks | A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 historical, **A07-F003 Vocabulary served sitemap**, A08-H001/H003; separate source P1 A08-F001 | No confirmed live indexing outages; raw origin/GSC checks A17 |
+| Qualified source/content/link finding rows | **26** — previous 23 plus A07-F001/F002/F004 | A07-F001 adds gateway referral clarity but reuses A06/A13 underlying unplayable speaking game state; **not** 26 independent root causes |
+| Additional unverified candidates / evidence gaps | **Prior 16 + A08-H001–H006 + A07-F003** | These are named pending checks with overlaps (especially A17); not independently confirmed production defects |
 | Google/Bing indexed count | **UNKNOWN** | No first-party inspections |
-| Native AI-engine results | **0 tested**, **86 prompts queued** in integrated reports | 344 potential platform–prompt runs across four engines, none executed; A07/A09/A10 prompt queues not yet integrated |
+| Native AI-engine results | **0 tested**, **98 prompts queued** in integrated A01–A08 | 392 possible platform–prompt runs across four engines, none executed; A09/A10 prompts not yet counted |
 | Lead conversion results | **UNTESTED** | No production lead submitted |
-| SEO/AEO/GEO composite | **NOT SCORABLE** | All 7 integrated reports have material platform/technical unknowns |
-| Next work | Integrate A07, A09, A10; execute A11–A17; obtain first-party platform and origin HTTP evidence | No website implementation |
+| SEO/AEO/GEO composite | **NOT SCORABLE** | All 8 integrated reports have substantial unverified platform/technical evidence |
+| Next work | Integrate A09/A10; run A11–A17; gather first-party and origin HTTP evidence | No website implementation |
 
 ### Definitions
 
@@ -36,7 +36,7 @@
 
 ## 2. Workstream status register — 17 fixed IDs
 
-Current directory check (2026-10-17 IST) confirms A01–A10 report files on main; **A01–A06 and A08 are integrated**. **A07, A09 and A10 are COMPLETE WITH LIMITATIONS in their own reports but NOT YET INTEGRATED**. A11–A17 are not present in the inspected report directory. Source blob SHAs for received reports are shown in this table; only integrated evidence is counted in §§3–9.
+Current directory check (2026-10-17 IST) confirms A01–A10 report files on main; **A01–A08 are integrated**. **A09 and A10 are COMPLETE WITH LIMITATIONS in their own reports but NOT YET INTEGRATED**. A11–A17 are not present in the inspected report directory. Source blob SHAs for received reports are shown in this table; only integrated evidence is counted in §§3–9.
 
 | ID | Subject | Primary owner(s) | Source report (expected) | Audit state | Integration state | Evidence coverage | Latest report/update |
 |---|---|---|---|---|---|---|---|
@@ -46,7 +46,7 @@ Current directory check (2026-10-17 IST) confirms A01–A10 report files on main
 | A04 | Reading commercial | /reading-classes-for-kids + /reading-fluency-program | [A04](./reports/A04.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 2/2 owned + 2/2 linked parent help; GSC/BWT 0/2, AI 0/4 | 2026-10-17; blob `8d48cc47e1b6` |
 | A05 | Grammar commercial | /grammar + /writing-classes-for-kids + Beginner/Advanced/chooser | [A05](./reports/A05.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 5/5 canonicals publicly retrievable; source sitemap/intent; GSC/BWT 0/5, native AI 0/4 | 2026-10-17; blob `d43047ddd4e0` |
 | A06 | Speaking commercial | /speaking + /spoken-english-classes-for-kids-online + specialist confidence + two levels | [A06](./reports/A06.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 2/2 primary and 8/8 commercial/support owner texts retrieved by A06 web reader; source index intent, GSC/Bing 0/6 core, native AI 0/4 | 2026-10-17; blob `0dc87fb7ca40` |
-| A07 | Resources gateway | /resources | [A07](./reports/A07.md) | **COMPLETE WITH LIMITATIONS (report received)** | **NOT INTEGRATED** | Gateway report exists; evidence and findings not yet reconciled here | 2026-10-17; blob `6c6bf01c4f06` |
+| A07 | Resources gateway | /resources + 7 pathways | [A07](./reports/A07.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 8/8 starting pages, 7/7 cards, 18/18 answer-layer links publicly retrievable; 22/53 checks evidenced (41.5%); 0 GSC/Bing/native AI | 2026-10-17 11:18 IST; blob `6c6bf01c4f06` |
 | A08 | Phonics & Reading knowledge | /resources/phonics | [A08](./reports/A08.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 32/32 hub+31 guides reported tool-readable; 32/32 source sitemap; raw HTTP 0/32, GSC/Bing 0/32, native AI 0/4 | 2026-10-17; blob `70d9c36c216e` |
 | A09 | Grammar & Writing knowledge | /resources/grammar | [A09](./reports/A09.md) | **COMPLETE WITH LIMITATIONS (report received)** | **NOT INTEGRATED** | Hub + 38 children described in received report; detailed findings await integration | 2026-10-17; blob `2d8266742172` |
 | A10 | Vocabulary knowledge | /resources/vocabulary | [A10](./reports/A10.md) | **COMPLETE WITH LIMITATIONS (report received)** | **NOT INTEGRATED** | Hub+16 child guides+practice shell described in received report; detailed findings await integration | 2026-10-17; blob `677f38d02502` |
@@ -69,7 +69,7 @@ Current directory check (2026-10-17 IST) confirms A01–A10 report files on main
 
 ## 3. Qualified findings and unverified hypotheses
 
-**Evidence rule:** The qualified table contains findings supported by sampled page text and/or repository source, each with explicit limits on production deployment. **No live P0/P1 availability or indexing outage has been reproduced in integrated A01–A06/A08.** A08-F001 is **P1 source-governance evidence**, not a confirmed live crawl failure or proof every teaching example is wrong. These observations do not independently establish Google/Bing exclusion, faulty live HTTP or false marketing statements.
+**Evidence rule:** The qualified table contains findings supported by sampled page text and/or repository source, each with explicit limits on production deployment. **No live P0/P1 availability or indexing outage has been reproduced in integrated A01–A08.** A08-F001 is **P1 source-governance evidence**, not a confirmed live crawl failure or proof every teaching example is wrong. These observations do not independently establish Google/Bing exclusion, faulty live HTTP or false marketing statements.
 
 | Canonical ID | Owner/priority | Affected URL(s) | Reproduced scope and explicit limitation | Evidence source | Hypothesized cause / proposed action (not approved) | Acceptance test and state |
 |---|---|---|---|---|---|---|
@@ -97,6 +97,10 @@ Current directory check (2026-10-17 IST) confirms A01–A10 report files on main
 | A08-F006 | A08 / P2 reading handoff | `/resources/phonics`, slow-reading parent pathway | Hub’s promoted commercial CTA goes to `/phonics`; limited direct next-step to `/reading-classes-for-kids` / `/reading-fluency-program` when decoding is secure but connected-text fluency weak. **Distinct from A04-F003 specialist-blog link**. | [A08](./reports/A08.md) E001/E011 | Add accurately labelled parent journey to A04-owned Reading programmes with assessment option, without rewriting A04 landing content | Slow-reading user can reach relevant reading owner in 1–2 clear steps; **OPEN HANDOFF OPPORTUNITY** |
 | A08-F007 | A08 / P3 review/utility QA | Hub word–sound utility; 74 declared starter mappings | Utility publicly indicates pending human review and describes isolated sound cues; playback, pronunciation quality, audio assets and mobile focus **not verified**. | [A08](./reports/A08.md) E001/E012 | Audit 74 cues with trained teacher and accessible-device playback; do not label untested sound buttons broken | Signoff of actual word–sound pairs plus safe keyboard/audio test; **OPEN QUALITY CHECK (FUNCTION UNVERIFIED)** |
 | A08-F008 | A08 / P3 terminology consistency | `oo-sounds-phonics`, `ch-tch-spelling-phonics` | Some upstream categories call OO 'diphthong' and group CH/TCH as 'digraphs' while instructional explanation distinguishes monophthongs and TCH as a trigraph. Nuanced taxonomic mismatch, **not proof a child was mis-taught**. | [A08](./reports/A08.md) E004/E006 | Qualified educational terminology cleanup across source categories and parent explanations | Accurate, age-appropriate consistent terminology confirmed by reviewer; **OPEN TERMINOLOGY REVIEW** |
+
+| A07-F001 | A07 / P2 **gateway link expectation** (A13 owns games) | `/resources`, `/resources/speaking`, `/free-speaking-games-for-kids`, `/free-speaking-practice-game-for-kids` | Gateway practice invitation points to a **0/4 playable** speaking-games category and **Coming Soon** game. **Same underlying availability observation as A06 §13 E030/E031**; A07 uniquely owns gateway expectation disclosure, not a second game outage | [A07](./reports/A07.md) A07-E002/E006/E008/E009; A06 §13 E030/E031 | Clearly label forthcoming practice at entry or link genuinely playable activity; A13 owns game readiness | Correct availability visible before clicking or destination playable on desktop/mobile; **OPEN P2 gateway wording** |
+| A07-F002 | A07 / P2 source SEO copy | `/resources` | Source route meta description omits **Vocabulary**, even though four topical resource hubs and three other pathways appear in the gateway; actual deployed initial HTML metadata unverified | [A07](./reports/A07.md) A07-E001/E002/E014 | Include accurate Vocabulary topic in gateway description without creating buyer-intent duplicate | Real initial/rendered meta covers actual seven destinations, canonical unchanged; **OPEN source-only copy gap** |
+| A07-F004 | A07 / P2 taxonomy consistency | `src/lib/centralResourceSystem.js`, `/resources` | `CENTRAL_RESOURCE_SUBJECT_HUBS` lists only phonics, grammar and speaking; Vocabulary hub exists and is gateway-linked. Runtime consumer defect **not proven** | [A07](./reports/A07.md) A07-E001/E005/E015 | Examine consumers, reconcile intended four-hub taxonomy, preserve routes/cards | Four subject hubs represented consistently without duplicate cards or canonical shifts; **OPEN source-only drift** |
 
 ### Unverified candidate ledger — **not confirmed defects**
 | ID | Report evidence | What remains unknown | Priority / owner |
@@ -127,13 +131,15 @@ Current directory check (2026-10-17 IST) confirms A01–A10 report files on main
 | A08-H005 | [A08](./reports/A08.md) §8 | Mobile LCP/INP/CLS and interaction burden from hub/guide cards not measured | P2 A08/A17; not a performance failure |
 | A08-H006 | [A08](./reports/A08.md) E013/§8 | Older generic web cache displayed fewer word-structure items than current A08 text report; source cache freshness unknown | Historical/cache only; DO NOT treat as live regressions |
 
+| A07-F003 (**unverified P1 candidate**) | [A07](./reports/A07.md) A07-E005/E011/E012/E017 | Checked-in static sitemap lacks `/resources/vocabulary` and sixteen child guides, **but** current route manifest and sitemap generator include them. Deployed XML and indexation could already be correct; no current live sitemap/GSC proof | **P1 verification only**, A07 gateway/A10 inventory/A17 sitewide sitemap; **NOT a reproduced production error** |
+
 ### P0 / P1 escalation
 
-**0 confirmed live P0/P1 availability/indexing outages in 7 integrated reports.** A08-F001 is a **P1 source-only editorial governance gap**, reproduced as 31 pending records in the current main code and reported against 31 guide URLs; it does not establish lack of any offline review or search suppression. A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 and A08-H001/H003 remain *P1 investigation priorities*, not reproduced production blocking. Three available reports (A07/A09/A10) await integration and cannot be represented as having passed.
+**0 confirmed live P0/P1 availability/indexing outages in 8 integrated reports.** A08-F001 is a **P1 source-only editorial governance gap**, reproduced as 31 pending records in the current main code and reported against 31 guide URLs; it does not establish lack of any offline review or search suppression. A01-F003/F005, A03-U001, A04-U001, A05-U001/U002, A06-E032 and A07-F003 and A08-H001/H003 remain *P1 investigation priorities*, not reproduced production blocking. Two available reports (A09/A10) await integration and cannot be represented as having passed.
 
 ### Proposed P2/P3 backlog
 
-Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F001–F003, A05-F001–F003, A06-F001/F002/F003/F006 and **A08-F001–F008 (with source/live qualifiers)** are eligible for planning at this stage. No change is approved or deployed.
+Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F001–F003, A05-F001–F003, A06-F001/F002/F003/F006 and **A08-F001–F008 (with source/live qualifiers)** and **A07-F001/F002/F004 (with source/link qualifiers)** are eligible for planning at this stage. No change is approved or deployed.
 
 ## 4. Search visibility summary (Google and Bing)
 
@@ -147,7 +153,7 @@ Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F
 | A04 | 0/2 current GSC URL Inspections, native Google SERP UNTESTED | 0/2 Bing inspections, native SERP UNTESTED | [A04](./reports/A04.md) §§3–4, 2026-10-17 IST |
 | A05 | GSC 0/5 inspections, native SERPs UNTESTED | Bing 0/5 inspections, native SERPs UNTESTED | [A05](./reports/A05.md) §§3–4, 2026-10-17 IST |
 | A06 | GSC 0/6 six core commercial/level/framework URLs; native Google SERPs UNTESTED; historical 2026-08-27 Confidence noindex, current UNKNOWN | Bing 0/6; native SERPs UNTESTED | [A06](./reports/A06.md) §§3–4 and §13 E032; 2026-10-17 IST |
-| A07 | Report received; GSC/native Google SERP not yet reconciled | Report received; BWT/native Bing not yet reconciled | [A07](./reports/A07.md), **NOT INTEGRATED** |
+| A07 | 0/8 GSC inspections, native Google rankings untested; public web retrieval only | 0/8 BWT inspections, native Bing SERPs untested | [A07](./reports/A07.md) §§2–5; checked-in vocabulary sitemap mismatch is not production index proof |
 | A08 | 0/32 GSC inspections; native Google SERP UNTESTED; source static sitemap lists 32, live HTTP canonical unknown | 0/32 BWT inspections; native Bing SERP UNTESTED | [A08](./reports/A08.md) §§2–4; 2026-10-17 IST |
 | A09 | Report received; evidence awaiting consolidation | Report received; evidence awaiting consolidation | [A09](./reports/A09.md), **NOT INTEGRATED** |
 | A10 | Report received; evidence awaiting consolidation | Report received; evidence awaiting consolidation | [A10](./reports/A10.md), **NOT INTEGRATED** |
@@ -165,7 +171,7 @@ Only evidence-based source/content improvements A02-F002, A03-F001–F004, A04-F
 
 ## 5. Native answer-engine visibility summary
 
-**0 native sessions tested; 86 prompts prepared in integrated A01–A06 plus A08 (72 + 14)**. Running every prompt separately on ChatGPT Search, Perplexity, Copilot and Google AI Mode/Overviews would require 344 platform–prompt observations, plus recommended repeats. **No citation or recommendation rate exists yet.** A07/A09/A10 native queues remain outside this integrated denominator until reconciled.
+**0 native sessions tested; 98 prompts prepared in integrated A01–A08 (72 A01–A06 + 12 A07 + 14 A08)**. Running every prompt separately on ChatGPT Search, Perplexity, Copilot and Google AI Mode/Overviews would require **392** platform–prompt observations, plus repeats. **No citation or recommendation rate exists yet.** A09/A10 questions are not included until separately integrated.
 
 | Engine | Actually tested? | Prompt results recorded | Tiny Steps cited / tested | Recommendations / tested | Evidence |
 |---|---|---:|---|---|---|
@@ -179,7 +185,7 @@ Crawl permission and answer-readable content are **not** proof that an engine ci
 
 ## 6. Trust, academic and content coverage summary
 
-**Integrated A01–A06:** Public web text and inspected code describe a brand serving ages 3–12, teacher-led phonics, reading, grammar/sentence building and speaking, skill-led placement and one free 35-minute assessment; these are published *claims*, not verified teaching outcomes. Main curriculum source explicitly disclaims formal CBSE/ICSE/IB/Cambridge endorsement; older web snapshots with “Cambridge-aligned” language cannot be treated as current live contradictory copy without new raw-HTML evidence (A02-F001).
+**Integrated A01–A08:** Public web text and inspected code describe a brand serving ages 3–12, teacher-led phonics, reading, grammar/sentence building and speaking, skill-led placement and one free 35-minute assessment; these are published *claims*, not verified teaching outcomes. Main curriculum source explicitly disclaims formal CBSE/ICSE/IB/Cambridge endorsement; older web snapshots with “Cambridge-aligned” language cannot be treated as current live contradictory copy without new raw-HTML evidence (A02-F001).
 
 A03 includes a fee comparison and cited provider references, but third-party figures, current parent testimonials, founder qualifications, learner reach totals and parent permissions are not independently fully corroborated. A03-F003 is specific wording requiring academic review. A02-F002 is a suggestion to communicate actual progression criteria, not a discovery that internal assessments are absent.
 
@@ -191,11 +197,13 @@ A03 includes a fee comparison and cited provider references, but third-party fig
 
 **Phonics & Reading resource pathway (A08):** Reported tool-readable hub and 31 child guides match the 16+15 main publication inventory and **32 checked-in static sitemap entries**, with unique pattern concepts for CK, Floss, TCH, digraphs, vowel teams and longer word families. Source `phonicsEditorialReviewRegistry.js` still defaults every guide to pending human signoff (A08-F001, source P1 governance), while per-guide attribution, applied grapheme/decoding models and some sound notation require editorial review (F002–F004/F008). Hub CTA semantics and direct A04 reading handoff could be clearer (F005/F006). A 74-word isolated sound utility advertises pending review but has not undergone functional/audio/mobile testing (F007). **None of these establishes current Google/Bing deindexing or an AI citation rate.** A15 owns complete related-blog article QA, A03/A04 own commercial texts.
 
+**Resources gateway (A07):** All seven card destinations match source routes (four subject resource hubs plus Parent Help, Free Activities and Schools/Educators); public inspection retrieved all eight required gateway/destination pages and 18 linked question/concept/practice targets. This supports discovery of links and text, **not native SERP ranking, selected canonicals, initial HTTP responses or AI citations**. A07-F001 documents the gateway entry expectation for speaking practice (the actual 0/4 game readiness was *already* noted by A06 and belongs to A13). A07-F002/F004 are source completeness/taxonomy findings. A07-F003 is a **P1 verification priority only**, because source/generated/deployed sitemap evidence differs. A08–A14 own pathway child quality; A15 articles; A16 shared demo/school leads; A17 served sitemaps and robots.
+
 **Cross-audit collision guard:** A01-F001 ↔ A03-F002 share the learner reach claim; consolidate any future confirmed root cause, but keep page-specific disclosure evidence. A02-F003 is a current-course check for A03; A01-F003/A02-F005/A04-U001 feed A17 technical checks; A01-F005 belongs to A16 conversion; A03-U001 is a suspected indexing investigation, not already-resolved or already-failed. Independent academic and public reputation validation remains outstanding.
 
 **Lead/UX:** Home, curriculum and phonics pages expose relevant enquiry links, but no production submissions, mobile keyboard checks, consent processing, CWV field metrics or successful WhatsApp journey were tested. A16/A17 own cross-site resolution.
 
-**Scorecard:** All 7 integrated reports explicitly say **NOT SCORABLE**. Do not numerically average unmeasured platforms.
+**Scorecard:** All 8 integrated reports explicitly withhold a fully supported composite score. A07 documents **22/53 (41.5%) test evidence coverage**, not 41.5/100 SEO performance. Do not numerically average unmeasured platforms.
 
 ## 7. Cross-audit dependency and collision matrix
 
@@ -208,7 +216,10 @@ A03 includes a fee comparison and cited provider references, but third-party fig
 | Parent problem/comparison path | A12 parent help, A03–A06 programmes, A16 conversion | A01/A07/A15 |
 | Every published blog | A15 owns full article-level QA | A08–A14 own hub relationships and specialist child guide pages |
 | SEO infra, canonical, sitemap, robots | A17 owns systemic root cause | All other workstreams may flag affected URL and cross-reference |
-| Shared demo, price, trust and contact | A16 owns end-to-end funnel | A01–A06/A12/A14 link to primary defect |
+| Shared demo, price, trust and contact | A16 owns end-to-end funnel | A01–A08/A12/A14 link to primary defect |
+| A07 gateway taxonomy / metadata versus topical resource content | A07 owns gateway labels, outbound pointers and SEO description; A08–A14 own in-depth pathways | A07-F002/F004 are gateway source concerns, not per-guide findings |
+| Speaking games and gateway practice promise | A13 game readiness; A07-F001 gateway expectation | A06 §13 E030/E031 already found the same 0/4 playable status; no duplicated outage |
+| Vocabulary sitemap source vs production | A17 sitewide served sitemap; A10 vocabulary URL roster | A07-F003 remains unverified until production XML/GSC evidence |
 
 A01–A06 documented overlaps: A01-F001↔A03-F002 (reach), A02-F003↔A03 course facts, A01-F003/A02-F005↔A17, A01-F005↔A16, A03-U001↔A17. These are cross-links, **not multiple confirmed failures**.
 
@@ -218,6 +229,8 @@ A01–A06 documented overlaps: A01-F001↔A03-F002 (reach), A02-F003↔A03 cours
 **A06 cross-audit dependencies:** A06-F002 ↔ A12 parent help (original source observation kept, editing owner A12); A06-F004 ↔ A01-F001/A03-F002/A16 (do not recalculate unique trust counts); A06-F005 ↔ A01-F005/A16; A06-F006 ↔ A16 canonical pricing; A06-F001 ↔ A17 live JSON-LD validation; A06-E032 ↔ A17 historical-to-current GSC reinspection; §13 A06-E030/E031 speaking games → A13, A06-E033 ended camps → A16/A17. All unresolved cross-audit handoffs remain verification, not independently fixed bugs.
 
 **A08 collision notes:** A08-F001 pertains specifically to the 31 child-guide editorial review records, not the broader founder-credential validation A01-F002; A08-F003 is per-guide visible author/reviewer provenance. A08-F005 is the phonics hub's blog-versus-guide CTA, whereas A07 owns the resource gateway's seven-card mapping. A08-F006 (hub-to-reading-programme handoff) is different from A04-F003 (fluency programme-to-article link). A08-F002/F008 are phonics educational terminology, not A03 commercial root defects. A08-H001/H002/H003/H005 feed A17 technical and platform validation; A08 blog links feed A15. No root cause is duplicated or marked repaired.
+
+**A07 overlaps:** A07-F001 ↔ A06 §13 E030/E031 ↔ A13 (single game availability root, distinct gateway invitation); A07-F003 ↔ A10 vocabulary guides ↔ A17 deployed sitemap (not deindexing proof); generic schools reach figures ↔ existing A01/A03 trust validation and A14, with no extra claim-defect ID. The resource gateway itself remains A07, not A08–A14.
 
 If findings conflict, integration must preserve both evidence trails as DISPUTED until a dated live reproduction settles the issue. Never pick the newer finding purely by author preference.
 
@@ -251,6 +264,9 @@ If findings conflict, integration must preserve both evidence trails as DISPUTED
 | IA-021 | A08-F005/F006 | P2 navigation intent | `/resources/phonics` | Correct “all guides” versus blog destination and add intent-aware pathway to A04 reading programmes | Label/URL match and parent can reach valid reading programme quickly; A03/A04 owners retained | NOT APPROVED |
 | IA-022 | A08-F007 | P3 utility QA; function unverified | 74-item word–sound utility | Audit human phonics review, audio cues, accessibility and focus; no unsupported claims that playback is broken | 74/74 mappings verified, device/keyboard/audio passed before any corrective code | NOT APPROVED |
 
+| IA-023 | A07-F003 | **P1 verification only**, live fault unconfirmed | Vocabulary hub + 16 guides / sitemap | Collect served sitemap.xml and child XML, raw response and manifest comparison | Exactly one loc per intended published canonical, GSC/BWT inspected separately; only then consider implementation | NOT APPROVED |
+| IA-024 | A07-F001, A06 §13 E030/E031, A13 | P2 observed gateway navigation expectation | Gateway-to-speaking practice | At entry, distinguish Coming Soon from playable practice or link an available exercise | Mobile and desktop links meet published available-now promise | NOT APPROVED |
+| IA-025 | A07-F002/F004 | P2 source descriptive consistency | /resources metadata + centralResourceSystem taxonomy | Add accurate Vocabulary mention, review consumers of 4-subject registry; no redirects | Initial/rendered meta parity, four subject hubs + seven cards remain canonical and accessible | NOT APPROVED |
 Final remediation requires user approval, scoped PRs, CI, deploy validation and post-change GSC/Bing observations.
 
 ## 9. Manual verification and access blockers
@@ -259,19 +275,21 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 |---|---|---|---|
 | GSC URL inspections and 7/28/90-day performance | Not available; 0 verified inspections for current period | Confirm Google status, selected canonical/query overlap for A03–A06, **especially A06 Confidence 2026-08-27 historical noindex**, not a current verdict | First-party current dated export/screenshot; A06/A17 |
 | Bing Webmaster inspection and performance | Not available | Independent Bing index/queries | Verified URL exports; A17 |
-| Native ChatGPT Search, Perplexity, Copilot, Google AI | 0 sessions; **86 integrated prompts queued** (A01–A06+A08); A07/A09/A10 pending | Actual citations, links, recommendations and factual educational rule treatment | **344** platform/prompt combinations plus repeats, exact mode/locale/date and links |
-| Deployed raw HTML/status, redirects, headers, JSON-LD, robots/sitemap | Only source/retriever or tool errors, no reliable current wire evidence | Verify A01-F003, A03-U001, A04-U001, A05-U002, **A06-F001 deployment + E032 confidence indexing history**, actual sitemap lastmods | Raw network GET/headers + rendered-browser/Schema.org validation; A17 |
+| Native ChatGPT Search, Perplexity, Copilot, Google AI | 0 sessions; **98 integrated prompts queued** (A01–A08); A09/A10 pending | Native source citations, correct gateway navigation and teaching accuracy | **392** platform/prompt combinations plus repeats, exact mode/locale/date and links |
+| Deployed raw HTML/status, redirects, headers, JSON-LD, robots/sitemap | Only source/retriever or tool errors, no reliable current wire evidence | Verify A01-F003, A03-U001, A04-U001, A05-U002, **A06-F001 deployment + E032 confidence indexing history**, **A07-F003 vocabulary served-sitemap verification**, actual sitemap lastmods | Raw network GET/headers + rendered-browser/Schema.org validation; A17 |
 | Founder/academic credentials, reach counts and testimonial permissions | Claim-support records not independently reviewed | A01-F001/F002, A02-F004, A03-F002, A06-F004 same reach/consent issue | Dated records, child privacy and qualified reviewer confirmation; owner/A16 |
 | Curriculum and programme-specific progression | Pages describe pathway but reviewed examples/actual Writing eligibility remain unresolved | A02-F002/F003, A04-F001, A05-F002/F003 | Academic review of approved milestones, Writing age/lesson structure and reading/grammar progress examples; A02/A04/A05 |
 | Harmless demo form/WhatsApp consent, mobile/a11y/CWV | No actual lead submitted or mobile browser inspection | A01-F005 and A06-F005 overlap; child name/WhatsApp data-use copy not visually confirmed at form | Safe staged synthetic journey and privacy review; A16 |
 | Three independently verified provider comparisons | A03 has sources; A01 competitive benchmark incomplete | Evidence-backed market comparisons | Same-date verified provider pages; A01/A03 |
 | Reading specialist evidence and parent decision navigation | Main A04 findings available, unimplemented | A04-F001–F003 and academic reviewer/progress sample | Academic owner and A04/A15 review, no code until remediation approved |
 | A06 course price-tier wording | Same-day A06 web text compares two course pages with central pricing | A06-F006: ₹400 named Premium on course pages vs Standard on pricing; amount unchanged | A16 commercial validation; fix only with approved copy/fee-source review |
-| Speaking games and past seasonal camp handoffs | A06 §13 E030/E031 (0 playable of 4), E033 (2026 camps concluded) | Parent-facing available-now clarity and historical campaign index intent, not verified technical failure | A13 owner for games; A16/A17 for concluded camp content and live URLs |
-| Received A07/A09/A10 + remaining A11–A17 | A07/A09/A10 files verified on main, **not yet integrated**; A11–A17 absent in checked directory | Complete consolidated evidence without overwriting other workstreams | Integrate A07/A09/A10 serially, then new A11–A17 reports as they arrive |
+| Speaking games and past seasonal camp handoffs | A06 §13 E030/E031 and A07-F001 refer to **same 0/4 playable state**, E033 ended 2026 camps | Distinguish A07 promise/entry language from A13 game readiness, plus historical campaigns | A07 gateway text; A13 games; A16/A17 camps |
+| Received A09/A10 + remaining A11–A17 | A09/A10 files verified, **not yet integrated**; A11–A17 absent in checked directory | Complete consolidated evidence without overwriting A01–A08 | Integrate A09/A10 serially, then remaining audits |
 
 | A08 editorial source signoffs, 31 concept examples and sound utility | 31/31 main-guide records pending, no reviewer signoff; audio/keyboard performance untested | Validate child's teaching source quality and avoid equating field-count gate with expert review | Tiny Steps academic reviewer for each exact revision; audit 74 word/audio mappings before any claim of full functional QA |
 | A08 live technical + origin/index/measurement | Main static list includes 32 URLs, live origin headers/robots/JSON-LD unavailable; 0/32 GSC/BWT | Resolve A08-H001–H006 and avoid assuming live sitemap/Google/Bing states | A17 check deployed origin and GSC/BWT; A08 verify real native answers from its 14 prompts |
+
+**A07 follow-up:** verify eight gateway/destination origin responses, served Vocabulary sitemap/16 guides, GSC+BWT URL Inspection, JS-off and mobile navigation, the 12 native AI questions × four engines, A13 speaking practice labels, and A14 school WhatsApp only via safe non-submitting checks.
 
 **Unknown is not failed.** A fetch tool error or historical cached snippet does not prove a deployed SEO failure.
 
@@ -301,6 +319,8 @@ Final remediation requires user approval, scoped PRs, CI, deploy validation and 
 | 2026-10-17 IST | **A06** | **4 qualified source/content/copy observations:** A06-F001/F002/F003/F006; **2 overlapping proof/consent validations** A06-F004/F005, not counted as separate root; **1 new historical GSC recheck** A06-E032 | **6/17 integrated; A06 COMPLETE WITH LIMITATIONS; 0 reproduced P0/P1** | A06 blob `0dc87fb7ca4068ed48d83316bfe820279e6af722` | 15 total qualified observations; 16 unique pending check categories (incl. historical Confidence noindex), 72 manual native AI prompts with 0 sessions; §13 E030/E031 → A13, E033 → A16/A17. No website code changes. |
 
 | 2026-10-17 IST | **A08** (A07/A09/A10 now received but not yet integrated) | **8 qualified source/content/UX findings:** A08-F001–F008, including **1 P1 source-governance** (not a live indexing failure); **6 pending queues** A08-H001–H006 | **7/17 integrated**; A01 EVIDENCE COLLECTED, A02–A06 and A08 COMPLETE WITH LIMITATIONS; **10/17 source files present**; 0 verified live P0/P1 outages | A08 blob `70d9c36c216ec4ae4d3f3dd0791cd0c32e4a3ef4`; initial integration register blob `a6b465007ba5b7b8f652a5c8e8b190bd834380c4` | 31-guide inventory and 32-source-URL sitemap noted; 0/32 first-party index inspections; 14 more AI questions (86 total integrated), 0 native tests. No code edits; A07/A09/A10 integration remains open. |
+
+| 2026-10-17 IST | **A07** (A08 evidence already integrated) | **3 qualified A07 gateway rows** F001/F002/F004; **1 unverified P1 candidate** F003, not live failure; F001 links A06 game status instead of duplicating that root | **8/17 integrated**, A07 COMPLETE WITH LIMITATIONS; **0 verified live P0/P1 outages** (A08 retains one P1 source-governance finding); A09/A10 awaiting integration | A07 blob `6c6bf01c4f06dd114a97fb9abdc021daac19c055`; previous register version independently reread at merge | Gateway 8/8 pages + 7/7 cards + 18/18 targeted links, 22/53 evidence checks, A07 12 manual AI prompts → **98** cumulative queued/0 sessions. Qualified finding *rows* 26; no website code or actual indexing work. |
 
 ## 12. Reporting finish line
 
