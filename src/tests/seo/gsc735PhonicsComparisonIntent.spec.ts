@@ -24,7 +24,7 @@ describe('GSC #735: protect the school vs online phonics parent decision article
   });
 
   it('does not expose internal numbered editorial labels to parents', () => {
-    expect(text).not.toMatch(/Blog\\s*#\\d+/);
+    expect(text).not.toContain('Blog #');
     expect(text).toContain('/blog/how-phonics-classes-help-kids-read');
     expect(text).toContain('/blog/how-to-choose-phonics-classes');
   });
