@@ -1,7 +1,7 @@
 # Tiny Steps Learning — Comprehensive SEO, AEO & GEO Findings Register
 
 **Programme:** 17 independent audits / one consolidated evidence register / one eventual prioritised remediation plan  
-**Status:** BASELINE CREATED — 0/17 reports received; NO completed audit findings entered  
+**Status:** 3/17 REPORTS INTEGRATED — A01 EVIDENCE COLLECTED, A02–A03 COMPLETE WITH LIMITATIONS; NO FULL-PLATFORM ASSURANCE  
 **Created:** 2026-10-17 (IST)  
 **Canonical scope and operating rules:** [MASTER_AUDIT_CHARTER.md](./MASTER_AUDIT_CHARTER.md)  
 **Individual report format:** [AUDIT_REPORT_TEMPLATE.md](./AUDIT_REPORT_TEMPLATE.md)  
@@ -12,35 +12,37 @@
 > IMPORTANT: This is a preparation baseline, NOT a website audit verdict. No green score, indexable verdict, AI citation rate, Google/Bing status or problem closure may be asserted until dated evidence from an actual audit supports it. This document is updated after each independently completed or evidence-collected report, BY ONE INTEGRATION CHAT AT A TIME.
 
 ## 1. Executive programme dashboard
-
 | Indicator | Current state | Rule |
 |---|---|---|
-| Planned audit workstreams | 17 | Fixed A01–A17 identifiers |
-| Workstreams with saved source reports | 0/17 | Only count verified reports on main |
-| Verified complete audits | 0/17 | COMPLETE VERIFIED only with required evidence |
-| Complete with explicitly disclosed limitations | 0/17 | Not a full-platform pass |
-| Workstreams integrated into this register | 0/17 | Only after evidence-linked summary |
-| Confirmed P0 issues | Not yet assessed | No inference from previous incidents |
-| Confirmed P1 issues | Not yet assessed | No inference from cached results |
-| Indexed coverage in Google/Bing | Not measured in this programme | Requires first-party or documented platform proof |
-| Verified native AI-answer citations | Not measured in this programme | Requires platform-specific answer observations |
-| Lead journey pass rate | Not tested | No synthetic form submissions to production |
-| SEO/AEO/GEO aggregate score | NOT SCORABLE | Never average unmeasured audits |
-| Next execution step | Launch A01–A17 in separate chats | Each owns one report file |
+| Planned audit workstreams | 17 | Fixed A01–A17 |
+| Workstreams with source reports on main | **3/17** — A01, A02, A03 | Directly read current reports on 2026-10-17 |
+| Integrated workstreams | **3/17** | This GitHub revision |
+| Complete verified | **0/17** | No unqualified pass |
+| Complete with limitations | **2/17** — A02, A03 | Audit source states respected |
+| Evidence collected, still open | **1/17** — A01 | Live technical/AI/search verification unfinished |
+| Reproduced P0 / P1 failures | **0 in 3 reports** | Not evidence of no sitewide failures |
+| High-priority *unverified* risks | A01-F003, A01-F005, A03-U001 | **Not confirmed P1 failures** |
+| Verified source/content observations | **5** — A02-F002, A03-F001–F004 | Scoped evidence; live status caveated |
+| Additional unverified candidates / evidence gaps | **12** | See §3 below |
+| Google/Bing indexed count | **UNKNOWN** | No first-party inspections |
+| Native AI-engine results | **0 tested**, **36 prompts queued** | No citation denominator; not 0% visibility |
+| Lead conversion results | **UNTESTED** | No production lead submitted |
+| SEO/AEO/GEO composite | **NOT SCORABLE** | All 3 source audits withheld scores |
+| Next work | A04–A17; resolve measured platform and production gaps | No website implementation |
 
 ### Definitions
 
-**PLANNED:** No dated report yet. **IN PROGRESS:** Work begun, not ready for consolidation. **EVIDENCE COLLECTED:** Findings partially documented, outstanding checks known. **COMPLETE WITH LIMITATIONS:** Workstream report finished, one or more mandatory first-party/native platform checks unavailable and clearly disclosed. **COMPLETE VERIFIED:** All necessary accessible evidence substantiates closure criteria. **INTEGRATED:** Independently indicates the current register contains that report's latest findings. Auditing and integration are separate statuses.
+**PLANNED** means no source report. **EVIDENCE COLLECTED** means a published partial audit with documented gaps. **COMPLETE WITH LIMITATIONS** means the author finished its report but key first-party/native tests are unavailable. **COMPLETE VERIFIED** requires all mandatory proof. **INTEGRATED** means this register includes the source report's current evidence, even if its audit state is not complete. Reporting and remediation are distinct.
 
 ## 2. Workstream status register — 17 fixed IDs
 
-Each report lives at docs/seo/visibility-17-audits/reports/AXX.md after it has been created. Paths below are planned destinations, not claims that files exist yet.
+Report paths A01–A03 have been verified on main (source blob SHAs logged in §11). A04–A17 were absent at this snapshot; their paths remain planned.
 
 | ID | Subject | Primary owner(s) | Source report (expected) | Audit state | Integration state | Evidence coverage | Latest report/update |
 |---|---|---|---|---|---|---|---|
-| A01 | Homepage | / | reports/A01.md | PLANNED | NOT INTEGRATED | — | — |
-| A02 | Curriculum | /curriculum | reports/A02.md | PLANNED | NOT INTEGRATED | — | — |
-| A03 | Phonics commercial | /phonics + comparison/fees | reports/A03.md | PLANNED | NOT INTEGRATED | — | — |
+| A01 | Homepage | / | [A01](./reports/A01.md) | **EVIDENCE COLLECTED** | **INTEGRATED 2026-10-17 IST** | 1/1 root source/search text; live raw HTTP unverified; GSC/BWT 0/2, AI 0/4 | 2026-10-17; blob `ca7bf5393c77` |
+| A02 | Curriculum | /curriculum | [A02](./reports/A02.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | Hub source + public text reviewed; dependent course URLs partial; GSC/BWT 0/2, AI 0/4 | 2026-10-17; blob `96354f656969` |
+| A03 | Phonics commercial | /phonics + comparison/fees | [A03](./reports/A03.md) | **COMPLETE WITH LIMITATIONS** | **INTEGRATED 2026-10-17 IST** | 3/3 owned + 4/4 adjacent web text; GSC/BWT 0/2, AI 0/4 | 2026-10-17; blob `0e9b6031841e` |
 | A04 | Reading commercial | /reading-classes-for-kids | reports/A04.md | PLANNED | NOT INTEGRATED | — | — |
 | A05 | Grammar commercial | /grammar | reports/A05.md | PLANNED | NOT INTEGRATED | — | — |
 | A06 | Speaking commercial | /speaking | reports/A06.md | PLANNED | NOT INTEGRATED | — | — |
@@ -65,60 +67,80 @@ Each report lives at docs/seo/visibility-17-audits/reports/AXX.md after it has b
 - Historic docs/ai-geo-implementation-status.md and other SEO plans document earlier code work; they do not replace a current-production indexability or native-answer-engine test.
 - Public web/search retrieval snapshots may lag deployments. Record cached vs live disagreement rather than silently choosing one.
 
-## 3. Canonical verified findings — initially empty
+## 3. Qualified findings and unverified hypotheses
 
-Each accepted row must link an individual source report AND specific evidence IDs; never enter an unverified risk as confirmed.
+**Evidence rule:** The confirmed table contains only observations supported by sampled page text and/or repository source, with qualifications about production deployment. **No A01 live P0/P1 failure was reproduced.** These findings do not prove actual indexing exclusion, faulty production HTTP or false marketing statements.
 
-| Finding ID | Owning audit | Priority | Affected canonical URL(s) | Reproduced issue | Evidence link/ID | Root-cause confidence | Proposed correction | Acceptance test | Status |
-|---|---|---|---|---|---|---|---|---|---|
-| — | — | — | — | **No audit findings integrated yet** | — | — | — | — | — |
+| Canonical ID | Owner/priority | Affected URL(s) | Reproduced scope and explicit limitation | Evidence source | Hypothesized cause / proposed action (not approved) | Acceptance test and state |
+|---|---|---|---|---|---|---|
+| A02-F002 | A02 / P2 improvement | `/curriculum` | Roadmap explains skill stages, but specific parent-facing operational cutoffs/sample mastery rubrics were not identified in the reviewed material | [A02](./reports/A02.md) A02-E001/E004 | Consider academically approved illustrative milestone/rubric examples | Parent can understand indicative progression; **OPEN IMPROVEMENT**, not broken assessment |
+| A03-F001 | A03 / P2 | `/phonics-fees-india` | **Source** sitemap lastmod is 2026-09-11, while the page describes research reviewed 2026-09-24; real material-edit date and live XML are **unverified** | [A03](./reports/A03.md) A03-E003/E009/E012/E013 | A17 validate genuine edit date and deployed sitemap; correct only if inaccurate | Deployed lastmod reflects meaningful page modification; **SOURCE VERIFIED / LIVE UNVERIFIED** |
+| A03-F002 | A03 / P2 | `/phonics`, `/best-online-phonics-classes-for-kids-in-india` | Sampled promotional 5000+/15+ and parent quote text lacks directly inspectable methodology/permission records; **not proof of false claims** | [A03](./reports/A03.md) A03-E001/E002/E015 | Compile dated, consent-safe evidence pack and appropriate public disclosures; relate A01-F001 | Sound aggregate figures and permissions underpin on-page claims; **OPEN CONTENT REVIEW** |
+| A03-F003 | A03 / P2 | `/phonics-apps-for-preschoolers-india` | Retrieved copy invokes shared CBSE/ICSE/IB sound order and expectations without precise official basis | [A03](./reports/A03.md) A03-E006 | Academic review; qualify broad claim or provide authoritative reference | No unsupported cross-board common sound-order implication; **OPEN VERIFIED WORDING CONCERN** |
+| A03-F004 | A03 / P3 | `/online-phonics-reading-classes` | Source retains JSX route despite Firebase/source redirect intent to `/phonics`; **no live duplicate detected** | [A03](./reports/A03.md) A03-E005/E011/E019 | Only after HTTP 301 regression check, reconcile legacy code | Single correct live redirect; **OPEN SOURCE MAINTENANCE ONLY** |
 
-### P0 immediate escalations
+### Unverified candidate ledger — **not confirmed defects**
+| ID | Report evidence | What remains unknown | Priority / owner |
+|---|---|---|---|
+| A01-F001 | [A01](./reports/A01.md) E001/E010 | Independent reach totals and dated definition; overlaps A03-F002 claim, but homepage surface remains distinct | P2 / A01, A16 |
+| A01-F002 | [A01](./reports/A01.md) E002/E010 | Independently supported founder/academic qualification and reviewer records | P2 / A01 |
+| A01-F003 | [A01](./reports/A01.md) E005/E006/E013 | Source metadata applied in React effect; check **live initial HTML**, canonical, noindex, JSON-LD before alleging crawler defect | **P1 validation priority**, A01/A17 |
+| A01-F004 | [A01](./reports/A01.md) E001/E009 | Whether homepage overlaps broad `/online-english-classes-for-kids` in actual GSC queries | P2 / A01/A16 |
+| A01-F005 | [A01](./reports/A01.md) E001/E008/E011 | True safe demo/WhatsApp form outcome, consent and promised follow-up untested | **P1 validation priority**, A16 |
+| A01-F006 | [A01](./reports/A01.md) E001/E002/E013 | Older/newer web-crawl snapshots; real current deployment discrepancy unproven | P2 / A01/A17 |
+| A02-F001 | [A02](./reports/A02.md) E001–E005 | Old Cambridge-aligned/3-pathway snippets vs newer 4-pathway source, live simultaneous contradiction unproven | P2 / A02/A17 |
+| A02-F003 | [A02](./reports/A02.md) E004/E009 | Historic 30 vs current 31 Phonics Foundations lessons; need current course registry/deployed comparison | P2 / A02→A03 |
+| A02-F004 | [A02](./reports/A02.md) E001/E004 | Curriculum reviewer qualifications were not independently verified | P2 / A02 |
+| A02-F005 | [A02](./reports/A02.md) E006–E008/E012 | Real HTTP, sitemap, bot response and deployed schema **tool-limited**, not failed | P2 / A02/A17 |
+| A02-F006 | [A02](./reports/A02.md) §4–5 | Google/Bing index and native AI citation exposure not measured | P2 / A02 |
+| A03-U001 | [A03](./reports/A03.md) suspected-nonindex section | October 2026 long phonics comparison page suspected exclusion: **no live noindex or GSC record reproduced**; distinguish old intentionally redirected aliases | **P1 investigation only**, A03/A17 |
 
-None yet established by this programme. P0 is NOT “all clear”; it means unassessed.
+### P0 / P1 escalation
 
-### P1 material risks
+**0 reproduced P0 and 0 reproduced P1 failures in the 3 reports.** A01-F003/F005 and A03-U001 are *unverified P1 test priorities*, not production findings. No assumption is made about the unreported 14 workstreams.
 
-None yet established by this programme. Unassessed is not a passing result.
+### Proposed P2/P3 backlog
 
-### P2/P3 backlog
-
-Not started; populate only from evidence-backed reports.
+Only evidence-based source/content improvements A02-F002 and A03-F001–F004 are eligible for planning at this stage. No change is approved or deployed.
 
 ## 4. Search visibility summary (Google and Bing)
 
-**Status: UNTESTED IN THIS PROGRAMME.**
+**First-party indexed counts and controlled native Google/Bing rankings remain UNKNOWN, not zero.** Generic web discovery and recent/old crawler extracts in reports cannot establish indexing, ranking or traffic movements.
 
-| Workstream | Google indexing evidence | Google search/queries | Bing indexing evidence | Bing search/queries | Source and observation time |
-|---|---|---|---|---|---|
-| A01–A17 | Pending | Pending | Pending | Pending | — |
+| Workstream | Google indexing / native SERPs | Bing indexing / native SERPs | Source and date |
+|---|---|---|---|
+| A01 | GSC unavailable; public retrieval only; rankings NOT measured | BWT unavailable, native SERP UNTESTED | [A01](./reports/A01.md) §§3–4; 2026-10-17 IST |
+| A02 | GSC unavailable; older/newer curriculum snapshots; rankings NOT measured | BWT unavailable, native SERP UNTESTED | [A02](./reports/A02.md) §§3–4; 2026-10-17 IST |
+| A03 | 0/3 URL inspections; branded, commercial, comparison ranks UNTESTED | 0/3 inspections; native SERP UNTESTED | [A03](./reports/A03.md) §§3–4; 2026-10-17 IST |
+| A04–A17 | No source audit report in this snapshot | No source audit report | Not yet received |
 
-Measured 7/28/90-day GSC/Bing exports should be added here when available, with coverage denominator, query cohort, country, device, date and the associated AXX report. Do not report one-off site: searches as authoritative index coverage.
+**Top priority:** A03-U001 requires GSC URL Inspection for `/best-online-phonics-classes-for-kids-in-india` with dated indexed/excluded state, Google-selected canonical, last crawl, server headers and live canonical/robots; a web excerpt cannot close the concern. No verified 7/28/90-day impressions, clicks, CTR, region/device baseline or ranking delta yet.
 
 ## 5. Native answer-engine visibility summary
 
-**Status: UNTESTED IN THIS PROGRAMME.**
+**0 native sessions tested, 36 prompts prepared in A01–A03 (§5 of each report).** Running each prompt on ChatGPT Search, Perplexity, Copilot and Google AI Mode/Overviews requires 144 distinct platform–prompt observations, plus recommended repeats. **No citation or recommendation rate exists yet.**
 
-| Engine | Platform/mode actually tested? | Exact dated prompt count | Tiny Steps citations / tested | Recommendations / tested | Source log |
-|---|---|---:|---:|---:|---|
-| ChatGPT Search | No | 0 | N/A | N/A | — |
-| Perplexity | No | 0 | N/A | N/A | — |
-| Microsoft Copilot | No | 0 | N/A | N/A | — |
-| Google AI Overviews / AI Mode | No | 0 | N/A | N/A | — |
-| Other independently tested engines | No | 0 | N/A | N/A | — |
+| Engine | Actually tested? | Prompt results recorded | Tiny Steps cited / tested | Recommendations / tested | Evidence |
+|---|---|---:|---|---|---|
+| ChatGPT Search | No | 0 | N/A | N/A | A01–A03 manual queues only |
+| Perplexity | No | 0 | N/A | N/A | A01–A03 manual queues only |
+| Microsoft Copilot | No | 0 | N/A | N/A | A01–A03 manual queues only |
+| Google AI results | No | 0 | N/A | N/A | A01–A03 manual queues only |
+| Other | No | 0 | N/A | N/A | None |
 
-Do not infer this table from crawler permissions, llms.txt, search result snippets or a GitHub SEO test. Cite each answer/prompt transcript by report ID.
+Crawl permission and answer-readable content are **not** proof that an engine cites or recommends Tiny Steps. Exact answer, links, mode, time, locale and repeats are required.
 
 ## 6. Trust, academic and content coverage summary
 
-**Awaiting A01–A16 audit evidence.**
+**Integrated A01–A03:** Public web text and inspected code describe a brand serving ages 3–12, teacher-led phonics, reading, grammar/sentence building and speaking, skill-led placement and one free 35-minute assessment; these are published *claims*, not verified teaching outcomes. Main curriculum source explicitly disclaims formal CBSE/ICSE/IB/Cambridge endorsement; older web snapshots with “Cambridge-aligned” language cannot be treated as current live contradictory copy without new raw-HTML evidence (A02-F001).
 
-Expected cross-audit issues to classify only if actually observed:
-- Fact consistency: ages, live-class duration, fees, programmes, formats, family reach, testimonials and credentials.
-- Teaching precision: systematic phonics, transfer from decoding into reading comprehension, grammar-to-writing distinction, confidence vs language proficiency and accurate programme comparisons.
-- Expertise and source quality: identifiable academic lead, verifiable research, documented teaching examples and transparent review.
-- Editorial uniqueness: commercial programme owner vs comparison vs fees vs informational hub vs individual blog intent; duplicate topic owners and thin advice.
-- Ethical and truthful advice: no unsupportable diagnosis, universal results guarantee, fabricated rankings, ratings or affiliations.
+A03 includes a fee comparison and cited provider references, but third-party figures, current parent testimonials, founder qualifications, learner reach totals and parent permissions are not independently fully corroborated. A03-F003 is specific wording requiring academic review. A02-F002 is a suggestion to communicate actual progression criteria, not a discovery that internal assessments are absent.
+
+**Cross-audit collision guard:** A01-F001 ↔ A03-F002 share the learner reach claim; consolidate any future confirmed root cause, but keep page-specific disclosure evidence. A02-F003 is a current-course check for A03; A01-F003/A02-F005 feed A17 technical checks; A01-F005 belongs to A16 conversion; A03-U001 is a suspected indexing investigation, not already-resolved or already-failed. Independent academic and public reputation validation remains outstanding.
+
+**Lead/UX:** Home, curriculum and phonics pages expose relevant enquiry links, but no production submissions, mobile keyboard checks, consent processing, CWV field metrics or successful WhatsApp journey were tested. A16/A17 own cross-site resolution.
+
+**Scorecard:** All 3 reports explicitly say **NOT SCORABLE**. Do not numerically average unmeasured platforms.
 
 ## 7. Cross-audit dependency and collision matrix
 
@@ -133,29 +155,41 @@ Expected cross-audit issues to classify only if actually observed:
 | SEO infra, canonical, sitemap, robots | A17 owns systemic root cause | All other workstreams may flag affected URL and cross-reference |
 | Shared demo, price, trust and contact | A16 owns end-to-end funnel | A01–A06/A12/A14 link to primary defect |
 
+A01–A03 documented overlaps: A01-F001↔A03-F002 (reach), A02-F003↔A03 course facts, A01-F003/A02-F005↔A17, A01-F005↔A16, A03-U001↔A17. These are cross-links, **not multiple confirmed failures**.
+
 If findings conflict, integration must preserve both evidence trails as DISPUTED until a dated live reproduction settles the issue. Never pick the newer finding purely by author preference.
 
 ## 8. Proposed remediation action plan — GATED, not approved
 
-**Status:** Do not authorise implementation yet. The final unified action plan will be issued after all 17 reports are reconciled; verified emergency P0 issues can be escalated earlier.
+**NO WEBSITE CHANGES AUTHORIZED.** The full ranked plan is gated on integration of all 17 reports and reproduction of P0/P1. Investigations below are not fixes.
 
-| Action ID | Related finding IDs | Priority and confidence | Target files/URLs | Proposed fix | Validation and rollback | Approval / implementation state |
+| Action ID | Linked candidates/findings | Priority / confidence | Scope | Proposed action | Verification gate | State |
 |---|---|---|---|---|---|---|
-| — | — | — | — | **Awaiting findings** | — | NOT APPROVED |
+| IA-001 | A01-F003, A02-F005, A03-U001 | P1 test priority; failure UNVERIFIED | Home/curriculum/phonics comparison | Raw deployed HTTP/meta/canonical, Google & Bing inspection, bot rules and sitemap check | Reproduce actual deployed defect before code action | NOT APPROVED |
+| IA-002 | A01-F005 | P1 test priority; failure UNVERIFIED | Home and /book-demo | Controlled harmless/staging WhatsApp consent and enquiry flow test | Correct confirmation without generating real parent lead | NOT APPROVED |
+| IA-003 | A03-F003 | P2 wording observed | Preschool phonics app guidance | Academic board-specific claim review and qualify unsupported wording | Primary authoritative support or accurate limited statement | NOT APPROVED |
+| IA-004 | A03-F001 | P2 source-only discrepancy | Fee page/sitemap | Verify legitimate last material update vs deployed XML; coordinate A17 | Truthful per-page lastmod or omission | NOT APPROVED |
+| IA-005 | A01-F001/F002, A02-F004, A03-F002 | P2 evidence gaps | Homepage/curriculum/phonics | Compile consent-safe dated reach, academic and review proof; correct claims only if needed | Owner-approved source records match public wording | NOT APPROVED |
+| IA-006 | A02-F002 | P2 content improvement | Curriculum | Consider real parent-facing examples of mastery/assessment progression | Academic reviewer-approved accuracy | NOT APPROVED |
+| IA-007 | A03-F004 | P3 source maintenance | Redirected alias | Reconcile retained JSX only after HTTP redirect verification | No redirect/regression harm | NOT APPROVED |
 
-Recommended release gates after all audits: reproduce → prioritise → resolve canonical and dependency owners → approve scope → make focused PR(s) → run CI and rendered/SEO gates → deploy → verify live URL(s) → track GSC/Bing/AI outcome with reasonable lag. No universal promise of immediate indexing or citation uplift.
+Final remediation requires user approval, scoped PRs, CI, deploy validation and post-change GSC/Bing observations.
 
 ## 9. Manual verification and access blockers
 
-| Needed source | Current status | Why necessary | How to close |
+| Needed source | Current status | Why necessary | How to close / owner |
 |---|---|---|---|
-| Google Search Console URL inspection, coverage/performance | Not yet connected as part of this audit | Actual index status, queries and impressions | Relevant account data/export or approved connector |
-| Bing Webmaster Tools index/performance | Not yet verified | Independent Bing visibility | Tool access/export |
-| Native ChatGPT/Perplexity/Copilot/Google AI query sessions | Not yet run | Actual answer/citation observations | Explicit native platform test or human-provided transcripts |
-| Live technical HTTP/crawler/sitemap probe | To be completed per audit | Deployed truth vs search cache/source | Reproducible non-sensitive URL checks |
-| Conversion analytics / safely controlled user journey | Not yet verified | Evidence of real lead completion | Consented aggregate analytics and non-production test workflow |
+| GSC URL inspections and 7/28/90-day performance | Not available; 0 verified inspections | Index/exclusion and selected canonical; A03-U001 specifically | Authenticated exports/screenshots, dates; A03/A17 |
+| Bing Webmaster inspection and performance | Not available | Independent Bing index/queries | Verified URL exports; A17 |
+| Native ChatGPT Search, Perplexity, Copilot, Google AI | 0 sessions; 36 exact prompts queued | Real citations/recommendations, not bot allowlisting | 144 platform/prompt runs plus repeats with exact links/date/mode/locale |
+| Deployed raw HTML/status, redirect/header, rendered JSON-LD, robots/sitemap | Public fetcher tool errors or only caches, no wire evidence | Check A01-F003, A02-F005, A03-U001 and true sitemap lastmod | Network-enabled curl/browser/CDN probe, compare main source and deployed SHA; A17 |
+| Founder/academic credentials, reach counts, testimonial permissions | Claim-support records unreviewed | A01-F001/F002, A02-F004, A03-F002 | Dated records and qualified reviewer attribution; site owner |
+| Curriculum course facts and mastery rubrics | Qualitative pages/source; incomplete dynamic course check | A02-F002/F003 and assessment transparency | Live/current course registry and academic validation; A02/A03 |
+| Harmless demo form/WhatsApp consent test, mobile/accessibility and Core Web Vitals | No actual submission or mobile browser inspection | Conversion and user safety | Test environment/approved synthetic journey; A16 |
+| Three independently verified provider comparisons | A03 has sources; A01 competitive benchmark incomplete | Evidence-backed market comparisons | Same-date verified provider pages; A01/A03 |
+| Remaining A04–A17 audit reports | Absent on main at snapshot | Complete coverage | Run separate audits and single-writer integration |
 
-These are prospective requirements, NOT claims that the website is failing.
+**Unknown is not failed.** A fetch tool error or historical cached snippet does not prove a deployed SEO failure.
 
 ## 10. Integration operating procedure — single writer
 
@@ -177,6 +211,7 @@ These are prospective requirements, NOT claims that the website is failing.
 | Date IST | Integrated reports | New/changed finding IDs | Aggregate state changes | GitHub source revision | Integration notes |
 |---|---|---|---|---|---|
 | 2026-10-17 | None | None | Created 0/17 baseline | Charter v1.0 | Initial register only; no completed audits |
+| 2026-10-17 IST | **A01–A03** | **5 source/content rows:** A02-F002, A03-F001–F004. **12 pending/unverified:** A01-F001–F006, A02-F001/F003–F006, A03-U001 | **3/17 integrated; A01 EVIDENCE COLLECTED; A02/A03 COMPLETE WITH LIMITATIONS; 0 reproduced P0/P1** | A01 blob `ca7bf5393c7774495151b66613443eb1e7a2e1b6`; A02 blob `96354f65696909bbd9a32735f8f6e1d887ad3ddf`; A03 blob `0e9b6031841e85631c9d1f442a678e6af0adb88a` | No verified platform index or AI presence, no numerical score, no code edits; related IDs deduplicated by ownership |
 
 ## 12. Reporting finish line
 
