@@ -41,6 +41,15 @@ describe('Speaking growth Brick 5 Spoken English territory', () => {
     expect(page).toContain('conversational fluency');
   });
 
+  it('illustrates conversational scaffolding without inventing pupil evidence or new programmes', () => {
+    expect(page).toContain('Illustrative examples · not class transcripts');
+    expect(page).toContain('How a one-word answer can become a real conversation');
+    expect(page).toContain('What did you do after school?');
+    expect(page).toContain('Which game would you teach a friend, and why?');
+    expect(page).toContain('with less prompting');
+    expect(page).toContain('to="/blog/child-gives-one-word-answers"');
+  });
+
   it('keeps adjacent programme boundaries explicit', () => {
     expect(page).toContain('Choose public speaking & communication');
     expect(page).toContain('to="/speaking"');
