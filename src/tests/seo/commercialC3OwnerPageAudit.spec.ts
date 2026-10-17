@@ -88,7 +88,7 @@ describe('Commercial C3 final canonical-owner reconciliation', () => {
     expect(grammar).toContain('Last weekend, we went to the library');
     expect(grammar).toContain('/resources/grammar');
     expect(grammar).toContain('https://schema.org/ItemListUnordered');
-    expect(speaking.match(/https:\/\/schema.org\/ItemListUnordered/g)?.length).toBe(3);
+    expect(speaking.match(/https:\/\/schema.org\/ItemListUnordered/g)?.length).toBe(4);
     expect(grammar).not.toContain('https://schema.org/ItemListOrderUnordered');
     expect(speaking).not.toContain('https://schema.org/ItemListOrderUnordered');
   });
