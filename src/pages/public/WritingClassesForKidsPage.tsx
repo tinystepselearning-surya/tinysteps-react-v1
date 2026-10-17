@@ -54,6 +54,11 @@ const faqItems = [
       'Grammar classes focus on accurate language use such as sentence structure, parts of speech, tenses, punctuation, and correction. Writing classes focus on using language to develop ideas, organise paragraphs, write creatively, revise, edit, and produce clearer longer responses. Some children need support in both areas.',
   },
   {
+    question: 'How do I know whether my child is ready for paragraph writing?',
+    answer:
+      'Start by asking whether the child can express one complete idea in a sentence, add a relevant detail, and put two or three connected ideas in a sensible order. If sentences are still difficult to form, sentence-level grammar or guided writing may come first. Paragraph readiness depends on current skills, not a fixed birthday; the assessment checks the appropriate starting task.',
+  },
+  {
     question: 'Are Tiny Steps writing classes live and 1:1?',
     answer:
       `Yes. Standard Tiny Steps writing classes are live 1:1 online classes and run for ${PUBLIC_SESSION_DURATION_LABEL}, with direct teacher feedback on the child’s writing process and next improvement target.`,
