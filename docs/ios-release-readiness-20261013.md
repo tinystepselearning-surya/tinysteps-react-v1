@@ -1,0 +1,120 @@
+# Tiny Steps iOS upgrade readiness — 13 October 2026
+
+Base: `main` at `ce678402df89388cbfd3f07aec6cf30348767467`.
+
+## Scope
+- App ID stays `com.tinystepslearning.app`; ship the latest stable web build with a new iOS version/build number.
+- iOS Sessions Management reminders should open WhatsApp Business explicitly. If absent, show an error **without** silently contacting parents from personal WhatsApp.
+- Restore Firebase Auth on startup before deciding whether the user is signed out. Cached Zustand profile data is **not** an auth credential. An existing signed-in account with missing role claims may reuse only its own cached non-admin UI role.
+- Explicit logout, revoked credentials, disabled accounts and security rejections remain respected.
+
+## Work completed in this branch
+- Capacitor AppLauncher dependency, native SwiftPM registration, iOS query scheme and Business-specific reminder launcher.
+- AuthBootstrap role restoration corrections, fail-closed temporary role-claims recovery, and unit regression coverage.
+
+## Audit fix: actual iOS build gate
+- `.github/workflows/ios-native-package.yml` builds full production web assets, runs `npx cap sync ios`, checks that the bundled public index and configuration exist, and compiles `App` for iOS Simulator on a macOS GitHub Actions runner with code signing disabled.
+- A passing simulator compile is **not** a signed TestFlight IPA or physical-device proof. Native plugin behavior, signing, provisioning and App Store Connect release remain gated.
+- Session-restoration role-claims errors now leave users in initializing/existing authenticated state with a Retry action, rather than silently substituting kid role.
+
+## Critical outstanding device verification
+**Persistent login after force-close is not yet proven fixed.** Firebase Web SDK currently stores its native WebView credentials through IndexedDB/localStorage. Use Xcode's existing `[auth-diagnostics]` messages, with no token or PII logging, to compare:
+1. First login, cold relaunch, force quit, 24h restart and 7-day restart.
+2. `webview` origin, `local-probe`, `preferences-probe`, and `firebase-auth-key` presence.
+3. Cases where the Firebase user is null even though the probes persist, and token-revocation cases.
+4. Parent, teacher, admin and account-switch behavior.
+
+If WebView credentials are lost, implement a reviewed native Keychain-backed Firebase Auth persistence solution; never store Firebase refresh tokens in Capacitor Preferences or plain localStorage without an explicit security review. Offline startup must not be confused with a verified sign-out.
+
+WhatsApp Business `whatsapp-business://send` is not guaranteed by official Meta documentation. Verify a real iPhone with both WhatsApp apps installed, Business only, regular only, and neither, including prefilled message/recipient. **Do not merge until these behaviors are confirmed.**
+
+## CI baseline
+The `main` deploy job succeeded on 11 Oct; a separate Milestone 3 System Verification run failed on 12 Oct in 3 existing tests: `sessionRevenuePresentLatePolicy`, `wave1IdentityAuthorizationHardening`, and `RollingScheduleCompatibilityContract`. Do not attribute those failures to this branch without comparison.
+
+## Release checklist
+1. Pass typecheck, focused tests, frontend build, and any relevant iOS/build CI.
+2. On a Mac with Xcode: `npm ci && npm run build && npm run cap:sync:ios && npm run cap:open:ios`.
+3. Check successful macOS/Xcode simulator compilation in PR CI, then separately verify physical-device APNs, routes, safe areas, calendar, session, attendance, billing and Android/web parity.
+4. Set `MARKETING_VERSION` and increment `CURRENT_PROJECT_VERSION` only after confirming the last App Store Connect build (avoid duplicate build numbers).
+5. TestFlight smoke test on existing installations; archive and submit only after review. No Firebase backend deployment is required by these changes.
+
+## iOS 27 physical-device launch blocker — confirmed and patched
+- iPhone 16 Plus initially presented a black screen and Xcode emitted:
+  `_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption: Application failed to launch`.
+- Root cause: native app only used `@UIApplicationMain` AppDelegate; `UIApplicationSceneManifest`, `SceneDelegate.swift`, and scene creation were absent.
+- Patch introduces a single scene-managed `CAPBridgeViewController`, forwards incoming URL/universal links via existing Capacitor 8.3 ApplicationDelegateProxy, preserves AppDelegate push-notification handling, and registers the Swift file in the Xcode target.
+- CI adds launch-lifecycle wiring assertions. **Unsigned Simulator compilation does not establish a successful on-device launch.** Rebuild using Xcode 27 and physically verify rendering, login persistence, push and URL handling.
+- Current branch is pinned to Capacitor 8.3.x. Future upgrade to Capacitor 8.5+ should replace the compatibility forwarding with official `SceneDelegateProxy` and receive an independent regression pass.
+- On existing Mac clone: `git pull --ff-only`, `npx cap sync ios`, reopen Xcode if needed, Product > Clean Build Folder, Run on physical iPhone.
+
+## 15 October mobile Sessions Management and Business link follow-up
+- On phone-width layouts, **Today / Tomorrow-Date / Overall Admissions**, Student Updates and Teacher Updates render vertically stacked cards instead of wide tables. Desktop keeps the complete table interface.
+- Phone cards retain the join/copy Teams actions, editable parent/teacher reminder templates, editable phone numbers, teacher notification, manual-session cancellation when applicable, and manual Parent/Teacher notified flags. WhatsApp handoff NEVER marks a notification sent.
+- Tab groups now wrap button labels within phone width; teacher/status/date filters can shrink without forcing sideways scrolling.
+- The dedicated `whatsapp-business://send` scheme is **not an officially guaranteed Meta contract**. The launcher attempts it directly rather than accepting a potentially false-negative `canOpenUrl` result. If launch fails, the app presents a manual copy-number/copy-message handoff to Business; it NEVER falls back to personal Messenger.
+- Physical iPhone acceptance: verify 320/375/390/430px widths (no clipped controls or horizontal page pan), scroll down each of the three Sessions modes, exercise every action including confirmation flags, and ensure the persistent bottom navigation remains visible.
+- WhatsApp acceptance: try Business-only, both apps, personal-only and neither. Check destination, pre-filled message, and which app actually opens. Mark direct Business launch as unverified until observed; if it fails use the explicit manual Business handoff and consider a future iOS share-extension integration following UX review.
+- No iOS IPA has been signed or shipped. Do not merge solely on Simulator compilation or GitHub green checks.
+
+## 15 October compact Sessions cards and WhatsApp Business follow-up
+- The phone Sessions view now shows Student / Parent and Course / Teacher in two-column rows beneath the session time and status, with wrapping labels. Session type and row Actions remain accessible.
+- The non-working Parent Notified / Teacher Notified checkboxes are removed from the **mobile cards**. Existing desktop checkboxes and stored data are preserved; do not infer delivery from tapping Notify or choosing a share target.
+- The third-party `whatsapp-business://` URL failed on the user's actual iPhone. An iOS Share sheet action now offers an OS-supported chooser. Operator copies the recipient phone number, taps **Share message using iOS**, explicitly selects **WhatsApp Business**, selects and confirms the recipient, and sends manually. If Business is absent in the share sheet, copying message/number is the fallback. Do not suggest or silently use personal WhatsApp.
+- Because `@capacitor/share` is a new native plugin, macOS installation requires `npm ci --ignore-scripts`, `npx cap sync ios`, Xcode package resolution and a fresh iPhone build, not just a web reload.
+- Before marking WhatsApp fixed, verify Business appears as a share destination on the real iPhone and that it accepts reminder text. Automatic recipient selection and delivery status are not supported or claimed.
+- No production deployments, Firestore changes, or signed TestFlight release performed.
+
+## 15 October WhatsApp iPhone deep-link research and opt-in chat-link experiment
+- Meta officially documents `https://wa.me/<international-number>?text=<encoded-text>` for iOS as its preferred Click-to-Chat universal link, and `whatsapp://send` for WhatsApp Messenger. It does **not** promise the third-party `whatsapp-business://send` scheme or guaranteed selection of the Business installation.
+- Apple's `UIApplication.open` can open URL handlers and may display app/website routing; opening a URL does not establish which WhatsApp account eventually opens or whether a reminder was sent. Capacitor's `AppLauncher.openUrl` exposes this launch result but not account identity/delivery.
+- Following verified Business-only link failure on iPhone, fallback dialog now offers **Open WhatsApp chat link** that uses the official recipient-prefilled `wa.me` URL. There is no automatic redirect to this link: operator explicitly taps it after seeing prominent warning that personal WhatsApp may open.
+- If iOS selects personal Messenger, **return without sending**. The alternative is **Choose WhatsApp Business via iOS Share**, then manually select/verify recipient, or manually copy number and message.
+- Physical acceptance requirements: test with only Business installed; both Business and Messenger installed; Business available/not available in iOS share sheet. Confirm which app the official `wa.me` route opens and whether the phone/message survive. If Business is not selected, do not enable one-tap direct mode.
+- Deeper future option: fully integrated approved WhatsApp Business Platform messages use a distinct API/account/onboarding/template/consent workflow; they are not an iOS URL-scheme substitute and are out of scope for this manual reminder feature.
+- Sources: https://faq.whatsapp.com/425247423114725/ and https://developer.apple.com/documentation/uikit/uiapplication/open(_:options:completionhandler:).
+- No change to production messaging, Firestore notified flags, user authentication, or existing browser/Android behavior.
+
+## 15 October physical iPhone verification and one-tap Sessions reminder
+- User confirmed on their physical iPhone that the documented `wa.me/<recipient>?text=<message>` path opened **WhatsApp Business**, in the intended parent's chat, with the complete reminder prefilled. This proves the route works on that device, **not** that every iPhone installation will choose the Business app.
+- The iPhone Sessions `Notify Parent` and `Notify Teacher` actions now use this verified WhatsApp Click-to-Chat route *directly*, avoiding the earlier two-step modal and the unsupported `whatsapp-business://send` attempt.
+- Opening a composer does not send a message or establish delivery; no Firestore notification flag is changed. The user must verify the recipient and account before manually pressing Send.
+- If the official chat link fails to launch, the manual fallback offers the iOS share sheet with an explicitly chosen Business destination, plus copy-number and copy-message options.
+- Additional device acceptance before merge: verify teacher reminder handoff on same iPhone, repeat tests with regular WhatsApp installed, iPad and another iPhone, check link/message integrity, and verify safe fallback when no compatible app is installed.
+- This is a native iOS branch-only change, not a production release.
+
+## 15 October session persistence / login screen investigation
+**User symptom:** iPhone Tiny Steps appears signed out immediately after closing/force-quitting and reopening; login form is displayed again.
+
+**Confirmed app-code failure:** Capacitor native startup always routes `/` to `/login`, but the previous login entry screens did not wait for Firebase restoration or redirect a verified existing account. A user could therefore see the login form even while Firebase eventually restored their session. New `NativeLoginSessionGate` is applied to generic, Admin, Founder, Teacher, Parent, Learning Partner and School login paths:
+- Auth status `initializing`: show “Restoring your Tiny Steps session…” and wait; no premature credential prompt.
+- Auth status `authenticated` with Firebase-confirmed role/user: redirect to the role's normal route; the existing `RoleGate` still verifies authorization.
+- Auth status `unauthenticated`: show the login form.
+- Marketing/web routes retain their previous behavior. Cached Zustand user data alone **never** authenticates the session.
+
+**Additional code issue:** the strict Surya Admin login path directly called `signInWithEmailAndPassword` without awaiting the native Firebase persistence gate used by other role login paths. It now explicitly awaits that gate before sign-in.
+
+**Persistence experiment:** the prior change on this branch prioritizes Firebase Web SDK `browserLocalPersistence` on native WKWebView, then `indexedDBLocalPersistence`. The SDK handles migration. This is a candidate improvement for WebView storage consistency but the actual device storage loss is **not yet proven**. No refresh token/password is copied into Preferences or localStorage manually, and there is no speculative Keychain workaround.
+
+**Physical iPhone acceptance test (required before merging):**
+1. With app installed *without uninstalling*, sign in to the appropriate workspace and observe dashboard.
+2. Swipe away/force-close the app, relaunch, observe “Restoring…” (possibly briefly) and direct role dashboard without typing credentials.
+3. Repeat after phone reboot, Wi-Fi/offline/online transition and normal Xcode app update.
+4. Confirm explicit Logout still removes the Firebase account; revoked/disabled credentials and wrong-role authorization still deny access; test Admin, Parent and Teacher roles.
+5. If login still appears, collect Xcode logs filtering `[auth-persistence]`, `[auth-bootstrap]`, `[auth-diagnostics]`, `[auth-state]`, `[firebase]` and `[role-gate]` (no credentials, emails, tokens, or student information). Compare `[auth-diagnostics] local-probe` and `preferences-probe` across force-quit. A restored local probe with missing Firebase auth state suggests a different issue from all WebView storage being wiped.
+6. Do not merge or claim fixed solely on GitHub green checks. A secure, reviewed native Firebase Auth / Keychain solution is a separate project **only if** on-device evidence shows WebView persistence is insufficient.
+
+## 15 October iPhone status bar and three Admin screens mobile-fit correction
+
+Source evidence: physical iPhone screenshots showed the Admin Logout control hidden under the status/battery area, Users list clipping Name and other columns, Month Close tracker showing only part of a wide table, and Students list cutting off parent email and enrollment actions.
+
+**Shared Admin/Founder shell:** the existing `ts-native-header-safe` CSS utility is now attached to Admin/Founder Header. Its header content remains 56px tall but the native sticky wrapper expands to reserve `env(safe-area-inset-top)` and an 8px gap, moving menu, logo, title and Logout beneath the Dynamic Island/status bar without affecting ordinary web layout. Check header on multiple physical iPhones, landscape/iPad, and against the persistent mobile tab bar.
+
+**Users:** on phone widths, searchable and filtered records render as individually wrapped cards with Name, Email, Status, Role, Phone and an accessible Actions menu. Existing role-limited Edit, Reactivate, Reset Password, Archive and Delete semantics are shared with desktop via the same action renderer. Mobile defaults to 25 records (not all 246 at once), and sortable Name/Email/Role buttons remain available. The full sortable seven-column table remains at widths >= 768px.
+
+**Month Close:** parent-month status cards replace the 1060px wide table at phone widths. They expose parent name, session/billable counts, attendance review, billing review, invoice, payment, next action and Start/Continue/Open. They reuse the existing derived finance data and `openParent` action; no new finance writes or collection reads.
+
+**Students:** card per student on phone widths shows Student/Parent in one row, Age/Grade and Status next, enrollment count, and View Enrollments/Actions in full-width button slots. Desktop retains full table, sorting and pagination. Filter inputs can shrink on phone widths.
+
+**Acceptance criteria:** force-quit/reopen must preserve auth (separate gate); status bar must not overlap tap targets; no horizontal page pan on iPhone; each page must scroll vertically with all user/parent/student names readable; modal actions accessible; no hidden desktop action lost in the mobile layout; no additional Firestore reads caused by layout rendering. Test iPhone 320, 375, 390 and 430 CSS widths and iPad; confirm Admin/Founder header and logout physically.
+
+Changes remain on draft PR #722, with no production deployment, App Store submission or merge.

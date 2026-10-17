@@ -8,16 +8,16 @@ const firebaseConfigSource = readFileSync(
 );
 
 describe('native Firebase authentication persistence contract', () => {
-  it('uses IndexedDB durability with browser local-storage fallback during native initialization', () => {
+  it('prioritizes durable localStorage on iOS while retaining IndexedDB migration support', () => {
     expect(firebaseConfigSource).toContain('browserLocalPersistence');
     expect(firebaseConfigSource).toContain('indexedDBLocalPersistence');
     expect(firebaseConfigSource).toContain(
-      'indexedDBLocalPersistence,\n        browserLocalPersistence',
+      'browserLocalPersistence,\n        indexedDBLocalPersistence',
     );
     expect(firebaseConfigSource).not.toContain('inMemoryPersistence');
   });
 
-  it('provides an idempotent native setPersistence gate in fallback order', () => {
+  it('migrates existing credentials into localStorage first with IndexedDB fallback', () => {
     expect(firebaseConfigSource).toContain('ensureNativeAuthPersistence');
     const indexedDbAttempt = firebaseConfigSource.indexOf(
       'setPersistence(auth, indexedDBLocalPersistence)',
@@ -25,11 +25,11 @@ describe('native Firebase authentication persistence contract', () => {
     const localStorageAttempt = firebaseConfigSource.indexOf(
       'setPersistence(auth, browserLocalPersistence)',
     );
-    expect(indexedDbAttempt).toBeGreaterThan(-1);
-    expect(localStorageAttempt).toBeGreaterThan(indexedDbAttempt);
-    expect(firebaseConfigSource).toContain(
-      "return 'local-storage' as const",
-    );
+    expect(localStorageAttempt).toBeGreaterThan(-1);
+    expect(indexedDbAttempt).toBeGreaterThan(localStorageAttempt);
+    expect(firebaseConfigSource).toContain("return 'local-storage' as const");
+    expect(firebaseConfigSource).toContain("return 'indexeddb' as const");
+    expect(firebaseConfigSource).not.toContain('browserSessionPersistence');
     expect(firebaseConfigSource).toContain('nativeAuthPersistencePromise');
   });
 

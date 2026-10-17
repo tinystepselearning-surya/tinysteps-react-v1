@@ -108,13 +108,16 @@ const createAuth = (): Auth => {
 
   try {
     const nativeAuth = initializeAuth(app, {
+      // Prefer WKWebView localStorage on iOS; Firebase will migrate any
+      // existing IndexedDB session before using the first available store.
+      // Both mechanisms are LOCAL persistence, never ephemeral SESSION/NONE.
       persistence: [
-        indexedDBLocalPersistence,
         browserLocalPersistence,
+        indexedDBLocalPersistence,
       ],
     });
     logAuthInit('firebase-auth:init:native-durable', {
-      persistence: ['indexeddb', 'local-storage'],
+      persistence: ['local-storage', 'indexeddb'],
     });
     return nativeAuth;
   } catch (err) {
@@ -143,23 +146,26 @@ export const ensureNativeAuthPersistence = (): Promise<NativeAuthPersistenceKind
   console.info('[auth-persistence] configure:start');
   nativeAuthPersistencePromise = (async () => {
     try {
-      await setPersistence(auth, indexedDBLocalPersistence);
-      console.info('[auth-persistence] configure:success', {
-        persistence: 'indexeddb',
-      });
-      return 'indexeddb' as const;
-    } catch (indexedDbError) {
-      console.warn('[auth-persistence] indexeddb:unavailable', {
-        code:
-          typeof (indexedDbError as { code?: unknown })?.code === 'string'
-            ? (indexedDbError as { code: string }).code
-            : undefined,
-      });
+      // Explicitly persist into the first-choice WKWebView-backed store.
+      // This moves an existing IndexedDB session to localStorage, using the
+      // Firebase SDK's own persistence migration without exposing credentials.
       await setPersistence(auth, browserLocalPersistence);
       console.info('[auth-persistence] configure:success', {
         persistence: 'local-storage',
       });
       return 'local-storage' as const;
+    } catch (localStorageError) {
+      console.warn('[auth-persistence] local-storage:unavailable', {
+        code:
+          typeof (localStorageError as { code?: unknown })?.code === 'string'
+            ? (localStorageError as { code: string }).code
+            : undefined,
+      });
+      await setPersistence(auth, indexedDBLocalPersistence);
+      console.info('[auth-persistence] configure:success', {
+        persistence: 'indexeddb',
+      });
+      return 'indexeddb' as const;
     }
   })().catch((error) => {
     nativeAuthPersistencePromise = null;

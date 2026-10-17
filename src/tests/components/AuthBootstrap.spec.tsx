@@ -353,4 +353,110 @@ describe('AuthBootstrap', () => {
       });
     },
   );
+  it('restores an admin authorized by the boolean admin claim', async () => {
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      authCallback?.({
+        uid: 'admin-1',
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        getIdTokenResult: vi.fn(async () => ({ claims: { admin: true } })),
+      });
+      await Promise.resolve();
+    });
+    expect(useAuthStore.getState().user?.role).toBe('admin');
+  });
+
+  it('keeps the saved non-admin UI role only for the same Firebase identity', async () => {
+    useAuthStore.setState({
+      user: {
+        uid: 'persisted-parent',
+        email: 'parent@example.com',
+        displayName: 'Parent',
+        role: 'parent',
+      },
+      authStatus: 'initializing',
+    });
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      authCallback?.({
+        uid: 'persisted-parent',
+        email: 'parent@example.com',
+        displayName: 'Parent',
+        getIdTokenResult: vi.fn(async () => ({ claims: {} })),
+      });
+      await Promise.resolve();
+    });
+    expect(useAuthStore.getState().user?.role).toBe('parent');
+  });
+
+  it('does not borrow a cached role from another account', async () => {
+    useAuthStore.setState({
+      user: { uid: 'old-parent', email: 'old@example.com', displayName: 'Old', role: 'parent' },
+      authStatus: 'initializing',
+    });
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      authCallback?.({
+        uid: 'new-kid',
+        email: 'kid@example.com',
+        displayName: 'Kid',
+        getIdTokenResult: vi.fn(async () => ({ claims: {} })),
+      });
+      await Promise.resolve();
+    });
+    expect(useAuthStore.getState().user?.role).toBe('kid');
+  });
+
+
+  it('keeps the verified session while claims verification is temporarily unavailable', async () => {
+    useAuthStore.setState({
+      user: {
+        uid: 'existing-parent',
+        email: 'parent@example.com',
+        displayName: 'Parent',
+        role: 'parent',
+      },
+      authStatus: 'authenticated',
+      isLoading: false,
+      authRecoveryError: null,
+    });
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      authCallback?.({
+        uid: 'existing-parent',
+        email: 'parent@example.com',
+        displayName: 'Parent',
+        getIdTokenResult: vi.fn().mockRejectedValue(new Error('network-offline')),
+      });
+      await Promise.resolve();
+    });
+    expect(useAuthStore.getState().authStatus).toBe('authenticated');
+    expect(useAuthStore.getState().user?.role).toBe('parent');
+    expect(useAuthStore.getState().authRecoveryError).toContain('could not verify');
+    expect(screen.getByRole('button', { name: 'Retry session restore' })).toBeTruthy();
+  });
+
+  it('does not assign a fallback kid role while cold-start claims are unavailable', async () => {
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      authCallback?.({
+        uid: 'admin-claim-pending',
+        email: 'admin@example.com',
+        displayName: 'Admin',
+        getIdTokenResult: vi.fn().mockRejectedValue(new Error('temporarily unavailable')),
+      });
+      await Promise.resolve();
+    });
+    expect(useAuthStore.getState().authStatus).toBe('initializing');
+    expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().authRecoveryError).toContain('could not verify');
+  });
+
+
 });

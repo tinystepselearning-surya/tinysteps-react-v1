@@ -2876,7 +2876,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
 
       <Card className="p-3">
         <div className="flex flex-wrap gap-4">
-          <div className="flex-1 min-w-[200px]">
+          <div className="w-full min-w-0 flex-1 sm:min-w-[200px]">
             <Input
               placeholder="Search name or parent email"
               value={search}
@@ -2885,7 +2885,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </div>
 
           <Select value={gradeFilter} onValueChange={setGradeFilter}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Grade"/></SelectTrigger>
+            <SelectTrigger className="w-[calc(50vw-3rem)] min-w-0 max-w-full sm:w-[150px]"><SelectValue placeholder="Grade"/></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Grades</SelectItem>
               <SelectItem value="Pre-K">Pre-K</SelectItem>
@@ -2896,7 +2896,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </Select>
 
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[150px]"><SelectValue placeholder="Status"/></SelectTrigger>
+            <SelectTrigger className="w-[calc(50vw-3rem)] min-w-0 max-w-full sm:w-[150px]"><SelectValue placeholder="Status"/></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
               <SelectItem value="active">Active</SelectItem>
@@ -2906,7 +2906,7 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </Select>
 
           <Select value={parentFilter} onValueChange={setParentFilter}>
-            <SelectTrigger className="w-[250px]"><SelectValue placeholder="Filter by parent"/></SelectTrigger>
+            <SelectTrigger className="w-full min-w-0 sm:w-[250px]"><SelectValue placeholder="Filter by parent"/></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Parents</SelectItem>
               {parents.map(p => (
@@ -2978,7 +2978,45 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
             </button>
           </div>
         </div>
-        <div className="relative max-h-[62vh] overflow-auto">
+
+        <div className="grid min-w-0 gap-3 p-3 md:hidden" aria-label="Student management mobile cards">
+          {paged.map((student) => {
+            const enrollments = getVisibleEnrollmentsForStudent(student.id);
+            const summary = enrollments.length
+              ? `${enrollments.length} ${enrollmentStatusTab === 'active' ? 'active' : 'past'} enrollment${enrollments.length === 1 ? '' : 's'}`
+              : enrollmentStatusTab === 'active' ? 'No active enrollments' : 'No past enrollments';
+            return (
+              <div key={student.id} className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="grid min-w-0 grid-cols-2 gap-x-3 gap-y-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Student</p>
+                    <p className="break-words text-sm font-semibold text-slate-900">{student.fullName || '—'}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Parent</p>
+                    <p className="break-words text-sm text-slate-800">{formatParentSummary(student)}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Age · Grade</p>
+                    <p className="break-words text-sm">{displayAgeYears(student)} · {student.grade || '—'}</p>
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-slate-500">Status</p>
+                    <p className="break-words text-sm">{(student as any).status || '—'}</p>
+                  </div>
+                </div>
+                <p className="mt-3 break-words border-t border-slate-100 pt-3 text-xs text-slate-600">{summary}</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Button type="button" variant="outline" className="min-h-11 w-full min-w-0"
+                    onClick={() => setEnrollmentDetailsFor(student)}>View enrollments</Button>
+                  <Button type="button" variant="outline" className="min-h-11 w-full min-w-0"
+                    onClick={() => setActionsFor(student)}>Actions</Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="relative hidden max-h-[62vh] overflow-auto md:block">
           <Table className="w-full table-fixed text-sm">
             <TableHeader className="sticky top-0 z-30 bg-slate-50">
               <TableRow>
@@ -3070,9 +3108,9 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
           </Table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4">
+        <div className="flex min-w-0 flex-col gap-3 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:p-4">
           <div>Showing {filtered.length} students</div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <span className="text-xs text-gray-500">Per page</span>
             <Select
               value={String(rowsPerPage)}
