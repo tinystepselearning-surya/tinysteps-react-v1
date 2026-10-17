@@ -13,6 +13,7 @@ export const CENTRAL_RESOURCE_GATEWAY: '/resources';
 export const CENTRAL_RESOURCE_SUBJECT_HUBS: readonly [
   '/resources/phonics',
   '/resources/grammar',
+  '/resources/vocabulary',
   '/resources/speaking',
 ];
 export const CENTRAL_RESOURCE_CONTENT_FAMILIES: readonly CentralResourceContentFamily[];
