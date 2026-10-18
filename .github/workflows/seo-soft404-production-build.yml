@@ -15,6 +15,7 @@ on:
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
       - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
+      - 'scripts/lib/gsc735TrackedResources.mjs'
       - 'src/lib/publicResourcePrerenderRecovery.js'
       - 'src/lib/publicResourcePrerenderRecovery.d.ts'
       - 'src/main.tsx'
