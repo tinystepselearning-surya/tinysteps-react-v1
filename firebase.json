@@ -51,6 +51,15 @@
         ]
       },
       {
+        "regex": "^/(?:courses|free-word-building-game-for-kids|summer-camp-for-kids-india)/?$",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache, max-age=0, must-revalidate"
+          }
+        ]
+      },
+      {
         "source": "/robots.txt",
         "headers": [
           {
