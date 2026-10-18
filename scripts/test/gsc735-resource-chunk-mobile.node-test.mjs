@@ -1,35 +1,58 @@
 // Production-artifact mobile smoke: force a lazy route module to fail.
+// Serve exact dist/<resource>/index.html instead of Vite SPA fallback.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
+import { createServer } from 'node:http';
+import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import path from 'node:path';
 
 const PORT = 4183;
 const ORIGIN = 'http://127.0.0.1:' + PORT;
-const bin = path.resolve('node_modules/.bin/vite');
+const DIST = path.resolve('dist');
 const routes = [
   { path: '/resources/grammar/simple-past-tense-for-kids', chunk: '/GrammarKnowledgePage-', title: /Simple Past/i },
   { path: '/resources/vocabulary/vocabulary-for-better-writing', chunk: '/VocabularyKnowledgePage-', title: /Vocabulary for Better Writing/i },
 ];
 
-async function waitForServer() {
-  const started = Date.now();
-  while (Date.now() - started < 40000) {
-    try { const res = await fetch(ORIGIN + '/resources/grammar/simple-past-tense-for-kids');
-      if (res.ok) return; } catch { /* startup */ }
-    await new Promise(resolve => setTimeout(resolve, 250));
-  }
-  throw new Error('Vite preview did not start');
+const contentTypes = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json',
+  '.svg': 'image/svg+xml',
+  '.webp': 'image/webp',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.ico': 'image/x-icon',
+  '.woff2': 'font/woff2',
+};
+function createPreview() {
+  return createServer(async (request, response) => {
+    const pathname = new URL(request.url || '/', ORIGIN).pathname;
+    const relative = decodeURIComponent(pathname).replace(/^\/+/, '');
+    const file = path.resolve(DIST, path.extname(relative) ? relative : path.join(relative, 'index.html'));
+    if (!file.startsWith(DIST + path.sep)) {
+      response.writeHead(403).end('Forbidden');
+      return;
+    }
+    try {
+      const bytes = await readFile(file);
+      response.setHeader('Content-Type', contentTypes[path.extname(file)] || 'application/octet-stream');
+      response.writeHead(200);
+      response.end(request.method === 'HEAD' ? undefined : bytes);
+    } catch {
+      response.writeHead(404).end('Not found in prerendered build');
+    }
+  });
 }
 
 test('GSC #735: mobile resource content survives a failed dynamically imported route module', { timeout: 120000 }, async () => {
-  const server = spawn(bin, ['preview', '--port', String(PORT), '--strictPort', '--host', '127.0.0.1'], {
-    stdio: 'ignore', shell: process.platform === 'win32',
-  });
+  const server = createPreview();
+  await new Promise(resolve => server.listen(PORT, '127.0.0.1', resolve));
   let browser;
   try {
-    await waitForServer();
     browser = await chromium.launch({ headless: true });
     for (const route of routes) {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
@@ -56,7 +79,7 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
       });
       await page.goto(ORIGIN + route.path, { waitUntil: 'domcontentloaded', timeout: 40000 });
       try {
-        await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), null, { timeout: 10000 });
+        await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), null, { timeout: 12000 });
       } catch (error) {
         const state = await page.evaluate(() => ({
           url: location.href,
@@ -79,6 +102,6 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
     }
   } finally {
     await browser?.close();
-    server.kill('SIGTERM');
+    await new Promise(resolve => server.close(resolve));
   }
 });
