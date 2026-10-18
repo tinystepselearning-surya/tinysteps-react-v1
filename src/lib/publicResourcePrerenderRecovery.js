@@ -1,7 +1,10 @@
-// SEO/GSC #735: preserve a trustworthy prerendered article when a transient
-// JS chunk failure would otherwise replace it with a generic error screen.
+// SEO/GSC #735: preserve trustworthy prerendered public educational content
+// when a transient lazy JS chunk failure would render a generic Soft 404.
 // This never substitutes content for another URL or a real missing page.
 const allowedResourcePath = /^\/resources\/(?:phonics|grammar|vocabulary)(?:\/[a-z0-9-]+)?$/;
+// Phase 1: Google confirmed intermittent BlogPostPage import failures on a
+// real /blog/:slug article. Snapshot only substantive self-canonical HTML.
+const allowedBlogArticlePath = /^\/blog\/[a-z0-9-]+$/;
 const lazyModuleError = /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|failed to load module script|loading chunk .+ failed/i;
 let originalResource = null;
 
@@ -9,7 +12,7 @@ const normalizedPath = (pathname) => pathname.replace(/\/+$/, '') || '/';
 
 export function captureOriginalPublicResource(document, location) {
   const path = normalizedPath(location.pathname);
-  if (!allowedResourcePath.test(path)) return null;
+  if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path)) return null;
 
   const root = document.getElementById('root');
   const main = root?.querySelector('main');
