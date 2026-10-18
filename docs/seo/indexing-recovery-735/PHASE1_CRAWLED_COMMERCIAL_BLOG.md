@@ -36,3 +36,23 @@ All four direct public text reads succeeded 18 Oct. External crawler text extrac
 
 ## Stop conditions
 No unverified indexing claim. Do not merge a website change automatically. Do not assume no Search Analytics rows means deindexed. No editorial changes solely to manufacture freshness. Keep Phase 2 separate until Phase 1 is classified.
+
+
+## Phase 1 no-deploy CI outcome — 18 October 2026
+
+**Run:** https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39120404914 — final head `270d0804e171710b27b7ef2dc0a71cda4fe2100b` (before this reporting-only documentation update). Full CI **SUCCESS**, including TypeScript, production-style prerendered build, 23-resource regression suite and newly added four-page P1 guard.
+
+**Generated production HTML (4/4 passed):**
+- `/courses`: unique self-canonical, sitemap-static.xml inclusion; **7,335 characters** of main text.
+- `/blog/why-child-knows-letter-sounds-but-cannot-read-words`: unique self-canonical, sitemap-blog.xml; **20,767 characters** of main text.
+- `/blog/sight-words-or-phonics-first`: unique self-canonical, sitemap-blog.xml; **17,802 characters** of main text.
+- `/blog/online-phonics-classes-vs-school`: unique self-canonical, sitemap-blog.xml; **17,985 characters** of main text.
+- All four also passed index-permitting robots metadata, title, description, H1, no generic page-error text and programme-path navigation checks. These are **build artefact checks**.
+
+**Read-only production HTTP GET observations at 2026-10-18 10:47:46 UTC (from GitHub runner):**
+- Ordinary Chrome and **simulated Googlebot smartphone User-Agent** each fetched all four URLs: **8/8 HTTP 200**, `text/html; charset=utf-8`, unredirected self-canonical, expected H1, no `X-Robots-Tag` and no generic `ErrorFallback` text in returned HTML.
+- All eight returned `Cache-Control: max-age=3600` despite the checked-in `**/*.html` no-cache declaration. Firebase cleaner requested URLs evidently do not use that path-matched HTML rule for these cases; the more-specific public-resource rule `/resources{,/**}` does not cover these `/courses` and `/blog` URLs.
+- **Risk hypothesis:** stale clean-URL HTML referencing previous-build JS chunks could contribute to intermittent module-loading errors during future deployments, as historically seen on a different resource cohort. It is **not a confirmed root cause** for these four URLs, and generic HTTP GET probes do not verify Googlebot's JavaScript rendering or actual Google Index selection.
+- The read-only probe ran successfully and published no content.
+
+**Result:** P1 production HTML/sitemap/canonical/source indexability infrastructure appears sound. Current Google Index view for each URL remains **unknown**. Next indispensable evidence: owner Google Index (not Live Test) for the four priority URLs; if current index exclusion persists, Live Test screenshot and More Info. Scope any future code PR to a reproduced fault; do not rewrite or redirect pages based only on this historical report.
