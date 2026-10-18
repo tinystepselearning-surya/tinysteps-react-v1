@@ -14,6 +14,7 @@ on:
       - 'scripts/test/gsc735-resource-indexability.node-test.mjs'
       - 'scripts/test/gsc735-phase1-commercial-blogs.node-test.mjs'
       - 'scripts/audit-gsc735-58-live-and-build.mjs'
+      - 'scripts/audit-gsc735-39-live-mobile.mjs'
       - 'docs/seo/indexing-recovery-735/**'
       - 'scripts/diagnose-gsc735-phase1-live.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
@@ -105,6 +106,8 @@ jobs:
         run: node --test scripts/test/gsc735-resource-cache.node-test.mjs
       - name: Audit all 58 GSC URLs against live production and build (nonblocking findings)
         run: node scripts/audit-gsc735-58-live-and-build.mjs
+      - name: Audit all 39 result pages in ordinary mobile Chromium (nonblocking findings)
+        run: node scripts/audit-gsc735-39-live-mobile.mjs
       - name: Upload dated batch audit evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -113,6 +116,7 @@ jobs:
           path: |
             artifacts/gsc735-58-batch-audit.json
             artifacts/gsc735-58-batch-audit.csv
+            artifacts/gsc735-39-mobile-browser-audit.json
           if-no-files-found: warn
           retention-days: 30
       - name: No deployment
