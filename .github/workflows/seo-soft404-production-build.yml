@@ -20,6 +20,7 @@ on:
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
       - 'scripts/test/gsc735-public-blog-cache.node-test.mjs'
+      - 'scripts/test/gsc735-three-clean-html-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs'
       - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
       - 'scripts/lib/gsc735TrackedResources.mjs'
@@ -96,6 +97,8 @@ jobs:
         run: node --test scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs
       - name: Protect clean blog article cache policy
         run: node --test scripts/test/gsc735-public-blog-cache.node-test.mjs
+      - name: Protect three remaining clean public HTML cache policies
+        run: node --test scripts/test/gsc735-three-clean-html-cache.node-test.mjs
       - name: Verify GSC #735 affected resources from the generated artifact
         run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
       - name: Verify P1 commercial and parent article HTML from the generated artifact
