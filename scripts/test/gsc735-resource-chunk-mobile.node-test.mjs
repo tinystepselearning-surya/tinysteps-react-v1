@@ -33,6 +33,18 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
     browser = await chromium.launch({ headless: true });
     for (const route of routes) {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
+      const failures = [];
+      page.on('pageerror', error => failures.push('pageerror: ' + error.message));
+      page.on('console', message => { if (message.type() === 'error') failures.push('console: ' + message.text().slice(0, 200)); });
+      page.on('requestfailed', request => failures.push('request: ' + request.url() + ' ' + request.failure()?.errorText));
+      const originHtml = await (await fetch(ORIGIN + route.path)).text();
+      console.log('Preloaded document evidence ' + JSON.stringify({
+        route: route.path,
+        htmlSize: originHtml.length,
+        containsArticle: originHtml.includes('ts-answer-title'),
+        containsRoot: originHtml.includes('id="root"'),
+        hasCanonical: originHtml.includes('https://tinystepslearning.com' + route.path),
+      }));
       let blocked = 0;
       await page.route('**/assets/*.js', async request => {
         if (request.request().url().includes(route.chunk)) {
@@ -43,7 +55,19 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
         }
       });
       await page.goto(ORIGIN + route.path, { waitUntil: 'domcontentloaded', timeout: 40000 });
-      await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), null, { timeout: 25000 });
+      try {
+        await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), null, { timeout: 10000 });
+      } catch (error) {
+        const state = await page.evaluate(() => ({
+          url: location.href,
+          heading: [...document.querySelectorAll('h1')].map(node => node.textContent),
+          root: document.querySelector('#root')?.innerHTML.slice(0, 550),
+          canonical: document.querySelector('link[rel="canonical"]')?.getAttribute('href'),
+          recovery: Boolean(document.querySelector('[data-ts-static-resource-recovery]')),
+        }));
+        console.error('Failed recovery diagnostic:', JSON.stringify({ blocked, failures: failures.slice(-10), state }));
+        throw error;
+      }
       assert.ok(blocked > 0, route.path + ': lazy module was not requested');
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
       assert.match(h1 || '', route.title, route.path);
