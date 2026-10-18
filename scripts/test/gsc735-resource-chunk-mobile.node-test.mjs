@@ -6,14 +6,23 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
 import path from 'node:path';
+import { JSDOM } from 'jsdom';
+import { TRACKED, GRAMMAR_HUB } from '../lib/gsc735TrackedResources.mjs';
 
 const PORT = 4183;
 const ORIGIN = 'http://127.0.0.1:' + PORT;
 const DIST = path.resolve('dist');
-const routes = [
-  { path: '/resources/grammar/simple-past-tense-for-kids', chunk: '/GrammarKnowledgePage-', title: /Simple Past/i },
-  { path: '/resources/vocabulary/vocabulary-for-better-writing', chunk: '/VocabularyKnowledgePage-', title: /Vocabulary for Better Writing/i },
-];
+const CHUNKS = {
+  phonics: '/PhonicsKnowledgePage-',
+  grammar: '/GrammarKnowledgePage-',
+  vocabulary: '/VocabularyKnowledgePage-',
+};
+// Verify every flagged resource (including the Grammar hub) rather than
+// extrapolating from the two pages where GSC exposed React Soft 404s.
+const routes = [...TRACKED, { url: GRAMMAR_HUB }].map(({ url }) => ({
+  path: url,
+  chunk: url === GRAMMAR_HUB ? '/SubjectResourcesPage-' : CHUNKS[url.split('/')[2]],
+}));
 
 const contentTypes = {
   '.html': 'text/html; charset=utf-8',
@@ -48,7 +57,7 @@ function createPreview() {
   });
 }
 
-test('GSC #735: mobile resource content survives a failed dynamically imported route module', { timeout: 120000 }, async () => {
+test('GSC #735: all 23 resource pages preserve prerendered content through dynamic import failures', { timeout: 240000 }, async () => {
   const server = createPreview();
   await new Promise(resolve => server.listen(PORT, '127.0.0.1', resolve));
   let browser;
@@ -69,6 +78,9 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
         containsRoot: originHtml.includes('id="root"'),
         hasCanonical: originHtml.includes('https://tinystepslearning.com' + route.path),
       }));
+      const pristine = new JSDOM(originHtml).window.document;
+      const expectedHeading = pristine.querySelector('main h1')?.textContent?.replace(/\s+/g, ' ').trim();
+      assert.ok(expectedHeading, route.path + ': initial prerendered article heading is missing');
       let blocked = 0;
       await page.route('**/assets/*.js', async request => {
         if (request.request().url().includes(route.chunk)
@@ -101,7 +113,9 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
           route.path + ': router should preserve the article before a broken 404 module cascades');
       }
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
-      assert.match(h1 || '', route.title, route.path);
+      assert.equal(h1?.replace(/\s+/g, ' ').trim(), expectedHeading, route.path + ': preserved wrong article');
+      assert.ok((await page.locator('[data-ts-static-resource-recovery] main').innerText()).length >= 180,
+        route.path + ': recovered article is unexpectedly thin');
       assert.equal(await page.locator('h1').filter({ hasText: 'Something went wrong' }).count(), 0);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
       assert.equal(canonical, 'https://tinystepslearning.com' + route.path);
