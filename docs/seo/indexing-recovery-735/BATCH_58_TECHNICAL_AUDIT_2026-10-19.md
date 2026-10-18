@@ -139,6 +139,16 @@ GSC IDs retain original exclusion-list provenance: `D` (historical Discovered) a
 | C16 | `/sitemap-courses.xml` | 200 | XML-looking | none | — |
 | C26 | `/blog/rss.xml` | 200 | XML-looking | noindex | — |
 
+## Additional live mobile-browser and lazy-module regression evidence
+
+**Final full-code CI:** [GitHub Actions #39161945543](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39161945543), completed **SUCCESS** on head `c4c03a735af9304bc4161a743bf7fd436e94f491` (before this report-only commit). No deployment. In addition to the 58-URL HTTP and build scan:
+
+- **Ordinary live mobile Chromium, all 39 HTML candidates: 39/39 HTTP 200**, **39/39 expected post-hydration H1 matches**, **39/39 self-canonical**, **39/39 without browser diagnostic flags**.
+- **Zero** failed same-origin `/assets/*.js` module requests and **zero** uncaught JavaScript `pageerror` events in this dated, short-lived mobile Chromium run. This is **not** a guarantee against future intermittent failures or evidence of Google's own smartphone rendering outcome.
+- **All 13 canonically indexable blog articles** from the original 58-URL cohort underwent **two per-article forced lazy-module failure scenarios** (BlogPostPage and BlogPostPage+NotFoundPage failure injection), for **26/26 successful article-preservation simulations**. Existing **23 resource URL × two scenarios = 46** independent recovery tests also passed. In the double-error scenario the recovery can intercept the first failure before NotFoundPage is actually requested.
+- The full audit artifact `gsc735-58-production-build-audit` now additionally contains `gsc735-39-mobile-browser-audit.json`, alongside the original 58-URL JSON + CSV. The test samples remain read-only and do not impersonate verified Googlebot identity.
+- Combined observation: **no new site-wide React/JavaScript error was reproducible** across these 39 regular mobile page loads. The three one-hour HTML cache headers remain the only machine-flagged URL issues. Low inbound link reach remains an opportunity, not a broken-link finding.
+
 ## QA and delivery decisions
 1. **No production code deployed by this batch audit.** PR #744 is a draft with auditing scripts, per-URL evidence logs, CSV/JSON artifact and documentation; current source code, canonicals, site content, Firebase rules, robots and redirects remain unchanged.
 2. **Possible fix package A (medium):** narrow revalidation of `/courses`, word game and summer archive clean HTML URLs with end-to-end Hosting checks; only after approval. Existing hashed asset policy must remain immutable.
