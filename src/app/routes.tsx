@@ -1,5 +1,6 @@
 // src/app/routes.tsx
 import { lazy, Suspense, useCallback, useEffect, useState, type FC, type MouseEvent } from 'react';
+import { originalResourceForChunkError } from '../lib/publicResourcePrerenderRecovery.js';
 import {
   createBrowserRouter,
   Outlet,
@@ -7,6 +8,7 @@ import {
   useLocation,
   useNavigate,
   redirect,
+  useRouteError,
   type LoaderFunctionArgs,
   type RouteObject,
 } from 'react-router-dom';
@@ -15,6 +17,18 @@ const LoginPage = lazy(() => import('../pages/LoginPage'));
 const Login = lazy(() => import('../pages/Login'));
 const UnauthorizedPage = lazy(() => import('../pages/UnauthorizedPage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
+
+// React Router can catch a failed article import before the root error boundary.
+// Preserve verified initial prerendered content only for that matching URL.
+const PublicRouteErrorElement = () => {
+  const error = useRouteError();
+  const staticResourceHtml = typeof window !== 'undefined'
+    ? originalResourceForChunkError(error, window.location) : null;
+  if (staticResourceHtml) {
+    return <div data-ts-static-resource-recovery="router" dangerouslySetInnerHTML={{ __html: staticResourceHtml }} />;
+  }
+  return <NotFoundPage />;
+};
 const HomePage = lazy(() => import('../pages/HomePage'));
 const CurriculumPage = lazy(() => import('../pages/CurriculumPage'));
 const CoursesPage = lazy(() => import('../pages/CoursesPage'));
@@ -492,7 +506,7 @@ const router = createBrowserRouter(
     { path: 'dev/comet-courier', element: <CometCourierGame /> },
     {
       element: <Layout />,
-      errorElement: <NotFoundPage />,
+      errorElement: <PublicRouteErrorElement />,
       children: [
         // ---------- Public marketing site ----------
         { index: true, element: rootLandingElement },

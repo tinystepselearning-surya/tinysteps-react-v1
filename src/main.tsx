@@ -8,6 +8,7 @@ import { queryClient } from './lib/queryClient';
 // the public marketing pages lightweight. Avoid importing it here.
 import { initSentry } from './lib/sentry';
 import { ErrorFallback } from './components/ErrorFallback';
+import { originalResourceForChunkError, saveOriginalPublicResource } from './lib/publicResourcePrerenderRecovery.js';
 import { initAnalytics } from './lib/analytics';
 import { installInpRum } from './lib/inpRum';
 
@@ -33,6 +34,13 @@ class RootErrorBoundary extends React.Component<
 
   render() {
     if (this.state.error) {
+      // An indexable, prerendered public resource should not become a soft 404
+      // solely because a lazy JavaScript chunk failed to load.
+      const staticResourceHtml = typeof window !== 'undefined'
+        ? originalResourceForChunkError(this.state.error, window.location) : null;
+      if (staticResourceHtml) {
+        return <div data-ts-static-resource-recovery="root" dangerouslySetInnerHTML={{ __html: staticResourceHtml }} />;
+      }
       return <ErrorFallback error={this.state.error} componentStack={this.state.componentStack} />;
     }
     return this.props.children;
@@ -140,6 +148,10 @@ const scheduleNonCriticalBoot = () => {
 // the existing analytics queue without adding work to the measured interaction.
 installInpRum();
 scheduleNonCriticalBoot();
+
+// Capture the immutable prerendered page before the React client can replace it.
+// Empty Vite shells, actual 404s, protected dashboards, and noindex URLs fail closed.
+if (typeof window !== 'undefined') saveOriginalPublicResource(document, window.location);
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
