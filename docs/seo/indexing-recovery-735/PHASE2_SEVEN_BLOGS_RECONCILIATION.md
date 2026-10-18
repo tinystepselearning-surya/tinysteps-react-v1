@@ -6,7 +6,7 @@
 - P2 source evidence is against deployed main at launch. All seven intended articles produced substantial readable HTML through separate public-web page retrieval. No independent HTTP header or current **Google Index** verdict for these seven has been verified; don't confuse a public reader or indexed-looking content with Search Console eligibility or actual Google inclusion.
 - Since #743 now guards properly prerendered index-permitted self-canonical `/blog/:slug` articles on lazy chunk failure, **do not automatically add another blanket fallback or rewrite content** without a verified defect. The previously reported module-import Soft 404 applied to a Phase 1 article, not demonstrated individually for these seven.
 
-## P2A — first three: search activity and parent-commercial value
+## Seven canonical articles — index status and search-intent queue
 
 | Master ID | Original GSC URL path (prefix https://tinystepslearning.com) | Last crawled in original GSC report | Search Analytics impressions Sep 15–Oct 17 | Clicks | Intent / content evidence | Current GOOGLE INDEX |
 |---|---|---|---:|---:|---|---|
@@ -20,7 +20,7 @@
 
 **Prioritization:** Start with C10 and C05 (largest historical impressions in this group), and C25 (commercial decision guide even though the exact Search Analytics extract returned no row). Then verify C07, C08, C09 and C21. No performance row does **not** imply nonindexing. All seven displayed educational content through the public text reader; review real Googlebot rendering only where indexed-view evidence demands it.
 
-## P2B — two old URLs are NOT indexable targets
+## Two legacy URLs — redirects, NOT indexable targets
 
 | ID | Historical GSC URL | 301 replacement configured in `firebase.json` | Sitemap owner | Disposition |
 |---|---|---|---|---|
