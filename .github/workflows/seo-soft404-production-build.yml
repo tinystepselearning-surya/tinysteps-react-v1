@@ -12,6 +12,8 @@ on:
       - 'scripts/soft404-prerender-policy.mjs'
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
       - 'scripts/test/gsc735-resource-indexability.node-test.mjs'
+      - 'scripts/test/gsc735-phase1-commercial-blogs.node-test.mjs'
+      - 'scripts/diagnose-gsc735-phase1-live.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
       - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
@@ -87,6 +89,10 @@ jobs:
         run: node --test scripts/test/gsc735-resource-chunk-mobile.node-test.mjs
       - name: Verify GSC #735 affected resources from the generated artifact
         run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
+      - name: Verify P1 commercial and parent article HTML from the generated artifact
+        run: node --test scripts/test/gsc735-phase1-commercial-blogs.node-test.mjs
+      - name: Record live Phase 1 HTTP and cache observations (nonblocking)
+        run: node scripts/diagnose-gsc735-phase1-live.mjs
       - name: Guard cache policy on clean resource URLs
         run: node --test scripts/test/gsc735-resource-cache.node-test.mjs
       - name: No deployment
