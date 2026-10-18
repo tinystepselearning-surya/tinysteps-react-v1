@@ -8,28 +8,28 @@
 - The 30 **Crawled – currently not indexed** example rows had specific historical crawl dates, recorded below. This status does **not** prove all 30 ought to be separately indexed or remain excluded today.
 - Three of the original discovered resources had **owner screenshots of "URL is on Google / Page is indexed"** on Oct 18: `/resources/grammar`, `/resources/phonics/sh-digraph-phonics`, `/resources/vocabulary/vocabulary-for-better-writing`. A screenshot of a successful Live Test is **not** an indexed-view confirmation.
 - `/resources/grammar/simple-past-tense-for-kids`: Google live test eligible, smartphone-rendered article captured, owner requested indexing; **not yet confirmed Google indexed**. `/resources/phonics/magic-e-phonics`: live eligible but earlier excluded; current indexed state unknown.
-- PR #739 deployed shared prerendered-content protection for eligible **public Phonics, Grammar, Vocabulary** routes. PR #740 added CI with **23 routes × 2 injected JS failures = 46 green tests**. These protect against a specific React Soft 404 failure; they **do not cause or guarantee Google's crawl, content selection, or index inclusion**, and they do not cover blog/commercial routes.
-- `firebase.json` source establishes 12 specified legacy 301 mappings; **live verification is still required**. Do not submit legacy aliases for indexing.
-- Connected Google Search Console Search Analytics from Sep 15–Oct 17 showed impressions for 8/13 crawled-content candidates (see rows); **historical impressions do not establish current indexed status**. XML/RSS resources generally need a valid response, not HTML-page indexing.
+- PR #739 deployed shared prerendered-content protection for eligible **public Phonics, Grammar, Vocabulary** routes. PR #740 added CI with **23 routes × 2 injected JS failures = 46 green tests**. These protect against a specific React Soft 404 failure; they **do not cause or guarantee Google's crawl, content selection, or index inclusion**, and they did not cover blog/commercial routes until the blog-specific fix in PR #743. **PR #743 is deployed (18 Oct 2026), safeguarding eligible substantive `/blog/:slug` pages on a matching lazy-import error and revalidating clean blog HTML; Google indexing remains separately unverified.**
+- `firebase.json` now establishes 14 legacy 301 mappings in the original GSC 58-URL cohort: the 12 initially identified aliases plus **C14** and **C15** discovered during Phase 2; **live verification is still required**. Do not submit legacy aliases for indexing.
+- Connected Google Search Console Search Analytics from Sep 15–Oct 17 showed impressions for 8/13 *originally classified* crawled-content candidates, including one later confirmed in source as a legacy redirect (C15); **historical impressions do not establish current indexed status**. XML/RSS resources generally need a valid response, not HTML-page indexing.
 
 ## Control totals and phases
 
 | Classification | Count | Phase |
 |---|---:|---|
 | Crawled — commercial page + 3 high-priority parent articles | 4 | P1 |
-| Crawled — 9 additional potentially indexable educational articles | 9 | P2 |
+| Crawled — 7 additional potentially indexable educational articles | 7 | P2 |
 | Discovered — protected Grammar/Phonics/Vocabulary resource hub and guides | 23 | P3 |
 | Discovered — 3 editorial posts, 1 game, 1 seasonal/archive page | 5 | P4 |
-| Crawled — 12 intentional 301 aliases + 5 XML/RSS machine resources | 17 | P5 |
+| Crawled — 14 confirmed-in-source 301 aliases + 5 XML/RSS machine resources | 19 | P5 |
 | **Total** | **58** | |
 
 ### Phase work order and release gates
 **P0 — Reconcile (this document):** freeze the supplied 58 historical examples; record evidence levels and group membership; avoid unverified "all fixed" statements.  
 **P1 — Highest-impact crawled content (4):** `/courses`, two highest-value parent phonics questions, school-vs-online article. For each, obtain **current Google Index**, last crawl, user & Google-selected canonical; inspect **Live Test screenshot + resource failures** only when unindexed/problematic. Preserve performing URLs and only fix demonstrated defects.  
-**P2 — Remaining crawled editorial candidates (9):** classify current GSC status; audit intent overlap, educational accuracy, canonical, article visibility, internal links. A missing performance row does not prove exclusion.  
+**P2 — Remaining crawled canonical editorial candidates (7):** classify current GSC status; audit intent overlap, educational accuracy, canonical, article visibility, internal links. A missing performance row does not prove exclusion.  
 **P3 — Previously discovered resources (23):** review three confirmed-indexed ones for regression only, check Simple Past Tense request outcome and Magic E status, then batch-verify other 18 URLs. Existing browser/render and sitemap safeguards are in place; no blanket rewrite.  
 **P4 — Other discovered pages (5):** three blogs, playable word-building game, 2026 summer archive. Validate real parent value, game accessibility and age-appropriate/seasonal truthfulness; check live render and current GSC status.  
-**P5 — Exclusion-list housekeeping (17):** validate twelve production 301s, canonical target 200/indexability and absence of loops; validate four XML sitemaps plus RSS. Do **not** request indexing for redirect aliases or XML/RSS.  
+**P5 — Exclusion-list housekeeping (19):** validate fourteen source-configured production 301s, canonical target 200/indexability and absence of loops; validate four XML sitemaps plus RSS. Do **not** request indexing for redirect aliases or XML/RSS.  
 **P6 — Google decision tracking (recurring review):** compare URL Inspection / Page Indexing export with this historical cohort in ~7–14 days, record requests once, check indexed status and organic impressions/clicks, and only open implementation PRs on reproducible, scoped defects. No guaranteed deadline.
 
 **Each phase:** produce a per-URL evidence table with `owner GSC indexed verdict`, `last crawled`, `live accessibility / Google rendered screenshot`, `canonical owner`, `recommended action`, `PR if any`, `post-release verdict`. No phase is "resolved" based on a passing CI test or public text fetch alone.
@@ -84,8 +84,8 @@
 | C11 | /sitemap-blog.xml | 2026-09-02 | XML/RSS | P5 | Machine resource; indexing as an HTML page not required | Verify valid machine-readable HTTP response; not a search-result target |
 | C12 | /sitemap.xml | 2026-07-26 | XML/RSS | P5 | Machine resource; indexing as an HTML page not required | Verify valid machine-readable HTTP response; not a search-result target |
 | C13 | /sitemap-static.xml | 2026-07-26 | XML/RSS | P5 | Machine resource; indexing as an HTML page not required | Verify valid machine-readable HTTP response; not a search-result target |
-| C14 | /blog/how-long-does-it-take-child-to-learn-phonics | 2026-07-12 | Editorial | P2 | No exact page-level Search Analytics row in Sep 15–Oct 17 extract; index status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
-| C15 | /blog/can-child-master-english-in-10-days | 2026-07-10 | Editorial | P2 | Search Analytics: 1 impressions, Sep 15–Oct 17; current indexed status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
+| C14 | /blog/how-long-does-it-take-child-to-learn-phonics | 2026-07-12 | **Redirect alias (301)** | **P5** | `firebase.json` 301 → `/blog/how-long-does-phonics-take`; replacement is in `sitemap-blog.xml`; original GSC exclusion category/date preserved | Verify real live 301 + canonical destination's indexing; **do not request indexing for alias** |
+| C15 | /blog/can-child-master-english-in-10-days | 2026-07-10 | **Redirect alias (301)** | **P5** | `firebase.json` 301 → `/blog/can-child-improve-english-in-10-days`; public-web retrieval followed redirect; replacement is in `sitemap-blog.xml`; previous historic performance 1 impression | Verify live 301 + canonical destination's indexing; **do not request indexing for alias** |
 | C16 | /sitemap-courses.xml | 2026-07-04 | XML/RSS | P5 | Machine resource; indexing as an HTML page not required | Verify valid machine-readable HTTP response; not a search-result target |
 | C17 | /blog/week-27-prevent-summer-slide-reading | 2026-06-20 | Redirect | P5 | 301 configured in firebase.json; live response not fully checked | Configured 301 → /blog/prevent-summer-slide-reading; verify live status and target |
 | C18 | /blog/week-4-phonics-long-vowels | 2026-06-19 | Redirect | P5 | 301 configured in firebase.json; live response not fully checked | Configured 301 → /blog/phonics-long-vowels; verify live status and target |
@@ -106,6 +106,12 @@
 - **C04 `/blog/online-phonics-classes-vs-school`: owner GSC screenshot Oct 18, 2026 shows Not indexed / Crawled–currently not indexed; the 4:41–4:42 live test Soft 404 and 4:43 live test eligible.** Connected GSC More Info logs on the failed test show a `BlogPostPage` JS chunk import error (and later a cascading NotFoundPage import error). The successful test does not establish actual indexing. Proposed scoped blog fallback and clean-URL cache fix in separate reviewable PR, not yet deployed; do not attribute the cause to content weakness by default.
 
 - **C01 `/courses`: owner-reported indexed on October 18, 2026** (the confirmation was typed, not a screenshot). Supersedes its historical Crawled exclusion example for current decision-making; retain the original `2026-10-13` crawl date and exclusion category as provenance. Do not change or request indexing for this traffic-bearing URL. Only one Phase 1 blog URL still requires a current indexed-view check (C04); owner also reports **C02 `/blog/sight-words-or-phonics-first` indexed** on October 18, 2026 without a new screenshot. Owner now also reports **C03 `/blog/why-child-knows-letter-sounds-but-cannot-read-words` indexed** on October 18, 2026 without a screenshot in this turn. Overall **six owner-confirmed/reported indexed URLs** from the 58: **three resource pages with owner GSC screenshots** and **three Phase 1 pages (`/courses`, C03, C02) reported indexed verbally**.
+
+## Phase 2 baseline correction — 18 October 2026
+- **Two additional legacy aliases found in source:** C14 and C15 were originally labelled "editorial candidates" but `firebase.json` defines them as 301 redirects. Both canonical replacement URLs appear in `public/sitemap-blog.xml`. These historical URLs should not be treated as separately indexable pages.
+- **Updated disposition:** 58 unique original examples = **39 potentially indexable target pages** (P1 4 + P2 7 + P3 23 + P4 5) and **19 technical/non-result targets** (14 301 redirects + 4 XML sitemaps + 1 blog RSS). Original Discovered/Crawled group membership and original dates remain unchanged.
+- The **seven** P2 intended standalone articles are C05, C07, C08, C09, C10, C21, and C25. Current **Google Index** decisions are unverified; a site URL being readable to public web retrieval or present in sitemap is not proof of Google index inclusion.
+- See `PHASE2_SEVEN_BLOGS_RECONCILIATION.md` for individual P2 priorities, canonical ownership and GSC verification workflow.
 
 ## Reconciliation checks and dependencies
 - All 58 paths are unique: 28 D + 30 C; no duplicates **between** those historical lists.
