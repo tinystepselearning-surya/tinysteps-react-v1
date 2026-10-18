@@ -13,6 +13,11 @@ on:
       - 'scripts/test/seo-soft404-prerender.node-test.mjs'
       - 'scripts/test/gsc735-resource-indexability.node-test.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
+      - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
+      - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
+      - 'src/lib/publicResourcePrerenderRecovery.js'
+      - 'src/main.tsx'
+      - 'src/app/routes.tsx'
       - 'src/lib/phonicsPublicationRegistry.js'
       - 'src/lib/grammarProgrammaticSeoManifest.js'
       - 'src/lib/vocabularyAuthoritySeoManifest.js'
@@ -70,10 +75,14 @@ jobs:
         run: npx vitest run src/tests/seo/commercialC3OwnerPageAudit.spec.ts src/tests/seo/speakingGrowthBrick5.spec.ts
       - name: Verify GSC #735 parent-comparison editorial quality
         run: npx vitest run src/tests/seo/gsc735PhonicsComparisonIntent.spec.ts
+      - name: Verify public prerender chunk recovery guards
+        run: node --test scripts/test/gsc735-public-resource-fallback.node-test.mjs
       - name: Check TypeScript source
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
         run: npm run build:deploy
+      - name: Simulate failed public resource chunks in mobile Chromium
+        run: node --test scripts/test/gsc735-resource-chunk-mobile.node-test.mjs
       - name: Verify GSC #735 affected resources from the generated artifact
         run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
       - name: Guard cache policy on clean resource URLs
