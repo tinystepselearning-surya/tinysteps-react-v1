@@ -642,6 +642,13 @@ export default function GrammarPage() {
           <p className="mt-3 text-slate-700">
             Tiny Steps focuses on visible grammar progress through class updates, skill-based feedback, strengths, improvement areas, and next-step guidance.
           </p>
+          <p className="mt-3 text-slate-700">
+            Before choosing a level, parents can use the{' '}
+            <Link to="/blog/grammar-assessment" className="font-semibold underline underline-offset-2">
+              practical grammar assessment checklist for kids
+            </Link>{' '}
+            to notice sentence errors and see whether the child can apply a rule in a fresh example. It guides observation; it is not a formal diagnostic test.
+          </p>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
             {[
               ['What was practised', 'Grammar topics, sentence formation, tense, punctuation, and correction work.'],
