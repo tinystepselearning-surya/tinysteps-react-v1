@@ -95,8 +95,10 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
       }
       assert.ok(blocked > 0, route.path + ': lazy module was not requested');
       if (scenario === 'article-and-notfound') {
-        assert.equal(await page.locator('[data-ts-static-resource-recovery]').getAttribute('data-ts-static-resource-recovery'), 'root',
-          route.path + ': root error recovery must handle a failed NotFoundPage module');
+        // The preferred behavior is for React Router to restore the article
+        // *before* attempting to render the broken lazy NotFoundPage chunk.
+        assert.equal(await page.locator('[data-ts-static-resource-recovery]').getAttribute('data-ts-static-resource-recovery'), 'router',
+          route.path + ': router should preserve the article before a broken 404 module cascades');
       }
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
       assert.match(h1 || '', route.title, route.path);
