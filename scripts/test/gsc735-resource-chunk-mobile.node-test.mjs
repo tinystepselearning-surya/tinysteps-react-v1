@@ -43,7 +43,7 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
         }
       });
       await page.goto(ORIGIN + route.path, { waitUntil: 'domcontentloaded', timeout: 40000 });
-      await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), { timeout: 25000 });
+      await page.waitForFunction(() => document.querySelector('[data-ts-static-resource-recovery]'), null, { timeout: 25000 });
       assert.ok(blocked > 0, route.path + ': lazy module was not requested');
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
       assert.match(h1 || '', route.title, route.path);
