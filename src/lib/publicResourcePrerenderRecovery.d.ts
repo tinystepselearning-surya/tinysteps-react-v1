@@ -5,8 +5,10 @@ export type PublicResourceSnapshot = {
 };
 
 /**
- * Captures only a substantive, self-canonical prerendered Phonics, Grammar or
- * Vocabulary page, before React replaces its server-generated HTML.
+ * Captures only substantive, self-canonical prerendered public Phonics,
+ * Grammar, Vocabulary or /blog/:slug articles, before React replaces the HTML.
+ * Protected routes, missing pages, noindex and wrong-canonical documents are
+ * never eligible for recovery.
  */
 export function captureOriginalPublicResource(
   document: Document,
