@@ -71,7 +71,7 @@
 
 | ID | Path (prefix https://tinystepslearning.com) | Last crawled in owner export | Type | Phase | Supporting evidence | Next verification |
 |---|---|---|---|---|---|---|
-| C01 | /courses | 2026-10-13 | Commercial | P1 | Search Analytics: 2,286 impressions, Sep 15–Oct 17; current indexed status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
+| C01 | /courses | 2026-10-13 | Commercial | P1 | **Indexed — owner-reported Oct 18, 2026**; previous Search Analytics 2,286 impressions Sep 15–Oct 17 | Preserve /courses as currently indexed; monitor, no reindexing or rewriting |
 | C02 | /blog/sight-words-or-phonics-first | 2026-10-13 | Editorial | P1 | Search Analytics: 40 impressions, Sep 15–Oct 17; current indexed status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
 | C03 | /blog/why-child-knows-letter-sounds-but-cannot-read-words | 2026-10-13 | Editorial | P1 | Search Analytics: 1,777 impressions, Sep 15–Oct 17; current indexed status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
 | C04 | /blog/online-phonics-classes-vs-school | 2026-10-11 | Editorial | P1 | No exact page-level Search Analytics row in Sep 15–Oct 17 extract; index status unverified | Check Google Index and live rendering; diagnose only proven technical/content gap |
@@ -101,6 +101,9 @@
 | C28 | /courses/advanced-grammar | 2026-04-27 | Redirect | P5 | 301 configured in firebase.json; live response not fully checked | Configured 301 → /courses/grammar-mastery; verify live status and target |
 | C29 | /blog/week-16-phonics-summer-plan | 2026-04-26 | Redirect | P5 | 301 configured in firebase.json; live response not fully checked | Configured 301 → /blog/phonics-summer-plan; verify live status and target |
 | C30 | /blog/week-21-speaking-competition-prep | 2026-04-24 | Redirect | P5 | 301 configured in firebase.json; live response not fully checked | Configured 301 → /blog/speaking-competition-prep; verify live status and target |
+
+## Newer per-URL Google Index results — recorded without erasing historical baselines
+- **C01 `/courses`: owner-reported indexed on October 18, 2026** (the confirmation was typed, not a screenshot). Supersedes its historical Crawled exclusion example for current decision-making; retain the original `2026-10-13` crawl date and exclusion category as provenance. Do not change or request indexing for this traffic-bearing URL. The three Phase 1 blog URLs still require current indexed-view checks. Overall indexed evidence is now **four owner-confirmed/reported URLs** from the 58, comprising **three resource pages backed by screenshots** and **one `/courses` page reported indexed verbally**.
 
 ## Reconciliation checks and dependencies
 - All 58 paths are unique: 28 D + 30 C; no duplicates **between** those historical lists.
