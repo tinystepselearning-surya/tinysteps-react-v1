@@ -10,7 +10,7 @@
 
 | Master ID | Original GSC URL path (prefix https://tinystepslearning.com) | Last crawled in original GSC report | Search Analytics impressions Sep 15–Oct 17 | Clicks | Intent / content evidence | Current GOOGLE INDEX |
 |---|---|---|---:|---:|---|---|
-| C10 | `/blog/grammar-assessment` | 2026-09-07 | 140 | 2 | Parent grammar assessment checklist; actionable home evaluation | **Unknown** |
+| C10 | `/blog/grammar-assessment` | 2026-09-07 | 140 | 2 | Parent grammar assessment checklist; actionable home evaluation | **Not indexed — GSC GOOGLE INDEX screenshot Oct 18**; **green LIVE TEST**, page can be indexed, 1 valid breadcrumb; original Google last crawl Sep 7 |
 | C05 | `/blog/how-phonics-grammar-and-communication-work-together` | 2026-09-30 | 83 | 0 | Multi-skill explanation: reading/writing/speaking progression | **Unknown** |
 | C25 | `/blog/online-english-classes-for-kids-india` | 2026-05-12 | No exact row | — | Commercial/comparison parent guide for online English classes | **Unknown** |
 | C07 | `/blog/what-is-phonics-for-kids` | 2026-09-15 | 9 | 0 | Broad parent introduction to phonics; intent distinct from individual sounds | **Unknown** |
@@ -40,3 +40,12 @@ Source declarations for both are **`type: 301`** and public reader followed the 
 - C05, C07, C08, C09, C10, C21 and C25 each have dated current GSC Google Index outcome or explicitly recorded "unknown" limitation and accountable next action.
 - C14 and C15 have been moved to P5 for redirect verification, with canonical replacement checks; no duplicate-content artificial reindexing.
 - No SEO copy changes or technical fix PR occurs without positive evidence that one is needed.
+
+## P2 C10 owner Google Search Console evidence — 18 October 2026, 5:30 PM IST
+
+Owner provided **two screenshots** for `https://tinystepslearning.com/blog/grammar-assessment`:
+- **GOOGLE INDEX** screenshot: "**URL is not on Google**"; "**Page is not indexed: Crawled – currently not indexed**"; last crawl **September 7, 2026 at 3:57:47 AM**. Discovery lists both `https://tinystepslearning.com/sitemap-blog.xml` and `https://tinystepslearning.com/sitemap.xml`. `Referring page: None detected` in this report. This is Google's observation, **not evidence that the website has no internal links**.
+- **LIVE TEST** screenshot (tested Oct 18, 2026 at **5:30 PM IST**): green "**URL is available to Google**", "**Page can be indexed**", and "**Breadcrumbs: 1 valid item detected**". This is eligibility, **not actual indexing**. No GSC failed-resource or JavaScript-console screenshot was supplied, so do not assume any script/rendering error or fully verify article rendering from the green card alone.
+- Repo source: `src/lib/blogIndexingPolicy.js` includes `grammar-assessment` in the quality-promoted indexable blog slugs, `src/lib/grammarWritingSemanticCanonicalOwnership.js` designates `/blog/grammar-assessment` the assessment-checklist owner, `src/lib/grammarWritingSemanticJourneyGraph.js` names related journeys, and `public/sitemap-blog.xml` includes the URL. Source-linked graph entries do not independently prove a crawlable **rendered** inbound link. Separate public web retrieval previously read the article; GSC's latest live eligibility is green.
+
+**Disposition:** P2 C10 = **Not indexed; live eligible; no new verified technical failure**. Preserve the unique parent grammar-assessment checklist; avoid blanket changes. Next verify **View Tested Page → Screenshot** shows the correct article H1/body and inspect More Info if required. Check that the article has a real crawlable link from relevant grammar hubs/related articles, because GSC says no referring page detected (not a definitive proof of absence). If not already submitted, request indexing **once** after confirming the rendered article and maintain a 7–14-day Google Index check; never claim indexing on request submission alone. The other six P2 canonical article decisions remain unverified.
