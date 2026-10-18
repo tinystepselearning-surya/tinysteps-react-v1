@@ -1,4 +1,4 @@
-// GSC #735 Phase 1 — true prerendered blog HTML in mobile Chromium.
+// GSC #735 original 58-URL cohort — true prerendered blog HTML in mobile Chromium.
 // Inject BlogPostPage and optionally NotFoundPage lazy import failures.
 // No fake Googlebot claim: this tests app fallbacks, not Google's indexing decision.
 import test from 'node:test';
@@ -11,11 +11,16 @@ import { JSDOM } from 'jsdom';
 
 const ORIGIN = 'http://127.0.0.1:4185';
 const DIST = path.resolve('dist');
-const ROUTES = [
-  '/blog/online-phonics-classes-vs-school',
-  '/blog/why-child-knows-letter-sounds-but-cannot-read-words',
-  '/blog/sight-words-or-phonics-first',
-];
+// Derive blog cohort from the exact 58-URL owner ledger. Never test 301 aliases
+// as independent articles; keep all 13 eligible blog routes under regression.
+const ledger = await readFile('docs/seo/indexing-recovery-735/MASTER_58_URL_RECONCILIATION.md', 'utf8');
+const redirectRules = JSON.parse(await readFile('firebase.json', 'utf8')).hosting.redirects;
+const aliases = new Set(redirectRules.map(rule => rule.source));
+const ROUTES = ledger.split(/\r?\n/)
+  .map(line => line.match(/^\|\s*[DC]\d{2}\s*\|\s*(\/blog\/[a-z0-9-]+)\s*\|/)?.[1])
+  .filter(Boolean)
+  .filter(route => !aliases.has(route));
+assert.equal(ROUTES.length, 13, 'GSC #735: expected all 13 canonically indexable blog pages');
 
 function serveBuild() {
   return createServer(async (req, res) => {
@@ -42,7 +47,7 @@ function serveBuild() {
   });
 }
 
-test('GSC #735 P1: all three Phase 1 blog articles survive article/NotFound lazy chunk failures', { timeout: 210000 }, async () => {
+test('GSC #735: all 13 canonical blog articles survive article/NotFound lazy chunk failures', { timeout: 480000 }, async () => {
   const server = serveBuild();
   await new Promise(resolve => server.listen(4185, '127.0.0.1', resolve));
   let browser;
