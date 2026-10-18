@@ -16,6 +16,8 @@ on:
       - 'scripts/diagnose-gsc735-phase1-live.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
+      - 'scripts/test/gsc735-public-blog-cache.node-test.mjs'
+      - 'scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs'
       - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
       - 'scripts/lib/gsc735TrackedResources.mjs'
       - 'src/lib/publicResourcePrerenderRecovery.js'
@@ -87,6 +89,10 @@ jobs:
         run: npm run build:deploy
       - name: Simulate failed public resource chunks in mobile Chromium
         run: node --test scripts/test/gsc735-resource-chunk-mobile.node-test.mjs
+      - name: Simulate failed blog chunks in mobile Chromium
+        run: node --test scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs
+      - name: Protect clean blog article cache policy
+        run: node --test scripts/test/gsc735-public-blog-cache.node-test.mjs
       - name: Verify GSC #735 affected resources from the generated artifact
         run: node --test scripts/test/gsc735-resource-indexability.node-test.mjs
       - name: Verify P1 commercial and parent article HTML from the generated artifact
