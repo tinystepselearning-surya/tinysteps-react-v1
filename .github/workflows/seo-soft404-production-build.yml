@@ -16,6 +16,7 @@ on:
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
       - 'scripts/test/gsc735-resource-chunk-mobile.node-test.mjs'
       - 'src/lib/publicResourcePrerenderRecovery.js'
+      - 'src/lib/publicResourcePrerenderRecovery.d.ts'
       - 'src/main.tsx'
       - 'src/app/routes.tsx'
       - 'src/lib/phonicsPublicationRegistry.js'
