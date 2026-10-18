@@ -18,7 +18,9 @@ export function captureOriginalPublicResource(document, location) {
   const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
   const robots = document.querySelector('meta[name="robots"]')?.getAttribute('content') || '';
   if (!main || !h1?.textContent?.trim() || content.length < 600) return null;
-  if (canonical !== location.origin + path || /\bnoindex\b/i.test(robots)) return null;
+  // Preview channels and local Vite preview intentionally keep the production
+  // canonical, so validate the canonical owner independently of the host.
+  if (canonical !== 'https://tinystepslearning.com' + path || /\bnoindex\b/i.test(robots)) return null;
   if (/something went wrong|404 - page not found/i.test(content)) return null;
 
   // Static HTML comes from the site's own prerendered response. We preserve
