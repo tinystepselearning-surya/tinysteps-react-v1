@@ -476,6 +476,13 @@ function CoursesPage() {
           <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
             Use these answers after comparing the pathways and levels. If your child sits between two options, the assessment can confirm the starting point.
           </p>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-700 sm:text-base">
+            Comparing different providers as well as courses? Our{' '}
+            <Link to="/blog/online-english-classes-for-kids-india" className="font-semibold text-slate-900 underline underline-offset-2">
+              parent guide to choosing online English classes in India
+            </Link>{' '}
+            explains what to look for in teaching interaction, feedback, progress evidence and fit before enrolling.
+          </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {quickAnswerFaqItems.map((item) => (
               <article key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
