@@ -61,3 +61,36 @@ test('GSC #735: normal failures never receive article rescue', () => {
     assert.equal(originalResourceForChunkError(error, dom.window.location), null);
   }
 });
+
+const blogRoute = '/blog/online-phonics-classes-vs-school';
+const blogChunkError = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/BlogPostPage-abc123.js');
+
+test('GSC #735 P1: protect a verified initial blog article when BlogPostPage lazy chunk fails', () => {
+  const dom = fixture({ route: blogRoute, canonical: blogRoute });
+  const snapshot = captureOriginalPublicResource(dom.window.document, dom.window.location);
+  assert.ok(snapshot, 'a substantive self-canonical blog article should be capturable');
+  saveOriginalPublicResource(dom.window.document, dom.window.location);
+  assert.match(originalResourceForChunkError(blogChunkError, dom.window.location), /Specific examples/);
+  assert.match(originalResourceForChunkError(
+    new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/NotFoundPage-abc123.js'),
+    dom.window.location,
+  ), /Specific examples/);
+  assert.equal(originalResourceForChunkError(new Error('Unrelated application failure'), dom.window.location), null);
+  assert.equal(originalResourceForChunkError(blogChunkError, new URL(ORIGIN + '/blog/sight-words-or-phonics-first')), null);
+});
+
+test('GSC #735 P1: never preserve wrong-canonical, noindex, empty, fake or protected blog content', () => {
+  for (const dom of [
+    fixture({ route: blogRoute, canonical: '/blog/sight-words-or-phonics-first' }),
+    fixture({ route: blogRoute, robots: 'noindex, follow' }),
+    fixture({ route: blogRoute, body: 'Too short' }),
+    fixture({ route: blogRoute, body: '404 - Page Not Found' + validArticle }),
+    fixture({ route: '/blog/rss.xml' }),
+    fixture({ route: '/blog/missing', canonical: blogRoute }),
+    fixture({ route: '/courses' }),
+    fixture({ route: '/parent/dashboard' }),
+    fixture({ route: '/surya' }),
+  ]) {
+    assert.equal(captureOriginalPublicResource(dom.window.document, dom.window.location), null, dom.window.location.href);
+  }
+});
