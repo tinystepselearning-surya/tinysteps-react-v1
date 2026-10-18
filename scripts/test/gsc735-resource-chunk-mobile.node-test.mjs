@@ -114,7 +114,7 @@ test('GSC #735: all 23 resource pages preserve prerendered content through dynam
       }
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
       assert.equal(h1?.replace(/\s+/g, ' ').trim(), expectedHeading, route.path + ': preserved wrong article');
-      assert.ok((await page.locator('[data-ts-static-resource-recovery] main').innerText()).length >= 180,
+      assert.ok((await page.locator('[data-ts-static-resource-recovery] main').first().innerText()).length >= 180,
         route.path + ': recovered article is unexpectedly thin');
       assert.equal(await page.locator('h1').filter({ hasText: 'Something went wrong' }).count(), 0);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
