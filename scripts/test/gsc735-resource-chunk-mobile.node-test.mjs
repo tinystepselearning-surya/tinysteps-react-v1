@@ -55,6 +55,7 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
   try {
     browser = await chromium.launch({ headless: true });
     for (const route of routes) {
+      for (const scenario of ['article-only', 'article-and-notfound']) {
       const page = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true });
       const failures = [];
       page.on('pageerror', error => failures.push('pageerror: ' + error.message));
@@ -70,7 +71,8 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
       }));
       let blocked = 0;
       await page.route('**/assets/*.js', async request => {
-        if (request.request().url().includes(route.chunk)) {
+        if (request.request().url().includes(route.chunk)
+            || (scenario === 'article-and-notfound' && request.request().url().includes('/NotFoundPage-'))) {
           blocked++;
           await request.abort('failed');
         } else {
@@ -92,13 +94,18 @@ test('GSC #735: mobile resource content survives a failed dynamically imported r
         throw error;
       }
       assert.ok(blocked > 0, route.path + ': lazy module was not requested');
+      if (scenario === 'article-and-notfound') {
+        assert.equal(await page.locator('[data-ts-static-resource-recovery]').getAttribute('data-ts-static-resource-recovery'), 'root',
+          route.path + ': root error recovery must handle a failed NotFoundPage module');
+      }
       const h1 = await page.locator('[data-ts-static-resource-recovery] main h1').first().textContent();
       assert.match(h1 || '', route.title, route.path);
       assert.equal(await page.locator('h1').filter({ hasText: 'Something went wrong' }).count(), 0);
       const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
       assert.equal(canonical, 'https://tinystepslearning.com' + route.path);
-      console.log(route.path + ' preserved its article after ' + blocked + ' intentionally aborted chunk request(s)');
+      console.log(route.path + ' (' + scenario + ') preserved its article after ' + blocked + ' intentionally aborted chunk request(s)');
       await page.close();
+      }
     }
   } finally {
     await browser?.close();
