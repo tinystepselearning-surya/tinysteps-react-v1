@@ -59,6 +59,7 @@ const account = {
   classDetails: [{ id: 'class1', serviceDate: '2026-10-03', monthKey: '2026-10',
     studentName: 'Sample Student', courseName: 'Phonics',
     attendance: 'Present', amount: 750, applied: 750, due: 0 }],
+  billingWarnings: [],
   receiptDetails: [{ id: 'receipt1', receivedDate: '2026-10-12',
     kind: 'regular', amount: 1000, method: 'UPI', reference: null }],
 };
