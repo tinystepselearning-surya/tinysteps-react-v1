@@ -1,6 +1,6 @@
 # Parent Payments V3 — Firestore Billing + Unified Receipt Ledger
 
-Status: **Development foundation only**. This design is not deployed, migration-enabled or an instruction to modify production Firestore.
+Status: **Draft implementation in PR #757; NOT deployed or activated.** Stage 1 pure ledger and initial Stage 2 admin-only, cutover-gated receipt writer/account reader are committed. No historical finance data has been migrated or modified.
 
 ## Approved business decisions (19 October 2026)
 
@@ -47,6 +47,18 @@ Data must stay out of GitHub commits: no real parent/child names, numbers or CSV
 - `src/tests/lib/parentPaymentsLedgerV3.spec.ts`: FIFO, surplus, explicit advance, future charge settlement, excluded classes, as-of history, deterministic ordering, duplicate/invalid guards, integer-paise conservation.
 
 These files are **foundation only**, not a replacement of the current production payment flow. More lifecycle cases (refunds, same-day billing conventions, reversed class charges, late attendance correction, disputed historic receipts, credit transfers) need explicit acceptance before activating this model.
+
+## Stage 2 progress — draft backend (19 October 2026)
+
+- `functions/src/parentReceiptV3Contract.ts`: validates canonical parent ID, unique idempotency key, positive amount in paise, actual receipt date, optional payment source/reference/notes, and exact idempotent replay.
+- `functions/src/parentPaymentsV3Control.ts`: shared fail-closed cutover guard requiring verified historical migration, preserved billing, disabled old writers and an explicit cutover run ID. Receipt writing additionally requires `receiptWritesEnabled: true`.
+- `functions/src/parentReceiptsV3.ts`: admin-authenticated atomic immutable receipt write to `parentReceiptsV3/{parentId}/receipts/{idempotencyKey}`; never touches historical payments, old wallet or billing charges.
+- `functions/src/parentLedgerReadV3.ts`: admin-authenticated, read-only account projection from Firestore billing charges + V3 receipts; refuses incomplete histories above 500 charges or 500 receipts (pagination is still pending), and requires resolvable class service dates.
+- `firestore.rules`: client access to the new receipt journal and migration controls denied; server-only paths.
+- `functions/src/index.ts`: exposes both V3 callables. Both remain **closed by default** until the independent production migration procedure explicitly verifies cutover controls.
+- Tests added for V3 receipt contract, finance cutover guard, and pure accounting model. CI/emulator integration results must be checked before marking these verified.
+
+**Still not implemented:** immutable corrections/reversal flow, bounded completeness-proof pagination, dashboard/parent portal integration, shared invoice PDF, staging import/reconciliation, old-writer retirement, production backup and approved activation. Do not manually set the cutover gate.
 
 ## Delivery stages
 
