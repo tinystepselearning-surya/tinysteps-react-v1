@@ -74,6 +74,32 @@ describe("FreeEnglishGamesCategoryPage", () => {
     },
   );
 
+  it("offers phonics game players an off-screen transfer check and relevant parent learning guides", () => {
+    renderRoute("/free-phonics-games-for-kids");
+
+    expect(screen.getByRole("heading", {
+      name: /after playing: check what your child can do away from the game/i,
+    })).toBeInTheDocument();
+    expect(screen.getByText(/a correct tap or a completed level is useful practice, not proof of independent reading/i))
+      .toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Understand SATPIN and first words" }))
+      .toHaveAttribute("href", "/blog/satpin-phonics-guide");
+    expect(screen.getByRole("link", { name: "Knows sounds but cannot read words?" }))
+      .toHaveAttribute("href", "/blog/why-child-knows-letter-sounds-but-cannot-read-words");
+    expect(screen.getByRole("link", { name: /book free 35-minute demo/i }))
+      .toHaveAttribute("href", "/book-demo");
+  });
+
+  it("does not duplicate phonics-specific parent guidance on unrelated games categories", () => {
+    renderRoute("/free-grammar-games-for-kids");
+
+    expect(screen.queryByRole("heading", {
+      name: /after playing: check what your child can do away from the game/i,
+    })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Understand SATPIN and first words" }))
+      .not.toBeInTheDocument();
+  });
+
   it("features Tiny Steps Phonics Balloon Pop on the letter-sound authority category", () => {
     renderRoute("/free-letter-sound-games-for-kids");
 
