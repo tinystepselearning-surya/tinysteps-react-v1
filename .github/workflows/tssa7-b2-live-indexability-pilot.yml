@@ -1,0 +1,42 @@
+name: TSSA-7 B2 Live Indexability Pilot
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa7-b2-live-indexability-pilot.mjs'
+      - '.github/workflows/tssa7-b2-live-indexability-pilot.yml'
+      - 'docs/seo/tssa-7/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Observe 10 high-priority live routes (no indexing or deployment)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Gather production HTTP and AI directory evidence
+        run: node scripts/tssa7-b2-live-indexability-pilot.mjs
+      - name: Verify evidence artifact exists
+        run: |
+          test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json
+          test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.csv
+      - name: Upload read-only observed findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b2-live-indexability-pilot
+          path: artifacts/tssa7-b2/
+          if-no-files-found: warn
+          retention-days: 45
+      - name: Affirm no website modification
+        run: echo "This is ordinary read-only HTTP evidence, not Google/Bing URL Inspection or an indexing request."
