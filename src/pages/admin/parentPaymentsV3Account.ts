@@ -51,6 +51,7 @@ export type ParentLedgerAccountV3 = {
   netDue: number;
   months: ParentLedgerMonthV3[];
   classDetails: ParentLedgerClassV3[];
+  billingWarnings: Array<{ chargeId: string; code: 'BILLED_ABSENT'; message: string }>;
   receiptDetails: ParentLedgerReceiptV3[];
 };
 
@@ -65,6 +66,7 @@ export function assertParentLedgerAccountV3(
     || !data.cutoverRunId
     || !Array.isArray(data.months)
     || !Array.isArray(data.classDetails)
+    || !Array.isArray(data.billingWarnings)
     || !Array.isArray(data.receiptDetails)) {
     throw new Error('Account ledger was incomplete or mismatched; no financial totals can be displayed.');
   }
