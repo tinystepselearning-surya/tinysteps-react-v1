@@ -167,7 +167,7 @@ const rows=await mapBounded(selected,fullScan ? 6 : 4,async item=>{
   return row;
 });
 // Machine directories are optional discovery aids, not mandated AI-ranking endpoints.
-const discoveryPaths=['/ai-resource-index.json','/ai-resource-index.txt','/llms.txt','/llms-full.txt'];
+const discoveryPaths=['/ai-resource-index.json','/ai-resource-index.txt','/llms.txt','/llms-full.txt','/sitemap-blog.xml','/sitemap-static.xml'];
 const discovery=await mapBounded(discoveryPaths,4,async pathname=>{
   const r=await request(ORIGIN+pathname);
   const result={path:pathname,status:r.status??null,contentType:r.type??null,bytes:r.body?.length??0,error:r.error??null,flags:[]};
@@ -193,6 +193,15 @@ const discovery=await mapBounded(discoveryPaths,4,async pathname=>{
         }
       }
     }catch(e){result.flags.push('malformed-ai-index-json');result.parseError=String(e?.message||e);}
+  } else if(pathname.startsWith('/sitemap-') && pathname.endsWith('.xml')){
+    const locs=[...r.body.matchAll(/<loc>\\s*([^<]+)\\s*<\\/loc>/gi)].map(x=>x[1].trim());
+    const expected=pathname==='/sitemap-blog.xml' ? inventory.blog : [...inventory.phonics,...inventory.grammar,...inventory.vocabulary];
+    const missing=expected.filter(x=>!locs.includes(ORIGIN+x));
+    result.sitemapLocs=locs.length;
+    result.expectedCanonicalUrls=expected.length;
+    result.missingCount=missing.length;
+    result.missingExamples=missing.slice(0,8);
+    if(missing.length)result.flags.push('live-sitemap-missing-owned-canonical-pages');
   } else if(pathname==='/ai-resource-index.txt' && !r.body.includes('Canonical:')){
     result.flags.push('ai-index-text-lacks-canonical-owner-links');
   } else if(pathname.startsWith('/llms') && !r.body.includes('ai-resource-index.json')){
