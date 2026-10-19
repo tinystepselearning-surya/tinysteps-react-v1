@@ -295,7 +295,7 @@ export default function ParentPaymentsV3({ onBack }: Props): JSX.Element {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" disabled={loading} onClick={() => void fetchAccount(selected)}>Refresh</Button>
-              <Button variant="outline" disabled={!account} onClick={download}>Download cumulative PDF</Button>
+              <Button variant="outline" disabled={!account || account.billingWarnings.length > 0} onClick={download}>Download cumulative PDF</Button>
               <Button disabled={!account || loading} onClick={openReceipt}>Record payment</Button>
             </div>
           </div>
@@ -305,6 +305,11 @@ export default function ParentPaymentsV3({ onBack }: Props): JSX.Element {
           {receiptMessage ? <div role="status" className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-sm">{receiptMessage}</div> : null}
           {account ? (
             <>
+              {account.billingWarnings.length > 0 ? (
+                <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900">
+                  {account.billingWarnings.length} class billing discrepancy needs review. Invoice download is blocked until absent classes with positive charges are resolved.
+                </div>
+              ) : null}
               <div className="grid grid-cols-2 gap-3 xl:grid-cols-3">
                 <Metric title="Total billed" value={money(account.totalBilled)} helper="Existing Firestore class charges" />
                 <Metric title="Total received" value={money(account.totalReceived)} helper="Verified V3 receipt dates" />
