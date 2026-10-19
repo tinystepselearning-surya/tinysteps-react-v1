@@ -109,7 +109,7 @@ export function projectParentLedger(
   for (const row of charges) {
     if (!row.id || seenCharges.has(row.id)) throw new Error('Missing or duplicate charge ID');
     seenCharges.add(row.id);
-    if (!validDate(row.serviceDate) || !MONTH_RE.test(row.monthKey) || row.monthKey !== row.serviceDate.slice(0, 7)) {
+    if (!validDate(row.serviceDate) || !MONTH_RE.test(row.monthKey)) {
       throw new Error(`Invalid service date or month for charge ${row.id}`);
     }
     if (asOfDate && row.serviceDate > asOfDate) continue;
