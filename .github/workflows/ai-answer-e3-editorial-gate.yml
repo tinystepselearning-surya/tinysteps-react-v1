@@ -1,0 +1,43 @@
+name: AI Answer E3 Parent Editorial Production Build Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/content/blog/posts/parent-tips/child-gives-one-word-answers.ts'
+      - 'src/content/blog/posts/parent-tips/child-understands-english-but-does-not-speak.ts'
+      - 'src/content/blog/posts/research/phonics-for-parents-guide.ts'
+      - 'src/pages/BlogPostPage.tsx'
+      - 'src/tests/seo/aiAnswerE3EditorialIntegrity.spec.ts'
+      - 'scripts/test/ai-answer-e3-rendered-html.node-test.mjs'
+      - '.github/workflows/ai-answer-e3-editorial-gate.yml'
+      - 'docs/seo/ai-answer-engines/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: E3 guarded editorial content and production prerender (no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Check parent-article source and TOC integrity
+        run: npx vitest run src/tests/seo/aiAnswerE3EditorialIntegrity.spec.ts
+      - name: Check TypeScript
+        run: npm run typecheck
+      - name: Install Chromium for pre-render build
+        run: npx playwright install --with-deps chromium
+      - name: Build final hosting artifact without deployment
+        run: npm run build:deploy
+      - name: Verify prerendered headings, canonicals and BlogPosting schema
+        run: node --test scripts/test/ai-answer-e3-rendered-html.node-test.mjs
+      - name: Confirm no publish
+        run: echo "Validated E3 educational editorial corrections only; no Firebase deploy or indexing action."

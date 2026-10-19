@@ -38,12 +38,12 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'Blog 56 is the parent-support guide — not a duplicate of every phonics article',
+      content: 'What this phonics guide covers and which guide to read next',
     },
     {
       type: 'p',
       content:
-        'This article owns the question **“How should a parent understand phonics well enough to support reading at home?”** If you mainly want the beginner vocabulary — phoneme, grapheme, blending, segmenting, decoding and decodable text — start with [What Is Phonics for Kids? A Parent Start-Here Guide](/blog/what-is-phonics-for-kids).',
+        'This guide answers the question **“How should a parent understand phonics well enough to support reading at home?”** If you mainly want the beginner vocabulary — phoneme, grapheme, blending, segmenting, decoding and decodable text — start with [What Is Phonics for Kids? A Parent Start-Here Guide](/blog/what-is-phonics-for-kids).',
     },
     {
       type: 'p',
@@ -53,7 +53,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'For a larger menu of games and practice formats, use [Phonics Activities for Kids at Home](/blog/phonics-activities-for-kids-at-home). For the specific question of whether software can replace instruction, use [Are Phonics Apps Enough, or Does a Child Still Need a Teacher?](/blog/are-phonics-apps-enough-for-kids). Blog 56 stays focused on the **parent’s role inside the reading-learning process**.',
+        'For a larger menu of games and practice formats, use [Phonics Activities for Kids at Home](/blog/phonics-activities-for-kids-at-home). For the specific question of whether software can replace instruction, use [Are Phonics Apps Enough, or Does a Child Still Need a Teacher?](/blog/are-phonics-apps-enough-for-kids). This guide stays focused on the **parent’s role inside the reading-learning process**.',
     },
 
     {

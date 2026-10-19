@@ -478,7 +478,7 @@ const AUTHORITY_BATCH_2_TOC_PREFIXES: Record<string, string[]> = {
   ],
   'child-gives-one-word-answers': [
     'Quick answer:',
-    'First separate Blog 37 from the nearby speaking problems',
+    'First check whether your child struggles to start speaking or to expand an answer',
     'The Tiny Steps six-question cause map for one-word answers',
     'The protected Tiny Steps answer-expansion checkpoint',
     'Use the smallest prompt that works',
