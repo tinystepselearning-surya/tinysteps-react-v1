@@ -19,7 +19,8 @@ permissions:
 jobs:
   verify:
     name: E3 guarded editorial content and production prerender (no deployment)
-    runs-on: ubuntu-latest
+    # Pin to the image supported by locked Playwright 1.57 (ubuntu-latest has moved to 26.04).
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
