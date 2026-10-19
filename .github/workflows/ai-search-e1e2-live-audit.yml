@@ -1,0 +1,52 @@
+name: AI Search E1 E2 Live Evidence Audit
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-ai-answer-e1e2-live.mjs'
+      - '.github/workflows/ai-search-e1e2-live-audit.yml'
+      - 'docs/seo/ai-answer-engines/**'
+      - 'src/lib/phonicsPublicationRegistry.js'
+      - 'src/lib/grammarProgrammaticSeoManifest.js'
+      - 'src/lib/grammarReferenceExtensionSeoManifest.js'
+      - 'src/lib/vocabularyAuthoritySeoManifest.js'
+      - 'public/sitemap-blog.xml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-e1e2-readonly-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Production answer HTML + JSON-LD evidence (read-only, no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install lockfile dependencies
+        run: npm ci
+      - name: Read real production responses and machine-readable article schemas
+        run: node scripts/audit-ai-answer-e1e2-live.mjs
+      - name: Scan all 168 governed and editorial pages (bounded, read-only)
+        run: node scripts/audit-ai-answer-e1e2-live.mjs --full
+      - name: Upload per-URL evidence including uncertain cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-answer-e1e2-live-evidence
+          path: |
+            artifacts/ai-answer-e1e2-sample.json
+            artifacts/ai-answer-e1e2-sample.csv
+            artifacts/ai-answer-e1e2-full.json
+            artifacts/ai-answer-e1e2-full.csv
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Confirm no deployment or mutation
+        run: echo "Read-only E1/E2 audit completed. No web deployment, indexing submission or production mutation."
