@@ -73,7 +73,7 @@ export const adminGetParentLedgerV3 = onCall(
     }
 
     const chargeRows = chargeSnap.docs.map((item) => ({
-      id: item.id, ...item.data() as Record<string, unknown>,
+      id: item.id, ...(item.data() as Record<string, unknown>),
     }));
     const sessionIds = [...new Set(chargeRows.map((row) =>
       String(row.sessionId || row.classSessionId || '').trim()).filter(Boolean))];
@@ -88,25 +88,24 @@ export const adminGetParentLedgerV3 = onCall(
       });
     }
 
-    const charges: LedgerChargeInput[] = chargeRows.map((row) => {
-      const sessionId = String(row.sessionId || row.classSessionId || '').trim();
-      const resolved = resolveCanonicalServiceDate(sessionsById.get(sessionId) || null, row);
-      const archived = row.archived === true;
-      const excluded = ['void', 'cancelled', 'canceled', 'reversed', 'refunded']
-        .includes(String(row.status || '').trim().toLowerCase());
-      // Even archived/voided charge dates should not silently poison the projection.
-      if (!archived && !excluded && (!resolved.serviceDate || typeof row.monthKey !== 'string')) {
-        throw new HttpsError('failed-precondition', 'Unresolved billing service date or billing month. Finance audit required.');
-      }
-      return {
-        id: row.id,
-        serviceDate: resolved.serviceDate || '2000-01-01',
-        monthKey: String(row.monthKey || '2000-01'),
-        amount: typeof row.amount === 'number' ? row.amount : Number.NaN,
-        status: typeof row.status === 'string' ? row.status : null,
-        archived,
-      };
-    });
+    const excludedStatuses = new Set(['void', 'cancelled', 'canceled', 'reversed', 'refunded']);
+    const charges: LedgerChargeInput[] = chargeRows
+      .filter((row) => row.archived !== true
+        && !excludedStatuses.has(String(row.status || '').trim().toLowerCase()))
+      .map((row) => {
+        const sessionId = String(row.sessionId || row.classSessionId || '').trim();
+        const resolved = resolveCanonicalServiceDate(sessionsById.get(sessionId) || null, row);
+        if (!resolved.serviceDate || typeof row.monthKey !== 'string') {
+          throw new HttpsError('failed-precondition', 'Unresolved billing service date or billing month. Finance audit required.');
+        }
+        return {
+          id: row.id,
+          serviceDate: resolved.serviceDate,
+          monthKey: row.monthKey,
+          amount: typeof row.amount === 'number' ? row.amount : Number.NaN,
+          status: typeof row.status === 'string' ? row.status : null,
+        };
+      });
 
     const receipts: LedgerReceiptInput[] = receiptSnap.docs.map((item) => {
       const row = item.data() as Record<string, unknown>;
@@ -118,11 +117,14 @@ export const adminGetParentLedgerV3 = onCall(
         || Number(row.amountPaise) <= 0) {
         throw new HttpsError('failed-precondition', 'Receipt integrity review required.');
       }
+      if (row.kind !== 'regular' && row.kind !== 'advance') {
+        throw new HttpsError('failed-precondition', 'Unknown receipt category.');
+      }
       return {
         id: item.id,
         amount: Number(row.amountPaise) / 100,
         receivedDate: String(row.receivedDate || ''),
-        kind: row.kind === 'advance' ? 'advance' : row.kind === 'regular' ? 'regular' : undefined,
+        kind: row.kind,
       };
     });
 
