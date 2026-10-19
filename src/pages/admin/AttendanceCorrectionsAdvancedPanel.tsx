@@ -27,7 +27,6 @@ import {
   type AttendanceCorrectionTeacherPayReasonCode,
 } from './attendanceCorrectionTeacherPay';
 import TeacherPayHandlingControl from './TeacherPayHandlingControl';
-import HistoricalAttendanceMissingSessionPanel from './HistoricalAttendanceMissingSessionPanel';
 
 type AttendanceCorrectionMode = 'existing' | 'create';
 
@@ -1385,9 +1384,6 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         </Button>
       </div>
 
-      <div className="border-t border-slate-200 pt-4">
-        <HistoricalAttendanceMissingSessionPanel />
-      </div>
     </Card>
   );
 }
