@@ -3,6 +3,7 @@ import * as admin from 'firebase-admin';
 import { FieldValue } from 'firebase-admin/firestore';
 import * as logger from 'firebase-functions/logger';
 import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
+import { resolveParentPaymentsV3Cutover } from './parentPaymentsV3Control';
 import {
   validateParentReceiptV3,
   parentReceiptV3MatchesExisting,
@@ -55,13 +56,8 @@ export const adminRecordParentReceiptV3 = onCall(
       const control = (controlSnap.data() || {}) as Record<string, unknown>;
 
       // A deliberate, separately approved switch. No code in this PR enables it.
-      if (control.phase !== 'active'
-        || control.receiptWritesEnabled !== true
-        || control.migrationVerified !== true
-        || control.billingPreservationVerified !== true
-        || control.legacyPaymentWritersDisabled !== true
-        || typeof control.cutoverRunId !== 'string'
-        || !control.cutoverRunId.trim()) {
+      const cutoverRunId = resolveParentPaymentsV3Cutover(control, true);
+      if (!cutoverRunId) {
         throw new HttpsError(
           'failed-precondition',
           'Parent Payments V3 is not activated after migration verification.',
@@ -94,7 +90,7 @@ export const adminRecordParentReceiptV3 = onCall(
         status: 'recorded',
         currency: 'INR',
         sourceSystem: 'parent_receipts_v3_admin',
-        cutoverRunId: control.cutoverRunId.trim(),
+        cutoverRunId,
         createdBy: actor,
         createdAt: FieldValue.serverTimestamp(),
       });
