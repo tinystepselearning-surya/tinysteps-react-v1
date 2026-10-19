@@ -1,0 +1,38 @@
+name: AI E4 Live Editorial Rollout Witness
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/audit-ai-e4-live-editorial-rollout.mjs'
+      - '.github/workflows/ai-e4-live-editorial-rollout.yml'
+      - 'docs/seo/ai-answer-engines/E4_*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observe:
+    name: Read public article deployment without modifying production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install exact read-only parse dependencies
+        run: npm ci
+      - name: Observe production E3 headings, old labels and BlogPosting graph
+        run: node scripts/audit-ai-e4-live-editorial-rollout.mjs
+      - name: Preserve direct-HTTP evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-e4-live-editorial-rollout
+          path: artifacts/ai-e4-three-article-rollout-witness.json
+          if-no-files-found: warn
+          retention-days: 30
+      - name: Confirm no deployment
+        run: echo "E4 read-only evidence generated; no Firebase deploy or indexing request."
