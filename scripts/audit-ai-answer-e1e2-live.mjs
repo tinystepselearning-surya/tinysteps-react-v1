@@ -150,7 +150,7 @@ const rows=await mapBounded(selected,fullScan ? 6 : 4,async item=>{
        (n.mainEntityOfPage?.['@id']||n.mainEntityOfPage)===ORIGIN+item.path+'#webpage'
     ));
     if(!match)row.flags.push('blogposting-headline-or-identity-mismatch');
-    if(match && (!match.datePublished||!match.dateModified||!match.author))row.flags.push('blogposting-missing-date-or-author');
+    if(match && (!match.datePublished||!match.author))row.flags.push('blogposting-missing-date-or-author');
     if(match && match.description && !normalize(match.description))row.flags.push('blogposting-empty-description');
     row.answerSignal=visible.includes('quick answer')&&row.mainChars>=900;
   } else if(item.family==='phonics'){
