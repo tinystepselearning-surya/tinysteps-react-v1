@@ -4,13 +4,13 @@
 **Scope:** Evidence-based search authority for Tiny Steps Learning, children aged **3–12**, across Google Search/AI Mode, Bing and Microsoft AI, ChatGPT Search and Gemini. Phonics, Reading, Grammar, Writing, Vocabulary, Speaking, Communication and public course curriculum.  
 **Live website:** https://tinystepslearning.com  
 **Parent tracking issue:** [#748](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/748)  
-**Current brick:** **B1 — Source content and authority baseline (in progress, not accepted until reproducible CI and review).**
+**Current brick:** **B1 — Source content and authority baseline, validated for acceptance on 2026-10-19 (CI #39288448253; merge required before official closure).**
 
 ## Seven-brick contract
 
 | ID | Name | Acceptance result | Current state |
 |---|---|---|---|
-| TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **IN PROGRESS** |
+| TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **VERIFIED; pending PR #758 merge** |
 | TSSA-7/B2 | Google and Bing indexing | Real inspection states, page/query/sitemap/robots evidence; only confirmed repairs | PLANNED; source issue #747 |
 | TSSA-7/B3 | Parent questions and curriculum coverage | Prioritized parent-intent map, one source owner per intent, meaningful stage/age boundaries | PLANNED |
 | TSSA-7/B4 | Educational content authority | Pedagogical review, independent references, appropriate author/expertise evidence, scoped editorial corrections | PLANNED |
@@ -99,11 +99,15 @@ The GSC owner report became available **after** the E4 GitHub document stated th
 - [x] Google/Microsoft first-party and native test evidence catalogued with disjoint metric definitions
 - [x] Automatic ledger compiler, ownership collision checks and repeatable CI evidence path authored
 
-**Open until CI succeeds and the review is approved:**
-- [ ] Confirm generated CSV has **279 unique canonical paths**, correct family counts, 28 Layer-1 entries and 12 benchmark owners from current source
-- [x] Inspect the 21 machine-directory `noindex` entries; isolate the two speaking-course alias collisions, with an explicit B2 investigation gate
-- [x] Inspect Layer-1 fallback owners, 133 unique layer-linked owners and zero unmatched canonical references
-- [ ] Review the exact audit-only diff and merge this baseline as a separate approved documentation/diagnostic change
+**B1 acceptance evidence reviewed 19 October 2026 (no production changes):**
+- [x] [GitHub CI #39288448253](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39288448253) completed successfully; all artifact-generation and count-gating steps passed
+- [x] Downloaded and inspected the **six actual files** in [CI artifact #12204975692](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39288448253/artifacts/12204975692); 279 distinct canonical CSV rows, 279 policy crosschecks, 28 Layer-1 problem rows, 12 priority owners, 17 audit rows
+- [x] Reviewed 21 machine-directory `noindex` entries and detected **exactly two** redirect-alias metadata conflicts; canonical route source policy is **260 indexable / 19 noindex**, while generator output is **258 / 21**. No other crosscheck mismatch; Google/Bing actual index verdicts remain unknown
+- [x] Inspected the two `hold-no-url` parent-problem mappings, 133 distinct owner URLs across all answer layers and zero unresolved owner paths; no additional thin articles required
+- [x] Reviewed PR #758 diff: only this roadmap, a read-only Node ledger compiler and one CI workflow; **no application source, lead handling, deployment, SEO rule or crawler policy changes**
+- [ ] Final acceptance: merge [PR #758](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/758) after reviewing the latest-head CI
+
+**B1 is technically ready to close; official completion is recorded after the above merge.**
 
 **Handoff to B2:** Individual real Google-selected canonical / Page Indexing states and Bing indexed states, crawler visits and coverage of additional routes. [Issue #747](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/747) tracks unresolved GSC outcomes. **Do not mass request indexing.**
 
