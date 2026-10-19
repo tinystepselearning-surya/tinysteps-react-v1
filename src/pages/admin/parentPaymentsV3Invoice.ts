@@ -25,6 +25,9 @@ const date = (iso: string): string => {
  */
 export function downloadParentLedgerV3Invoice(account: ParentLedgerAccountV3): string {
   assertParentLedgerAccountV3(account, account.parentId);
+  if (account.billingWarnings.length) {
+    throw new Error('Invoice download is blocked until attendance and class charges are reconciled.');
+  }
   const pdf = new jsPDF({ unit: 'pt', format: 'a4' });
   const margin = 42;
   const width = pdf.internal.pageSize.getWidth();
