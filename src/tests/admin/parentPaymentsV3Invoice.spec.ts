@@ -49,6 +49,7 @@ const example: ParentLedgerAccountV3 = {
     { id: 'two', serviceDate: '2026-10-09', monthKey: '2026-10', studentName: 'Example Child', courseName: 'Phonics',
       attendance: 'Not verified', amount: 500, applied: 500, due: 0 },
   ],
+  billingWarnings: [],
   receiptDetails: [{ id: 'receipt1', receivedDate: '2026-10-10', kind: 'regular',
     amount: 1200, method: 'UPI', reference: 'REF-1' }],
 };
