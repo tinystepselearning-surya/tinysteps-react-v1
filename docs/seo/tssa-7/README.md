@@ -4,14 +4,14 @@
 **Scope:** Evidence-based search authority for Tiny Steps Learning, children aged **3–12**, across Google Search/AI Mode, Bing and Microsoft AI, ChatGPT Search and Gemini. Phonics, Reading, Grammar, Writing, Vocabulary, Speaking, Communication and public course curriculum.  
 **Live website:** https://tinystepslearning.com  
 **Parent tracking issue:** [#748](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/748)  
-**Current brick:** **B1 — Source content and authority baseline, validated for acceptance on 2026-10-19 (CI #39288448253; merge required before official closure).**
+**Current brick:** **B2 — Google & Bing indexing verification (IN PROGRESS, first production indexability pilot in draft PR; platform-selected indexed verdicts still pending).** Brick **B1 COMPLETE**, merged [PR #758](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/758) 2026-10-19.
 
 ## Seven-brick contract
 
 | ID | Name | Acceptance result | Current state |
 |---|---|---|---|
-| TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **VERIFIED; pending PR #758 merge** |
-| TSSA-7/B2 | Google and Bing indexing | Real inspection states, page/query/sitemap/robots evidence; only confirmed repairs | PLANNED; source issue #747 |
+| TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **COMPLETE** — #758 merged; CI passed |
+| TSSA-7/B2 | Google and Bing indexing | Real inspection states, page/query/sitemap/robots evidence; only confirmed repairs | **IN PROGRESS** — read-only [pilot](./B2_INDEXABILITY_PILOT_2026-10-19.md); owner GSC/Bing inspection #747 |
 | TSSA-7/B3 | Parent questions and curriculum coverage | Prioritized parent-intent map, one source owner per intent, meaningful stage/age boundaries | PLANNED |
 | TSSA-7/B4 | Educational content authority | Pedagogical review, independent references, appropriate author/expertise evidence, scoped editorial corrections | PLANNED |
 | TSSA-7/B5 | Internal linking and external brand authority | Useful parent → explanation → practice/programme paths and substantiated entity/syndication evidence | PLANNED; unrelated draft #755 held |
@@ -105,12 +105,12 @@ The GSC owner report became available **after** the E4 GitHub document stated th
 - [x] Reviewed 21 machine-directory `noindex` entries and detected **exactly two** redirect-alias metadata conflicts; canonical route source policy is **260 indexable / 19 noindex**, while generator output is **258 / 21**. No other crosscheck mismatch; Google/Bing actual index verdicts remain unknown
 - [x] Inspected the two `hold-no-url` parent-problem mappings, 133 distinct owner URLs across all answer layers and zero unresolved owner paths; no additional thin articles required
 - [x] Reviewed PR #758 diff: only this roadmap, a read-only Node ledger compiler and one CI workflow; **no application source, lead handling, deployment, SEO rule or crawler policy changes**
-- [ ] Final acceptance: merge [PR #758](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/758) after reviewing the latest-head CI
+- [x] Final acceptance: [PR #758](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/758) merged with squash SHA `4e88368cb03350768026defa7ceb304aa8fa9d29` after latest-head [CI #39288874255](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39288874255) succeeded
 
-**B1 is technically ready to close; official completion is recorded after the above merge.**
+**B1 is COMPLETE.** Source-level discrepancies are explicitly queued in B2; no SEO-content deployment or live crawler/index policy change was made by B1.
 
 **Handoff to B2:** Individual real Google-selected canonical / Page Indexing states and Bing indexed states, crawler visits and coverage of additional routes. [Issue #747](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/747) tracks unresolved GSC outcomes. **Do not mass request indexing.**
 
 **Parallel work remains separate:** [Issue #756](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/756) investigates zero enquiries and GA4 reporting; [PR #755](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/755) remains draft/unmerged during release hold. [PR #754](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/754) is native-answer evidence and still draft/unmerged. This B1 PR will not merge either PR or deploy marketing changes.
 
-**Resume command for future sessions:** `Resume TSSA-7; open docs/seo/tssa-7/README.md and Issue #748; inspect latest B1 PR/CI and proceed from the next unmet acceptance gate.`
+**Resume command for future sessions:** `Resume TSSA-7; open docs/seo/tssa-7/README.md and Issue #748; B1 completed as PR #758. Continue B2 from its first unverified Google/Bing indexed-view gate.`
