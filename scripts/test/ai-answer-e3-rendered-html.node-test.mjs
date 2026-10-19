@@ -37,6 +37,6 @@ for(const {slug,heading} of cases){
       const collect=x=>{if(Array.isArray(x))x.forEach(collect);else if(x&&typeof x==='object'){graph.push(x);if(x['@graph'])collect(x['@graph']);}};
       collect(value);
     }
-    assert.ok(graph.some(x=>(Array.isArray(x['@type'])?x['@type']:[x['@type']]).includes('BlogPosting')&&x.url===base+'/blog/'+slug),'canonical BlogPosting schema must survive editorial correction');
+    assert.ok(graph.some(x=>(Array.isArray(x['@type'])?x['@type']:[x['@type']]).includes('BlogPosting')&&x.url===base+'/blog/'+slug),'canonical BlogPosting schema must survive editorial correction; present=' + JSON.stringify(graph.map(x=>({type:x['@type'],url:x.url,id:x['@id'],mainEntityOfPage:x.mainEntityOfPage}))).slice(0,3000));
   });
 }
