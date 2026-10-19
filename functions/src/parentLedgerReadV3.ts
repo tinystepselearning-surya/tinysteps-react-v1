@@ -2,6 +2,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
+import { resolveParentPaymentsV3Cutover } from './parentPaymentsV3Control';
 import { resolveCanonicalServiceDate } from './helpers/serviceDate';
 import {
   projectParentLedger,
@@ -40,12 +41,8 @@ export const adminGetParentLedgerV3 = onCall(
     const db = admin.firestore();
     const controlSnap = await db.collection('parentPaymentsV3Config').doc('control').get();
     const control = (controlSnap.data() || {}) as Record<string, unknown>;
-    if (control.phase !== 'active'
-      || control.migrationVerified !== true
-      || control.billingPreservationVerified !== true
-      || control.legacyPaymentWritersDisabled !== true
-      || typeof control.cutoverRunId !== 'string'
-      || !control.cutoverRunId.trim()) {
+    const cutoverRunId = resolveParentPaymentsV3Cutover(control);
+    if (!cutoverRunId) {
       throw new HttpsError('failed-precondition', 'V3 account statements are unavailable before verified cutover.');
     }
 
@@ -133,7 +130,7 @@ export const adminGetParentLedgerV3 = onCall(
       return {
         schemaVersion: 3,
         parentId,
-        cutoverRunId: control.cutoverRunId,
+        cutoverRunId,
         asOfDate: asOfDate || null,
         generatedAt: new Date().toISOString(),
         complete: true,
