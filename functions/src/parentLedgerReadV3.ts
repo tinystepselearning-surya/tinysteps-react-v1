@@ -128,6 +128,56 @@ export const adminGetParentLedgerV3 = onCall(
 
     try {
       const projection = projectParentLedger(charges, receipts, asOfDate);
+      const chargeById = new Map(chargeRows.map((row) => [row.id, row]));
+      const resolveLabel = (...values: unknown[]): string => {
+        for (const value of values) {
+          if (typeof value === 'string' && value.trim()) return value.trim().slice(0, 120);
+        }
+        return '';
+      };
+      const classDetails = projection.charges.map((charge) => {
+        const raw = chargeById.get(charge.id);
+        if (!raw) throw new Error('A calculated charge is missing from the source snapshot.');
+        const sessionId = resolveLabel(raw.sessionId, raw.classSessionId);
+        const session = sessionsById.get(sessionId) || null;
+        const childId = resolveLabel(raw.kidId, raw.studentId, session?.kidId, session?.studentId);
+        const attendanceMap = session?.attendance && typeof session.attendance === 'object'
+          ? session.attendance as Record<string, unknown>
+          : null;
+        const attendanceEntry = childId && attendanceMap ? attendanceMap[childId] : null;
+        const attendanceRaw = typeof attendanceEntry === 'string'
+          ? attendanceEntry
+          : (attendanceEntry && typeof attendanceEntry === 'object'
+            ? (attendanceEntry as Record<string, unknown>).status
+            : null);
+        const status = String(attendanceRaw || '').trim().toLowerCase();
+        const attendance = status === 'present' || status === 'late' ? 'Present'
+          : status === 'absent' || status === 'no_show' ? 'Absent' : 'Not verified';
+        return {
+          ...charge,
+          studentName: resolveLabel(
+            raw.kidName, raw.studentName, raw.childName,
+            session?.kidName, session?.studentName, session?.childName,
+          ) || 'Student',
+          courseName: resolveLabel(raw.courseName, session?.courseName, raw.courseId, session?.courseId) || 'Course not recorded',
+          attendance,
+        };
+      });
+      const receiptDetails = receiptSnap.docs
+        .filter((item) => !asOfDate || String(item.data().receivedDate || '') <= asOfDate)
+        .map((item) => {
+          const row = item.data() as Record<string, unknown>;
+          return {
+            id: item.id,
+            receivedDate: String(row.receivedDate || ''),
+            amount: Number(row.amountPaise) / 100,
+            kind: row.kind,
+            method: typeof row.method === 'string' ? row.method : null,
+            reference: typeof row.reference === 'string' ? row.reference : null,
+          };
+        })
+        .sort((left, right) => left.receivedDate.localeCompare(right.receivedDate)
+          || left.id.localeCompare(right.id));
       return {
         schemaVersion: 3,
         parentId,
@@ -137,7 +187,10 @@ export const adminGetParentLedgerV3 = onCall(
         complete: true,
         source: 'firestore_billing_charges_and_v3_receipts',
         chargeCount: chargeSnap.size,
-        receiptCount: receiptSnap.size,
+        receiptCount: receiptDetails.length,
+        parentName: String(parent.displayName || parent.name || parent.email || 'Parent').trim().slice(0, 120),
+        classDetails,
+        receiptDetails,
         ...projection,
       };
     } catch (error) {
