@@ -31,7 +31,7 @@ describe('AI Answer E3: parent-facing editorial integrity', () => {
       const contents=blocks.map(b=>String(b.content||''));
       expect(contents.some(x=>x===config.heading)).toBe(true);
       const combined=contents.join('\\n');
-      expect(combined).not.toMatch(/\\bBlog\\s+#?\\d+\\b/i);
+      expect(combined).not.toMatch(/\bBlog\s+#?\d+\b/i);
       for (const path of config.related) expect(combined).toContain(']('+path+')');
       expect(contents.some(x=>/^Quick answer/i.test(x))).toBe(true);
     });
