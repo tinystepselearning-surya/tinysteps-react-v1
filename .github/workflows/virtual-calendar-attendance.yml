@@ -32,6 +32,8 @@ on:
       - 'src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts'
       - 'src/tests/pages/TodaysNotificationsManualRefresh.spec.ts'
       - 'src/tests/pages/parent/ParentClassesView.spec.tsx'
+      - 'src/pages/admin/AttendanceCorrectionsAdvancedPanel.tsx'
+      - 'src/tests/pages/HistoricalAttendanceCorrectionRouting.spec.ts'
       - 'src/pages/admin/TodaysNotifications.tsx'
       - 'src/pages/admin/todaysNotificationsManualData.ts'
       - 'src/lib/sessionScheduleIntegrity.ts'
@@ -67,6 +69,8 @@ jobs:
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
           npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/TodaysNotificationsManualRefresh.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx src/tests/hooks/useTeacherSessions.spec.tsx src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/hooks/useTeacherStudents.spec.tsx src/tests/teacher/TeacherCalendarReadOnce.spec.ts src/tests/pages/parentClassSessionReadPolicy.spec.ts src/tests/pages/ParentDashboardClassSessionReadPlan.spec.ts
+      - name: Admin historical attendance retirement and attendance-status regressions
+        run: npx vitest run src/tests/pages/HistoricalAttendanceCorrectionRouting.spec.ts src/tests/attendance/attendanceStatusSimplification.spec.ts
       - name: Full backend regression
         run: npm --prefix functions test
       - name: Deployment and retirement regressions (mocked mutations only)
