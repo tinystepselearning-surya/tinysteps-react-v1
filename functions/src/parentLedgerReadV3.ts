@@ -70,7 +70,8 @@ export const adminGetParentLedgerV3 = onCall(
     }
 
     const chargeRows = chargeSnap.docs.map((item) => ({
-      id: item.id, ...(item.data() as Record<string, unknown>),
+      ...(item.data() as Record<string, unknown>),
+      id: item.id, // authoritative Firestore document ID wins over any data field
     }));
     const sessionIds = [...new Set(chargeRows.map((row) =>
       String(row.sessionId || row.classSessionId || '').trim()).filter(Boolean))];
