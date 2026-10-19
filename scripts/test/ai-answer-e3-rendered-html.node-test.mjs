@@ -37,6 +37,18 @@ for(const {slug,heading} of cases){
       const collect=x=>{if(Array.isArray(x))x.forEach(collect);else if(x&&typeof x==='object'){graph.push(x);if(x['@graph'])collect(x['@graph']);}};
       collect(value);
     }
-    assert.ok(graph.some(x=>(Array.isArray(x['@type'])?x['@type']:[x['@type']]).includes('BlogPosting')&&x.url===base+'/blog/'+slug),'canonical BlogPosting schema must survive editorial correction; present=' + JSON.stringify(graph.map(x=>({type:x['@type'],url:x.url,id:x['@id'],mainEntityOfPage:x.mainEntityOfPage}))).slice(0,3000));
+    const canonical=base+'/blog/'+slug;
+    const hasCorrectArticle=graph.some(article=>{
+      const types=Array.isArray(article['@type'])?article['@type']:[article['@type']];
+      if(!types.includes('BlogPosting'))return false;
+      if(article.url!==undefined && article.url!==canonical)return false;
+      if(article.url===canonical)return true;
+      const pageId=typeof article.mainEntityOfPage==='string'?article.mainEntityOfPage:article.mainEntityOfPage?.['@id'];
+      return graph.some(node=>{
+        const nodeTypes=Array.isArray(node['@type'])?node['@type']:[node['@type']];
+        return nodeTypes.includes('WebPage')&&node['@id']===pageId&&node.url===canonical;
+      });
+    });
+    assert.ok(hasCorrectArticle,'BlogPosting must identify a canonical URL directly or via its actual WebPage node');
   });
 }
