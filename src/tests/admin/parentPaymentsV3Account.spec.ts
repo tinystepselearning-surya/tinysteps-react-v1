@@ -20,6 +20,7 @@ const sample = {
   netDue: -100,
   months: [{ monthKey: '2026-10', classes: 2, billed: 1500, applied: 1500, due: 0 }],
   classDetails: [],
+  billingWarnings: [],
   receiptDetails: [],
 } as const;
 
