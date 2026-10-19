@@ -37,6 +37,21 @@ The 111 extra entries include resource hubs, parent-help, course/commercial, act
 
 **Strongest dated technical source:** [168-URL production E1/E2 audit](../ai-answer-engines/E1E2_LIVE_168_URL_AUDIT_2026-10-19.md). The current B1 script **does not re-run 168 HTTP checks** and records that evidence as `PASS_WITHIN_E1E2_SCOPE` as of **19 October 2026**, not a permanent live check. Other 111 rows receive `NOT_INCLUDED_IN_168_URL_SCAN`; actual Google and Bing individual indexed verdicts stay `UNVERIFIED`.
 
+### B1 source-policy discrepancy — two public-speaking course URLs
+
+**Verified against current `main` source**: the generated `ai-resource-index.json` currently classifies **21 of 279** entries as `noindex`. **19** are supporting/private/legal or intentionally excluded source URLs; **two are different**:
+
+| Canonical destination | Generated AI directory | Canonical course-route policy | Cause |
+|---|---|---|---|
+| `/courses/public-speaking-foundations` | `noindex` | `/courses/**` **index** | Older `/courses/basic-public-speaking[\/]` redirect aliases have `noindex` in `routeSeoRegistry.js` |
+| `/courses/public-speaking-excellence` | `noindex` | `/courses/**` **index** | Older `/courses/advanced-public-speaking[\/]` redirect aliases have `noindex` in `routeSeoRegistry.js` |
+
+`scripts/generate-rss.mjs` builds the directory corpus from the **union** of the public manifest and `routeSeoRegistry.js`, chooses each entry's **canonicalPath**, and retains the first record for a canonical URL. Redirect-source metadata can therefore be attributed to its actual destination before the destination's own source-policy is considered. This is a **machine discovery-directory classification conflict, not verified live course-page noindex**. The two routes remain declared as public canonical 301 destinations, and the site's dynamic `/courses/**` SEO intent is **index/follow**. Do not rewrite page canonicals or request indexing on the strength of this artifact.
+
+**B1 action:** Add `SOURCE_INDEX_POLICY_CROSSCHECK.csv` with all 279 generated entries, direct canonical route-policy comparison, mismatch markers and redirect alias trace. CI fails if any **additional, unrecognized** classification conflict appears. The current two are documented evidence and **deferred to B2**, which must reproduce the actual served robots/meta, sitemap, GSC selected canonical/index state and Bing URL inspection before a scoped generator fix. Correct machine metadata only after establishing canonical ownership and regression tests. Machine-directory `258 indexable + 21 noindex` and source route-policy `260 indexable + 19 noindex` describe **different source-level classifications**; neither is a Google-index count.
+
+Also note **two of the 28 Layer-1 parent problems** are deliberately in source state `hold-no-url`; the mapping can legitimately fall back to the Phonics resource hub rather than inventing two thin answer pages. This is **not** evidence of two missing publication requirements. B3 should check whether parents can resolve the concern using existing guides.
+
 **Curriculum source:** `src/config/semanticFacts.ts`, `src/content/phonicsCurriculum.ts`, `src/content/grammarCurriculum.ts`, `src/content/speakingCurriculum.ts` and public course catalogue. Phonics 31 + 40 + 30 = **101**; Grammar 36 + 36 = **72**; Speaking 36 + 36 = **72**. Total **7 public levels / 245 internal structured lessons**. These are programme teaching counts, not published standalone SEO-page counts.
 
 **Existing audits:** All **17 workstream reports A01–A17** were integrated in [the consolidated register](../visibility-17-audits/COMPREHENSIVE_FINDINGS.md) as of 17 October. A01 was “evidence collected”; A02–A17 “complete with limitations”. Many report-level Google/Bing/native-AI statements precede the later 19 October first-party data and should not be falsely promoted to current outcomes or erase more recent measurements.
@@ -55,7 +70,8 @@ The script writes these **audit artifacts** to `artifacts/tssa7-b1/` (ephemeral;
 - `PARENT_PROBLEM_OWNER_MAP.csv` — the established **28** Layer-1 parent problems, their canonical owner and teaching/practice links
 - `PRIORITY_12_CANONICAL_OWNERS.csv` — source-owned benchmark question owners from the existing 12×4 native matrix; **not** a claim that a source was cited
 - `SEVENTEEN_AUDIT_CROSSWALK.csv` — A01–A17 report existence and honest dated evidence limitations
-- `BASELINE_SUMMARY.json` — distinct count, directory revision, indexable-vs-noindex policy split, layer totals, unowned layer paths, 7 levels/245 lessons and validation results
+- `SOURCE_INDEX_POLICY_CROSSCHECK.csv` — all 279 directory entries versus canonical route indexing intent, including redirect alias metadata conflicts (not actual Google exclusions)
+- `BASELINE_SUMMARY.json` — distinct count, directory revision, machine-directory and canonical-route policy splits, layer totals, unowned layer paths, 7 levels/245 lessons and validation results
 
 The script fails on duplicate canonical ownership, broken 83-blog sitemap reconciliation, divergent 279/168 family counts, missing A01–A17 source reports, misplaced 12 benchmark owner URLs or curriculum-total drift. These thresholds are a **dated snapshot**: if real publication changes later, review the new count and refresh the baseline instead of manipulating the source to force 279.
 
@@ -85,8 +101,8 @@ The GSC owner report became available **after** the E4 GitHub document stated th
 
 **Open until CI succeeds and the review is approved:**
 - [ ] Confirm generated CSV has **279 unique canonical paths**, correct family counts, 28 Layer-1 entries and 12 benchmark owners from current source
-- [ ] Inspect actual number and identity of deliberately `noindex` entries; do not change them to index for vanity totals
-- [ ] Review source-classification anomalies and any layer canonical references not in corpus
+- [x] Inspect the 21 machine-directory `noindex` entries; isolate the two speaking-course alias collisions, with an explicit B2 investigation gate
+- [x] Inspect Layer-1 fallback owners, 133 unique layer-linked owners and zero unmatched canonical references
 - [ ] Review the exact audit-only diff and merge this baseline as a separate approved documentation/diagnostic change
 
 **Handoff to B2:** Individual real Google-selected canonical / Page Indexing states and Bing indexed states, crawler visits and coverage of additional routes. [Issue #747](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/747) tracks unresolved GSC outcomes. **Do not mass request indexing.**
