@@ -113,7 +113,10 @@ if(robotsResponse.status===200 && robots.length) {
   for(const group of robots) if(!group.explicitGroup||!group.publicAllow||!group.privateProtected)
     findings.push({severity:'investigate',scope:'robots',issue:'source crawler policy mismatch',agent:group.agent});
 }
-const rows=await mapBounded(samples,4,async item=>{
+const fullScan=process.argv.includes('--full');
+const selected=fullScan ? Object.entries(inventory).flatMap(([family,paths])=>paths.map(path=>({family,path}))) : samples;
+const outName=fullScan ? 'ai-answer-e1e2-full' : 'ai-answer-e1e2-sample';
+const rows=await mapBounded(selected,fullScan ? 6 : 4,async item=>{
   const response=await request(ORIGIN+item.path);
   const row={...item,status:response.status??null,error:response.error||null,contentType:response.type||null,
     cacheControl:response.cache||null,xRobots:response.xRobots||null,location:response.location||null,
@@ -155,27 +158,27 @@ const rows=await mapBounded(samples,4,async item=>{
     row.answerSignal=visible.includes('quick answer')&&visible.includes('common confusion');
   } else if(item.family==='grammar'){
     if(!hasType('WebPage')||!hasType('BreadcrumbList'))row.flags.push('grammar-webpage-or-breadcrumb-schema-missing');
-    row.answerSignal=visible.includes('quick answer')&&visible.includes('example');
+    row.answerSignal=visible.includes('what this grammar skill means')&&visible.includes('worked examples');
   } else {
     if(!hasType('Article')||!hasType('BreadcrumbList'))row.flags.push('vocabulary-article-or-breadcrumb-schema-missing');
-    row.answerSignal=visible.includes('quick answer')&&visible.includes('example');
+    row.answerSignal=visible.includes('what this vocabulary skill means')&&visible.includes('worked examples');
   }
   if(!row.answerSignal)row.unknowns.push('parent-answer-pattern-needs-human-review');
   return row;
 });
 await mkdir('artifacts',{recursive:true});
 const output={
-  generatedAt:new Date().toISOString(),origin:ORIGIN,method:'ordinary read-only HTTP fetch; NOT a Googlebot IP / AI crawler or native answer engine',sourceInventory:{
+  generatedAt:new Date().toISOString(),scope:fullScan?'full-inventory':'representative-18',origin:ORIGIN,method:'ordinary read-only HTTP fetch; NOT a Googlebot IP / AI crawler or native answer engine',sourceInventory:{
     counts:Object.fromEntries(Object.entries(inventory).map(([k,v])=>[k,v.length])),
     uniquePaths:168,programmaticGuides:85,blogArticleCount:83
   },robots:{status:robotsResponse.status||null,error:robotsResponse.error||null,groups:robots},
   samples:rows,confirmedFlags:rows.flatMap(row=>row.flags.map(flag=>({path:row.path,flag}))),
   inaccessibleOrUnverified:rows.filter(row=>row.unknowns.length||row.error).map(row=>({path:row.path,unknowns:row.unknowns,error:row.error})),
 };
-await writeFile('artifacts/ai-answer-e1e2-sample.json',JSON.stringify(output,null,2)+'\n');
+await writeFile('artifacts/'+outName+'.json',JSON.stringify(output,null,2)+'\n');
 const csvCell=x=>'"'+String(x??'').replace(/"/g,'""').replace(/\r?\n/g,' ')+'"';
 const cols=['family','path','status','error','canonical','h1','mainChars','jsonLdScripts','schemaTypes','flags','unknowns','answerSignal','cacheControl','xRobots'];
-await writeFile('artifacts/ai-answer-e1e2-sample.csv',cols.join(',')+'\n'+rows.map(row=>cols.map(col=>csvCell(Array.isArray(row[col])?row[col].join(';'):row[col])).join(',')).join('\n')+'\n');
+await writeFile('artifacts/'+outName+'.csv',cols.join(',')+'\n'+rows.map(row=>cols.map(col=>csvCell(Array.isArray(row[col])?row[col].join(';'):row[col])).join(',')).join('\n')+'\n');
 console.log('AI_E1E2_INVENTORY '+JSON.stringify(output.sourceInventory));
 console.log('AI_E1E2_ROBOTS '+JSON.stringify(output.robots));
 for(const row of rows) console.log('AI_E1E2_URL '+JSON.stringify(row));
@@ -183,5 +186,5 @@ console.log('AI_E1E2_SUMMARY '+JSON.stringify({
   count:rows.length,readableHtml:rows.filter(x=>x.status===200&&x.mainChars>=350).length,
   jsonLdScriptsPresent:rows.filter(x=>x.jsonLdScripts>0).length,
   flags:output.confirmedFlags.length,unknowns:output.inaccessibleOrUnverified.length,
-  artifacts:['artifacts/ai-answer-e1e2-sample.json','artifacts/ai-answer-e1e2-sample.csv']
+  artifacts:['artifacts/'+outName+'.json','artifacts/'+outName+'.csv']
 }));
