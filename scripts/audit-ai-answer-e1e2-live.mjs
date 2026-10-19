@@ -194,7 +194,7 @@ const discovery=await mapBounded(discoveryPaths,4,async pathname=>{
       }
     }catch(e){result.flags.push('malformed-ai-index-json');result.parseError=String(e?.message||e);}
   } else if(pathname.startsWith('/sitemap-') && pathname.endsWith('.xml')){
-    const locs=[...r.body.matchAll(/<loc>\\s*([^<]+)\\s*<\\/loc>/gi)].map(x=>x[1].trim());
+    const locs=[...r.body.matchAll(/<loc>\s*([^<]+)\s*<\/loc>/gi)].map(x=>x[1].trim());
     const expected=pathname==='/sitemap-blog.xml' ? inventory.blog : [...inventory.phonics,...inventory.grammar,...inventory.vocabulary];
     const missing=expected.filter(x=>!locs.includes(ORIGIN+x));
     result.sitemapLocs=locs.length;
