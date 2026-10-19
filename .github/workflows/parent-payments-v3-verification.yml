@@ -1,0 +1,51 @@
+name: Parent Payments V3 Verification
+
+on:
+  push:
+    branches:
+      - feat/parent-receipts-ledger-v3-20261019
+  pull_request:
+    paths:
+      - 'functions/src/parentReceiptV3Contract.ts'
+      - 'functions/src/parentReceiptsV3.ts'
+      - 'functions/src/parentLedgerProjectionV3.ts'
+      - 'functions/src/parentLedgerReadV3.ts'
+      - 'functions/src/parentPaymentsV3Control.ts'
+      - 'functions/test/parentReceiptV3Contract.spec.ts'
+      - 'functions/test/parentPaymentsV3Control.spec.ts'
+      - 'src/pages/admin/ParentPaymentsV3.tsx'
+      - 'src/pages/admin/parentPaymentsV3Account.ts'
+      - 'src/pages/admin/parentPaymentsV3Invoice.ts'
+      - 'src/tests/admin/parentPaymentsV3Account.spec.ts'
+      - 'src/tests/admin/parentPaymentsV3Invoice.spec.ts'
+      - 'src/tests/pages/ParentPaymentsV3.spec.tsx'
+      - 'src/tests/lib/parentPaymentsLedgerV3.spec.ts'
+      - '.github/workflows/parent-payments-v3-verification.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  finance-v3:
+    name: Compile and test parent receipts V3
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install application dependencies
+        run: npm ci --ignore-scripts
+      - name: Install Cloud Function dependencies
+        run: npm --prefix functions ci --ignore-scripts
+      - name: Compile functions
+        run: npm --prefix functions run build
+      - name: Typecheck application and tests
+        run: npm run typecheck
+      - name: Test receipt validation and cutover gate
+        run: npx vitest run --config functions/vitest.config.ts functions/test/parentReceiptV3Contract.spec.ts functions/test/parentPaymentsV3Control.spec.ts
+      - name: Test ledger, dashboard and PDF
+        run: npx vitest run src/tests/lib/parentPaymentsLedgerV3.spec.ts src/tests/admin/parentPaymentsV3Account.spec.ts src/tests/admin/parentPaymentsV3Invoice.spec.ts src/tests/pages/ParentPaymentsV3.spec.tsx
