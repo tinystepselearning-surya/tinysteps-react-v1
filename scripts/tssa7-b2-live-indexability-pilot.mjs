@@ -75,7 +75,7 @@ const results=await Promise.all(PATHS.map(async path=>{
   return o;
 }));
 // Distinguish site-specific failures from runner-wide outbound networking failures.
-const networkControl=await request('https://example.com/');
+const [networkControl,wwwControl,httpApexControl]=await Promise.all([request('https://example.com/'),request('https://www.tinystepslearning.com/'),request('http://tinystepslearning.com/')]);
 const summary={project:'TSSA-7',brick:'B2',observedAt:stamp,
   evidenceMode:'normal ordinary HTTP GET, no verified crawler or Google/Bing index inspection',
   candidateCount:results.length,
@@ -86,6 +86,12 @@ const summary={project:'TSSA-7',brick:'B2',observedAt:stamp,
   sitemapReady,machineDirectoryAvailable:byCanonical.size>0,
   networkControl:{host:'https://example.com/',status:networkControl.status??null,
     error:networkControl.error??null,causeCode:networkControl.causeCode??null,causeMessage:networkControl.causeMessage??null},
+  alternateHostControls:{
+    httpsWww:{status:wwwControl.status??null,error:wwwControl.error??null,
+      code:wwwControl.causeCode??null,cause:wwwControl.causeMessage??null,location:wwwControl.location??null},
+    httpApex:{status:httpApexControl.status??null,error:httpApexControl.error??null,
+      code:httpApexControl.causeCode??null,cause:httpApexControl.causeMessage??null,location:httpApexControl.location??null}
+  },
   machineDirectoryError:{error:machine.error??null,causeCode:machine.causeCode??null,causeMessage:machine.causeMessage??null},
   sitemapIndexError:{error:sitemap.error??null,causeCode:sitemap.causeCode??null,causeMessage:sitemap.causeMessage??null},
   googleIndexedUrlsVerified:0,bingIndexedUrlsVerified:0};
