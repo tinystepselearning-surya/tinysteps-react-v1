@@ -166,13 +166,47 @@ const rows=await mapBounded(selected,fullScan ? 6 : 4,async item=>{
   if(!row.answerSignal)row.unknowns.push('parent-answer-pattern-needs-human-review');
   return row;
 });
+// Machine directories are optional discovery aids, not mandated AI-ranking endpoints.
+const discoveryPaths=['/ai-resource-index.json','/ai-resource-index.txt','/llms.txt','/llms-full.txt'];
+const discovery=await mapBounded(discoveryPaths,4,async pathname=>{
+  const r=await request(ORIGIN+pathname);
+  const result={path:pathname,status:r.status??null,contentType:r.type??null,bytes:r.body?.length??0,error:r.error??null,flags:[]};
+  if(r.error||!r.status||r.status>=500||r.status===429){result.flags.push('origin-response-unverified');return result;}
+  if(r.status!==200||!r.body||/^\\s*<!doctype html/i.test(r.body)){result.flags.push('missing-or-html-fallback');return result;}
+  if(pathname.endsWith('.json')){
+    try {
+      const index=JSON.parse(r.body);
+      result.revision=index.revision;
+      result.corpusCounts=index.corpus_counts;
+      const keys={blog:'editorial_blogs',phonics:'programmatic_phonics_guides',grammar:'programmatic_grammar_guides',vocabulary:'vocabulary_authority_guides'};
+      for(const [family,key] of Object.entries(keys)){
+        const entries=index.corpus?.[key];
+        const expected=inventory[family].map(x=>ORIGIN+x);
+        const found=Array.isArray(entries)?entries.map(x=>x.canonical_url):[];
+        const missing=expected.filter(x=>!found.includes(x));
+        const unexpected=found.filter(x=>!expected.includes(x));
+        if(missing.length||unexpected.length||found.length!==expected.length){
+          result.flags.push('ai-json-corpus-parity-'+family);
+          result[family+'MissingCount']=missing.length;
+          result[family+'UnexpectedCount']=unexpected.length;
+          result[family+'ActualCount']=found.length;
+        }
+      }
+    }catch(e){result.flags.push('malformed-ai-index-json');result.parseError=String(e?.message||e);}
+  } else if(pathname==='/ai-resource-index.txt' && !r.body.includes('Canonical:')){
+    result.flags.push('ai-index-text-lacks-canonical-owner-links');
+  } else if(pathname.startsWith('/llms') && !r.body.includes('ai-resource-index.json')){
+    result.flags.push('llm-directory-lacks-ai-answer-index-link');
+  }
+  return result;
+});
 await mkdir('artifacts',{recursive:true});
 const output={
   generatedAt:new Date().toISOString(),scope:fullScan?'full-inventory':'representative-18',origin:ORIGIN,method:'ordinary read-only HTTP fetch; NOT a Googlebot IP / AI crawler or native answer engine',sourceInventory:{
     counts:Object.fromEntries(Object.entries(inventory).map(([k,v])=>[k,v.length])),
     uniquePaths:168,programmaticGuides:85,blogArticleCount:83
   },robots:{status:robotsResponse.status||null,error:robotsResponse.error||null,groups:robots},
-  samples:rows,confirmedFlags:rows.flatMap(row=>row.flags.map(flag=>({path:row.path,flag}))),
+  discovery,samples:rows,confirmedFlags:rows.flatMap(row=>row.flags.map(flag=>({path:row.path,flag}))),
   inaccessibleOrUnverified:rows.filter(row=>row.unknowns.length||row.error).map(row=>({path:row.path,unknowns:row.unknowns,error:row.error})),
 };
 await writeFile('artifacts/'+outName+'.json',JSON.stringify(output,null,2)+'\n');
@@ -181,6 +215,7 @@ const cols=['family','path','status','error','canonical','h1','mainChars','jsonL
 await writeFile('artifacts/'+outName+'.csv',cols.join(',')+'\n'+rows.map(row=>cols.map(col=>csvCell(Array.isArray(row[col])?row[col].join(';'):row[col])).join(',')).join('\n')+'\n');
 console.log('AI_E1E2_INVENTORY '+JSON.stringify(output.sourceInventory));
 console.log('AI_E1E2_ROBOTS '+JSON.stringify(output.robots));
+console.log('AI_E1E2_DISCOVERY '+JSON.stringify(discovery));
 for(const row of rows) console.log('AI_E1E2_URL '+JSON.stringify(row));
 console.log('AI_E1E2_SUMMARY '+JSON.stringify({
   count:rows.length,readableHtml:rows.filter(x=>x.status===200&&x.mainChars>=350).length,
