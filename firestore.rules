@@ -1888,6 +1888,20 @@ function teacherProgressIdentityUnchanged() {
       allow read, create, update, delete: if false;
     }
 
+    // V3 finance migration gate and immutable receipt journal: all access is
+    // via canonical-admin-authenticated Cloud Functions, never client SDK writes.
+    // The new receipt service is closed until verified cutover.
+    match /parentPaymentsV3Config/{docId} {
+      allow read, write: if false;
+    }
+
+    match /parentReceiptsV3/{parentId} {
+      allow read, write: if false;
+      match /receipts/{receiptId} {
+        allow read, write: if false;
+      }
+    }
+
     // ----------------------------
     // CONFIG COLLECTION
     // ----------------------------
