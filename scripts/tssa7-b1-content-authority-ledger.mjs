@@ -169,7 +169,7 @@ const routePolicy = (p) => {
   if (dynamic) return {state:dynamic.intent === 'index' ? 'indexable' : 'noindex',
     source:'DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST'};
   const config = ROUTE_SEO_REGISTRY[p];
-  if (config?.robots) return {state:/\\bnoindex\\b/i.test(config.robots) ? 'noindex' : 'indexable',
+  if (config?.robots) return {state:/noindex/i.test(config.robots) ? 'noindex' : 'indexable',
     source:'ROUTE_SEO_REGISTRY_CANONICAL_ENTRY'};
   return {state:'NOT_DECLARED_EXPLICITLY',source:'NO_DIRECT_POLICY'};
 };
@@ -178,7 +178,7 @@ const policyRows = ledger.map((row) => {
   const resolved = routePolicy(p);
   const aliases = Object.entries(ROUTE_SEO_REGISTRY)
     .filter(([alias, config]) => alias !== p && config?.canonicalPath === p &&
-      /\\bnoindex\\b/i.test(String(config.robots || '')) && directRedirects.get(alias)?.destination === p)
+      /noindex/i.test(String(config.robots || '')) && directRedirects.get(alias)?.destination === p)
     .map(([alias])=>alias);
   const conflict = resolved.state !== 'NOT_DECLARED_EXPLICITLY' && resolved.state !== row.indexed_by_design;
   return {canonical_path:p, corpus_family:row.corpus_family,
