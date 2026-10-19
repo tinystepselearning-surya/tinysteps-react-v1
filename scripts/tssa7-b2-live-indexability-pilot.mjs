@@ -25,7 +25,7 @@ const request=async url=>{
       xRobots:res.headers.get('x-robots-tag')||'',
       cache:res.headers.get('cache-control')||'',
       location:res.headers.get('location')||'',body:await res.text()};
-  }catch(e){return {error:String(e?.message||e)};}
+  }catch(e){return {error:String(e?.message||e),causeCode:e?.cause?.code||null,causeMessage:String(e?.cause?.message||''),causeName:e?.cause?.name||null};}
 };
 const stamp=new Date().toISOString();
 const sitemap=await request(ORIGIN+'/sitemap.xml');
@@ -49,7 +49,7 @@ const results=await Promise.all(PATHS.map(async path=>{
     verdict:'NOT_OBSERVED',flags:[],unknowns:[],
     gscIndexedVerdict:'UNVERIFIED',bingIndexedVerdict:'UNVERIFIED'};
   const page=await request(url);
-  if(page.error){o.unknowns.push('origin request: '+page.error);return o;}
+  if(page.error){o.unknowns.push('origin request: '+page.error+(page.causeCode?' ['+page.causeCode+']':'')+(page.causeMessage?' '+page.causeMessage:''));return o;}
   o.originStatus=page.status;o.xRobots=page.xRobots;o.cache=page.cache;
   o.sitemapListed=sitemapReady ? allLocations.has(url) : null;
   if(!sitemapReady)o.unknowns.push('sitemap index or child sitemap retrieval incomplete');
@@ -74,6 +74,8 @@ const results=await Promise.all(PATHS.map(async path=>{
   o.verdict=o.flags.length?'OBSERVED_TECHNICAL_FLAG':'LIVE_INDEXABILITY_ELIGIBLE';
   return o;
 }));
+// Distinguish site-specific failures from runner-wide outbound networking failures.
+const networkControl=await request('https://example.com/');
 const summary={project:'TSSA-7',brick:'B2',observedAt:stamp,
   evidenceMode:'normal ordinary HTTP GET, no verified crawler or Google/Bing index inspection',
   candidateCount:results.length,
@@ -82,6 +84,10 @@ const summary={project:'TSSA-7',brick:'B2',observedAt:stamp,
   technicalFlags:results.filter(x=>x.flags.length).length,
   incomplete:results.filter(x=>x.unknowns.length).length,
   sitemapReady,machineDirectoryAvailable:byCanonical.size>0,
+  networkControl:{host:'https://example.com/',status:networkControl.status??null,
+    error:networkControl.error??null,causeCode:networkControl.causeCode??null,causeMessage:networkControl.causeMessage??null},
+  machineDirectoryError:{error:machine.error??null,causeCode:machine.causeCode??null,causeMessage:machine.causeMessage??null},
+  sitemapIndexError:{error:sitemap.error??null,causeCode:sitemap.causeCode??null,causeMessage:sitemap.causeMessage??null},
   googleIndexedUrlsVerified:0,bingIndexedUrlsVerified:0};
 await mkdir('artifacts/tssa7-b2',{recursive:true});
 await writeFile('artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json',JSON.stringify({summary,results},null,2)+'\n');
