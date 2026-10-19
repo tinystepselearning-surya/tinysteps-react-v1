@@ -8,6 +8,8 @@
  * Outputs are local audit artifacts, NOT instructions to index every route.
  * The complete on-site corpus includes intentionally noindex support routes.
  */
+import { PUBLIC_ROUTE_MANIFEST, DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST, PUBLIC_REDIRECT_MANIFEST } from '../src/lib/publicRouteManifest.js';
+import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -151,6 +153,56 @@ writeCsv('CONTENT_AUTHORITY_LEDGER.csv', [
   'gsc_ai_page_metrics','microsoft_citation_metrics','origin'
 ], ledger);
 
+// Cross-check generated discovery metadata against the canonical route's own source policy.
+// Redirect aliases (and their noindex instruction) do NOT inherit authority over the
+// final 301 destination. A conflict in this directory is not a Google-indexing verdict.
+const directPublicRoutes = new Map(PUBLIC_ROUTE_MANIFEST.map((route) => [route.path, route]));
+const directRedirects = new Map(PUBLIC_REDIRECT_MANIFEST.map((route) => [route.source, route]));
+const routePolicy = (p) => {
+  const explicit = directPublicRoutes.get(p);
+  if (explicit) return { state:explicit.indexable === false ? 'noindex':'indexable', source:'PUBLIC_ROUTE_MANIFEST' };
+  const dynamic = DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST.find((rule) => {
+    if (!rule.path.endsWith('/**')) return false;
+    const prefix = rule.path.slice(0, -2);
+    return p.startsWith(prefix);
+  });
+  if (dynamic) return {state:dynamic.intent === 'index' ? 'indexable' : 'noindex',
+    source:'DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST'};
+  const config = ROUTE_SEO_REGISTRY[p];
+  if (config?.robots) return {state:/\\bnoindex\\b/i.test(config.robots) ? 'noindex' : 'indexable',
+    source:'ROUTE_SEO_REGISTRY_CANONICAL_ENTRY'};
+  return {state:'NOT_DECLARED_EXPLICITLY',source:'NO_DIRECT_POLICY'};
+};
+const policyRows = ledger.map((row) => {
+  const p = row.canonical_path;
+  const resolved = routePolicy(p);
+  const aliases = Object.entries(ROUTE_SEO_REGISTRY)
+    .filter(([alias, config]) => alias !== p && config?.canonicalPath === p &&
+      /\\bnoindex\\b/i.test(String(config.robots || '')) && directRedirects.get(alias)?.destination === p)
+    .map(([alias])=>alias);
+  const conflict = resolved.state !== 'NOT_DECLARED_EXPLICITLY' && resolved.state !== row.indexed_by_design;
+  return {canonical_path:p, corpus_family:row.corpus_family,
+    machine_index_state:row.indexed_by_design,
+    canonical_route_policy_state:resolved.state,
+    policy_source:resolved.source,
+    metadata_conflict:conflict ? 'YES' : 'NO',
+    noindex_redirect_aliases:aliases.join(' | '),
+    google_index_verdict:'NOT_TESTED_BY_SOURCE_CROSSCHECK'};
+});
+writeCsv('SOURCE_INDEX_POLICY_CROSSCHECK.csv',[
+ 'canonical_path','corpus_family','machine_index_state',
+ 'canonical_route_policy_state','policy_source','metadata_conflict',
+ 'noindex_redirect_aliases','google_index_verdict'
+],policyRows);
+const sourcePolicyConflicts = policyRows.filter((row)=>row.metadata_conflict==='YES');
+const knownCanonicalAliasConflicts = new Set([
+  '/courses/public-speaking-foundations','/courses/public-speaking-excellence'
+]);
+const unexpectedConflicts = sourcePolicyConflicts.filter((row)=>!knownCanonicalAliasConflicts.has(row.canonical_path));
+if (unexpectedConflicts.length) fail('unexpected machine-index vs canonical route policy differences: '+JSON.stringify(unexpectedConflicts));
+const sourcePolicyIndexes = policyRows.filter((row)=>row.canonical_route_policy_state==='indexable').length;
+const sourcePolicyNoindexes = policyRows.filter((row)=>row.canonical_route_policy_state==='noindex').length;
+
 const parentLayer = (index.layers || []).find((l) => Number(l.layer) === 1);
 const parentQuestions = parentLayer.items.map((entry) => ({
   parent_problem_id:entry.id, subject:entry.subject, parent_question:entry.query,
@@ -213,6 +265,13 @@ const summary={
   by_corpus_family:Object.fromEntries(families.map(([key])=>[key,corpus.filter((row)=>row.family===key).length])),
   indexable_by_design:ledger.filter((row)=>row.indexed_by_design==='indexable').length,
   noindex_by_design:ledger.filter((row)=>row.indexed_by_design==='noindex').length,
+  known_machine_directory_vs_canonical_route_policy_conflicts:sourcePolicyConflicts.map((row)=>({
+    canonical_path:row.canonical_path,machine_state:row.machine_index_state,
+    canonical_route_state:row.canonical_route_policy_state,
+    redirect_aliases:row.noindex_redirect_aliases,
+  })),
+  canonical_source_policy_indexable_count:sourcePolicyIndexes,
+  canonical_source_policy_noindex_count:sourcePolicyNoindexes,
   answer_eligible_by_design:ledger.filter((row)=>row.answer_eligible_by_design==='true').length,
   technically_checked_on_2026_10_19:168,
   additional_routes_outside_168_scan:111,
@@ -236,6 +295,8 @@ console.log('TSSA7_B1_SUMMARY '+JSON.stringify({
   other:summary.additional_routes_outside_168_scan,layerCounts,questions:benchmark.size,
   audits:summary.audit_reports_present,lessons:summary.curriculum_lessons.total,
   indexable:summary.indexable_by_design,noindex:summary.noindex_by_design,
+  sourcePolicyConflicts:sourcePolicyConflicts.length,
+  sourcePolicyIndexable:sourcePolicyIndexes,sourcePolicyNoindex:sourcePolicyNoindexes,
   unmatchedLayerOwnerPaths:extraLayerRefs.length
 }));
 console.log('TSSA7_B1_ARTIFACTS '+JSON.stringify(fs.readdirSync(outDir).sort()));
