@@ -142,7 +142,7 @@ export function downloadParentLedgerV3Invoice(account: ParentLedgerAccountV3): s
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
   const foot = 'Classes and fees reflect Tiny Steps billing records. Payments reflect verified receipts. '
-    + 'Microsoft Teams attendance or duration is included only when separately verified. '
+    + 'Attendance is shown where class records permit verification. '
     + 'Please contact Tiny Steps if you notice a discrepancy.';
   const footLines = pdf.splitTextToSize(foot, right - margin) as string[];
   pdf.text(footLines, margin, y);
