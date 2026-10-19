@@ -69,7 +69,7 @@ export const adminGetParentLedgerV3 = onCall(
       throw new HttpsError('resource-exhausted', 'Account history exceeds the verified read limit. Paginated reconciliation required.');
     }
 
-    const chargeRows = chargeSnap.docs.map((item) => ({
+    const chargeRows: Array<Record<string, unknown> & { id: string }> = chargeSnap.docs.map((item) => ({
       ...(item.data() as Record<string, unknown>),
       id: item.id, // authoritative Firestore document ID wins over any data field
     }));
