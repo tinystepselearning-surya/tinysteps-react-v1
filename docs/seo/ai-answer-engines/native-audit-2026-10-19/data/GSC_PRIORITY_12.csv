@@ -1,0 +1,13 @@
+prompt_id,url,row_state,clicks,impressions,ctr,average_position,through_oct16_clicks,through_oct16_impressions,google_index_verdict,data_fetched_at_utc
+P01,https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words,RETURNED,9,1033,0.0087,6.1578,9,982,UNVERIFIED,2026-10-19T14:04:19
+P02,https://tinystepslearning.com/blog/sight-words-or-phonics-first,RETURNED,0,16,0,8.125,0,15,UNVERIFIED,2026-10-19T14:04:19
+P03,https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story,RETURNED,0,12,0,6.25,0,12,UNVERIFIED,2026-10-19T14:04:19
+P04,https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children,RETURNED,0,12,0,11.5,0,12,UNVERIFIED,2026-10-19T14:04:19
+P05,https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids,RETURNED,0,10,0,7.3,0,10,UNVERIFIED,2026-10-19T14:04:19
+P06,https://tinystepslearning.com/blog/what-age-to-start-phonics,RETURNED,0,73,0,8.9041,0,70,UNVERIFIED,2026-10-19T14:04:19
+P07,https://tinystepslearning.com/blog/how-long-does-phonics-take,RETURNED,0,33,0,7.2424,0,30,UNVERIFIED,2026-10-19T14:04:19
+P08,https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes,RETURNED,0,22,0,6.1818,0,21,UNVERIFIED,2026-10-19T14:04:19
+P09,https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak,RETURNED,0,5,0,5.6,0,5,UNVERIFIED,2026-10-19T14:04:19
+P10,https://tinystepslearning.com/blog/child-gives-one-word-answers,RETURNED,5,285,0.0175,5.4386,5,284,UNVERIFIED,2026-10-19T14:04:19
+P11,https://tinystepslearning.com/blog/online-phonics-classes-vs-school,NO_RETURNED_ROW,,,,,,,UNVERIFIED,
+P12,https://tinystepslearning.com/blog/phonics-diagnostics,NO_RETURNED_ROW,,,,,,,UNVERIFIED,

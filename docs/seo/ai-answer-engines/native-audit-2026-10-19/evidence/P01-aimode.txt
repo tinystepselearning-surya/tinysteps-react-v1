@@ -1,0 +1,178 @@
+Browser tab: 4, Title: "Child Reading Difficulties - Google Search", URL: "https://www.google.com/search?aep=11&sei=wiLWap-YJtyymtkPm8P_qAU&udm=50&q=My+child+knows+letter+sounds+but+cannot+read+words.+Why%3F&mstk=AUtExfA16MVHj1bJglEbgCo1KvJEGRp17ZVtE178wAKL7L0dEhrqWe9TqUgXK7HtBZtyOA5z4y4NdtQNvWrOOjHQQNBV8I_p80YF4JDcp8hkS9ubvkovvsDSPGcpAJ0jqE-Io7CHP_FSVJJnJa-U8GIg_fIw74rNW211X4c&csuir=1".
+0 AXWebArea Child Reading Difficulties - Google Search, URL: google.com/search?aep=11&sei=wiLWap-YJtyymtkPm8P_qAU&udm=50&q=My+child+knows+letter+sounds+but+cannot+read+words.+Why%3F&mstk=AUtExfA16MVHj1bJglEbgCo1KvJEGRp17ZVtE178wAKL7L0dEhrqWe9TqUgXK7HtBZtyOA5z4y4NdtQNvWrOOjHQQNBV8I_p80YF4JDcp8hkS9ubvkovvsDSPGcpAJ0jqE-Io7CHP_FSVJJnJa-U8GIg_fIw74rNW211X4c&csuir=1
+	1 container gsr
+		2 container
+			3 link Skip to main content
+				4 text Skip to main content
+			5 link Description: Accessibility help, Value: support.google.com/websearch/answer/181196?hl=en
+		6 link Description: Go to Google home, Value: google.com/webhp?hl=en&ictx=0&sa=X&ved=2ahUKEwjgyKefn8aXAxX6k2oFHQbUBZkQPHoECAYQBA&atvm=2
+		7 container cnt
+			8 container
+				9 content list
+					10 link (disabled) AI Mode
+						23 text AI Mode
+					12 link Description: All, Value: google.com/search?sca_esv=8001b418ab72b965&aep=11&prmd=ivns&sxsrf=APpeQnsj3fCYCyDkkMIYOvWR1jSU9MwHgQ:1792418498873&source=lnms&sa=X&ved=2ahUKEwjgyKefn8aXAxX6k2oFHQbUBZkQ0pQJegQICBAF&q=My%20child%20knows%20letter%20sounds%20but%20cannot%20read%20words.%20Why%3F
+					13 link Description: Images, Value: google.com/search?sca_esv=8001b418ab72b965&aep=11&udm=2&prmd=ivns&sxsrf=APpeQnsj3fCYCyDkkMIYOvWR1jSU9MwHgQ:1792418498873&source=lnms&sa=X&ved=2ahUKEwjgyKefn8aXAxX6k2oFHQbUBZkQ0pQJegQICBAH&q=My%20child%20knows%20letter%20sounds%20but%20cannot%20read%20words.%20Why%3F
+					14 link Description: Videos, Value: google.com/search?sca_esv=8001b418ab72b965&aep=11&udm=vids&prmd=ivns&sxsrf=APpeQnsj3fCYCyDkkMIYOvWR1jSU9MwHgQ:1792418498873&source=lnms&sa=X&ved=2ahUKEwjgyKefn8aXAxX6k2oFHQbUBZkQ0pQJegQICBAJ&q=My%20child%20knows%20letter%20sounds%20but%20cannot%20read%20words.%20Why%3F
+					15 link Description: News, Value: google.com/search?sca_esv=8001b418ab72b965&aep=11&tbm=nws&prmd=ivns&sxsrf=APpeQnsj3fCYCyDkkMIYOvWR1jSU9MwHgQ:1792418498873&source=lnms&sa=X&ved=2ahUKEwjgyKefn8aXAxX6k2oFHQbUBZkQ0pQJegQICBAL&q=My%20child%20knows%20letter%20sounds%20but%20cannot%20read%20words.%20Why%3F
+					16 button (collapsed) More filters, Secondary Actions: Expand
+						17 container More filters
+							18 text More
+				19 button Description: Settings, ID: og-te
+				20 button (collapsed) Description: Google apps, Secondary Actions: Expand
+				21 link Description: Sign in, Value: accounts.google.com/ServiceLogin?hl=en&passive=true&continue=https://www.google.com/search%3Fudm%3D50%26aep%3D11%26sei%3DwiLWap-YJtyymtkPm8P_qAU&ec=futura_srp_og_si_72236_p
+			22 container
+				24 container
+					25 container
+						26 button AI Mode history
+						27 button New thread
+							28 image
+						29 button (collapsed) Description: Settings, Secondary Actions: Expand
+							30 image
+					31 heading AI Mode Conversation: My child knows letter sounds but cannot read words. Why?, Value: 1
+						32 text AI Mode Conversation: My child knows letter sounds but cannot read words. Why?
+					33 heading My child knows letter sounds but cannot read words. Why?, Value: 2
+						34 text My child knows letter sounds but cannot read words. Why?
+					41 container
+						42 text Knowing individual letter sounds is only the first step; 
+						43 text reading words requires a completely different cognitive skill called blending
+						44 text .
+						45 text  It is incredibly common and developmentally typical for children to master the individual sounds (like /m/, /a/, and /p/) but get completely stuck when trying to fuse them into a word ("map").
+						46 link Description: EiFO Academy, Value: google.com/goto?url=CAESmgEB6zswFWUbhCRNOWyZbiIUuRYPISnFaYQVUekAhhDgC4MPBHE1_hLhDzQ3KzZjs91mSs3mioANY_2zOSrR8qDggK005PXhvI2c1gCisIljLvTLhLlq8itd2fbXPmnsNjaXuRcNwNdBwwxWrFiUiSDeyL9lnlNJ6gjdU1VRLHNokjDT3P1Z22r-labqeqZ0XN_p1XF5zZpKrnKt
+						47 button EiFO Academy (+2) - Related results
+							48 text EiFO Academy
+							49 text  +2
+						50 text One point of agreement among users on 
+						51 link Description: Reddit, Value: google.com/goto?url=CAESnQEB6zswFVhtYyRgnD3oV2n3b6z60MGGkgc4X0-soUL0igjBPgS9cVfcD4VA7AtzU1i1cQwoS4vnpUVq8Whez-oLuTQVsSIvGbfc12xw_-9tA8hO7zDfpiaapSzKYnLNeC5xTN5cr2InjJCpqkIIhf-PPu9DIedqvg_qt2yx06QTNpZt3qr2vj2CsDnRP_5AObvA8_ZPeoDBcZEOxSCv
+						52 text  is that difficulty putting phonics sounds together usually points to a 
+						53 text phonemic awareness or memory hurdle
+						54 text , rather than a problem with knowing the alphabet itself.
+						55 link Description: Reddit · r/kindergarten, Value: google.com/goto?url=CAESnQEB6zswFVhtYyRgnD3oV2n3b6z60MGGkgc4X0-soUL0igjBPgS9cVfcD4VA7AtzU1i1cQwoS4vnpUVq8Whez-oLuTQVsSIvGbfc12xw_-9tA8hO7zDfpiaapSzKYnLNeC5xTN5cr2InjJCpqkIIhf-PPu9DIedqvg_qt2yx06QTNpZt3qr2vj2CsDnRP_5AObvA8_ZPeoDBcZEOxSCv
+						56 button Reddit · r/kindergarten - Related results
+							57 text Reddit
+							58 text ·
+							59 text r/kindergarten
+						60 text Here are the most common reasons your child is experiencing this roadblock:
+						61 heading 1. The Short-Term Memory Bottleneck, Value: 3
+							62 text 1. The Short-Term Memory Bottleneck
+						63 text When a child is first learning to read, sounding out a word takes a massive amount of mental energy. By the time they say the first sound, move to the second sound, and reach the third sound, their short-term memory has literally "dropped" the first sound. They might sound out 
+						64 text /c/ - /a/ - /t/
+						65 text , but when you ask what the word is, they say "pig" or look at you blankly because the beginning of the word is gone.
+						66 link Description: Tiny Steps Learning, Value: google.com/goto?url=CAESjgEB6zswFYq35zHkfh-3QV3cAczujiR2Y2rJqr2j2OJbS8lMw2NnzVECbfqmk7K257mrN4KHp0K4Te1fHcSRVbTxnUNK7zS3JkHjrkH4To4EU56oh_iGzf6IP0p0PxqrfoViSnc6NSLDsfJq_MAl_r5PBKPhnk-zNRUzXya0WRx8GUEs9KdoVoxKtri0FLsm
+						67 button Tiny Steps Learning (+1) - Related results
+							68 text Tiny Steps Learning
+							69 text  +1
+						70 heading 2. Segmenting Sounds Too Harshly, Value: 3
+							71 text 2. Segmenting Sounds Too Harshly
+						72 text If your child pauses too long between letters (e.g., 
+						73 text /b/..... /e/..... /d/
+						74 text ), the connection is lost. Additionally, look out for the "Uh" sound. If they are pronouncing the letter 
+						75 text M
+						76 text  as "muh" and 
+						77 text T
+						78 text  as "tuh," they are accidentally trying to blend "muh-aaa-tuh," which doesn't sound like any real word. Clean, crisp sound production is essential.
+						79 link Description: Word Wiz AI, Value: google.com/goto?url=CAESeQHrOzAVj4Gj5DQSfIXGGuSvXbxZ1Q1bhNinhKLosmPwHDv4hSHrk_wU2fVAwTVAppdFh_cWma2ZXI1NI30kJsODvpaRSc7pFjFNc7B0pxcHCBEdKWPokgK7RpnUQ_9GrTaDf3lMy7-Bv5U_ozLJfmxorlcnlDovMgw
+						80 button Word Wiz AI (+1) - Related results
+							81 text Word Wiz AI
+							82 text  +1
+						83 heading 3. Weak Oral Blending Skills, Value: 3
+							84 text 3. Weak Oral Blending Skills
+						85 text Before a child can blend written letters, they must be able to blend 
+						86 text spoken
+						87 text  sounds. If you can't say the sounds 
+						88 text /s/ /u/ /n/
+						89 text  out loud and have your child immediately guess "sun" without looking at any text, their brain isn't yet ready to process the visual letters alongside the sounds.
+						90 link Description: Wonster Words, Value: google.com/goto?url=CAESeQHrOzAVzgxpfv1XdRckjffKDTQaDw84FSwaZxSHhku8TUE03030DMk3akOpSVTkQ2Bayro9amuzQCoDSi7Kk42dhbyL9kVk9QGKjxPsmUeEZBh_Z3rnVvMMIEDy88VPI2G634wZw7ZiJGJ3Qnk1ZewCcrEK5FvGIac
+						91 button Wonster Words (+2) - Related results
+							92 text Wonster Words
+							93 text  +2
+						94 heading How to Help at Home, Value: 3
+							95 text How to Help at Home
+						96 content list
+							97 container
+								98 AXListMarker • 
+								99 text Practice "Continuous Blending":  Instead of choppy, isolated sounds, teach them to stretch the sounds together like a rubber band without stopping the breath between them. Say  “maaaat”  instead of  /m/ - /a/ - /t/ .
+								100 link Description: YouTube · Power Parent, Value: google.com/goto?url=CAESYwHrOzAVZdHQEAb1d8hzyLLHoiJ76AaGkwa6iMwXMB-avIylzVSIQsGF9KOC2RraNdGkS6dC8KwSS8sn54_7HzwuLeFdzmnikIAxMzHndxTJH5CRW7PQYa-0NSusbevUMyC6KA
+								101 button YouTube · Power Parent (+1) - Related results
+									102 text YouTube
+									103 text ·
+									104 text Power Parent
+									105 text  +1
+							106 container
+								107 AXListMarker • 
+								108 text Try "Successive Blending":  To protect their short-term memory, have them blend as they go. For the word  CAT , have them blend the first two letters first ( "ca..." ), and only then add the final letter ( "ca...t"  ->  cat ).
+								109 link Description: YouTube · Learning Reading Hub, Value: google.com/goto?url=CAESYwHrOzAVK0OIkC4DmyvjtkWJ1k2P1-IjFYoM8uP2QA_OeqM41c9VNcyr4-vOPwtSmAllrIZY7YuFOiEILjWvU4g_U9aKsvh98BuT49TvAA043TCvJ0LsCqOKvZiiOw9m_M7F7A
+								110 button YouTube · Learning Reading Hub - Related results
+									111 text YouTube
+									112 text ·
+									113 text Learning Reading Hub
+							114 container
+								115 AXListMarker • 
+								116 text Step Back to Oral Games:  Play word games in the car with zero text in sight. Say,  "I am thinking of a word. It is /z/ /oo/. What is it?"  Once oral blending clicks, written reading usually follows rapidly.
+								117 link Description: Tiny Steps Learning, Value: google.com/goto?url=CAESjgEB6zswFYq35zHkfh-3QV3cAczujiR2Y2rJqr2j2OJbS8lMw2NnzVECbfqmk7K257mrN4KHp0K4Te1fHcSRVbTxnUNK7zS3JkHjrkH4To4EU56oh_iGzf6IP0p0PxqrfoViSnc6NSLDsfJq_MAl_r5PBKPhnk-zNRUzXya0WRx8GUEs9KdoVoxKtri0FLsm
+								118 button Tiny Steps Learning (+1) - Related results
+									119 text Tiny Steps Learning
+									120 text  +1
+						121 text To give you the most accurate activities, could you tell me:
+						122 content list
+							123 container
+								124 AXListMarker • 
+								125 text Roughly how  old  is your child?
+							126 container
+								127 AXListMarker • 
+								128 text When you say a word out loud in separate pieces (like  /b/ /u/ /g/ ), can they  guess the word  without looking at the page?
+						129 text AI can make mistakes, so double-check responses
+						130 button Copy text
+						131 button Share
+						132 container fbproxy1
+							133 checkbox Description: Good response, Value: 0
+							134 checkbox Description: Bad response, Value: 0
+						135 button (collapsed) Description: More options for this response, Secondary Actions: Expand
+						136 container
+							137 content list
+								138 container
+									139 link Description: Daughter can't put phonics sounds together for words - Reddit. Opens in new tab., Value: google.com/goto?url=CAESnQEB6zswFVhtYyRgnD3oV2n3b6z60MGGkgc4X0-soUL0igjBPgS9cVfcD4VA7AtzU1i1cQwoS4vnpUVq8Whez-oLuTQVsSIvGbfc12xw_-9tA8hO7zDfpiaapSzKYnLNeC5xTN5cr2InjJCpqkIIhf-PPu9DIedqvg_qt2yx06QTNpZt3qr2vj2CsDnRP_5AObvA8_ZPeoDBcZEOxSCv
+									140 text Reddit · r/kindergarten
+									141 button Description: About this result, ID: snui-atr-8CLWaryzFZO0qtsPz7PiqAU_yns12p_14
+									142 text Daughter can't put phonics sounds together for words - Reddit
+									143 text May 9, 2024 —  Difficulty blending phonics sounds into words, despite knowing individual letter sounds, often indicates a phonemic awareness issu...
+								144 container
+									145 link Description: Why Does My Child Know Letter Sounds But Cannot Read .... Opens in new tab., Value: google.com/goto?url=CAESjgEB6zswFYq35zHkfh-3QV3cAczujiR2Y2rJqr2j2OJbS8lMw2NnzVECbfqmk7K257mrN4KHp0K4Te1fHcSRVbTxnUNK7zS3JkHjrkH4To4EU56oh_iGzf6IP0p0PxqrfoViSnc6NSLDsfJq_MAl_r5PBKPhnk-zNRUzXya0WRx8GUEs9KdoVoxKtri0FLsm
+									146 text Tiny Steps Learning
+									147 button Description: About this result, ID: snui-atr-8CLWaryzFZO0qtsPz7PiqAU_yns12p_18
+									148 text Why Does My Child Know Letter Sounds But Cannot Read ...
+									149 text Blending is a separate skill from naming individual phonemes. If /s/ /u/ /n/ never becomes sun without print, strengthen oral soun...
+								150 container
+									151 link Description: If Your Child Knows the Letters but Still Can't Read.... Try This!, Video, watch on YouTube, Value: google.com/goto?url=CAESYwHrOzAVK0OIkC4DmyvjtkWJ1k2P1-IjFYoM8uP2QA_OeqM41c9VNcyr4-vOPwtSmAllrIZY7YuFOiEILjWvU4g_U9aKsvh98BuT49TvAA043TCvJ0LsCqOKvZiiOw9m_M7F7A
+									152 text YouTube · Learning Reading Hub
+									153 button Description: About this result, ID: snui-atr-8CLWaryzFZO0qtsPz7PiqAU_yns12p_21
+									154 text If Your Child Knows the Letters but Still Can't Read.... Try This!
+									155 text Apr 20, 2026 —  Successive blending is an effective technique for beginner readers that prevents overloading a child's memory, is less taxing on s...
+									156 button ID: vv-8CLWaryzFZO0qtsPz7PiqAU_yns12p_22, Description: If Your Child Knows the Letters but Still Can't Read.... Try This! by Learning Reading Hub on YouTube. Play on Google. - 5:55
+										157 container
+											158 image
+											159 text 5:55
+							160 button (collapsed) Description: Show all related results, Secondary Actions: Expand
+						162 container Related links
+							163 content list
+								164 container
+									165 link Description: Why Does My Child Know Letter Sounds But Cannot Read .... Opens in new tab., Value: …
+									166 text Tiny Steps Learning
+									167 button Description: About this result, ID: snui-atr-16
+									168 text Why Does My Child Know Letter Sounds But Cannot Read ...
+									169 text /t/ with long pauses can make the first sound difficult to hold while the child reaches the last.
+								170 container
+									171 link Description: If Your Child Knows the Letters but Still Can't Read.... Try This!, Video, open in an external site, Value: google.com/goto?url=CAESYwHrOzAVK0OIkC4DmyvjtkWJ1k2P1-IjFYoM8uP2QA_OeqM41c9VNcyr4-vOPwtSmAllrIZY7YuFOiEILjWvU4g_U9aKsvh98BuT49TvAA043TCvJ0LsCqOKvZiiOw9m_M7F7A
+									172 text YouTube · Learning Reading Hub
+									173 button Description: About this result, ID: snui-atr-18
+									174 text If Your Child Knows the Letters but Still Can't Read.... Try This!
+									175 text Apr 20, 2026  —  Successive blending is an effective technique for beginner readers that prevents overloading a child's memory, which is a common r...
+					35 container
+						36 link Description: Skip to previous prompt, Value: …
+						37 text entry area (settable) Ask anything
+						38 pop up button (collapsed) Description: Add files and tools, Secondary Actions: Expand
+						39 container
+							40 button Microphone
+		161 text AI Mode response is ready
+
+The focused UI element is 162 container Related links

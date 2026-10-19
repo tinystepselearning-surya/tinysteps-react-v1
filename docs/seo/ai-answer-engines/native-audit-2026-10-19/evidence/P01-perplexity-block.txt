@@ -1,0 +1,112 @@
+Browser tab: 5, Title: "My child knows letter sounds but cannot read words. Why?", URL: "https://www.perplexity.ai/search/237cc90b-ee5e-4d32-a8d8-21e429be4303".
+0 AXWebArea My child knows letter sounds but cannot read words. Why?, URL: perplexity.ai/search/237cc90b-ee5e-4d32-a8d8-21e429be4303
+	1 container
+		2 container root
+			3 container Main
+				4 container
+					5 container
+						6 link Description: Perplexity, Value: perplexity.ai/
+						7 button Search sessions
+						8 button Collapse sidebar
+					9 container
+						10 link Description: New, Value: perplexity.ai/
+						11 text New
+						12 text ⌃I
+					13 container
+						14 container
+							15 link Description: Computer, Value: perplexity.ai/computer/tasks
+							16 text Computer
+						17 container
+							18 link Description: Automations, Value: perplexity.ai/computer/automations
+							19 text Automations
+						20 container
+							21 link Description: Artefacts, Value: perplexity.ai/computer/artifacts
+							22 text Artefacts
+						23 container
+							24 link Description: Customise, Value: perplexity.ai/computer/connectors
+							25 text Customise
+						26 container
+							27 link Description: Projects, Value: perplexity.ai/projects
+							28 container
+								29 text Projects
+								30 button Create project
+								31 pop up button (collapsed) Description: Filter projects, Secondary Actions: Expand
+								32 button (expanded) Description: Collapse projects, Secondary Actions: Collapse
+							33 text No projects
+							34 link Description: Recents, Value: perplexity.ai/library
+							35 container
+								36 text Recents
+								37 button (expanded) Description: Collapse recents, Secondary Actions: Collapse
+							47 container
+								48 link Description: My child knows letter sounds but cannot read words. Why?, Value: perplexity.ai/search/237cc90b-ee5e-4d32-a8d8-21e429be4303
+								49 text My child knows letter sounds but cannot read words. Why?
+								50 container
+									51 pop up button (collapsed) Description: Session actions, Secondary Actions: Expand
+							52 container
+								53 link Description: View all, Value: perplexity.ai/library
+								54 text View all
+					39 button View plans
+						41 text View plans
+					42 container
+						43 button Sign In
+							44 container
+								45 image
+								46 text Sign In
+				40 splitter Description: Resize sidebar, Value: 240
+			55 container
+				56 tab group Answer mode tabs
+					57 tab (selected, settable, boolean) Answer, Value: 1, ID: radix-_r_32_-trigger-default
+					58 tab (selectable, settable, boolean) Links, Value: 0, ID: radix-_r_32_-trigger-sources
+					59 tab (selectable, settable, boolean) Images, Value: 0, ID: radix-_r_32_-trigger-images
+				60 container
+					61 pop up button (collapsed) Description: Session actions, Secondary Actions: Expand
+					62 button (disabled) Share
+						63 text Share
+				64 container
+					65 text 19:32
+					66 button Edit query
+					67 button Copy query
+					68 text My child knows letter sounds but cannot read words. Why?
+					69 container
+						70 text Researched 3s
+					71 text Sign up and repeat your request.
+					72 button Copy
+					73 button Helpful
+					74 button Not helpful
+					75 button Fork
+					76 pop up button (collapsed) Description: More actions, Secondary Actions: Expand
+					77 button Collapse pane
+				78 button (collapsed) Sources, Secondary Actions: Expand
+					79 text Sources
+					80 image
+				81 container
+					82 text Sign in to save your history and access more features
+					83 button Sign in
+						84 text Sign in
+					85 button Dismiss
+				86 container
+					87 text entry area (settable) ID: ask-input, Value: 
+
+					88 pop up button (collapsed) Description: Add files or tools, Secondary Actions: Expand
+					89 checkbox Search, Value: 1, ID: radix-_r_4u_
+					90 checkbox Computer, Value: 0
+					91 pop up button (collapsed) Description: Model, Secondary Actions: Expand
+						92 text Model
+					93 button Dictation
+					94 button (disabled) Submit
+		95 button Close
+		96 image Perplexity
+		97 text Login or sign up for free
+		98 text Save and sync your searches
+		99 button Continue with Google
+			100 text Continue with Google
+		101 button Continue with Apple
+			102 text Continue with Apple
+		103 container
+			104 text field (settable)
+		105 button (disabled) Continue with email
+			106 text Continue with email
+		107 button Single sign-on (SSO)
+			108 text Single sign-on (SSO)
+
+The focused UI element is 0 AXWebArea My child knows letter sounds but cannot read words. Why?, URL: perplexity.ai/search/237cc90b-ee5e-4d32-a8d8-21e429be4303
