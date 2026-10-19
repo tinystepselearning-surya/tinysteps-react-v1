@@ -34,6 +34,18 @@ GitHub CI uploads both artifacts. The script will **record technical flags and u
 - Redirect aliases should NOT become their destination's `noindex` policy; no correction made by this pilot
 - If a test fails with `fetch` error, mark the relevant live attribute unknown, not a sitewide outage
 
+## Initial production network result — 19 Oct 2026 (pilot blocked)
+
+**No live indexability verdict was obtained from this GitHub-hosted runner.** Both pilot executions succeeded as evidence collectors but returned **0/10 readable HTTPS responses**, **10/10 UNKNOWN**, **zero confirmed page technical flags** and **zero Google/Bing indexed verdicts**. Do **not** interpret the CI job's success as a 10-page indexability pass, nor the ten connection failures as ten broken URLs.
+
+[Run #39290188854](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39290188854) recorded for **all ten URLs** `ECONNRESET: Client network socket disconnected before secure TLS connection was established`. HTTPS `/sitemap.xml` and `/ai-resource-index.json` yielded the **same TLS reset**, so sitemap and directory statuses remained unknown. To isolate general connectivity, a control request to `https://example.com/` returned HTTP 200.
+
+[Run #39290485663](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/39290485663) additionally observed `https://www.tinystepslearning.com/` **TLS reset**, while `http://tinystepslearning.com/` returned an HTTP **200** to the GitHub runner. **We did not examine that HTTP response's body or intermediary path**, so no redirect/canonical correctness conclusion is established from this contrast. The potential causes are runner egress path, edge/CDN security or TLS routing, not a diagnosed public-site outage.
+
+The previous 168-page E1/E2 HTTPS audit had succeeded from a GitHub Actions runner earlier on October 19. **The inconsistency is meaningful and warrants independent verification**, but does not justify code/robots/canonical changes or indexing requests based on this test alone.
+
+**Next decision gate:** Reproduce two exact speaking course HTTPS pages plus `/robots.txt` and `/sitemap.xml` in an independent browser/network, preserve response status, certificate and headers if available, and check any CDN/Hosting blocking logs. Obtain GSC URL Inspection and Bing indexed-view evidence separately. If independent production/browser tests are healthy, document the GitHub-runner-specific TLS reset without mistaking it for an indexing outage. The two **source-level** AI directory `noindex` alias misclassifications from B1 remain reproducible independently of live connectivity.
+
 ## B2 real indexed-view evidence — required from the website owner
 
 For each priority URL, capture GSC **URL Inspection → Indexed result**, plus Google-selected canonical, crawl time, robots/crawl/indexation reason, **Test Live URL** separately, any rendered screenshot and latest Page Indexing category.
