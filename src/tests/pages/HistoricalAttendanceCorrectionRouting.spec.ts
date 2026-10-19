@@ -25,10 +25,12 @@ const candidatesSource = readFileSync(
 );
 
 describe('historical attendance correction routing', () => {
-  it('keeps the normal correction workflow intact and exposes historical repair as an optional section', () => {
+  it('preserves standard admin corrections while retiring legacy historical repair from the mounted screen', () => {
     expect(parentSource).toContain("httpsCallable<");
     expect(parentSource).toContain("(functions, 'createAdminManualSession')");
-    expect(parentSource).toContain('<HistoricalAttendanceMissingSessionPanel />');
+    expect(parentSource).toContain('saveAdminAttendanceCorrectionWithTeacherPayDecision');
+    expect(parentSource).not.toContain('HistoricalAttendanceMissingSessionPanel');
+    // The legacy source and restricted callable remain available for manual recovery.
     expect(panelSource).toContain('<details');
     expect(panelSource).toContain('Historical / Previous Course — Missing Session');
   });
