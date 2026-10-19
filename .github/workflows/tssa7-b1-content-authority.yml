@@ -1,0 +1,49 @@
+name: TSSA-7 B1 Content Authority Baseline
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa7-b1-content-authority-ledger.mjs'
+      - 'docs/seo/tssa-7/**'
+      - '.github/workflows/tssa7-b1-content-authority.yml'
+      - 'scripts/generate-rss.mjs'
+      - 'src/lib/aiAnswerLayerRegistry.js'
+      - 'src/config/semanticFacts.ts'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    name: Reconcile canonical corpus and 17 audits (no production writes)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Regenerate existing public machine directory locally
+        run: node scripts/generate-rss.mjs
+      - name: Verify all canonical owners and produce TSSA-7 B1 evidence
+        run: node scripts/tssa7-b1-content-authority-ledger.mjs
+      - name: Check exported counts without relying on a site deploy
+        run: |
+          test -f artifacts/tssa7-b1/CONTENT_AUTHORITY_LEDGER.csv
+          test -f artifacts/tssa7-b1/PARENT_PROBLEM_OWNER_MAP.csv
+          test -f artifacts/tssa7-b1/PRIORITY_12_CANONICAL_OWNERS.csv
+          test -f artifacts/tssa7-b1/SEVENTEEN_AUDIT_CROSSWALK.csv
+          node --input-type=module -e "import fs from 'node:fs'; const d=JSON.parse(fs.readFileSync('artifacts/tssa7-b1/BASELINE_SUMMARY.json','utf8')); if(d.connected_corpus_total!==279||d.technically_checked_on_2026_10_19!==168||d.audit_reports_present!==17||d.curriculum_lessons.total!==245||d.benchmark_parent_questions!==12)process.exit(1); console.log(d);"
+      - name: Upload source-derived row-level baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b1-canonical-and-parent-intent-ledgers
+          path: artifacts/tssa7-b1/
+          if-no-files-found: error
+          retention-days: 60
+      - name: Affirm no deployment
+        run: echo "TSSA-7 B1 read-only source baseline; no production deploy, GSC indexing request, or user lead submission."
