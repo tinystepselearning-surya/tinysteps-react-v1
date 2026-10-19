@@ -93,8 +93,9 @@ export const adminGetParentLedgerV3 = onCall(
       .map((row) => {
         const sessionId = String(row.sessionId || row.classSessionId || '').trim();
         const resolved = resolveCanonicalServiceDate(sessionsById.get(sessionId) || null, row);
-        if (!resolved.serviceDate || typeof row.monthKey !== 'string') {
-          throw new HttpsError('failed-precondition', 'Unresolved billing service date or billing month. Finance audit required.');
+        if (!resolved.serviceDate || typeof row.monthKey !== 'string'
+          || resolved.serviceMonthKey !== row.monthKey) {
+          throw new HttpsError('failed-precondition', 'Unresolved or mismatched billing service month. Finance audit required.');
         }
         return {
           id: row.id,
@@ -163,6 +164,13 @@ export const adminGetParentLedgerV3 = onCall(
           attendance,
         };
       });
+      const billingWarnings = classDetails
+        .filter((charge) => charge.attendance === 'Absent' && charge.amount > 0)
+        .map((charge) => ({
+          chargeId: charge.id,
+          code: 'BILLED_ABSENT' as const,
+          message: 'Absent class has a positive fee; attendance/billing correction required.',
+        }));
       const receiptDetails = receiptSnap.docs
         .filter((item) => !asOfDate || String(item.data().receivedDate || '') <= asOfDate)
         .map((item) => {
@@ -190,6 +198,7 @@ export const adminGetParentLedgerV3 = onCall(
         receiptCount: receiptDetails.length,
         parentName: String(parent.displayName || parent.name || parent.email || 'Parent').trim().slice(0, 120),
         classDetails,
+        billingWarnings,
         receiptDetails,
         ...projection,
       };
