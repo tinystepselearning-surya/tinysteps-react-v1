@@ -30,6 +30,35 @@ jobs:
         run: |
           test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json
           test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.csv
+      - name: Diagnose HTTPS with curl (read-only independent client)
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/tssa7-b2
+          {
+            date -u '+UTC observation: %Y-%m-%dT%H:%M:%SZ'
+            for host in tinystepslearning.com www.tinystepslearning.com; do
+              echo "=== DNS $host ==="
+              getent ahostsv4 "$host" | awk 'NR <= 5 { print $1 }' | sort -u || true
+            done
+            for url in \
+              'https://example.com/' \
+              'https://tinystepslearning.com/' \
+              'https://www.tinystepslearning.com/' \
+              'http://tinystepslearning.com/' \
+              'https://tinystepslearning.com/robots.txt' \
+              'https://tinystepslearning.com/sitemap.xml' \
+              'https://tinystepslearning.com/ai-resource-index.json' \
+              'https://tinystepslearning.com/courses/public-speaking-foundations' \
+              'https://tinystepslearning.com/courses/public-speaking-excellence' \
+              'https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india'; do
+              echo "=== GET $url ==="
+              curl --silent --show-error --location --connect-timeout 8 --max-time 18 \
+                --output /dev/null \
+                --write-out 'http_code=%{http_code} verify_ssl=%{ssl_verify_result} remote_ip=%{remote_ip} redirects=%{num_redirects} final_url=%{url_effective} content_type=%{content_type}\n' \
+                "$url" || echo "CURL_GET_FAILED exit=$?"
+            done
+          } | tee artifacts/tssa7-b2/CURL_HTTP_NETWORK_PROBE.txt
       - name: Upload read-only observed findings
         if: always()
         uses: actions/upload-artifact@v4
