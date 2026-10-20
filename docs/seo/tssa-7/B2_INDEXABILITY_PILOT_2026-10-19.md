@@ -99,3 +99,10 @@ The exact B2 pilot cohort produced **eight** Search Analytics page rows across 1
 4. Collect Bing URL inspection/indexed-view separately; the Windsor.ai connection currently exposed GSC Search Analytics and Sitemaps fields, **not** Google URL Inspection or Bing indexed verdicts.
 
 **B2 stays IN PROGRESS.** Keep PR #759 draft as an evidence-only collector until these acceptance checks are met. No mass reindexing or canonical/robots changes.
+
+
+### Related owner and search-intent crosscheck (same GSC property and dates)
+
+Normalized impressions/day for the main \`/phonics\` programme were **87.0 before** and **84.6 after** (approximately **-2.7%**). The separate \`/phonics-fees-india\` owner had **28.9/day before** and **30.1/day after** (approximately **+4.2%**). Thus the comparison-page decline (55.6/day to 2.25/day) is not matched by those adjacent phonics owners.
+
+For four exact “best online phonics classes” queries, the Google Search Console \`query + page\` report included the comparison page before 11 October but showed only a few later impressions mapped to \`/phonics\`; the 11–18 October records did **not** contain comparison-page rows for those four queries. Query coverage is limited by GSC privacy and reporting thresholds. This is a **hypothesis of search-result owner selection/intent shift**, **not** evidence of a Google-selected canonical change, deindexing or a proven cause. Inspect the affected URL's indexed canonical and changes in search appearance before changing either commercial page.
