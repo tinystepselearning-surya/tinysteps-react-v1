@@ -137,3 +137,18 @@ Both owner inspections show HTTPS and one valid Breadcrumb enhancement. Both sho
 **Refreshed connected Search Analytics through 20 October:** The commercial page received **556 impressions / 12 clicks during 1–10 Oct** (55.6 impressions/day), versus **80 impressions / 1 click during 11–20 Oct** (8 impressions/day), a **-85.61%** impressions/day period comparison. After the initial collapse, daily impressions recovered from 12 (18 Oct) to **23 (19 Oct) and 39 (20 Oct)**, but still trail the previous 55.6/day baseline. The connector did not return 21 Oct rows at this refresh; this is **reporting availability**, not a zero on 21 Oct. The URL remains indexed in GSC, so the ranking/query-exposure loss is **not explained by the URL being unindexed at the screenshot observation time**. October 11–16 historical crawl/index history and precise ranking cause remain unknown. Google-selected canonical for the commercial page remains unverified; do not equate the "URL is on Google" verdict with canonical confirmation.
 
 **Next B2 decision:** Preserve the existing `/phonics` indexable canonical and the commercial page's current indexable configuration. Investigate the specific high-value queries and page/query distributions, competitors and potential ranking/intent selection changes before changing content, canonicals, redirects, robots or issuing reindexing requests. Separately fix the two confirmed Public Speaking **generated AI directory** alias `noindex` classifications in a tightly scoped, regression-tested generator PR after checking all existing canonical ownership rules. Continue owner GSC priority URLs and Bing inspection. **B2 remains in progress**; no production implementation change in this evidence-only PR.
+
+
+## Query-owner comparison after owner GSC inspection — 22 October 2026
+
+**Source:** Connected first-party GSC Search Analytics domain property, `date + page + query` dimension, refreshed through **20 October** (1–10 October vs 11–20 October, equal 10-day windows). Google privacy-filtered query-level data are **not** exhaustive page totals; never sum the visible query rows and claim they represent all impressions. Neither these query impressions nor search rankings prove why Google showed one owner instead of another.
+
+| Exact query | `/phonics` 1–10 → 11–20 Oct impressions | Comparison URL 1–10 → 11–20 Oct impressions |
+|---|---:|---:|
+| `online phonics classes for kids` | **7 → 23** | **6 → 2** |
+| `online phonics classes` | **6 → 24** | **4 → 3** |
+| `best online phonics classes for kids in india` | **2 → 6** | **12 → 2** |
+| `best online phonics classes in india` | **2 → 2** | **7 → 0** returned |
+| `tiny steps learning` | **453 → 311** | **206 → 21** |
+
+**Interpretation:** The core `/phonics` owner gained reported exposure on important generic phonics terms while the separate comparison page lost branded and some specific long-tail exposure. This makes a broad `/phonics` or sitewide phonics indexing failure **unlikely** and raises a **candidate query-ownership / search-intent shift**. The comparison page is confirmed in Google's index in the owner's 22 Oct screenshots and recovered to 39 daily impressions on 20 Oct, so **no canonical, redirect, robots, page rewrite, or mass indexing intervention is justified from these rows**. Continue B2 with the missing *Google-selected canonical* indexed-panel row for the comparison page, quality/intent and internal link review, and Bing inspection. Note: the commercial page's full page-dimension count 556 → 80 is larger than its query-row totals due to GSC aggregation/privacy, not a data discrepancy to solve by summing query rows.
