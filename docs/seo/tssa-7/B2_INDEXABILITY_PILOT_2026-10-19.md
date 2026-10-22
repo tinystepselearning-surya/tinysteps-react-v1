@@ -152,3 +152,46 @@ Both owner inspections show HTTPS and one valid Breadcrumb enhancement. Both sho
 | `tiny steps learning` | **453 → 311** | **206 → 21** |
 
 **Interpretation:** The core `/phonics` owner gained reported exposure on important generic phonics terms while the separate comparison page lost branded and some specific long-tail exposure. This makes a broad `/phonics` or sitewide phonics indexing failure **unlikely** and raises a **candidate query-ownership / search-intent shift**. The comparison page is confirmed in Google's index in the owner's 22 Oct screenshots and recovered to 39 daily impressions on 20 Oct, so **no canonical, redirect, robots, page rewrite, or mass indexing intervention is justified from these rows**. Continue B2 with the missing *Google-selected canonical* indexed-panel row for the comparison page, quality/intent and internal link review, and Bing inspection. Note: the commercial page's full page-dimension count 556 → 80 is larger than its query-row totals due to GSC aggregation/privacy, not a data discrepancy to solve by summing query rows.
+
+
+## User-supplied Bing AI Performance and Clarity exports — 22 October 2026
+
+**Evidence provenance and confidentiality.** User uploaded two CSVs to the TSSA-7 project conversation on 22 Oct 2026: `tinystepslearning.com_AIPerformanceOverviewStats_10_22_2026.csv` and `Clarity_Tiny_Steps_URL performance_10-22-2026 22 57.csv`. This section records **aggregated derived metrics**, not raw content or authenticated URLs. The originals remain conversation attachments. No authenticated URL/path IDs or user/staff identifiers from Clarity are reproduced in GitHub. This is a read-only analysis with no application changes.
+
+### Bing Webmaster AI Performance — aggregate citations, not organic clicks
+
+The AI Performance export contains **90 consecutive dated daily rows** from **22 Jul to 19 Oct 2026**, with no duplicate dates or missing cells, fields `Date`, `Citations`, `Cited Pages`. Those metrics match Microsoft's Bing Webmaster Tools *AI Performance* definitions. They reflect visible references to the site in supported Microsoft Copilot, AI-generated Bing search summaries and supported partner AI experiences. They **do not verify ChatGPT/Gemini citations, impressions, search rankings, clickthrough, leads, or conversions**. Data is aggregated/sampled by the provider; do not claim complete response-level coverage or causal attribution.
+
+| Period | Days | Reported citations | Citations/day | Daily cited pages avg (NOT unique across full period) |
+|---|---:|---:|---:|---:|
+| 22–31 Jul | 10 | 210 | 21.0 | 4.9 |
+| August | 31 | 1,824 | 58.8 | 9.5 |
+| September | 30 | 7,532 | 251.1 | 23.7 |
+| 1–19 October | 19 | 9,526 | 501.4 | 39.7 |
+| **All exported dates** | **90** | **19,092** | **212.1** | **20.1** |
+
+The file ends on **19 October** despite its 22 October export filename; there are no 20–22 October observations to interpret. In the Google comparison-page collapse period, **1–10 Oct** Bing AI citations averaged **448.1/day** and **11–19 Oct** averaged **560.6/day** (+25.1% vs the preceding average), suggesting Microsoft's AI citation activity did **not** collapse in parallel with that single Google's commercial Phonics page. This is a **cross-platform aggregate comparison**, *not proof of transferred traffic, a ranking cause, or that phonics content specifically gained AI citations*. The 90-day overall total is the sum of citation counts; **never sum cited-pages daily counts as unique site URLs**.
+
+Official provider definition: https://www.bing.com/webmasters/help/ai-performance-9f8e7d6c ; provider explicitly warns reports are aggregate representative samples and citations do not equal clicks or ranking.
+
+**Next B6 evidence to request/inspect:** dated Bing AI Performance exports for *Pages* (specific canonical cited URLs), *Grounding Queries* (topic phrases, not verbatim user prompts), and available query→page mapping, with date window 1–10 vs 11–19 Oct. This is essential to determine whether `/phonics`, the commercial phonics page, or the Speaking course pages drive citations. Do not credit any one URL with these sitewide counts.
+
+### Microsoft Clarity URL Performance — selected 20-row export
+
+The separate Clarity report header declares period **23 Sep–22 Oct 2026**, with **20 reported URL rows**, sorted in descending performance score (**90–95**, average **92.33**). Only **17** rows are publicly accessible-style routes; **3** are authenticated Teacher/Founder/Admin app routes; their exact IDs are withheld in this report. The columns are Clarity `Score`, `LCP` in **seconds**, `INP` in **milliseconds**, `CLS` unitless; the latter three are performance measurements, not user acquisition/engagement, traffic or Google indexing verdicts.
+
+Using official good thresholds (LCP ≤2.5 sec, INP ≤200 ms, CLS ≤0.1): **19/20** LCP good, **19/20** INP good, **20/20** CLS good, **18/20** good across all three. The two minor exceptions:
+- Public blog `/blog/phonics-blending-activities`: **LCP 2.788 s**, needs improvement; other shown vitals good.
+- Public blog `/blog/long-vowel-sounds-for-kids`: **INP 208 ms**, just above good; other shown vitals good.
+
+These 20 selected URLs are **not a representative sitewide speed audit**, particularly because they are score-ordered and do **not include either** `/phonics` or `/best-online-phonics-classes-for-kids-in-india`. Thus this export cannot diagnose those two URLs' actual page experience or Google's October 11 impressions drop. Treat private URL capture by Clarity as a separate **privacy/masking/settings review** only if investigating parent/teacher session recordings; the export's presence alone is not evidence of a sensitive-data leak.
+
+Official metric definitions: https://learn.microsoft.com/en-us/clarity/insights/performance-widget and https://developers.google.com/search/docs/appearance/core-web-vitals .
+
+### TSSA-7 interpretation
+
+**Verified:** AI citations increased month over month in Microsoft's supported experiences; 18/20 selected Clarity URL rows meet three good-vitals thresholds; the commercial Phonics page is owner-confirmed *indexed* on 22 Oct and started impression recovery by 20 Oct.
+
+**Not verified:** AI citations for any individual Tiny Steps course/blog/Phonics URL, representation in ChatGPT or Gemini, conversion from AI citation to leads, user acquisition source, sitewide Core Web Vitals, 20–22 Oct AI citation activity, any direct cause linking the two independent trends.
+
+**No Phonics site changes or reindex requests authorized from these exports.** B2 indexed-canonical verification remains outstanding for the comparison page; B6 AI query→page ownership is now a particularly useful follow-up.
