@@ -32,6 +32,8 @@ jobs:
         run: node scripts/generate-rss.mjs
       - name: Regression-test canonical machine-directory owner policies
         run: node --test scripts/test/tssa7-ai-directory-canonical-owner.node-test.mjs
+      - name: Validate existing generated AI answer-layer contracts
+        run: node scripts/audit-ai-answer-layers.mjs --generated
       - name: Verify all canonical owners and produce TSSA-7 B1 evidence
         run: node scripts/tssa7-b1-content-authority-ledger.mjs
       - name: Check exported counts without relying on a site deploy
