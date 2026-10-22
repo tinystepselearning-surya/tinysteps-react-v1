@@ -341,7 +341,12 @@ function buildPublicRouteCorpus(blogItemMap) {
     if (blogItemMap.has(canonicalUrl) || programmaticPaths.has(canonicalPath)) continue;
     if (map.has(canonicalUrl)) continue;
 
-    const noindex = manifest ? manifest.indexable === false : isNoIndexRoute(config);
+    // A redirect alias can precede its canonical destination in ROUTE_SEO_REGISTRY.
+    // The destination's policy and metadata must own the emitted canonical URL:
+    // the alias's noindex is only for the redirect source, not for its target.
+    const ownerConfig = ROUTE_SEO_REGISTRY[canonicalPath] || config;
+    const ownerManifest = manifestByPath.get(canonicalPath) || manifest;
+    const noindex = ownerManifest ? ownerManifest.indexable === false : isNoIndexRoute(ownerConfig);
     map.set(canonicalUrl, {
       id: `route-${canonicalPath === '/' ? 'home' : canonicalPath.replace(/^\//, '').replace(/[^a-z0-9]+/gi, '-')}`,
       content_type: canonicalPath.startsWith('/resources/') || canonicalPath === '/resources'
@@ -352,15 +357,15 @@ function buildPublicRouteCorpus(blogItemMap) {
             ? 'practice-or-tool'
             : canonicalPath === '/for-schools'
               ? 'school-resource'
-              : manifest?.group === 'legal'
+              : ownerManifest?.group === 'legal'
                 ? 'legal'
-                : manifest?.group === 'seasonal'
+                : ownerManifest?.group === 'seasonal'
                   ? 'seasonal'
                   : 'public-route',
-      title: normalizeText(config?.title || fallbackTitleFromPath(canonicalPath)),
-      summary: normalizeText(config?.description || SITE_DESCRIPTION),
+      title: normalizeText(ownerConfig?.title || fallbackTitleFromPath(canonicalPath)),
+      summary: normalizeText(ownerConfig?.description || SITE_DESCRIPTION),
       canonical_url: canonicalUrl,
-      route_group: manifest?.group || null,
+      route_group: ownerManifest?.group || null,
       indexing_state: noindex ? 'noindex' : 'indexable',
       retrieval_role: noindex ? 'supporting-only-noindex' : 'public-canonical',
       answer_eligible: !noindex,
