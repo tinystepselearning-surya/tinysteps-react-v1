@@ -195,3 +195,54 @@ Official metric definitions: https://learn.microsoft.com/en-us/clarity/insights/
 **Not verified:** AI citations for any individual Tiny Steps course/blog/Phonics URL, representation in ChatGPT or Gemini, conversion from AI citation to leads, user acquisition source, sitewide Core Web Vitals, 20–22 Oct AI citation activity, any direct cause linking the two independent trends.
 
 **No Phonics site changes or reindex requests authorized from these exports.** B2 indexed-canonical verification remains outstanding for the comparison page; B6 AI query→page ownership is now a particularly useful follow-up.
+
+
+## GA4 organic, AI-referral and lead-measurement evidence — 23 October 2026
+
+**Scope/provenance.** The owner uploaded six CSV exports dated **25 Sep–22 Oct 2026** from Google Analytics 4 for property `tinysteps-react-v1`: Traffic acquisition (session channel group), User acquisition (first-user channel group), Search Console-linked Google organic landing pages, Search Console-linked Queries, session manual source, and Pages/screens by page title. This is **NOT** a Bing AI Performance Pages or Grounding Queries export. Only aggregated business-safe information is reproduced here, not user identifiers, session recordings, app-private paths, or raw query lists. Data is a **single aggregate 28-day window**, so it **cannot test an Oct 11 change point**.
+
+### Traffic channels and ChatGPT-attributed visits
+
+| Exported session channel | Sessions | Engaged sessions | Key events | Session key event rate |
+|---|---:|---:|---:|---:|
+| Organic Search | 10,398 | 7,799 | 178 | **1.40%** |
+| Direct | 5,324 | 3,255 | 71 | 1.07% |
+| AI Assistant | **882** | **647** | **64** | **6.01%** |
+| Referral | 431 | 330 | 5 | 0.70% |
+| Unassigned | 415 | 223 | 4 | 0.96% |
+| Organic Social | 308 | 192 | 0 | 0% |
+| Organic Video | 1 | 0 | 0 | 0% |
+| **GA4 grand total (unique session estimate)** | **17,636** | **12,427** | **322** | 1.49% |
+
+**Important nonadditivity finding:** Sum of channel Sessions rows is **17,759**, exceeding the displayed GA4 grand total **17,636** by 123 (~0.7%); sum of manual source Sessions rows is **17,808** (172 more than total). Do not present channel session shares as perfectly additive or assert the cause; the exports do not contain session IDs, privacy thresholds or implementation settings to diagnose this. Key-event rows in the channel export DO reconcile to 322. AI channel is approximately **5% of total reported sessions** but **19.9% of key-event counts**. Its session key-event rate is **~4.28×** Organic Search (6.01% vs 1.40%). These rates are **NOT lead or enquiry conversion rates** until key-event names and qualification status are verified.
+
+The distinct *Session manual source* export reports `chatgpt.com` = **873 sessions**, **640 engaged sessions**, **64 key events**, representing almost all of the 882 AI Assistant channel sessions by magnitude. Google's default AI Assistant channel includes ChatGPT, Gemini, Copilot etc. and excludes Google AI Overview/Mode; a source named `chatgpt.com` is referral/attribution **not proof that the site was cited by a specific model response, intent, or query**. Internal-sounding session sources such as `floating_assistant_dock`, `public_assessment_modal`, and `homepage_hero_assessment` also occur: audit internal link UTM-source design to ensure navigation is not polluting acquisition/source attribution. The observed source strings alone do not prove implementation misuse.
+
+**Primary lead-quality audit gate:** GA4 reports **322 key-event occurrences** across all channels, but the extracts **do not identify event names**, distinguish actual demo/assessment submissions, deduplicate requests, or validate against Firestore/CRM lead records. Zero recognized revenue is reported. **Never count those 322 as 322 leads or the 64 AI-source key events as 64 bookings.** Reconcile `Reports → Engagement → Events/Key events` (event name + key-event setting + source) with confirmed persisted enquiry records and lead-health Issue #756 before making ROI claims.
+
+Official channel-group/metric definitions:
+- https://support.google.com/analytics/answer/9756891 (AI Assistant channel)
+- https://support.google.com/analytics/table/13948007 (session key event rate)
+- https://support.google.com/analytics/answer/12922540 (key event and user metrics)
+
+### Google organic landing and query data, same 28-day period
+
+Search Console-linked *Google organic landing page* report: **6,424 reported search clicks**, **164,180 impressions** across **466 listed landing rows**. The separate *Queries* export lists **4,132 search phrases**, **2,992 clicks**, **56,496 impressions** in its displayed total. The query report includes **only 46.6% of landing-report clicks and 34.4% of impressions**, so query-only data is **not a census**. GSC query-level anonymization and row limiting materially affect inferences. Do not sum query rows and equate them to whole-site organic traffic. The linked landing export mixes Search Console clicks/impressions with GA4 engagement/key-event columns; do not causally treat a page's key events as conversions from its displayed GSC clicks.
+
+| Landing URL | Search clicks | Search impressions | GSC CTR | Observed avg position |
+|---|---:|---:|---:|---:|
+| `/free-letter-tracing-game-for-kids` | **2,859** | 38,858 | 7.36% | 6.17 |
+| `/` | **1,635** | 4,137 | 39.52% | 3.40 |
+| `/phonics` | **74** | 3,187 | 2.32% | 5.13 |
+| `/speaking` | **56** | 1,937 | 2.89% | 8.86 |
+| `/best-online-phonics-classes-for-kids-in-india` | **21** | **1,024** | 2.05% | 7.52 |
+| `/resources/grammar/verbs-for-kids` | **25** | **4,221** | 0.59% | 7.40 |
+
+The tracing game alone accounts for **44.5% of the landing report's reported Google clicks**; together the game and homepage account for **70.0%**. The Pages/screens report independently lists **73,723 of 130,072 views** (56.7%) under the main tracing-game page title. This is **large information/tool engagement**, not automatically high-intent class enquiries. The commercial phonics comparison page has real search exposure and owner-verified GSC indexing, but only 21 linked-report clicks in the 28-day window; inspect its query-specific SERP CTR/intent rather than reindex or merge it.
+
+**Potential strategic opportunities requiring separate query/quality checks:** 
+- The free-letter-tracing tool can make age-appropriate, unobtrusive pathways to `/phonics`, `/courses` and assessment content for visitors who express intent; preserve free educational utility and avoid intrusive prompts.
+- High-impression grammar explanations (e.g. verbs-for-kids) and targeted commercial phonics queries may merit snippet/intent review, not a blanket rewrite.
+- Example query rows: `phonics classes` **364 impressions / 3 clicks / avg position 6.9**; `online phonics classes` **77 / 0 / 11.5**; `online phonics classes for kids` **68 / 1 / 15.4**. Queries are standalone GSC dimensions and not linked to a landing URL in this exported table.
+
+**Decisions / next evidence:** B2 Google commercial canonical still unverified (not visible in owner's screenshot); Google page indexed YES. B3 target real parent intents and educational-to-commercial handoff, without collapsing phonics and reading. B6 corroborate referral sessions with native, date-stamped Bing **AI Pages / Grounding Queries** exports and available ChatGPT/Gemini native citations before declaring cross-model market visibility. Lead-health #756: obtain event-name-level key-event and confirmed submission evidence; check internal campaign source attribution. **No production SEO changes or premature AI ranking claims from these aggregate CSVs.**
