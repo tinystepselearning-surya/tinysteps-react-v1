@@ -1,0 +1,43 @@
+name: TSSA-7 P0 Lead Measurement Source Audit
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa7-p0-lead-measurement-audit.mjs'
+      - 'docs/seo/tssa-7/P0_LEAD_MEASUREMENT_AUDIT_2026-10-23.md'
+      - '.github/workflows/tssa7-p0-lead-measurement-audit.yml'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
+      - 'src/lib/conversionTracking.ts'
+      - 'src/lib/leadAttribution.ts'
+      - 'src/components/common/ConversionTracker.tsx'
+      - 'src/lib/analytics.ts'
+      - 'firestore.rules'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: Source-derived event / attribution audit
+        run: node scripts/tssa7-p0-lead-measurement-audit.mjs
+      - name: Assert audit output exists without visiting production
+        run: |
+          test -s artifacts/tssa7-p0/LEAD_MEASUREMENT_SOURCE_AUDIT.json
+          node --input-type=module -e "import fs from 'node:fs'; const d=JSON.parse(fs.readFileSync('artifacts/tssa7-p0/LEAD_MEASUREMENT_SOURCE_AUDIT.json')); if(!d.no_user_record_access||d.ga4_live_event_configuration_verified||d.firestore_production_lead_counts_verified||d.conclusions.length!==8)process.exit(1);console.log('Read-only evidence valid; live metrics intentionally unverified');"
+      - name: Upload P0 source findings
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-p0-lead-measurement-source-audit
+          path: artifacts/tssa7-p0/LEAD_MEASUREMENT_SOURCE_AUDIT.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify no production activity
+        run: echo "Local static source audit only; no Firestore, analytics APIs, forms, messages, deployment, or indexing requests."
