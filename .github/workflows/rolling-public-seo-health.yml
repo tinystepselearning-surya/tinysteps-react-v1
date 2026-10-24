@@ -1,0 +1,64 @@
+name: Rolling public SEO-AEO-GEO readiness
+
+on:
+  schedule:
+    # UTC :53 translates to IST :23, away from Github's busiest minute.
+    # GitHub schedule may be delayed or skipped; coverage reports must show gaps.
+    - cron: '53 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tiny-steps-seo-public-health
+  cancel-in-progress: false
+
+jobs:
+  rolling-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - name: Checkout production source for read-only comparison
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Read isolated health-data branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin +refs/heads/seo-url-health-tracker:refs/remotes/origin/seo-url-health-tracker
+          git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/MASTER_URL_TRACKER.csv > /tmp/master-url-tracker.csv
+          git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/CHANGES.md > /tmp/seo-change-ledger.md
+
+      - name: Audit today's assigned public URLs and prepare reports
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/seo/rolling_public_health.py \
+            --tracker /tmp/master-url-tracker.csv \
+            --changes /tmp/seo-change-ledger.md \
+            --out-dir /tmp/seo-hourly-results
+
+      - name: Update only isolated health-data branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B seo-url-health-tracker origin/seo-url-health-tracker
+          mkdir -p docs/seo/rolling-public-health
+          cp /tmp/seo-hourly-results/MASTER_URL_TRACKER.csv docs/seo/rolling-public-health/
+          cp /tmp/seo-hourly-results/LATEST_SUMMARY.md docs/seo/rolling-public-health/
+          cp /tmp/seo-hourly-results/CHANGES.md docs/seo/rolling-public-health/
+          git add docs/seo/rolling-public-health/MASTER_URL_TRACKER.csv \
+                  docs/seo/rolling-public-health/LATEST_SUMMARY.md \
+                  docs/seo/rolling-public-health/CHANGES.md
+          if git diff --cached --quiet; then
+            echo "No report updates."
+            exit 0
+          fi
+          git commit -m "docs(seo-health): hourly standards readiness audit [skip ci]"
+          git push origin HEAD:seo-url-health-tracker
