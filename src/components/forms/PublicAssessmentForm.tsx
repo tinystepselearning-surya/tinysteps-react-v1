@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  trackDemoBookingComplete,
+  trackLeadFormAttempt,
   trackLeadFormView,
   trackGenerateLead,
   trackLeadFormError,
@@ -258,7 +258,8 @@ export default function PublicAssessmentForm({
       urgency: submittedForm.urgency,
     };
 
-    trackLeadFormSubmit({
+    // Attempt only: this can still fail Firestore validation/network/security rules.
+    trackLeadFormAttempt({
       ...trackingPayload,
     });
 
@@ -320,6 +321,10 @@ export default function PublicAssessmentForm({
         // Storage may be disabled; the in-memory id has already been cleared.
       }
 
+      // Only a confirmed persisted request counts as a form submission.
+      trackLeadFormSubmit({
+        ...trackingPayload,
+      });
       // Keep conversion events tied to a successfully saved public lead.
       trackGenerateLead({
         ...trackingPayload,
@@ -331,10 +336,8 @@ export default function PublicAssessmentForm({
         submission_id: leadRef.id,
         value: 1,
       });
-      trackDemoBookingComplete({
-        booking_type: 'whatsapp_assessment_request',
-        source_context: source || 'public_assessment_form',
-      });
+      // A saved request is not a booked demo. Booking is confirmed later
+      // by the authoritative scheduling workflow, not this form.
       navigateToWhatsapp(whatsappWindow, whatsappUrl);
       trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
       setLastOpenedWaLink(whatsappUrl);
