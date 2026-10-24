@@ -30,6 +30,21 @@ jobs:
         run: node --test scripts/test/tssa7-b2-index-directives.node-test.mjs
       - name: Gather production HTTP and AI directory evidence
         run: node scripts/tssa7-b2-live-indexability-pilot.mjs
+      - name: Require complete read-only HTTP evidence before technical B2 signoff
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const report = JSON.parse(readFileSync('artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json', 'utf8'));
+          const summary = report.summary;
+          assert.equal(summary.candidateCount, 10, 'unexpected changed high-priority route cohort');
+          assert.equal(summary.observed200, 10, 'missing ordinary HTTP 200 observations; runner failures are UNKNOWN, not site outages');
+          assert.equal(summary.technicalFlags, 0, 'indexability flags detected; inspect route evidence before proceeding');
+          assert.equal(summary.incomplete, 0, 'indexability evidence incomplete; inspect network and retrieval failures');
+          assert.equal(summary.sitemapReady, true, 'child sitemap retrieval incomplete');
+          assert.equal(summary.machineDirectoryAvailable, true, 'machine AI directory retrieval incomplete');
+          console.log('All ten live origin pages technically eligible in this run; Google/Bing indexed decisions remain unverified.');
+          NODE
       - name: Verify evidence artifact exists
         run: |
           test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json
