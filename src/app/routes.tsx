@@ -15,6 +15,7 @@ import {
 
 const LoginPage = lazy(() => import('../pages/LoginPage'));
 const Login = lazy(() => import('../pages/Login'));
+const NativeLoginSessionGate = lazy(() => import('../components/common/NativeLoginSessionGate'));
 const UnauthorizedPage = lazy(() => import('../pages/UnauthorizedPage'));
 const NotFoundPage = lazy(() => import('../pages/NotFoundPage'));
 
@@ -246,6 +247,15 @@ const isNativeIOSCapacitorRuntime = () => {
     return false;
   }
 };
+
+// Auth entry points are guarded independently of route roles so cold-start
+// Firebase restoration can complete before rendering the login form.
+const nativeLoginPageElement = (
+  <NativeLoginSessionGate><LoginPage /></NativeLoginSessionGate>
+);
+const nativeAdminLoginElement = (
+  <NativeLoginSessionGate><Login /></NativeLoginSessionGate>
+);
 
 const rootLandingElement = isNativeCapacitorRuntime()
   ? <Navigate to="/login" replace />
@@ -670,17 +680,17 @@ const router = createBrowserRouter(
         { path: 'book-demo', element: <BookDemoPage /> },
 
         // ---------- Public auth routes ----------
-        { path: 'login', element: <LoginPage /> },
-        { path: 'surya/login', element: <Login /> },
-        { path: 'founder/login', element: <LoginPage /> },
+        { path: 'login', element: nativeLoginPageElement },
+        { path: 'surya/login', element: nativeAdminLoginElement },
+        { path: 'founder/login', element: nativeLoginPageElement },
         { path: 'admin/login', element: <Navigate to="/surya/login" replace /> },
         { path: 'Surya/login', element: <Navigate to="/surya/login" replace /> },
 
-        { path: 'teacher/login', element: <LoginPage /> },
-        { path: 'parent/login', element: <LoginPage /> },
-        { path: 'learning-partner/login', element: <LoginPage /> },
-        { path: 'learningpartner/login', element: <LoginPage /> }, // alias
-        { path: 'school/login', element: <LoginPage /> },
+        { path: 'teacher/login', element: nativeLoginPageElement },
+        { path: 'parent/login', element: nativeLoginPageElement },
+        { path: 'learning-partner/login', element: nativeLoginPageElement },
+        { path: 'learningpartner/login', element: nativeLoginPageElement }, // alias
+        { path: 'school/login', element: nativeLoginPageElement },
 
         { path: 'kid/login', element: <Navigate to="/login" replace /> },
         { path: 'unauthorized', element: <UnauthorizedPage /> },

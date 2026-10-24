@@ -1,0 +1,96 @@
+name: iOS Native Package Verification
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - 'capacitor.config.ts'
+      - 'src/components/common/AuthBootstrap.tsx'
+      - 'src/lib/whatsAppBusinessLauncher.ts'
+      - 'src/pages/admin/TodaysNotifications.tsx'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-native-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ios-simulator-package:
+    name: Bundle latest web and compile Capacitor iOS app
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Require Apple-supported Xcode 26+ toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild -version
+          swift --version
+          major="$(xcodebuild -version | awk '/^Xcode / { split($2, parts, "."); print parts[1] }')"
+          if [[ -z "$major" ]] || (( major < 26 )); then
+            echo "::error::Capacitor 8 and App Store uploads require Xcode 26 or newer."
+            exit 1
+          fi
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts
+      - name: Install Chromium needed by production prerender
+        run: npx playwright install chromium
+      - name: Produce deploy-equivalent Vite bundle
+        run: npm run build:deploy
+      - name: Sync frontend and native plugins
+        run: npx cap sync ios
+      - name: Check synchronized app assets and native configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s ios/App/App/public/index.html
+          test -s ios/App/App/capacitor.config.json
+          test -d ios/App/App/public/assets
+          grep -q 'CapacitorAppLauncher' ios/App/CapApp-SPM/Package.swift
+          grep -q 'CapacitorShare' ios/App/CapApp-SPM/Package.swift
+          # The pre-iOS-27 Xcode compile was previously green while launch failed.
+          # Require the scene manifest, single controller, and Xcode source target membership.
+          test -s ios/App/App/SceneDelegate.swift
+          grep -q 'SceneDelegate.swift in Sources' ios/App/App.xcodeproj/project.pbxproj
+          grep -q 'configurationForConnecting' ios/App/App/AppDelegate.swift
+          test "$(/usr/libexec/PlistBuddy -c 'Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneConfigurationName' ios/App/App/Info.plist)" = 'Default Configuration'
+          /usr/libexec/PlistBuddy -c 'Print :UIApplicationSceneManifest:UISceneConfigurations:UIWindowSceneSessionRoleApplication:0:UISceneDelegateClassName' ios/App/App/Info.plist | grep -F 'SceneDelegate'
+          if /usr/libexec/PlistBuddy -c 'Print :UIMainStoryboardFile' ios/App/App/Info.plist 2>/dev/null; then
+            echo '::error::Legacy main storyboard key must not create a second UIKit window'
+            exit 1
+          fi
+          /usr/libexec/PlistBuddy -c 'Print :LSApplicationQueriesSchemes:0' ios/App/App/Info.plist |
+            grep -Fx 'whatsapp-business'
+          echo 'Capacitor iOS contains synchronized web assets and Business launcher plugin'
+      - name: Compile app against the iOS Simulator SDK (unsigned)
+        shell: bash
+        run: |
+          set -euo pipefail
+          xcodebuild \
+            -project ios/App/App.xcodeproj \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath "${RUNNER_TEMP}/tiny-steps-ios-derived" \
+            CODE_SIGNING_ALLOWED=NO \
+            build >"${RUNNER_TEMP}/xcodebuild.log" 2>&1 || {
+              tail -n 180 "${RUNNER_TEMP}/xcodebuild.log"
+              exit 1
+            }
+          test -d "${RUNNER_TEMP}/tiny-steps-ios-derived/Build/Products/Debug-iphonesimulator/App.app"
+          test -s "${RUNNER_TEMP}/tiny-steps-ios-derived/Build/Products/Debug-iphonesimulator/App.app/public/index.html"
+          echo 'Unsigned iOS Simulator app compiled with embedded frontend'
+      - name: Show errors if Xcode failed (no production actions)
+        if: failure()
+        run: |
+          if [ -f "${RUNNER_TEMP}/xcodebuild.log" ]; then
+            grep -nE 'error:|BUILD FAILED|failed' "${RUNNER_TEMP}/xcodebuild.log" | tail -n 80 || true
+          fi
