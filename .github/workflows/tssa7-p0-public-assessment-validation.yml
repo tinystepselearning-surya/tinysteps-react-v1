@@ -1,0 +1,41 @@
+name: TSSA-7 P0 Public Assessment Validation
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/publicLeadForm.ts'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
+      - 'src/tests/lib/publicLeadForm.spec.ts'
+      - 'src/tests/components/PublicAssessmentForm.spec.tsx'
+      - 'src/tests/firestore/publicLeads.rules.spec.ts'
+      - '.github/workflows/tssa7-p0-public-assessment-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Validate forms, types and Firestore rules (emulator only)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Validate shared public form and source-level regression suites
+        run: npx vitest run src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx src/tests/lib/leadAttribution.spec.ts src/tests/lib/leadAcquisition.spec.ts
+      - name: Verify anonymous Firestore create rules with local emulator
+        run: npx firebase-tools@latest emulators:exec --project tinysteps-react-v1 --only firestore "FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts"
+      - name: No production changes
+        run: echo "No Firebase deploy, real Firestore write, parent message, or analytics settings change."
