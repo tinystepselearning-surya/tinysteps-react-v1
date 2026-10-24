@@ -11,6 +11,23 @@ let idleLoadTimerId: number | undefined;
 const PRODUCTION_GA_MEASUREMENT_ID = 'G-J3TTBH8CN9';
 const PRODUCTION_CLARITY_ID = 'xl3yemvlms';
 
+const resolveMarketingMeasurementId = (): string =>
+  import.meta.env.VITE_GA_MEASUREMENT_ID || PRODUCTION_GA_MEASUREMENT_ID;
+
+/**
+ * gtag routes undirected events to every configured target in its default
+ * group. Firebase Analytics configures a separate stream on the same page,
+ * so scope marketing conversions and page views to this website stream.
+ * Placing send_to last prevents event payloads overriding the destination.
+ */
+export const scopeMarketingEventToWebStream = (
+  params: Record<string, unknown>,
+  measurementId = resolveMarketingMeasurementId(),
+): Record<string, unknown> => ({
+  ...params,
+  send_to: measurementId,
+});
+
 const DESKTOP_FALLBACK_DELAY_MS = 18000;
 const MOBILE_FALLBACK_DELAY_MS = 12000;
 const IDLE_LOAD_TIMEOUT_MS = 9000;
@@ -130,8 +147,7 @@ export const initAnalytics = () => {
   if (!shouldRunAnalytics()) return;
   if (initialized) return;
 
-  const measurementId =
-    import.meta.env.VITE_GA_MEASUREMENT_ID || PRODUCTION_GA_MEASUREMENT_ID;
+  const measurementId = resolveMarketingMeasurementId();
   if (!measurementId) return;
 
   window.dataLayer = window.dataLayer || [];
@@ -155,10 +171,10 @@ export const trackPageView = (path: string) => {
   if (!ensureInit()) return;
 
   const context = classifyMarketingPath(path);
-  window.gtag('event', 'page_view', {
+  window.gtag('event', 'page_view', scopeMarketingEventToWebStream({
     page_path: path,
     ...context,
-  });
+  }));
 };
 
 export function trackEvent(name: string, params?: Record<string, any>) {
@@ -167,7 +183,7 @@ export function trackEvent(name: string, params?: Record<string, any>) {
     if (!ensureInit()) return;
     if (!window.gtag) return;
 
-    window.gtag('event', name, withMarketingContext(params));
+    window.gtag('event', name, scopeMarketingEventToWebStream(withMarketingContext(params)));
   } catch (err) {
     console.error('[GA ERROR]', err);
   }
