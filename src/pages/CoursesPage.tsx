@@ -2,6 +2,7 @@
 import { useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
+import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { catalogs } from '../content/courses';
 import { createCourseListSchema, createFAQPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
@@ -36,7 +37,7 @@ const howItWorksSteps = [
 const phonicsCards = [
   {
     title: 'Phonics Foundations',
-    age: 'Age: 3–5',
+    age: SEMANTIC_FACTS.programmes.phonics.levels.foundations.ageRange.label,
     tag: 'Best for beginners',
     focus: ['Recognize letter sounds through structured synthetic phonics', 'Start blending simple words', 'Build confidence in reading'],
     outcome: 'Learning focus: build early word-reading independence through guided phonics practice',
@@ -44,7 +45,7 @@ const phonicsCards = [
   },
   {
     title: 'Early Phonics',
-    age: 'Age: 4–7',
+    age: SEMANTIC_FACTS.programmes.phonics.levels.early.ageRange.label,
     tag: 'Best for developing readers',
     focus: ['Blend 3–4 letter words', 'Learn digraphs like sh, ch, th', 'Improve decoding skills'],
     outcome: 'Learning focus: build more accurate sentence reading through stronger decoding habits',
@@ -52,7 +53,7 @@ const phonicsCards = [
   },
   {
     title: 'Advanced Phonics',
-    age: 'Age: 6–12',
+    age: SEMANTIC_FACTS.programmes.phonics.levels.advanced.ageRange.label,
     tag: 'Best for fluent reading',
     focus: ['Long vowels and advanced patterns', 'R-controlled sounds', 'Reading fluency'],
     outcome: 'Learning focus: strengthen advanced decoding and increasingly independent reading',
@@ -92,14 +93,14 @@ const readingCards = [
 const grammarCards = [
   {
     title: 'Beginner Grammar',
-    age: 'Age: 5–10',
+    age: SEMANTIC_FACTS.programmes.grammar.levels.beginner.ageRange.label,
     focus: ['Nouns, verbs, adjectives', 'Sentence formation', 'Prepositions and articles'],
     outcome: 'Learning focus: build clearer, more accurate everyday sentence formation',
     href: '/courses/grammar',
   },
   {
     title: 'Advanced Grammar',
-    age: 'Age: 8–12',
+    age: SEMANTIC_FACTS.programmes.grammar.levels.advanced.ageRange.label,
     focus: ['Tenses mastery', 'Complex sentences', 'Paragraph writing'],
     outcome: 'Learning focus: strengthen grammar control in writing and spoken expression',
     href: '/courses/grammar-mastery',
@@ -109,14 +110,14 @@ const grammarCards = [
 const speakingCards = [
   {
     title: 'Public Speaking Foundations',
-    age: 'Age: 4–7',
+    age: SEMANTIC_FACTS.programmes.speaking.levels.beginner.ageRange.label,
     focus: ['Organised responses', 'Picture talk + show-and-tell', 'Storytelling foundations + short presentations'],
     outcome: 'Learning focus: build speaking structure, clear expression, and short presentation readiness',
     href: '/courses/public-speaking-foundations',
   },
   {
     title: 'Public Speaking Excellence',
-    age: 'Age: 7–12',
+    age: SEMANTIC_FACTS.programmes.speaking.levels.advanced.ageRange.label,
     focus: ['Longer structured talks', 'Storytelling + impromptu speaking', 'Presentations + guided debate'],
     outcome: 'Learning focus: strengthen organisation, audience awareness, reasoning, delivery, and presentation skill',
     href: '/courses/public-speaking-excellence',
