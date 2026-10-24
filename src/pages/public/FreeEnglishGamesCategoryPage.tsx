@@ -382,6 +382,34 @@ export default function FreeEnglishGamesCategoryPage() {
           </div>
         </div>
 
+        {config.route === "/free-phonics-games-for-kids" ? (
+          <section
+            aria-labelledby="phonics-game-parent-next-step"
+            className="mt-3 rounded-lg border border-emerald-300/20 bg-slate-950/70 p-4 backdrop-blur-md"
+          >
+            <h2 id="phonics-game-parent-next-step" className="text-lg font-black text-white">
+              After playing: check what your child can do away from the game
+            </h2>
+            <p className="mt-2 max-w-4xl text-sm leading-6 text-slate-200">
+              A correct tap or a completed level is useful practice, not proof of independent reading.
+              For letter-sound games, show one already-taught letter away from the screen and ask for its sound.
+              If your child knows enough sounds to form a short word, try blending one new word together.
+              Follow the child&apos;s taught sound sequence rather than testing unfamiliar patterns.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold">
+              <Link to="/blog/satpin-phonics-guide" className="text-emerald-200 underline underline-offset-4 hover:text-white">
+                Understand SATPIN and first words
+              </Link>
+              <Link
+                to="/blog/why-child-knows-letter-sounds-but-cannot-read-words"
+                className="text-cyan-200 underline underline-offset-4 hover:text-white"
+              >
+                Knows sounds but cannot read words?
+              </Link>
+            </div>
+          </section>
+        ) : null}
+
         <section className="mt-3 grid gap-3 lg:grid-cols-[0.62fr_0.38fr]">
           <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4 backdrop-blur-md">
             <h2 className="text-xl font-black text-white">Quick Answers for Parents</h2>

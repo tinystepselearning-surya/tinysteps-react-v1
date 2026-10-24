@@ -1,0 +1,33 @@
+name: AI-Cited Phonics Games Parent Journey Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/public/FreeEnglishGamesCategoryPage.tsx'
+      - 'src/tests/pages/public/FreeEnglishGamesCategoryPage.spec.tsx'
+      - '.github/workflows/ai-games-parent-journey-gate.yml'
+      - 'docs/seo/ai-answer-engines/E5_HIGH_CITATION_PARENT_JOURNEYS_2026-10-19.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Phonics-only parent links and public game safety (no deployment)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Test all public category cards and phonics-only parent links
+        run: npx vitest run src/tests/pages/public/FreeEnglishGamesCategoryPage.spec.tsx
+      - name: Check TypeScript
+        run: npm run typecheck
+      - name: Confirm no deployment
+        run: echo "Verified parent learning path; no deployment, analytics event or indexing request."
