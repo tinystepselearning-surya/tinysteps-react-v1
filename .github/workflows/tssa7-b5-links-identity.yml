@@ -1,0 +1,76 @@
+name: TSSA-7 B5 Internal Links and External Identity
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/SubjectResourcesPage.tsx'
+      - 'src/pages/public/ReadingFluencyProgramPage.tsx'
+      - 'scripts/tssa7-b5-authority-path-audit.mjs'
+      - 'scripts/test/tssa7-b5-authority-paths.node-test.mjs'
+      - 'docs/seo/tssa-7/**'
+      - '.github/workflows/tssa7-b5-links-identity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  path-audit:
+    name: Audit 28 parent paths and safeguard external identity
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Source-linked parent and authority audit
+        run: node scripts/tssa7-b5-authority-path-audit.mjs
+      - name: Regression guards for pathways, provenance and schema identity
+        run: node --test scripts/test/tssa7-b5-authority-paths.node-test.mjs
+      - name: Public TypeScript validation
+        run: npm run typecheck
+      - name: Upload path provenance (read-only)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b5-parent-path-evidence
+          path: artifacts/tssa7-b5/
+          if-no-files-found: warn
+          retention-days: 45
+
+  rendered-links:
+    name: Verify full prerender and reading links without SEO regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Full production build and existing SEO guards
+        run: npm run build
+      - name: Verify rendered internal destinations, canonical and index policy
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const hub=fs.readFileSync('dist/resources/phonics/index.html','utf8');
+          const fluency=fs.readFileSync('dist/reading-fluency-program/index.html','utf8');
+          assert.match(hub,/href="\/reading-classes-for-kids"/);
+          assert.match(hub,/href="\/reading-fluency-program"/);
+          assert.match(fluency,/href="\/blog\/how-to-improve-reading-fluency-in-children"/);
+          assert.match(fluency,/rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/reading-fluency-program"/);
+          assert.match(hub,/rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/resources\/phonics"/);
+          assert.doesNotMatch(hub,/<meta[^>]*name="robots"[^>]*content="noindex/);
+          assert.doesNotMatch(fluency,/<meta[^>]*name="robots"[^>]*content="noindex/);
+          console.log('B5 rendered links and canonical indexability passed.');
+          NODE
+      - name: No automatic deployment or external account mutation
+        run: echo "Read-only B5 validation; no Firebase, social-platform or search indexing actions."
