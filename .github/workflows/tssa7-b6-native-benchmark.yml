@@ -1,0 +1,40 @@
+name: TSSA-7 B6 Native AI Evidence Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa7-b6-native-benchmark.mjs'
+      - 'scripts/test/tssa7-b6-native-benchmark.node-test.mjs'
+      - 'docs/seo/tssa-7/B6_NATIVE_AI_BENCHMARK_2026-10-25.md'
+      - 'docs/seo/ai-answer-engines/native-audit-2026-10-19/**'
+      - 'docs/seo/ai-answer-engines/E4_NATIVE_12x4_SESSION_MATRIX_2026-10-19.csv'
+      - '.github/workflows/tssa7-b6-native-benchmark.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile-historical-evidence:
+    name: Validate historical native evidence and Bing untested cells
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: Reconcile existing 48 observations without external provider calls
+        run: node scripts/tssa7-b6-native-benchmark.mjs
+      - name: Source and denominator regression suite
+        run: node --test scripts/test/tssa7-b6-native-benchmark.node-test.mjs
+      - name: Preserve evidence and future native-session template
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b6-native-benchmark-evidence
+          path: artifacts/tssa7-b6/
+          retention-days: 45
+          if-no-files-found: error
+      - name: No production, AI-provider or webmaster changes
+        run: echo "Historical audit only; no deployment or synthetic native platform requests."
