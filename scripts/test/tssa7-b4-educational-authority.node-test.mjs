@@ -15,6 +15,8 @@ test('B4 inventories all protected educational families without new routes',()=>
  assert.equal(summary.structural_phonics_teaching_minimum_met,31);
  assert.equal(summary.structural_grammar_vocab_reference_minimum_met,54);
  assert.equal(summary.high_priority_blog_sample,9);
+ assert.deepEqual(summary.sample_without_named_references,[], 'all nine reviewed priority blog sources need explicit evidence/reference sections');
+ assert.equal(summary.blog_source_files_located,71, 'historical dynamic weekly sources need separate lineage, not invented bylines');
  assert.equal(read('SOURCE_EDUCATIONAL_AUTHORITY_168.csv').trim().split('\n').length,169);
  assert.equal(read('PRIORITY_9_BLOG_SPOT_CHECK.csv').trim().split('\n').length,10);
 });
