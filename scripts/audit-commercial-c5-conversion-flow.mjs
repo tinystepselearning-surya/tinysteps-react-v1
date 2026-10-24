@@ -74,10 +74,17 @@ requireTokens('src/components/common/ConversionTracker.tsx', [
 requireTokens('src/components/forms/PublicAssessmentForm.tsx', [
   'trackLeadFormView',
   'trackLeadFormStart',
+  'trackLeadFormAttempt',
   'trackLeadFormSubmit',
   'trackGenerateLead',
-  'trackDemoBookingComplete',
 ]);
+
+// A request for WhatsApp assessment slots cannot be reported as an already
+// scheduled demo: that event belongs to the authoritative booking workflow.
+const publicAssessmentSource = read('src/components/forms/PublicAssessmentForm.tsx');
+if (publicAssessmentSource.includes('trackDemoBookingComplete')) {
+  failures.push('PublicAssessmentForm emits a booked-demo event before any slot is confirmed');
+}
 
 requireTokens('src/lib/commercialC0Foundation.ts', ["COMMERCIAL_C0_STATUS = 'frozen'"]);
 requireTokens('src/lib/commercialC2KeywordOwnership.ts', ["COMMERCIAL_C2_STATUS = 'ownership-complete'"]);
