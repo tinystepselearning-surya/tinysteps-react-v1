@@ -256,6 +256,28 @@ WhatsApp conversion tracking:
 - Listed `app_store_subscription_convert`, `app_store_subscription_renew`, `first_open`, `in_app_purchase`, and `purchase` are not marked as key events in that screenshot and show *No stream data detected*.
 - `lead_form_submit`, `funnel_form_submit`, and `funnel_demo_booking_complete` are **not** in the displayed key-event list. Do **not** make `lead_form_submit_attempt` a key event.
 - Therefore the proposed assessment-form fix **preserves `generate_lead` as the key conversion event** rather than changing its name or GA4 configuration. The change moves two other submit events to the post-save stage and stops falsely completing demo-booking.
-- **Not proven by screenshot:** that GA4's 322 key-event occurrences during 25 Sep–22 Oct were entirely `generate_lead`, how they break down by event/source/stream, whether the two named web data streams receive duplicate hits from one production form submission, or how many distinct persisted Firestore leads they represent. `generate_lead` may also be emitted by trial/advisor forms with different source-of-truth and IDs.
+- **Now verified by 25 Oct owner CSV exports:** 322 `generate_lead` event occurrences across 139 tracked users in 25 Sep–22 Oct. This exactly matches the earlier 322 GA4 acquisition-report key-event occurrences and is consistent with `generate_lead` being the sole starred key event. The CSVs do **not** establish 322 distinct saved enquiries or identify real parents, form names, streams, unique submission IDs or qualified lead counts. `generate_lead` may also be emitted by trial/advisor forms with other persistence contracts.
 - **Release gate:** before production rollout, check GA4 *event-name counts* and **Admin → Data streams** URL + Measurement ID for each of the two streams. Preserve pre/post event semantics in reporting, and reconcile `generate_lead` for `form_name=public_assessment_form` with distinct saved lead IDs. Do not disable either stream or toggle key-event stars based on names alone.
+
+
+### Three owner GA4 Events exports, 25 Sep–22 Oct 2026 (received 25 October)
+
+Provenance: owner supplied the Explorations event-name daily export, 65-row event-count breakdown, and same event breakdown with total users. Filenames `download (8).csv`, `download (7).csv`, `download (6).csv`; all cover the exact **28 days 25 Sep–22 Oct**. The event-name daily counts sum to the tabulated totals for the relevant conversion events. Aggregated-only figures are retained in this repo; original CSVs are not published here.
+
+| GA4 event name | Event occurrences | GA4 total users | Evidence classification |
+|---|---:|---:|---|
+| `generate_lead` | **322** | **139** | Count of browser analytics events, NOT canonical Firestore leads |
+| `funnel_demo_booking_complete` | **299** | **130** | Historical request-acknowledged event; NOT 299 scheduled demos |
+| `lead_form_submit` | **231** | **142** | Historical mixed form-submit semantics including **pre-write** assessment attempts |
+| `funnel_form_submit` | **231** | 142 | Same per-day counts as `lead_form_submit`, shared tracker emits both |
+| `lead_form_start` | **865** | 495 | Diagnostic form start |
+| `lead_form_view` | **4,866** | 1,686 | Diagnostic form views |
+| `whatsapp_click` | **1,421** | 654 | Navigations/clicks, not confirmed message deliveries |
+| `form_error` | **3** | 2 | Browser-emitted error events; **not** a comprehensive log of Firestore failures |
+
+**Crosscheck:** `generate_lead` is 322 in the 28-day daily export, summary event counts, user/count export, and earlier acquisition report's key-event count (322). Every one of the 28 dates has `funnel_demo_booking_complete <= generate_lead`; 17 dates equal and 11 show differences of 1–4. Total difference = 23 events. The close relationship is **consistent with** a paired instrumentation path in the assessment form but cannot measure actual demo bookings or show which forms produced the 23-event gap.
+
+**Consequence:** Do not infer the 322 event occurrences are distinct leads because they came from 139 tracked users (2.32 events/user). Repeats may be legitimate, duplicate instrumentation, or different lead forms, and users are not a unique-lead key. Counting completed forms against `funnel_demo_booking_complete` will overstate real bookings. The commercial KPI's canonical unit remains a **distinct persisted lead record with business qualification status**, not GA4 events.
+
+**Next proof gates:** (1) in GA4 Explore, filter `event_name=generate_lead` and break down by **stream name / form_name** if registered as a custom dimension, preserving date range; (2) inspect both web stream URLs and Measurement IDs before attributing double sends; (3) compare synthetic non-production `submission_id` emissions with a single persisted Firestore lead in an approved staging test and reconcile production aggregated lead counts with admin read-only permission; (4) annotate cutover date in GA4 reports and do not retroactively treat old `funnel_demo_booking_complete` as bookings.
 
