@@ -41,6 +41,9 @@ export {
   initParentWalletOpeningDeficit,
   reconcileParentWallet,
 } from "./wallet";
+// V3 receipt journal: isolated from legacy finance and closed by default until cutover.
+export { adminRecordParentReceiptV3 } from "./parentReceiptsV3";
+export { adminGetParentLedgerV3 } from "./parentLedgerReadV3";
 export { auditParentPaymentBackfillDryRun } from "./parentPaymentBackfillDryRun";
 export { applyParentPaymentBackfillForSafeParents } from "./parentPaymentBackfillWriteMode";
 export { runFinanceReconciliationAudit, runFinanceReconciliationAuditDaily } from "./financeReconciliationReport";
