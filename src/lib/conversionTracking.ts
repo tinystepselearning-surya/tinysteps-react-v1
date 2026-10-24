@@ -529,6 +529,22 @@ export const trackLeadFormStart = (params: FunnelLeadFormParams = {}) => {
   });
 };
 
+/**
+ * Diagnostic attempt, not a saved enquiry. This must not be configured as a
+ * conversion/key event. A successful submission continues to use
+ * trackLeadFormSubmit + trackGenerateLead AFTER confirmed persistence.
+ */
+export const trackLeadFormAttempt = (params: FunnelLeadFormParams = {}) => {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('lead_form_submit_attempt', {
+    page: pagePath,
+    page_path: pagePath,
+    form_name: params.form_name || 'unknown_form',
+    ...buildLeadDetailEventParams(params, pagePath),
+    ...buildAttributionEventParams(pagePath),
+  });
+};
+
 export const trackLeadFormSubmit = (params: FunnelLeadFormParams = {}) => {
   const pagePath = resolvePagePath(params.page_path);
   trackEvent('lead_form_submit', {
