@@ -283,3 +283,22 @@ Provenance: owner supplied the Explorations event-name daily export, 65-row even
 
 **Next proof gates:** (1) in GA4 Explore, filter `event_name=generate_lead` and break down by **stream name / form_name** if registered as a custom dimension, preserving date range; (2) inspect both web stream URLs and Measurement IDs before attributing double sends; (3) compare synthetic non-production `submission_id` emissions with a single persisted Firestore lead in an approved staging test and reconcile production aggregated lead counts with admin read-only permission; (4) annotate cutover date in GA4 reports and do not retroactively treat old `funnel_demo_booking_complete` as bookings.
 
+
+
+### Stream-level validation from owner GA4 export (25 October 2026)
+
+**Provenance:** owner-uploaded `download (9).csv`, same property and window (25 Sep–22 Oct 2026), exported GA4 Exploration `Event name × Stream name`. Browser's connected GA4 exploration visually agrees with the export's column/stream structure. Aggregated metrics only; raw data is not committed.
+
+| Event | Tiny Steps web stream | Tiny Steps App Check web stream | Combined |
+|---|---:|---:|---:|
+| `generate_lead` | **161 occurrences, 139 users** | **161 occurrences, 139 users** | **322 occurrences; 139 property-level users** |
+| `funnel_demo_booking_complete` | 150 occurrences, 130 users | 149 occurrences, 129 users | 299 occurrences |
+| `lead_form_submit` | 164 occurrences, 142 users | 67 occurrences, 58 users | 231 occurrences |
+| `funnel_form_submit` | 164 occurrences, 142 users | 67 occurrences, 58 users | 231 occurrences |
+| `whatsapp_click` | 1,104 occurrences, 654 users | 317 occurrences, 185 users | 1,421 occurrences |
+| `page_view` | 98,764 occurrences | 31,308 occurrences | 130,072 occurrences |
+
+**Diagnosis:** Exact 161/161 split **and** exactly 139 users on both streams for `generate_lead`, on top of the 28/28 even-valued daily counts, makes mirrored/duplicated lead-event collection **highly likely**. The other event streams do **not** universally mirror 1:1 (e.g. page_view, lead_form_submit), so the underlying mechanism remains **unproven**; do not declare that all GA4 activity is doubled or that Tiny Steps has 161 saved, distinct, qualified leads. Total users are not additive across streams. The apparent 161 unique *event occurrences on one stream* is a candidate **analytics baseline**, not Firestore truth; no `submission_id`-level join was obtained. Which stream is appropriate for production is still unknown.
+
+**Release safety:** Keep `generate_lead` starred, do not delete/disable either web stream or change tag destinations until reviewing the **two Data Stream detail pages** (web URLs and measurement IDs), their **Google tag destinations/connected site tags**, and outbound `tid` values on **one approved, privacy-safe staging** submission. A GA4 *event-name × date × stream* comparison and `form_name` breakdown, if registered, would narrow the exact duplicate mechanism. Make tag changes only in a separate, reversible, tested PR/configuration change; PR #763 fixes event **semantics**, not dual-stream collection. Record the cutover date separately and preserve historical reporting definitions.
+
