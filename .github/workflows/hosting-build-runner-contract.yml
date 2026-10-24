@@ -1,0 +1,35 @@
+name: Firebase Hosting Build Runner Contract
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/hosting-build-runner-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-runner:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify Playwright-supported production deployment runner
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+          const workflow = readFileSync('.github/workflows/deploy.yml', 'utf8');
+          const match = workflow.match(/\n  deploy-to-firebase:\n([\s\S]*?)(?=\n  [\w-]+:\n|$)/);
+          const production = match?.[1];
+          assert.ok(production, 'production deploy-to-firebase job missing');
+          assert.match(production, /runs-on: ubuntu-24\.04/, 'Playwright 1.57.0 cannot use the Ubuntu 26.04 runner');
+          assert.match(production, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/, 'Deploy must remain main-only');
+          assert.match(production, /cancel-in-progress: false/, 'Deploy operations must not be cancelled midway');
+          assert.match(production, /needs: analyze-changes/, 'Deployment must use impact analysis');
+          const analysis = workflow.includes('\n  analyze-changes:\n');
+          assert.ok(analysis, 'Impact-analysis job missing');
+          console.log('Production build runner pinned; deploy gating unchanged; no production requests.');
+          NODE

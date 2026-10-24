@@ -142,7 +142,9 @@ jobs:
        needs.analyze-changes.outputs.firestore_rules_changed == 'true' ||
        needs.analyze-changes.outputs.firestore_indexes_changed == 'true')
     needs: analyze-changes
-    runs-on: ubuntu-latest
+    # Playwright 1.57.0 Chromium dependencies are unsupported on ubuntu-26.04.
+    # Pin only the production build/deploy job; analyze-changes stays unchanged.
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     concurrency:
