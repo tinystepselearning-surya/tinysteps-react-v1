@@ -4,6 +4,7 @@ import PublicAssessmentForm from '../../components/forms/PublicAssessmentForm';
 import { PUBLIC_MAIN_CONCERN_OPTIONS } from '../../lib/publicLeadForm';
 
 const trackingMocks = vi.hoisted(() => ({
+  trackLeadFormAttempt: vi.fn(),
   trackDemoBookingComplete: vi.fn(),
   trackLeadFormView: vi.fn(),
   trackGenerateLead: vi.fn(),
@@ -92,6 +93,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     expect(trackingMocks.trackLeadFormError).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormAttempt).not.toHaveBeenCalled();
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
   });
@@ -161,6 +163,7 @@ describe('PublicAssessmentForm analytics', () => {
         conversionPage: '/',
       }),
     }));
+    expect(trackingMocks.trackLeadFormAttempt).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledWith(expect.objectContaining({
@@ -176,7 +179,8 @@ describe('PublicAssessmentForm analytics', () => {
       mainConcern: 'Blending sounds to read words',
       value: 1,
     }));
-    expect(trackingMocks.trackDemoBookingComplete).toHaveBeenCalledTimes(1);
+    // Request saved, but no confirmed class date/time exists yet.
+    expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
     expect(globalThis.open).toHaveBeenCalledTimes(1);
@@ -194,13 +198,17 @@ describe('PublicAssessmentForm analytics', () => {
     expect(decodeURIComponent(whatsappUrl)).toContain('Support area: Blending sounds to read words');
 
     const openOrder = (globalThis.open as any).mock.invocationCallOrder[0];
+    const attemptOrder = trackingMocks.trackLeadFormAttempt.mock.invocationCallOrder[0];
     const saveOrder = firestoreMocks.setDoc.mock.invocationCallOrder[0];
+    const completedSubmitOrder = trackingMocks.trackLeadFormSubmit.mock.invocationCallOrder[0];
     const generateLeadOrder = trackingMocks.trackGenerateLead.mock.invocationCallOrder[0];
     const navigateOrder = popupLocationReplace.mock.invocationCallOrder[0];
     const whatsappOrder = trackingMocks.trackWhatsappClick.mock.invocationCallOrder[0];
 
-    expect(openOrder).toBeLessThan(saveOrder);
-    expect(saveOrder).toBeLessThan(generateLeadOrder);
+    expect(openOrder).toBeLessThan(attemptOrder);
+    expect(attemptOrder).toBeLessThan(saveOrder);
+    expect(saveOrder).toBeLessThan(completedSubmitOrder);
+    expect(completedSubmitOrder).toBeLessThan(generateLeadOrder);
     expect(generateLeadOrder).toBeLessThan(navigateOrder);
     expect(navigateOrder).toBeLessThan(whatsappOrder);
   });
@@ -254,7 +262,8 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
-    expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormAttempt).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
@@ -285,6 +294,8 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(trackingMocks.trackLeadFormAttempt).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
     expect(globalThis.open).toHaveBeenCalledTimes(1);
 
     resolveSave?.();
@@ -312,6 +323,10 @@ describe('PublicAssessmentForm analytics', () => {
     expect(firestoreMocks.doc).toHaveBeenLastCalledWith({}, 'leads', 'lead-123');
     expect(firestoreMocks.setDoc.mock.calls[1]?.[0]).toEqual({ id: 'lead-123' });
     expect(window.sessionStorage.getItem('ts_public_assessment_pending_lead_id_v1')).toBeNull();
+    expect(trackingMocks.trackLeadFormAttempt).toHaveBeenCalledTimes(2);
+    expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
   });
 
   it('does not render the urgency field in the public form', () => {
