@@ -33,6 +33,22 @@ jobs:
           git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/MASTER_URL_TRACKER.csv > /tmp/master-url-tracker.csv
           git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/CHANGES.md > /tmp/seo-change-ledger.md
 
+      - name: Validate runner syntax and daily batch boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/seo/rolling_public_health.py
+          for pair in 1:10 19:10 20:12 21:0 22:0; do
+            slot="${pair%%:*}"
+            expected="${pair##*:}"
+            output="$(python3 scripts/seo/rolling_public_health.py \
+              --tracker /tmp/master-url-tracker.csv \
+              --changes /tmp/seo-change-ledger.md \
+              --out-dir /tmp/seo-validation \
+              --slot "${slot}" --dry-run)"
+            echo "${output}" | grep -Fq "Slot ${slot}; selected ${expected} URLs;"
+          done
+
       - name: Audit today's assigned public URLs and prepare reports
         shell: bash
         run: |
