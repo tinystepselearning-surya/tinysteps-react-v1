@@ -1,0 +1,71 @@
+name: TSSA-7 B2 Live Indexability Pilot
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa7-b2-live-indexability-pilot.mjs'
+      - '.github/workflows/tssa7-b2-live-indexability-pilot.yml'
+      - 'docs/seo/tssa-7/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    name: Observe 10 high-priority live routes (no indexing or deployment)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Gather production HTTP and AI directory evidence
+        run: node scripts/tssa7-b2-live-indexability-pilot.mjs
+      - name: Verify evidence artifact exists
+        run: |
+          test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json
+          test -s artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.csv
+      - name: Diagnose HTTPS with curl (read-only independent client)
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/tssa7-b2
+          {
+            date -u '+UTC observation: %Y-%m-%dT%H:%M:%SZ'
+            for host in tinystepslearning.com www.tinystepslearning.com; do
+              echo "=== DNS $host ==="
+              getent ahostsv4 "$host" | awk 'NR <= 5 { print $1 }' | sort -u || true
+            done
+            for url in \
+              'https://example.com/' \
+              'https://tinystepslearning.com/' \
+              'https://www.tinystepslearning.com/' \
+              'http://tinystepslearning.com/' \
+              'https://tinystepslearning.com/robots.txt' \
+              'https://tinystepslearning.com/sitemap.xml' \
+              'https://tinystepslearning.com/ai-resource-index.json' \
+              'https://tinystepslearning.com/courses/public-speaking-foundations' \
+              'https://tinystepslearning.com/courses/public-speaking-excellence' \
+              'https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india'; do
+              echo "=== GET $url ==="
+              curl --silent --show-error --location --connect-timeout 8 --max-time 18 \
+                --output /dev/null \
+                --write-out 'http_code=%{http_code} verify_ssl=%{ssl_verify_result} remote_ip=%{remote_ip} redirects=%{num_redirects} final_url=%{url_effective} content_type=%{content_type}\n' \
+                "$url" || echo "CURL_GET_FAILED exit=$?"
+            done
+          } | tee artifacts/tssa7-b2/CURL_HTTP_NETWORK_PROBE.txt
+      - name: Upload read-only observed findings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b2-live-indexability-pilot
+          path: artifacts/tssa7-b2/
+          if-no-files-found: warn
+          retention-days: 45
+      - name: Affirm no website modification
+        run: echo "This is ordinary read-only HTTP evidence, not Google/Bing URL Inspection or an indexing request."
