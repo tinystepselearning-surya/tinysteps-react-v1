@@ -1,0 +1,38 @@
+[
+  {
+    "platform": "ChatGPT Search",
+    "completed_answers": 12,
+    "correct_owner": 0,
+    "different_target": 0,
+    "third_party_only": 12,
+    "no_citation": 0,
+    "not_tested": 0
+  },
+  {
+    "platform": "Gemini",
+    "completed_answers": 12,
+    "correct_owner": 0,
+    "different_target": 0,
+    "third_party_only": 2,
+    "no_citation": 10,
+    "not_tested": 0
+  },
+  {
+    "platform": "Google AI Mode",
+    "completed_answers": 12,
+    "correct_owner": 1,
+    "different_target": 2,
+    "third_party_only": 9,
+    "no_citation": 0,
+    "not_tested": 0
+  },
+  {
+    "platform": "Perplexity",
+    "completed_answers": 0,
+    "correct_owner": 0,
+    "different_target": 0,
+    "third_party_only": 0,
+    "no_citation": 0,
+    "not_tested": 12
+  }
+]

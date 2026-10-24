@@ -1,0 +1,5 @@
+{
+  "at": "2026-10-19T14:15:24.182Z",
+  "url": "https://medium.com/@tinystepselearning/are-phonics-apps-enough-or-does-a-child-still-need-a-teacher-ef87f4cca41f",
+  "snapshot": "- heading \"Sorry, you have been blocked\" [level=1]\n- heading \"You are unable to access medium.com\" [level=2]\n- heading \"Why have I been blocked?\" [level=2]\n- paragraph: This website is using a security service to protect itself from online attacks. The action you just performed triggered the security solution. There are several actions that could trigger this block including submitting a certain word or phrase, a SQL command or malformed data.\n- heading \"What can I do to resolve this?\" [level=2]\n- paragraph: You can email the site owner to let them know you were blocked. Please include what you were doing when this page came up and the Cloudflare Ray ID found at the bottom of this page.\n- paragraph:\n  - text: \"Cloudflare Ray ID:\"\n  - strong: a4d0649f1c0c915e\n  - generic: •\n  - text: \"Your IP:\"\n  - button \"Click to reveal\"\n  - generic: •\n  - text: Performance & security by\n  - link \"Cloudflare\":\n    - /url: https://www.cloudflare.com/5xx-error-landing"
+}

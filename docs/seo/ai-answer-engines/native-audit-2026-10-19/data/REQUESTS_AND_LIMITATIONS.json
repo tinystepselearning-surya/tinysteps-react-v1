@@ -1,0 +1,27 @@
+{
+  "property": "sc-domain:tinystepslearning.com",
+  "connector": "Windsor.ai searchconsole",
+  "accounts_discovered": [
+    "sc-domain:tinystepslearning.com",
+    "https://tinystepslearning.com/"
+  ],
+  "requested_periods": [
+    "2026-10-01/2026-10-18",
+    "2026-10-01/2026-10-17",
+    "2026-10-01/2026-10-16",
+    "2026-10-17/2026-10-17"
+  ],
+  "latest_returned_date": "2026-10-17",
+  "include_fresh_data": "not enabled; connector default false",
+  "filters": "No country/device/query filters. Exact canonical URL cohort matching; no fragment or alias summation.",
+  "page_grain": "URL aggregate; one row per returned page",
+  "query_grain": "page/query; privacy-suppressed and omitted queries are not recoverable",
+  "retrieved_page_rows": 216,
+  "cohort_query_rows": 1452,
+  "freshness_field": "data_fetched_at timestamps retained in page CSVs; retrieval time is not underlying event completeness",
+  "dedicated_generative_ai_fields": "not exposed by inspected connector field catalog",
+  "gsc_ui": "requested domain property redirected to public Search Console about page; authentication unavailable",
+  "index_inspection": "not available; all current per-URL indexed verdicts UNVERIFIED",
+  "baseline_reconciliation": "1,033/9 and 285/5 match through-Oct17 aggregates. Through-Oct16 rerun gives 982/9 and 284/5. Earlier narrative date cutoff is inconsistent with those totals; do not report the difference as post-edit uplift.",
+  "main_source_commit": "21a0e124393f6bdc9046eae65c8283880c08a250"
+}

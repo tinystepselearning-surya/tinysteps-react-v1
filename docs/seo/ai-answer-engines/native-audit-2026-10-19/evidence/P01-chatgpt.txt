@@ -1,0 +1,193 @@
+Browser tab: 2, Title: "ChatGPT: Chat, Work, Create & Code with AI", URL: "https://chatgpt.com/uc/6ad622ba-1230-83ea-b5d5-a37fb1f83f10".
+0 AXWebArea ChatGPT: Chat, Work, Create & Code with AI, URL: chatgpt.com/uc/6ad622ba-1230-83ea-b5d5-a37fb1f83f10
+	1 container ChatGPT
+		2 container
+			3 container Sidebar
+				4 container
+					5 link Description: ChatGPT logo, Value: chatgpt.com/?noauth_recent_chat_failed=1
+					6 button (expanded) Description: Close sidebar, Secondary Actions: Collapse
+					7 link Description: New chat, Value: chatgpt.com/?noauth_recent_chat_failed=1
+					8 container Sidebar
+						9 link Description: Images, Value: chatgpt.com/images
+						10 link Description: Plugins, Value: chatgpt.com/plugins
+						11 pop up button (collapsed) Description: Deep research, Secondary Actions: Expand
+						12 link Description: See plans and pricing, Value: openai.com/chatgpt/pricing/
+						13 link Description: OpenAI Help, Value: help.openai.com/
+						14 button Settings
+					15 container Get responses tailored to you
+						16 heading Get responses tailored to you, Value: 2, ID: sidebar-login-title
+							17 text Get responses tailored to you
+						18 text Log in to get answers based on saved chats, plus create images and upload files.
+						19 button Log in
+			20 container
+				21 pop up button (collapsed) ChatGPT, Secondary Actions: Expand
+				22 button Log in
+				23 button Sign up for free
+			24 container Conversation
+				25 container Conversation chat-b8b3b23b-e14f-4bec-adde-1516aa767bce
+					26 content list Conversation
+						27 container 8acef398-8eaa-4b55-b5f0-46a877e8c8de
+							28 heading You said:, Value: 4
+								29 text You said:
+							30 text My child knows letter sounds but cannot read words. Why?
+							31 container
+								32 button Copy
+						33 container e6cc5655-848e-498c-961b-1e3e8fb0c907
+							34 heading ChatGPT said:, Value: 4
+								35 text ChatGPT said:
+							36 container
+								37 container DIL content
+									38 container
+										39 text This is actually quite common when children are learning to read. ❤️ Knowing letter sounds is an important first step, but reading words requires another skill: blending those sounds together.
+									40 container
+										41 text For example, your child may know that:
+									42 content list
+										43 container
+											44 AXListMarker • 
+											45 text c says /k/
+										46 container
+											47 AXListMarker • 
+											48 text a says /ă/
+										49 container
+											50 AXListMarker • 
+											51 text t says /t/
+									52 container
+										53 text But when shown cat , the child may say each sound separately without being able to blend them into “cat.”
+									54 container
+										55 text This does not automatically mean your child has a learning problem. It may mean they need more practice with the next step in reading.
+									56 heading Whyyourchildmayknowsoundsbutnotreadwords, Value: 2
+										57 text Why your child may know sounds but not read words
+									58 container
+										59 image My First Phonics Kit - Best Preschools – BRAINIFY
+										60 button Open My First Phonics Kit - Best Preschools – BRAINIFY
+									61 container
+										62 text 1. Your child cannot blend sounds yet
+									63 container
+										64 text They can say /m/ /a/ /p/ but cannot combine them into map . This is one of the most common reasons.
+										65 pop up button (collapsed) IES +1, ID: :in-10:-trigger, Secondary Actions: Expand
+											66 image
+											67 text IES
+											68 text +1
+									69 container
+										70 image CVC Word Families Say it, Map it, Tap it Worksheets | SOR Aligned | K–2
+										71 button Open CVC Word Families Say it, Map it, Tap it Worksheets | SOR Aligned | K–2
+									72 container
+										73 text 2. Your child adds extra sounds
+									74 container
+										75 text For example, they say “muh-a-puh” instead of the clean sounds /m/ /ă/ /p/. This can make it harder to hear the whole word.
+									76 container
+										77 image Decodable Books: What They Are, What They’re Not, and How to Use Them (Clear Guide + Free Resources)
+										78 button Open Decodable Books: What They Are, What They’re Not, and How to Use Them (Clear Guide + Free Resources)
+									79 container
+										80 text 3. Your child remembers sounds but struggles to use them in print
+									81 container
+										82 text They may know sounds on flashcards but struggle to connect them in a written word, especially when the letters are presented in a different order.
+									83 container
+										84 image Raise a Reader: A Parent Guide to Reading for Ages 3-5
+										85 button Open Raise a Reader: A Parent Guide to Reading for Ages 3-5
+									86 container
+										87 text 4. Your child needs more structured practice
+									88 container
+										89 text If lessons move straight from individual sounds to sentences, your child may need more time learning to read simple words before progressing to books.
+									90 heading Whatyoucandoathome, Value: 2
+										91 text What you can do at home
+									92 container
+										93 text Try this for 5–10 minutes a day.
+										94 pop up button (collapsed) IES +1, ID: :in-1i:-trigger, Secondary Actions: Expand
+											95 image
+											96 text IES
+											97 text +1
+									98 container
+										99 text A simple blending exercise
+									100 heading m—a—t→mat, Value: 2
+										101 text m — a — t → mat
+									102 content list
+										103 container
+											104 AXListMarker 1. 
+											105 text Write mat on paper.
+										106 container
+											107 AXListMarker 2. 
+											108 text Point to each letter and say its sound clearly: /m/ /ă/ /t/.
+										109 container
+											110 AXListMarker 3. 
+											111 text Gradually bring the sounds together: “mmmăăt” → mat .
+										112 container
+											113 AXListMarker 4. 
+											114 text Repeat with sat , map , and sit , provided your child knows those letter sounds.
+										115 container
+											116 AXListMarker 5. 
+											117 text Praise effort, model the answer when needed, and stop before your child gets frustrated.
+									118 container
+										119 text Avoid asking your child to memorise whole words or guess from pictures as a substitute for sounding them out. The goal is to help them read new words independently.
+									120 heading Coulditbedyslexia?, Value: 2
+										121 text Could it be dyslexia?
+									122 container
+										123 text Sometimes, persistent difficulty blending sounds and reading words can be associated with dyslexia or other language-related learning difficulties. But this difficulty alone does not mean your child has dyslexia .
+									124 container
+										125 text If your child continues to struggle despite consistent, explicit teaching, speak with their teacher and consider an assessment by a reading specialist or educational psychologist. Earlier support can help.
+										126 pop up button (collapsed) indianpediatrics.net +1, ID: :in-1p:-trigger, Secondary Actions: Expand
+											127 image
+											128 text indianpediatrics.net
+											129 text +1
+									130 heading Letmehelpyouidentifytheexactdifficulty, Value: 2
+										131 text Let me help you identify the exact difficulty
+									132 container
+										133 text I have three quick questions. Your answers will help me suggest the right next step for your child.
+									134 container
+										135 text 1. How old is your child?
+									136 Options
+										137 container
+											138 radio button (settable, integer) Description: 3–4 years, Value: 0, ID: :in-1w:
+											139 text 3–4 years
+										140 container
+											141 radio button (settable, integer) Description: 5–6 years, Value: 1, ID: :in-1x:
+											142 text 5–6 years
+										143 container
+											144 radio button (settable, integer) Description: 7–8 years, Value: 0, ID: :in-1y:
+											145 text 7–8 years
+										146 container
+											147 radio button (settable, integer) Description: 9 years or older, Value: 0, ID: :in-1z:
+											148 text 9 years or older
+									149 container
+										150 text 2. What happens when you show the word “cat”?
+									151 Options
+										152 container
+											153 radio button (settable, integer) Description: Cannot remember the sounds, Value: 0, ID: :in-20:
+											154 text Cannot remember the sounds
+										155 container
+											156 radio button (settable, integer) Description: Says /c/ /a/ /t/ but cannot say “cat”, Value: 1, ID: :in-21:
+											157 text Says /c/ /a/ /t/ but cannot say “cat”
+										158 container
+											159 radio button (settable, integer) Description: Guesses a word, Value: 0, ID: :in-22:
+											160 text Guesses a word
+										161 container
+											162 radio button (settable, integer) Description: Reads familiar words but not new ones, Value: 0, ID: :in-23:
+											163 text Reads familiar words but not new ones
+									164 container
+										165 text 3. Which language does your child speak most comfortably?
+									166 Options
+										167 container
+											168 radio button (settable, integer) Description: English, Value: 0, ID: :in-24:
+											169 text English
+										170 container
+											171 radio button (settable, integer) Description: English plus another language, Value: 1, ID: :in-25:
+											172 text English plus another language
+										173 container
+											174 radio button (settable, integer) Description: Another language, Value: 0, ID: :in-26:
+											175 text Another language
+									176 button Help me find the next step
+							177 container Response actions
+								178 button Copy response
+								179 button Share
+					180 text ChatGPT is AI and can make mistakes.
+			181 container
+				182 button Scroll to bottom
+				183 container
+					184 button (collapsed) Description: Add files and more, Secondary Actions: Expand
+					185 button Web search, click to remove
+					186 text Chat with ChatGPT
+					187 text entry area (settable) Description: Chat with ChatGPT, ID: mobile-composer-prompt
+					188 button Start dictation
+					189 button (disabled) Send message
+
+The focused UI element is 65 pop up button (collapsed) IES +1, ID: :in-10:-trigger, Secondary Actions: Expand
