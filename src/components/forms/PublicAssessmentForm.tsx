@@ -14,6 +14,7 @@ import {
   buildPublicLeadPayload,
   buildPublicWhatsappMessage,
   getPublicLeadAttribution,
+  validatePublicAssessmentForm,
   type MainConcernOption,
   type PublicAssessmentFormState,
 } from '../../lib/publicLeadForm';
@@ -101,7 +102,7 @@ export default function PublicAssessmentForm({
         ...prev,
         parentName: typeof parsed.parentName === 'string' ? parsed.parentName.slice(0, 80) : prev.parentName,
         childName: typeof parsed.childName === 'string' ? parsed.childName.slice(0, 80) : prev.childName,
-        whatsapp: typeof parsed.whatsapp === 'string' ? parsed.whatsapp.slice(0, 20) : prev.whatsapp,
+        whatsapp: typeof parsed.whatsapp === 'string' ? parsed.whatsapp.slice(0, 24) : prev.whatsapp,
       }));
     } catch {
       return;
@@ -209,28 +210,7 @@ export default function PublicAssessmentForm({
   };
 
   const validate = () => {
-    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
-
-    if (!form.parentName.trim()) {
-      nextErrors.parentName = 'Please enter parent name.';
-    }
-
-    if (!form.childName.trim()) {
-      nextErrors.childName = 'Please enter child name.';
-    }
-
-    if (!form.whatsapp.trim()) {
-      nextErrors.whatsapp = 'Please enter WhatsApp number.';
-    }
-
-    if (!form.childAge) {
-      nextErrors.childAge = 'Please select child age.';
-    }
-
-    if (!form.mainConcern) {
-      nextErrors.mainConcern = 'Please select the support area.';
-    }
-
+    const nextErrors = validatePublicAssessmentForm(form);
     setErrors(nextErrors);
     return {
       isValid: Object.keys(nextErrors).length === 0,
@@ -418,6 +398,7 @@ export default function PublicAssessmentForm({
               id="assessment-parent-name"
               name="parentName"
               type="text"
+              maxLength={80}
               autoComplete="name"
               aria-label="Parent Name"
               placeholder="Parent Name"
@@ -441,6 +422,7 @@ export default function PublicAssessmentForm({
               id="assessment-child-name"
               name="childName"
               type="text"
+              maxLength={80}
               autoComplete="off"
               aria-label="Child Name"
               placeholder="Child Name"
@@ -465,6 +447,7 @@ export default function PublicAssessmentForm({
             id="assessment-whatsapp"
             name="whatsapp"
             type="tel"
+            maxLength={24}
             autoComplete="tel"
             inputMode="tel"
             aria-label="WhatsApp Number"

@@ -319,4 +319,49 @@ describe('PublicAssessmentForm analytics', () => {
 
     expect(screen.queryByLabelText(/when do you want to start/i)).toBeNull();
   });
+  it.each([
+    ['parentName', 'P', /parent name must be 2/i],
+    ['whatsapp', '1234567', /valid WhatsApp number with 8/i],
+    ['whatsapp', '1234567890xyz', /valid WhatsApp number with 8/i],
+    ['whatsapp', '1234567890123456', /valid WhatsApp number with 8/i],
+  ])('rejects invalid %s input (%s) without an outbound attempt', (field, invalidValue, message) => {
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    const label = field === 'parentName' ? /parent name/i : /whatsapp number/i;
+    fireEvent.change(screen.getByLabelText(label), { target: { value: invalidValue } });
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+
+    expect(screen.getByText(message)).toBeInTheDocument();
+    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
+    expect(trackingMocks.trackLeadFormError).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
+    expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
+    expect(globalThis.open).not.toHaveBeenCalled();
+    expect(popupLocationReplace).not.toHaveBeenCalled();
+  });
+
+  it('allows an internationally formatted WhatsApp phone without changing Firestore or handoff behavior', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.change(screen.getByLabelText(/whatsapp number/i), {
+      target: { value: '+91 (99999) 99999' },
+    });
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc).toHaveBeenCalledWith(
+      { id: 'lead-123' },
+      expect.objectContaining({
+        whatsappNumber: '+91 (99999) 99999',
+        primaryPhone: '+91 (99999) 99999',
+        phoneNormalized: '+919999999999',
+      }),
+    );
+    await waitFor(() => expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1));
+    expect(globalThis.open).toHaveBeenCalledTimes(1);
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
+  });
+
 });

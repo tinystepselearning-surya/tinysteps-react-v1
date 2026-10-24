@@ -36,6 +36,63 @@ export type PublicAssessmentFormState = {
   urgency: '' | 'Today' | 'This week' | 'This month' | 'Just exploring';
 };
 
+/**
+ * Validate only the anonymous Firestore lead-create fields. Keep this aligned
+ * with the existing /leads rules; never loosen server rules for browser input.
+ * Phone punctuation is allowed for international numbers, but the stored
+ * phoneNormalized value must contain an optional leading + and 8–15 digits.
+ */
+export type PublicAssessmentValidationErrors = Partial<
+  Record<'parentName' | 'childName' | 'whatsapp' | 'childAge' | 'mainConcern', string>
+>;
+
+export function validatePublicAssessmentForm(
+  form: PublicAssessmentFormState,
+): PublicAssessmentValidationErrors {
+  const errors: PublicAssessmentValidationErrors = {};
+  const parentName = form.parentName.trim();
+  const childName = form.childName.trim();
+  const whatsapp = form.whatsapp.trim();
+
+  if (!parentName) {
+    errors.parentName = 'Please enter parent name.';
+  } else if (parentName.length < 2 || parentName.length > 80) {
+    errors.parentName = 'Parent name must be 2–80 characters.';
+  }
+
+  if (!childName) {
+    errors.childName = 'Please enter child name.';
+  } else if (childName.length > 80) {
+    errors.childName = 'Child name must be 80 characters or fewer.';
+  }
+
+  if (!whatsapp) {
+    errors.whatsapp = 'Please enter WhatsApp number.';
+  } else if (whatsapp.length > 24) {
+    errors.whatsapp = 'WhatsApp number must be 24 characters or fewer.';
+  } else {
+    const normalizedPhone = whatsapp.replace(/[^\d+]/g, '');
+    const acceptableFormatting = /^\+?[0-9 ()\-.]+$/.test(whatsapp);
+    if (!acceptableFormatting || !/^\+?\d{8,15}$/.test(normalizedPhone)) {
+      errors.whatsapp = 'Enter a valid WhatsApp number with 8–15 digits (country code optional).';
+    }
+  }
+
+  if (!form.childAge) {
+    errors.childAge = 'Please select child age.';
+  } else if (!/^\d+$/.test(form.childAge) || !Number.isInteger(Number(form.childAge)) ||
+    Number(form.childAge) < 3 || Number(form.childAge) > 12) {
+    errors.childAge = 'Please select an age from 3 to 12.';
+  }
+
+  if (!form.mainConcern) {
+    errors.mainConcern = 'Please select the support area.';
+  } else if (!PUBLIC_MAIN_CONCERN_OPTIONS.includes(form.mainConcern)) {
+    errors.mainConcern = 'Please choose a listed support area.';
+  }
+  return errors;
+}
+
 export type PublicLeadAttribution = {
   sourcePath: string;
   landingPage?: string;
