@@ -1,0 +1,78 @@
+name: TSSA-7 B3 Parent Intent and Course Age Integrity
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/CoursesPage.tsx'
+      - 'scripts/tssa7-b3-parent-intent-coverage.mjs'
+      - 'scripts/test/tssa7-b3-parent-intent-coverage.node-test.mjs'
+      - 'docs/seo/tssa-7/**'
+      - '.github/workflows/tssa7-b3-parent-intent-coverage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parent-intent-source:
+    name: Parent-question owner audit and age-boundary regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Generate existing canonical corpus
+        run: node scripts/generate-rss.mjs
+      - name: Reconcile B1 source baseline and 17 integrated audits
+        run: node scripts/tssa7-b1-content-authority-ledger.mjs
+      - name: Reconcile B3 parent problems, native query owners and course ages
+        run: node scripts/tssa7-b3-parent-intent-coverage.mjs
+      - name: Assert source intent boundaries and no new indexable URLs
+        run: node --test scripts/test/tssa7-b3-parent-intent-coverage.node-test.mjs
+      - name: TypeScript compilation guard
+        run: npm run typecheck
+      - name: Upload reviewable B3 source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b3-parent-intent-source-evidence
+          path: artifacts/tssa7-b3/
+          if-no-files-found: warn
+          retention-days: 45
+
+  rendered-course-page:
+    name: Full rendered website and SEO regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Install Chromium for build prerender
+        run: npx playwright install --with-deps chromium
+      - name: Full production build, prerender, SEO and indexing regression
+        run: npm run build
+      - name: Verify exact /courses output remains canonical
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const html = fs.readFileSync('dist/courses/index.html','utf8');
+          assert.match(html, /<link[^>]*rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/courses"/);
+          assert.match(html, /Ages 3[–-]7/);
+          assert.match(html, /Ages 4[–-]8/);
+          assert.match(html, /Ages 6[–-]12/);
+          assert.match(html, /Phonics Foundations/);
+          assert.match(html, /Early Phonics/);
+          assert.doesNotMatch(html, /<meta[^>]*name="robots"[^>]*content="noindex/);
+          console.log('Existing /courses canonical and curriculum-age strings verified in production-rendered HTML');
+          NODE
+      - name: No external mutations
+        run: echo "Build-only. No Firestore, live parent enquiry, GSC submissions, sitemap submission or Firebase deployment."
