@@ -1,0 +1,77 @@
+name: TSSA-7 B4 Educational Content Authority
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/public/PhonicsAppsPreschoolersIndiaPage.tsx'
+      - 'scripts/tssa7-b4-educational-authority.mjs'
+      - 'scripts/test/tssa7-b4-educational-authority.node-test.mjs'
+      - 'docs/seo/tssa-7/**'
+      - '.github/workflows/tssa7-b4-educational-content-authority.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  educational-source-evidence:
+    name: Review 168 educational source owners and B4 editorial guards
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Generate existing site corpus and B1 baseline
+        run: |
+          node scripts/generate-rss.mjs
+          node scripts/tssa7-b1-content-authority-ledger.mjs
+      - name: Produce reviewable B4 educational-source evidence
+        run: node scripts/tssa7-b4-educational-authority.mjs
+      - name: Verify authority and no misleading preschool claims
+        run: node --test scripts/test/tssa7-b4-educational-authority.node-test.mjs
+      - name: TypeScript compilation guard
+        run: npm run typecheck
+      - name: Upload reviewable B4 source evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b4-educational-authority-evidence
+          path: artifacts/tssa7-b4/
+          if-no-files-found: warn
+          retention-days: 45
+
+  rendered-public-guidance:
+    name: Validate published preschool evidence and all SEO routes
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - name: Chromium for production prerender
+        run: npx playwright install --with-deps chromium
+      - name: Full production build and built-in SEO checks
+        run: npm run build
+      - name: Assert affected route still canonical and educational citations render
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const html=fs.readFileSync('dist/phonics-apps-for-preschoolers-india/index.html','utf8');
+          assert.match(html,/rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/phonics-apps-for-preschoolers-india"/);
+          assert.match(html,/Education Endowment Foundation/);
+          assert.match(html,/Institute of Education Sciences/);
+          assert.match(html,/not a standardized diagnostic test/);
+          assert.doesNotMatch(html,/matches CBSE\/ICSE\/IB sound order and expectations/);
+          assert.doesNotMatch(html,/<meta[^>]*name="robots"[^>]*content="noindex/);
+          console.log('Existing canonical/index intent, revised learning examples and real references rendered.');
+          NODE
+      - name: Never mutate Firebase or indexed URL owners in CI
+        run: echo "Read-only build and prerender. No Firebase deployment, GSC changes, or parent activity."
