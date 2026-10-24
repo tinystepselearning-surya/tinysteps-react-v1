@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'scripts/tssa7-b2-live-indexability-pilot.mjs'
+      - 'scripts/lib/tssa7-b2-index-directives.mjs'
+      - 'scripts/test/tssa7-b2-index-directives.node-test.mjs'
       - '.github/workflows/tssa7-b2-live-indexability-pilot.yml'
       - 'docs/seo/tssa-7/**'
   workflow_dispatch:
@@ -24,6 +26,8 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Verify Google/Bing index exclusion parsing (read-only)
+        run: node --test scripts/test/tssa7-b2-index-directives.node-test.mjs
       - name: Gather production HTTP and AI directory evidence
         run: node scripts/tssa7-b2-live-indexability-pilot.mjs
       - name: Verify evidence artifact exists
