@@ -4,14 +4,14 @@
 **Scope:** Evidence-based search authority for Tiny Steps Learning, children aged **3–12**, across Google Search/AI Mode, Bing and Microsoft AI, ChatGPT Search and Gemini. Phonics, Reading, Grammar, Writing, Vocabulary, Speaking, Communication and public course curriculum.  
 **Live website:** https://tinystepslearning.com  
 **Parent tracking issue:** [#748](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/748)  
-**Current brick:** **B2 — repository engineering closeout in review; Google/Bing indexed-decision outcomes tracked separately in Issue #747.** Brick **B1 COMPLETE** (merged PR #758). The B2 HTTP pilot and machine-directory fix (#759, #760) and related parent-navigation improvement (#755) were merged and released 24–25 October. See [B2 engineering closeout](./B2_REPOSITORY_REMEDIATION_2026-10-25.md). **Do not claim full search-engine indexed verdicts are verified.**
+**Brick progression (25 October 2026):** **B1 COMPLETE** (merged PR #758); **B2 REPOSITORY ENGINEERING VERIFIED** (live 10/10, eight guard tests, GitHub runs #40130321849 and #40130321866, proposed integration PR #766). Prior B2 metadata (#760) and parent-journey (#755) improvements are already merged/deployed. **Google/Bing engine-selected indexing outcomes remain an external watch in Issue #747** and are not claimed resolved. **Next internal brick after #766 integration: B3.** See [B2 engineering closeout](./B2_REPOSITORY_REMEDIATION_2026-10-25.md).
 
 ## Seven-brick contract
 
 | ID | Name | Acceptance result | Current state |
 |---|---|---|---|
 | TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **COMPLETE** — #758 merged; CI passed |
-| TSSA-7/B2 | Google and Bing indexing | Technical origin and machine-directory fixes + separately recorded Google/Bing indexed verdicts | **ENGINEERING CLOSEOUT IN REVIEW** — [repo remediation](./B2_REPOSITORY_REMEDIATION_2026-10-25.md); external indexed verdicts deferred to #747 |
+| TSSA-7/B2 | Google and Bing indexing | Technical origin and machine-directory fixes + separately recorded Google/Bing indexed verdicts | **REPOSITORY ENGINEERING VERIFIED, PR #766** — [10/10 live gate + tests](./B2_REPOSITORY_REMEDIATION_2026-10-25.md); external indexed verdicts deferred to #747 |
 | TSSA-7/B3 | Parent questions and curriculum coverage | Prioritized parent-intent map, one source owner per intent, meaningful stage/age boundaries | PLANNED |
 | TSSA-7/B4 | Educational content authority | Pedagogical review, independent references, appropriate author/expertise evidence, scoped editorial corrections | PLANNED |
 | TSSA-7/B5 | Internal linking and external brand authority | Useful parent → explanation → practice/programme paths and substantiated entity/syndication evidence | PLANNED; unrelated draft #755 held |
