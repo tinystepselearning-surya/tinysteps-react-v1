@@ -141,7 +141,7 @@ describe('publicLeadForm helpers', () => {
     ['abc123456789', 'letters'],
     ['1234567', 'too few digits'],
     ['1234567890123456', 'more than 15 digits'],
-    ['1234567890123  -   -   -', 'raw input longer than 24 characters'],
+    ['1234567890123         -   -   -', 'raw input longer than 24 characters'],
     ['++919999999999', 'repeated plus'],
     ['91+9999999999', 'plus in the middle'],
     ['9999999999#', 'other punctuation'],
