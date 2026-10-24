@@ -1,0 +1,32 @@
+name: P0 GA4 Marketing Stream Routing
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/analytics.ts'
+      - 'src/tests/lib/ga4MarketingEventRouting.spec.ts'
+      - 'docs/seo/tssa-7/P0_GA4_DUAL_STREAM_ROUTING_2026-10-25.md'
+      - '.github/workflows/ga4-marketing-stream-routing.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install frozen dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Verify scoped GA4 event routing and public analytics guards
+        run: npx vitest run src/tests/lib/ga4MarketingEventRouting.spec.ts src/tests/seo/clarityRoutePolicy.spec.ts src/tests/seo/commercialC0Foundation.spec.ts
+      - name: No production interaction
+        run: echo "No live GA4 mutation, Firebase deploy, stream deletion, or real enquiry submission."
