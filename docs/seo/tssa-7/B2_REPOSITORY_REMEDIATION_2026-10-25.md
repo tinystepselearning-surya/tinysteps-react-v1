@@ -39,3 +39,11 @@ No index requests, Firestore/function/app changes, price/assessment changes, mas
 ## Progression decision
 
 Once the deterministic CI, 10-route live read-only witness and regression checks pass, **B2 engineering is ready to close**, and TSSA-7/B3 can proceed while #747 remains a platform-indexing watch. Do **not** claim B2's Google/Bing indexed-decision acceptance as achieved unless actual engine inspection evidence arrives. If the live gate fails, classify and diagnose without presenting a site outage as proven.
+
+## Verified engineering acceptance — 25 October 2026
+
+- Latest B2 GitHub CI [run #40130321849](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/40130321849) **SUCCESS** on reviewed source: **8/8** index-directive, source-wiring and cache-regression tests; **10/10** ordinary production HTTPS pages HTTP 200, **10/10** `LIVE_INDEXABILITY_ELIGIBLE`, **zero** technical flags, **zero** missing data; all ten self-canonical/sitemap-listed/machine-indexable and `robots`/`googlebot`/`bingbot` metadata permit indexing.
+- Independent cURL from GitHub runner: verified SSL result `0`, homepage, sitemap, robots, AI directory and speaking/phonics routes fetched successfully; both `www` HTTPS and plain HTTP apex redirected to canonical HTTPS apex.
+- Latest B1 content-authority baseline [run #40130321866](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/40130321866) **SUCCESS**.
+- **Engineering decision:** repository-side B2 changes and tests are now **verified / ready for approved merge**, with no new website page changes. Postmerge CI must be checked before calling branch integration complete.
+- **External exclusion:** zero Google/Bing provider-side URL Inspection verdicts were obtained by this workflow; their authoritative index selection stays in #747. The 10/10 result is *live technical eligibility only*.
