@@ -46,3 +46,10 @@ The samples are **not** complete query-volume totals or national market demand e
 4. Keep lead-generation PRs #761–#764 and operational work untouched; this PR does not change submission behavior. If changed public text deploys, verify Firebase rollout and current live `/courses` HTML before calling B3 released.
 
 **Next B3 decision:** If the source audit exposes additional actionable broken/redirected supporting links or missing age/stage explanation, resolve each in a separate narrow change. Do not bulk-publish duplicate pages just to expand keyword surface.
+
+## B3 source and rendered acceptance — verified 25 October 2026
+
+- [B3 CI #40131794609](https://github.com/tinystepselearning-surya/tinysteps-react-v1/actions/runs/40131794609): both jobs **SUCCESS**. Generated source inventory confirmed **279 distinct canonical entries, 28/28 parent problems, 12/12 benchmark owners, 9/9 commercial intents, 7 curriculum levels, 245 lessons**; **zero owner errors and zero unregistered supporting/practice paths**; **4/4** new Node tests pass, TypeScript passed.
+- Full production build on Ubuntu 24.04 with real Chromium: **266/266 prerendered routes**, standard rendered SEO/canonical guard PASS, **299/299 route indexability report checks** PASS. The rendered `/courses` page contains the corrected Ages **3–7** and **4–8**, remains self-canonical/index-permitted.
+- B1 and B2 accompanying source/production read-only audits also passed on the same branch.
+- **B3 acceptance decision:** the *parent intent ownership and curriculum coverage engineering criteria* have been met and this branch is ready for approved integration. External Google/Bing index selections (#747), native AI citations (B6) and broader instructional-authority judgment (B4) remain separate. No ranking or traffic improvement guaranteed.
