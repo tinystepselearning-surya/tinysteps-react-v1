@@ -4,14 +4,14 @@
 **Scope:** Evidence-based search authority for Tiny Steps Learning, children aged **3–12**, across Google Search/AI Mode, Bing and Microsoft AI, ChatGPT Search and Gemini. Phonics, Reading, Grammar, Writing, Vocabulary, Speaking, Communication and public course curriculum.  
 **Live website:** https://tinystepslearning.com  
 **Parent tracking issue:** [#748](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/748)  
-**Current brick:** **B2 — Google & Bing indexing verification (IN PROGRESS, first production indexability pilot in draft PR; platform-selected indexed verdicts still pending).** Brick **B1 COMPLETE**, merged [PR #758](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/758) 2026-10-19.
+**Current brick:** **B2 — repository engineering closeout in review; Google/Bing indexed-decision outcomes tracked separately in Issue #747.** Brick **B1 COMPLETE** (merged PR #758). The B2 HTTP pilot and machine-directory fix (#759, #760) and related parent-navigation improvement (#755) were merged and released 24–25 October. See [B2 engineering closeout](./B2_REPOSITORY_REMEDIATION_2026-10-25.md). **Do not claim full search-engine indexed verdicts are verified.**
 
 ## Seven-brick contract
 
 | ID | Name | Acceptance result | Current state |
 |---|---|---|---|
 | TSSA-7/B1 | Content and authority baseline | Nonduplicated canonical ledger, question-owner mapping, curriculum/17-report crosswalk and evidence-status register | **COMPLETE** — #758 merged; CI passed |
-| TSSA-7/B2 | Google and Bing indexing | Real inspection states, page/query/sitemap/robots evidence; only confirmed repairs | **IN PROGRESS** — read-only [pilot](./B2_INDEXABILITY_PILOT_2026-10-19.md); owner GSC/Bing inspection #747 |
+| TSSA-7/B2 | Google and Bing indexing | Technical origin and machine-directory fixes + separately recorded Google/Bing indexed verdicts | **ENGINEERING CLOSEOUT IN REVIEW** — [repo remediation](./B2_REPOSITORY_REMEDIATION_2026-10-25.md); external indexed verdicts deferred to #747 |
 | TSSA-7/B3 | Parent questions and curriculum coverage | Prioritized parent-intent map, one source owner per intent, meaningful stage/age boundaries | PLANNED |
 | TSSA-7/B4 | Educational content authority | Pedagogical review, independent references, appropriate author/expertise evidence, scoped editorial corrections | PLANNED |
 | TSSA-7/B5 | Internal linking and external brand authority | Useful parent → explanation → practice/programme paths and substantiated entity/syndication evidence | PLANNED; unrelated draft #755 held |
@@ -111,6 +111,6 @@ The GSC owner report became available **after** the E4 GitHub document stated th
 
 **Handoff to B2:** Individual real Google-selected canonical / Page Indexing states and Bing indexed states, crawler visits and coverage of additional routes. [Issue #747](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/747) tracks unresolved GSC outcomes. **Do not mass request indexing.**
 
-**Parallel work remains separate:** [Issue #756](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/756) investigates zero enquiries and GA4 reporting; [PR #755](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/755) remains draft/unmerged during release hold. [PR #754](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/754) is native-answer evidence and still draft/unmerged. This B1 PR will not merge either PR or deploy marketing changes.
+**Status supersession (25 October 2026):** The B1 section above records its *19 October* acceptance context. Subsequently #754 and #755 were **merged and deployed** after validation; #759 and #760 also merged and released. Lead/GA4 Issue #756 and PRs #761–#764 are a **separate held workstream**. For current B2 status, use [repository remediation closeout](./B2_REPOSITORY_REMEDIATION_2026-10-25.md) and external-indexed-decision watch #747, not older in-progress statements in dated audits.
 
 **Resume command for future sessions:** `Resume TSSA-7; open docs/seo/tssa-7/README.md and Issue #748; B1 completed as PR #758. Continue B2 from its first unverified Google/Bing indexed-view gate.`
