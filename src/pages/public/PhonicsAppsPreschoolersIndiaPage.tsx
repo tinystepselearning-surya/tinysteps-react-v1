@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 const FAQS = [
   {
     question: 'What age should a child start using phonics apps?',
-    answer: 'Most children are ready between ages 3–6, when they can listen to sounds, repeat them, and match letters with pictures. Start with short, guided sessions and build slowly. If your child enjoys story time and can follow simple instructions, they are ready to begin.'
+    answer: 'For children around ages 3–6, readiness varies. A short, shared sound-listening activity may be useful when the child is interested and can participate comfortably; there is no universal age or app-readiness test. Start with play, oral language and reading aloud, and introduce sound–letter practice gradually.'
   },
   {
     question: 'Are phonics apps enough to teach reading?',
@@ -14,11 +14,11 @@ const FAQS = [
   },
   {
     question: 'How many minutes a day should we use a phonics app?',
-    answer: '10 minutes a day is plenty for preschoolers. Short, consistent practice works better than long sessions. Two 5-minute bursts (morning and evening) often feels easier for young children.'
+    answer: 'Ten minutes is one optional example, not an evidence-based daily requirement. Try a shorter, adult-guided activity if that suits your child; stop when attention or enjoyment fades. Conversation, play and reading aloud also matter.'
   },
   {
     question: 'Should the app use Indian English pronunciation?',
-    answer: 'Clear, consistent pronunciation matters most. An app that models sounds cleanly and matches the way letters are taught at school (CBSE/ICSE/IB) will be effective. If possible, choose apps that avoid mixed accents and keep sounds consistent.'
+    answer: 'Choose clear speech sounds and spelling examples your child can understand. If your child is learning a particular phonics sequence at school, use the same already-taught sound–letter correspondences where practical. CBSE, ICSE and IB do not prescribe one shared phonics sound order; accent differences alone do not establish whether an app teaches decoding well.'
   },
   {
     question: 'What features matter most for ages 3–6?',
@@ -30,11 +30,11 @@ const FAQS = [
   },
   {
     question: 'Can phonics apps help bilingual kids?',
-    answer: 'Yes. Phonics teaches how English sounds map to letters, which helps bilingual children decode words faster. Choose apps that focus on sound clarity and blending rather than heavy text blocks.'
+    answer: 'They can provide useful English sound–letter and blending practice for multilingual children, alongside speaking, listening and reading in the languages the child uses. An app does not guarantee faster decoding; check whether the child can apply taught patterns to unfamiliar words and gets appropriate feedback.'
   },
   {
     question: 'What if my child confuses similar letters like b and d?',
-    answer: 'That is normal at this age. Use visual cues (b has the bat first, d has the drum first), multisensory practice, and short, repeated drills. The confusion usually resolves with consistent practice.'
+    answer: 'Letter reversals such as b and d can occur during early writing and reading development. Model the letter formation and sound, practise briefly with fresh examples, and look for gradual improvement. If confusion persists or substantially affects reading, discuss it with the child's teacher or an appropriate specialist rather than assuming practice alone will resolve it.'
   },
   {
     question: 'Do I need to buy a paid phonics app?',
@@ -97,7 +97,7 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
   useEffect(() => {
     applySeo({
       title: 'Phonics Apps for Preschoolers in India (Ages 3–6) | Parent Guide',
-      description: 'Parent-friendly guide to phonics apps for preschoolers in India. Learn what to look for, how to use apps at home in 10 minutes a day, and common mistakes to avoid.',
+      description: 'Parent-friendly guide to phonics apps for preschoolers in India. Compare systematic sound–letter practice, adult guidance, readiness and evidence-based limitations.',
       canonicalPath: '/phonics-apps-for-preschoolers-india',
       ogType: 'website',
       jsonLd: [breadcrumbSchema, webPageSchema, faqSchema]
@@ -133,7 +133,7 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
           What are good phonics apps for preschoolers in India?
         </h2>
         <p className="text-gray-700 leading-relaxed">
-          Good phonics apps for preschoolers in India help ages 3–6 practice letter sounds, blending, and short words through playful, daily activities. Look for clear audio, step-by-step progression, and parent tracking. Apps work best when paired with guided reading or a mentor.
+          A useful phonics app can offer playful practice with sounds, letters and blending at the child's current level. Look for clear audio, a coherent teaching sequence and examples the child can use away from the screen. Apps supplement adult conversation, shared reading and responsive teaching; no app alone guarantees independent reading.
         </p>
         <p className="mt-3 text-sm text-gray-600">
           If your child also needs pencil-control practice, add a short{' '}
@@ -155,13 +155,13 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
             <li className="flex items-start"><span className="text-[#4a7c2c] font-bold mr-3">✓</span><span><strong>Minimal distractions:</strong> Rewards that don’t interrupt learning.</span></li>
             <li className="flex items-start"><span className="text-[#4a7c2c] font-bold mr-3">✓</span><span><strong>Parent tracking:</strong> Progress dashboards that show mastered sounds.</span></li>
             <li className="flex items-start"><span className="text-[#4a7c2c] font-bold mr-3">✓</span><span><strong>Offline-friendly:</strong> Works smoothly on average home internet.</span></li>
-            <li className="flex items-start"><span className="text-[#4a7c2c] font-bold mr-3">✓</span><span><strong>School alignment:</strong> Matches CBSE/ICSE/IB sound order and expectations.</span></li>
+            <li className="flex items-start"><span className="text-[#4a7c2c] font-bold mr-3">✓</span><span><strong>Teaching continuity:</strong> Lets the child practise already-taught sound–letter patterns; schools and programmes may use different sequences.</span></li>
           </ul>
         </div>
       </section>
 
       <section className="mb-12 bg-green-50 p-8 rounded-lg">
-        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">How to use an app at home (10 minutes/day)</h2>
+        <h2 className="text-3xl font-bold text-[#2d5016] mb-4">An example of a short, guided app routine</h2>
         <ol className="space-y-4 text-gray-700 list-decimal list-inside">
           <li><strong>2 minutes:</strong> Review 3–5 known sounds together (say, point, repeat).</li>
           <li><strong>5 minutes:</strong> Complete one app activity focused on today’s sound or blend.</li>
@@ -169,7 +169,7 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
           <li><strong>1 minute:</strong> Celebrate a win and stop before your child gets tired.</li>
         </ol>
         <p className="text-sm text-gray-600 mt-4">
-          Consistency beats length. Ten focused minutes daily works better than one long session per week.
+          This is an illustrative ten-minute plan, not a prescribed duration or a guarantee of progress. Adjust to the child's attention and the sounds already taught; make time for conversation, story reading and play.
         </p>
       </section>
 
@@ -195,6 +195,40 @@ export default function PhonicsAppsPreschoolersIndiaPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      <section aria-labelledby="app-evidence-boundary" className="mb-12 rounded-lg border border-gray-200 bg-white p-6">
+        <h2 id="app-evidence-boundary" className="text-2xl font-bold text-[#2d5016] mb-3">What research supports—and what it does not</h2>
+        <p className="text-gray-700 leading-relaxed">
+          Research supports explicit, systematic sound–letter instruction, blending, spelling, and practice matched
+          to a learner&apos;s current knowledge. It does not establish that a particular app, accent, fixed
+          ten-minute schedule, or one universal school-board sound order guarantees reading progress.
+          Monitor whether the child can use a taught pattern in a fresh word away from the app.
+        </p>
+        <p className="mt-3 text-gray-700 leading-relaxed">
+          For example, after teaching the sounds in <strong>sat</strong>, help the child blend the word.
+          When <strong>p</strong> has also been taught, offer <strong>pat</strong> without the answer displayed.
+          Correct errors gently and check independent blending rather than accepting repeated taps as mastery.
+          These are illustrative teaching activities, not a standardized diagnostic test.
+        </p>
+        <ul className="mt-4 list-disc space-y-2 pl-6 text-sm text-gray-700">
+          <li>
+            <a className="font-semibold text-[#2d5016] underline" href="https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics/" target="_blank" rel="noopener noreferrer">
+              Education Endowment Foundation — Phonics evidence review
+            </a>
+            {' '}describes explicit, systematic phonics and the need to match teaching to a child&apos;s knowledge.
+          </li>
+          <li>
+            <a className="font-semibold text-[#2d5016] underline" href="https://ies.ed.gov/ncee/wwc/PracticeGuide/21/Published" target="_blank" rel="noopener noreferrer">
+              Institute of Education Sciences — Foundational Reading Skills practice guide
+            </a>
+            {' '}covers sound awareness, decoding, word analysis, oral language and connected reading.
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-gray-600">
+          These independent references inform general teaching principles; they do not endorse Tiny Steps or evaluate any named app.
+          The examples and home routine above are Tiny Steps editorial guidance.
+        </p>
       </section>
 
       <section className="text-center bg-blue-50 p-8 rounded-lg">
