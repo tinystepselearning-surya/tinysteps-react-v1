@@ -244,3 +244,18 @@ WhatsApp conversion tracking:
 - This step adds interpretation and reporting guidance only (no dashboard UI build).
 - `high_intent_page_cta_click` is intentionally selective (strong CTA labels only) to avoid event spam.
 - `book_demo_click` from non-link controls without destination may not fire unless label + destination rules match; this is deliberate for event quality.
+
+
+---
+
+## Owner-verified GA4 key-event configuration (25 October 2026)
+
+**Source:** Owner-supplied screenshots of GA4 Admin → Data display → Events → **Key events** for property `tinysteps-react-v1`, captured around 00:01 IST on **25 Oct 2026**. Screenshots were inspected in the owner conversation, not uploaded to the repository.
+
+- In the displayed six-event key-events table, **`generate_lead` is the only starred/selected key event**, with **2 streams** visible when expanded: `Tiny Steps` and `Tiny Steps App Check`.
+- Listed `app_store_subscription_convert`, `app_store_subscription_renew`, `first_open`, `in_app_purchase`, and `purchase` are not marked as key events in that screenshot and show *No stream data detected*.
+- `lead_form_submit`, `funnel_form_submit`, and `funnel_demo_booking_complete` are **not** in the displayed key-event list. Do **not** make `lead_form_submit_attempt` a key event.
+- Therefore the proposed assessment-form fix **preserves `generate_lead` as the key conversion event** rather than changing its name or GA4 configuration. The change moves two other submit events to the post-save stage and stops falsely completing demo-booking.
+- **Not proven by screenshot:** that GA4's 322 key-event occurrences during 25 Sep–22 Oct were entirely `generate_lead`, how they break down by event/source/stream, whether the two named web data streams receive duplicate hits from one production form submission, or how many distinct persisted Firestore leads they represent. `generate_lead` may also be emitted by trial/advisor forms with different source-of-truth and IDs.
+- **Release gate:** before production rollout, check GA4 *event-name counts* and **Admin → Data streams** URL + Measurement ID for each of the two streams. Preserve pre/post event semantics in reporting, and reconcile `generate_lead` for `form_name=public_assessment_form` with distinct saved lead IDs. Do not disable either stream or toggle key-event stars based on names alone.
+
