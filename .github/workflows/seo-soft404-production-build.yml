@@ -61,7 +61,8 @@ concurrency:
 jobs:
   verify-hosting-build:
     name: Production artifact + Soft 404 guards (no deployment)
-    runs-on: ubuntu-latest
+    # Pin to 24.04 while the repository's pinned Playwright Chromium build lacks Ubuntu 26.04 support.
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - name: Checkout PR source
