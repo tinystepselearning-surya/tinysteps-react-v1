@@ -96,6 +96,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
           { title: 'Knows ABC but cannot read words', description: 'Check whether letter names are masking a decoding gap.', to: '/blog/child-knows-abc-but-cannot-read', label: 'Check this reading gap' },
           { title: 'Knows sounds but cannot read words', description: 'Separate sound knowledge from blending and decoding transfer.', to: '/blog/why-child-knows-letter-sounds-but-cannot-read-words', label: 'Check the blending gap' },
           { title: 'Reading is slow or effortful', description: 'Look at accuracy, phrasing and meaning before pushing speed.', to: '/blog/how-to-improve-reading-fluency-in-children', label: 'Explore fluency help' },
+          { title: 'Accurate word reading, but still choppy in passages', description: 'If unfamiliar-word decoding is reasonably secure, check whether specialist connected-text fluency support fits better than repeating beginner phonics.', to: '/reading-fluency-program', label: 'Compare fluency support' },
         ],
       },
     ],
@@ -359,7 +360,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
                 Resources first. Live phonics support when you need it.
               </h2>
               <p className="mt-1.5 max-w-3xl text-sm leading-6 text-slate-600">
-                If a guide or activity is not enough, explore the live phonics programme or use the free assessment to check the best starting level.
+                If blending or decoding is still unstable, explore live phonics support. When word reading is secure but fluency or comprehension needs work, see the{' '}<Link to="/reading-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2">Reading Classes programme</Link>{' '}instead. A free assessment can help distinguish the next priority.
               </p>
             </div>
             <div className="flex flex-wrap gap-2.5 lg:justify-end">

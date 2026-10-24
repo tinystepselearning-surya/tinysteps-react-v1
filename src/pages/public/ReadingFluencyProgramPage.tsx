@@ -252,6 +252,16 @@ export default function ReadingFluencyProgramPage() {
         </p>
       </section>
 
+      <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6" aria-labelledby="fluency-parent-guide">
+        <h2 id="fluency-parent-guide" className="mb-2 text-xl font-bold text-slate-900">Learn how to practise reading fluency at home</h2>
+        <p className="text-slate-700">
+          Explore short, level-matched passage practice, meaningful re-reading, phrasing and comprehension checks in our{' '}
+          <Link to="/blog/how-to-improve-reading-fluency-in-children" className="font-semibold text-slate-900 underline underline-offset-2">
+            parent guide to improving reading fluency
+          </Link>. If unfamiliar-word decoding is still unreliable, start with <Link to="/phonics" className="font-semibold underline underline-offset-2">phonics guidance</Link> rather than pushing reading speed.
+        </p>
+      </section>
+
       <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Frequently asked questions</h2>
         <div className="space-y-4">
