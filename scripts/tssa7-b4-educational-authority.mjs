@@ -61,7 +61,7 @@ const list=x=>Array.isArray(x)?x:[];
 const flatten=[];
 for(const page of PHONICS_PUBLISHED_RESOURCE_PAGES){
   const concept=page.concept;
-  flatten.push({path:page.path,category:'phonics',sources_present:hasText(concept?.parentQuestion),
+  flatten.push({path:page.path,category:'phonics',parent_question_present:hasText(concept?.parentQuestion),named_external_references_present:null,
     answer_present:hasText(concept?.quickAnswer),
     example_count:list(concept?.exampleWords).length,
     practice_count:list(concept?.practiceIdeas).length,
@@ -71,7 +71,7 @@ for(const page of PHONICS_PUBLISHED_RESOURCE_PAGES){
     notes:'Existing prepublication contract + curriculum refs; no claim of externally peer-reviewed each example'});
 }
 for(const page of GRAMMAR_KNOWLEDGE_PAGES){
-  flatten.push({path:page.path,category:'grammar',sources_present:list(page.sources).length>=2,
+  flatten.push({path:page.path,category:'grammar',parent_question_present:null,named_external_references_present:list(page.sources).length>=2,
     answer_present:hasText(page.quickAnswer),
     example_count:list(page.workedExamples).length+list(page.examples).length,
     practice_count:list(page.practicePrompts).length,
@@ -96,7 +96,7 @@ for(const entry of byFamily.editorial_blogs){
   const found=blogs.get(slug);
   const txt=found?.content||'';
   const author=txt.match(/\bauthor:\s*['"]([^'"]+)['"]/)?.[1]||'UNVERIFIED';
-  flatten.push({path:p,category:'blog',sources_present:/Evidence and references|Evidence and sources|References and sources|Sources and further reading|Sources and references/i.test(txt),
+  flatten.push({path:p,category:'blog',parent_question_present:null,named_external_references_present:/Evidence and (?:references|sources|source boundary|curriculum boundary)|References and sources|Sources and further reading|Sources and references/i.test(txt),
     answer_present:/\bquick answer\b/i.test(txt)||/\bbody:\s*\[/.test(txt),
     example_count:(txt.match(/\bexample\b/gi)||[]).length,
     practice_count:(txt.match(/\bpractis(?:e|ing)|practice\b/gi)||[]).length,
@@ -114,11 +114,11 @@ for(const row of flatten){
 }
 if(flatten.length!==168||[...paths.keys()].some(p=>!seen.has(p)))fail('core corpus ledger mismatch');
 for(const row of flatten.filter(x=>x.category==='phonics')){
- if(!row.sources_present||!row.answer_present||row.example_count<3||row.practice_count<2||row.exception_count<1)
+ if(!row.parent_question_present||!row.answer_present||row.example_count<3||row.practice_count<2||row.exception_count<1)
   fail('governed Phonics teaching schema incomplete '+row.path);
 }
 for(const row of flatten.filter(x=>x.category==='grammar'||x.category==='vocabulary')){
- if(!row.sources_present||!row.answer_present||row.example_count<2||row.practice_count<1)
+ if(!row.named_external_references_present||!row.answer_present||row.example_count<2||row.practice_count<1)
   fail('governed Grammar/Vocabulary teaching schema incomplete '+row.path);
 }
 const appFile=read('src/pages/public/PhonicsAppsPreschoolersIndiaPage.tsx');
@@ -139,7 +139,7 @@ for(const marker of [
 
 fs.mkdirSync(out,{recursive:true});
 const csv=(value)=>'"'+String(value??'').replaceAll('"','""').replace(/^[=+@-]/,v=>"'"+v)+'"';
-const fields=['path','category','sources_present','answer_present','example_count','practice_count','exception_count','references_count','author','source_file','notes'];
+const fields=['path','category','parent_question_present','named_external_references_present','answer_present','example_count','practice_count','exception_count','references_count','author','source_file','notes'];
 fs.writeFileSync(path.join(out,'SOURCE_EDUCATIONAL_AUTHORITY_168.csv'),
   [fields.join(','),...flatten.sort((a,b)=>a.path.localeCompare(b.path)).map(x=>fields.map(k=>csv(x[k])).join(','))].join('\n')+'\n');
 const blogEntries=flatten.filter(x=>x.category==='blog');
@@ -157,7 +157,7 @@ const highPriority=[
 const sample=highPriority.map(p=>{
  const row=seen.get(p);if(!row)fail('priority sample not in 168 '+p);
  return {path:p,source_file:row.source_file,source_label:row.author,
-    has_named_reference_section:row.sources_present,linked_reference_count:row.references_count,
+    has_named_reference_section:row.named_external_references_present,linked_reference_count:row.references_count,
     status:'EDITORIAL_SOURCE_SPOT_CHECK_NOT_EXTERNAL_PEER_REVIEW'};
 });
 const sampleFields=['path','source_file','source_label','has_named_reference_section','linked_reference_count','status'];
@@ -170,7 +170,7 @@ const result={
  structural_grammar_vocab_reference_minimum_met:flatten.filter(x=>x.category==='grammar'||x.category==='vocabulary').length,
  structural_phonics_teaching_minimum_met:31,
  blog_source_files_located:blogEntries.filter(x=>x.source_file!=='NOT_LOCATED_BY_LITERAL_SLUG').length,
- blog_named_reference_sections:blogEntries.filter(x=>x.sources_present).length,
+ blog_named_reference_sections:blogEntries.filter(x=>x.named_external_references_present).length,
  blog_sources_missing_literal_slug:blogEntries.filter(x=>x.source_file==='NOT_LOCATED_BY_LITERAL_SLUG').map(x=>x.path),
  high_priority_blog_sample:sample.length,
  sample_without_named_references:sample.filter(x=>!x.has_named_reference_section).map(x=>x.path),
