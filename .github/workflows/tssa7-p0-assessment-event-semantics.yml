@@ -1,0 +1,37 @@
+name: TSSA-7 P0 Assessment Event Semantics
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/conversionTracking.ts'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
+      - 'src/tests/components/PublicAssessmentForm.spec.tsx'
+      - 'src/tests/lib/assessmentLeadEventSemantics.spec.ts'
+      - 'scripts/audit-commercial-c5-conversion-flow.mjs'
+      - 'docs/ga4-conversion-reporting-playbook.md'
+      - '.github/workflows/tssa7-p0-assessment-event-semantics.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  event-truth:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Test public assessment success/error/retry and conversion event contract
+        run: npx vitest run src/tests/components/PublicAssessmentForm.spec.tsx src/tests/lib/assessmentLeadEventSemantics.spec.ts src/tests/lib/publicLeadForm.spec.ts src/tests/seo/commercialC5ConversionFlow.spec.ts
+      - name: Check commercial funnel audit invariants
+        run: node scripts/audit-commercial-c5-conversion-flow.mjs
+      - name: Prohibit production access and deployment
+        run: echo "Local source and component tests only; GA4 key-event settings and production Firestore records remain unverified."
