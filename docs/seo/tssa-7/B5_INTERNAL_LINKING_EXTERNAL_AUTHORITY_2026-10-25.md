@@ -48,3 +48,14 @@ Dated, publicly accessible material checked on **25 October 2026**:
 - Firebase release gate: no Functions, Firestore rules/indexes, teacher/parent app workflow, lead events or fees modifications. Require Hosting deployment and build-id verification before claiming live. Production indexing/rank/click/AI citation improvements must be measured separately (B6/B7).
 
 **Status boundary:** B5 source linkage and evidence ledger can close after CI and release. Independent external account/profile metadata management and measurement of earned backlinks remain external watch items, **not** prerequisites for safely releasing the verified on-site links.
+
+
+## Observed 28-parent source audit results
+
+Dated GitHub CI `TSSA7_B5_SUMMARY`: **28/28** registered problem owners retain a practice destination, **20/28** explicitly register a secondary supporting destination, and **8/28** omit the optional `supportingPath` field. All eight omissions belong to the existing Speaking problem-route registry `src/lib/speakingCommunicationCompletionArchitecture.js`. Each of those eight **already has a canonical `ownerPath` and a `practicePath`**; they are *not orphaned* and do not by themselves warrant another URL, metadata-only synthetic reference or forced link. This is a transparent structural property of the original SP6 model, not eight broken public web links. A future editorial linking improvement must be checked against the relevant existing article and exact parent task before adding another contextual link.
+
+The B5 CI path output `PARENT_28_PATH_AUDIT.csv` is source-level metadata; it cannot establish that every registered path is a visible link or clicked by a parent. The three new scoped links are separately inspected in generated/prerendered HTML.
+
+## SEO Soft 404 runner regression repaired on the same scope
+
+The existing `.github/workflows/seo-soft404-production-build.yml` used `runs-on: ubuntu-latest`. On 25 October 2026 the GitHub image rolled onto Ubuntu **26.04**, and the repository's pinned Playwright version failed **before page checks** with `Playwright does not support chromium on ubuntu26.04-x64`. This is an **CI environment regression**, not a reproduced Soft 404 in Tiny Steps production. GitHub itself documents the October–November migration of `ubuntu-latest` to Ubuntu 26.04 and advises pinning `ubuntu-24.04` until dependencies are ready: https://github.blog/changelog/2026-09-17-ubuntu-26-generally-available-and-latest-migration/ . The PR pins this one SEO build job to `ubuntu-24.04`, matching the already-green B3/B4/B5 Chromium runners, without altering Firebase/runtime page logic. Re-run the Soft 404 gate and inspect page checks before treating it as repaired.
