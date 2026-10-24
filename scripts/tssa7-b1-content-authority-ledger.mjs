@@ -195,11 +195,11 @@ writeCsv('SOURCE_INDEX_POLICY_CROSSCHECK.csv',[
  'noindex_redirect_aliases','google_index_verdict'
 ],policyRows);
 const sourcePolicyConflicts = policyRows.filter((row)=>row.metadata_conflict==='YES');
-const knownCanonicalAliasConflicts = new Set([
-  '/courses/public-speaking-foundations','/courses/public-speaking-excellence'
-]);
-const unexpectedConflicts = sourcePolicyConflicts.filter((row)=>!knownCanonicalAliasConflicts.has(row.canonical_path));
-if (unexpectedConflicts.length) fail('unexpected machine-index vs canonical route policy differences: '+JSON.stringify(unexpectedConflicts));
+// Historical redirect-alias exceptions are no longer acceptable: the generator
+// must emit the canonical destination's policy, never the alias's noindex.
+if (sourcePolicyConflicts.length) fail(
+  'machine-index vs canonical route policy differences: '+JSON.stringify(sourcePolicyConflicts)
+);
 const sourcePolicyIndexes = policyRows.filter((row)=>row.canonical_route_policy_state==='indexable').length;
 const sourcePolicyNoindexes = policyRows.filter((row)=>row.canonical_route_policy_state==='noindex').length;
 
