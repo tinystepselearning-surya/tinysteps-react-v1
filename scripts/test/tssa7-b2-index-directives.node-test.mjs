@@ -54,3 +54,12 @@ test('returns all independently observed noindex signals instead of dropping Bin
     'bingbot-index-exclusion',
   ]);
 });
+
+test('live pilot passes the captured Bingbot values into the exclusion gate and CSV', async () => {
+  const { readFileSync } = await import('node:fs');
+  const script = readFileSync('scripts/tssa7-b2-live-indexability-pilot.mjs', 'utf8');
+  assert.match(script, /meta\[name="bingbot"\]/);
+  assert.match(script, /bingbotValues:o\.bingbotValues/);
+  assert.match(script, /'googlebotValues','bingbotValues','xRobots'/);
+  assert.match(script, /\.\.\.b2IndexExclusionFlags/);
+});
