@@ -1,6 +1,6 @@
 # Tiny Steps GA4 Conversion Reporting Playbook (Step 10)
 
-Last updated: 2026-04-05
+Last updated: 2026-10-24 (P0 assessment event migration; deployment date pending)
 
 Purpose: make Tiny Steps public marketing conversion tracking usable for weekly SEO/AEO decisions without building a heavy dashboard.
 
@@ -73,10 +73,20 @@ Use it to answer:
 
 ### `lead_form_submit`
 Meaning:
-- Successful lead form completion (true conversion event for forms).
+- **After the assessment-event P0 fix is deployed**, `form_name=public_assessment_form` is emitted only after the Firestore lead write succeeds, along with `funnel_form_submit` and `generate_lead`.
+- **Before that deployment**, the same event from the public assessment form was a *submit attempt*, even on a failed database write. Compare pre/post-release series separately; do not retrofit old event counts as saved leads.
+- Other forms may use the same event name. In particular, the legacy `program_lead_form` emits it without persisting an enquiry. Filter by `form_name` and confirm source before reporting.
+- `lead_form_submit_attempt` is the new attempt-only **diagnostic event** for the public assessment form and must NOT be marked as a GA4 key event.
 
 Use it to answer:
-- Which pages/components convert intent into completed leads?
+- Which form attempts succeed versus fail, filtered by form name and release period?
+- For actual saved enquiries, reconcile post-save `generate_lead` with distinct canonical Firestore lead documents; these browser events do not independently prove qualified parents.
+
+### `funnel_demo_booking_complete`
+Meaning:
+- The public assessment form no longer emits this event for a saved WhatsApp demo request. **Request saved is not a confirmed class slot**.
+- Use the authoritative backend demo scheduling record for booked-demo counts. A dedicated booked event may be emitted **only after** a confirmed slot exists and is deduplicated; that integration is outside this PR.
+- Historic events before the release may include *requests* instead of bookings. Do not use them as an uninterrupted booked-demo time series.
 
 ### `high_intent_page_cta_click`
 Meaning:
