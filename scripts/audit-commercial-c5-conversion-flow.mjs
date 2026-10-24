@@ -27,7 +27,9 @@ const requiredFiles = [
   'src/tests/seo/commercialC5ConversionFlow.spec.ts',
   'scripts/audit-commercial-c5-conversion-flow.mjs',
   'docs/seo/commercial-growth/C5_COMMERCIAL_CRO_DECISION_FLOW_2026-09-11.md',
-  '.github/workflows/commercial-c5-cro-decision-flow.yml',
+  // Historical commercial-c5 workflow file is absent on main. This source
+  // contract is now executed by TSSA-7 P0 assessment-event CI; never waive
+  // the actual C5 owner or request-vs-booked-demo source assertions below.
 ];
 for (const relativePath of requiredFiles) {
   if (!exists(relativePath)) failures.push(`${relativePath} is missing`);
