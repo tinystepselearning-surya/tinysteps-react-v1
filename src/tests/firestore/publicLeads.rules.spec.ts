@@ -87,6 +87,30 @@ suite('public leads firestore rules', () => {
     await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ mainConcern: '' })));
   });
 
+  it('allows internationally formatted WhatsApp numbers when normalized storage matches', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      whatsappNumber: '+91 (99999) 99999',
+      primaryPhone: '+91 (99999) 99999',
+      phoneNormalized: '+919999999999',
+    })));
+  });
+
+  it('rejects names and phone lengths which client validation must catch', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ parentName: 'P' })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      whatsappNumber: '1234567',
+      primaryPhone: '1234567',
+      phoneNormalized: '1234567',
+    })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      whatsappNumber: '1'.repeat(25),
+      primaryPhone: '1'.repeat(25),
+      phoneNormalized: '1'.repeat(25),
+    })));
+  });
+
   it('rejects unexpected extra fields for unauthenticated create', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
     await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ extraField: true })));
