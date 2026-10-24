@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     question: 'What if my child confuses similar letters like b and d?',
-    answer: 'Letter reversals such as b and d can occur during early writing and reading development. Model the letter formation and sound, practise briefly with fresh examples, and look for gradual improvement. If confusion persists or substantially affects reading, discuss it with the child's teacher or an appropriate specialist rather than assuming practice alone will resolve it.'
+    answer: 'Letter reversals such as b and d can occur during early writing and reading development. Model the letter formation and sound, practise briefly with fresh examples, and look for gradual improvement. If confusion persists or substantially affects reading, discuss it with the child’s teacher or an appropriate specialist rather than assuming practice alone will resolve it.'
   },
   {
     question: 'Do I need to buy a paid phonics app?',
