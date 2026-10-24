@@ -55,3 +55,14 @@ New page:
 4. Mark B4 **repository educational-authority baseline** complete, but preserve transparent unverified independent author credentials and external pedagogical peer review as *separately documented evidence limits*. B6 remains responsible for actual AI citation results.
 
 **Explicitly not claimed:** proof of national curriculum endorsement, certification of 168 independently reviewed teaching plans, or improved Google/AI search rankings.
+
+
+## Reconciled source findings (25 October 2026)
+
+A dated read-only B4 source scan on current PR source yielded **168/168 core pages reconciled** with the existing generated canonical corpus. Phonics had **31/31** governed teaching-structure contracts, and Grammar/Vocabulary had **54/54** pages with minimum two registered reference records and worked-example/practice metadata. This is a machine-checkable **source structure** result—not a claim of line-by-line independent pedagogical review or that every external link is currently available.
+
+The blog-source scan located **71 of 83** canonical blog slugs by **literal slug declarations**. The remaining **12** reflect source-location limitations of that scanner (historical generated/renamed weekly owners) and are **not evidence that the published URLs are missing**. **52 of 83** entries had a directly recognisable references/evidence heading under the scanner's patterns; an unrecognised heading is not proof that an article lacks reliable sources. All **nine priority articles** were checked against their source and **9/9** contain explicit named evidence/source boundary sections, including the Phonics start guide, vocabulary-comprehension guide and storytelling guide. The first pass incorrectly flagged those three because its heading regex was too narrow; the regex was corrected, **not** the already-cited articles.
+
+**Source bylines are attribution labels, not externally verified credentials.** No fabricated review signature, expert endorsement, educational performance numbers, national-board alignment, diagnostic recommendation, or historical `modifiedDate` was introduced. Future quality spot checks should prioritise the other articles on substantive evidence/claim relevance (B4 editorial watch) without asserting missing references based solely on this heuristic.
+
+**Closure gate:** passing latest-head B1–B4 workflow runs, reviewed diff limited to one scoped parent page + audit/tests/docs/CI, and confirmed Hosting live build identity. Until those gates pass, B4 remains **in review**, and external pedagogical peer-review evidence remains unverified.
