@@ -81,7 +81,7 @@ for(const page of GRAMMAR_KNOWLEDGE_PAGES){
     notes:'References and examples are structured metadata; source relevance still needs editorial spot check'});
 }
 for(const page of VOCABULARY_AUTHORITY_PAGES){
-  flatten.push({path:page.path,category:'vocabulary',sources_present:list(page.sources).length>=2,
+  flatten.push({path:page.path,category:'vocabulary',parent_question_present:null,named_external_references_present:list(page.sources).length>=2,
     answer_present:hasText(page.quickAnswer),
     example_count:list(page.workedExamples).length+list(page.examples).length,
     practice_count:list(page.practicePrompts).length,
