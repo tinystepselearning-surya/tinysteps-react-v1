@@ -4,6 +4,7 @@ import {
   buildPublicLeadPayload,
   buildPublicWhatsappMessage,
   PUBLIC_MAIN_CONCERN_OPTIONS,
+  validatePublicAssessmentForm,
 } from '../../lib/publicLeadForm';
 
 describe('publicLeadForm helpers', () => {
@@ -117,4 +118,62 @@ describe('publicLeadForm helpers', () => {
       'Not sure where to start',
     ]);
   });
+  const validAssessment = {
+    parentName: 'Priya',
+    childName: 'Aarav',
+    whatsapp: '+919999999999',
+    childAge: '7',
+    mainConcern: 'Blending sounds to read words',
+    urgency: '',
+  } as const;
+
+  it.each([
+    ['+919999999999', 'international with plus'],
+    ['919999999999', 'international without plus'],
+    ['9999999999', 'national number'],
+    ['+91 (99999) 99999', 'international formatting'],
+    ['(212) 555-0123', 'parentheses and hyphen'],
+  ])('accepts a valid %s WhatsApp number (%s)', (whatsapp) => {
+    expect(validatePublicAssessmentForm({ ...validAssessment, whatsapp })).toEqual({});
+  });
+
+  it.each([
+    ['abc123456789', 'letters'],
+    ['1234567', 'too few digits'],
+    ['1234567890123456', 'more than 15 digits'],
+    ['1234567890123  -   -   -', 'raw input longer than 24 characters'],
+    ['++919999999999', 'repeated plus'],
+    ['91+9999999999', 'plus in the middle'],
+    ['9999999999#', 'other punctuation'],
+    ['( ) - .', 'punctuation without digits'],
+  ])('rejects %s as a WhatsApp number (%s)', (whatsapp) => {
+    expect(validatePublicAssessmentForm({ ...validAssessment, whatsapp }).whatsapp).toBeTruthy();
+  });
+
+  it('validates the same name lengths, age range and allowed concerns as Firestore', () => {
+    expect(validatePublicAssessmentForm({ ...validAssessment, parentName: 'P' }).parentName).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, parentName: 'P'.repeat(81) }).parentName).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, parentName: 'Pr' }).parentName).toBeUndefined();
+    expect(validatePublicAssessmentForm({ ...validAssessment, parentName: 'P'.repeat(80) }).parentName).toBeUndefined();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childName: 'A'.repeat(81) }).childName).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childName: 'A' }).childName).toBeUndefined();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childAge: '2' }).childAge).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childAge: '13' }).childAge).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childAge: '7.5' }).childAge).toBeTruthy();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childAge: '3' }).childAge).toBeUndefined();
+    expect(validatePublicAssessmentForm({ ...validAssessment, childAge: '12' }).childAge).toBeUndefined();
+    expect(validatePublicAssessmentForm({ ...validAssessment, mainConcern: 'Other' as any }).mainConcern).toBeTruthy();
+  });
+
+  it('produces a Firestore-compatible normalized number without changing the submitted phone', () => {
+    const input = { ...validAssessment, whatsapp: '+91 (99999) 99999' };
+    expect(validatePublicAssessmentForm(input)).toEqual({});
+    const payload = buildPublicLeadPayload(input, {
+      attribution: { sourcePath: '/book-demo' },
+    });
+    expect(payload.whatsappNumber).toBe('+91 (99999) 99999');
+    expect(payload.primaryPhone).toBe('+91 (99999) 99999');
+    expect(payload.phoneNormalized).toBe('+919999999999');
+  });
+
 });
