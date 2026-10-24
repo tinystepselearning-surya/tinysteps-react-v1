@@ -3,6 +3,7 @@
 // verified bot-IP traffic, native SERP rank, or a reindexing request.
 import {mkdir,writeFile} from 'node:fs/promises';
 import {JSDOM} from 'jsdom';
+import {b2IndexExclusionFlags} from './lib/tssa7-b2-index-directives.mjs';
 
 const ORIGIN='https://tinystepslearning.com';
 const PATHS=[
@@ -44,7 +45,7 @@ if(!machine.error&&machine.status===200)try{
 const results=await Promise.all(PATHS.map(async path=>{
   const url=ORIGIN+path;
   const o={path,checkedAt:stamp,expectedOwner:url,sourceIntent:'INDEX_B2_PILOT',
-    originStatus:null,canonical:null,canonicalCount:0,robotsValues:[],googlebotValues:[],
+    originStatus:null,canonical:null,canonicalCount:0,robotsValues:[],googlebotValues:[],bingbotValues:[],
     xRobots:null,sitemapListed:null,directoryIndexingState:null,
     verdict:'NOT_OBSERVED',flags:[],unknowns:[],
     gscIndexedVerdict:'UNVERIFIED',bingIndexedVerdict:'UNVERIFIED'};
@@ -61,10 +62,16 @@ const results=await Promise.all(PATHS.map(async path=>{
   o.canonicalCount=canon.length;o.canonical=canon[0]||null;
   o.robotsValues=[...doc.querySelectorAll('meta[name="robots"]')].map(n=>n.getAttribute('content')||'');
   o.googlebotValues=[...doc.querySelectorAll('meta[name="googlebot"]')].map(n=>n.getAttribute('content')||'');
+  o.bingbotValues=[...doc.querySelectorAll('meta[name="bingbot"]')].map(n=>n.getAttribute('content')||'');
   o.title=doc.title;o.h1=(doc.querySelector('h1')?.textContent||'').replace(/\s+/g,' ').trim();
   o.mainTextChars=(doc.querySelector('main')?.textContent||'').replace(/\s+/g,' ').trim().length;
   if(canon.length!==1||canon[0]!==url)o.flags.push('canonical-count-or-target');
-  if(/noindex/i.test([page.xRobots,...o.robotsValues,...o.googlebotValues].join(',')))o.flags.push('served-noindex');
+  o.flags.push(...b2IndexExclusionFlags({
+    xRobots:page.xRobots,
+    robotsValues:o.robotsValues,
+    googlebotValues:o.googlebotValues,
+    bingbotValues:o.bingbotValues,
+  }));
   if(o.robotsValues.length===0)o.unknowns.push('no robots meta found: examine defaults/headers');
   if(o.sitemapListed===false)o.flags.push('missing-from-live-sitemaps');
   if(!o.title||!o.h1||o.mainTextChars<200)o.flags.push('missing-substantial-rendered-content');
@@ -97,7 +104,7 @@ const summary={project:'TSSA-7',brick:'B2',observedAt:stamp,
   googleIndexedUrlsVerified:0,bingIndexedUrlsVerified:0};
 await mkdir('artifacts/tssa7-b2',{recursive:true});
 await writeFile('artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.json',JSON.stringify({summary,results},null,2)+'\n');
-const csvcols=['path','originStatus','canonical','canonicalCount','robotsValues','googlebotValues','xRobots','sitemapListed','directoryIndexingState','mainTextChars','verdict','flags','unknowns','gscIndexedVerdict','bingIndexedVerdict'];
+const csvcols=['path','originStatus','canonical','canonicalCount','robotsValues','googlebotValues','bingbotValues','xRobots','sitemapListed','directoryIndexingState','mainTextChars','verdict','flags','unknowns','gscIndexedVerdict','bingIndexedVerdict'];
 const q=x=>'"'+String(x==null?'':Array.isArray(x)?x.join(' | '):x).replaceAll('"','""')+'"';
 await writeFile('artifacts/tssa7-b2/LIVE_INDEXABILITY_PILOT.csv',
   [csvcols.join(','),...results.map(row=>csvcols.map(k=>q(row[k])).join(','))].join('\n')+'\n');
@@ -105,6 +112,7 @@ console.log('TSSA7_B2_SUMMARY '+JSON.stringify(summary));
 for(const row of results)console.log('TSSA7_B2_PAGE '+JSON.stringify({
   path:row.path,status:row.originStatus,verdict:row.verdict,
   canon:row.canonical,robots:row.robotsValues,
+  googlebot:row.googlebotValues,bingbot:row.bingbotValues,
   xRobots:row.xRobots,sitemap:row.sitemapListed,machine:row.directoryIndexingState,
   flags:row.flags,unknowns:row.unknowns
 }));
