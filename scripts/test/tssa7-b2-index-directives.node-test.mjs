@@ -63,3 +63,22 @@ test('live pilot passes the captured Bingbot values into the exclusion gate and 
   assert.match(script, /'googlebotValues','bingbotValues','xRobots'/);
   assert.match(script, /\.\.\.b2IndexExclusionFlags/);
 });
+
+test('previously flagged clean-URL HTML has explicit no-cache source policy; assets stay immutable', async () => {
+  const { readFileSync } = await import('node:fs');
+  const hosting = JSON.parse(readFileSync('firebase.json', 'utf8')).hosting;
+  const rules = hosting.headers || [];
+  const urls = ['/courses', '/free-word-building-game-for-kids', '/summer-camp-for-kids-india'];
+  for (const url of urls) {
+    const policy = rules.find(rule => rule.regex && new RegExp(rule.regex).test(url));
+    assert.ok(policy, 'missing clean-URL HTML cache rule for ' + url);
+    const cache = policy.headers?.find(x => x.key.toLowerCase() === 'cache-control')?.value || '';
+    assert.match(cache, /no-cache/);
+    assert.match(cache, /max-age=0/);
+  }
+  const assets = rules.find(rule => rule.source === '/assets/**');
+  assert.match(
+    assets?.headers?.find(x => x.key.toLowerCase() === 'cache-control')?.value || '',
+    /immutable/,
+  );
+});
