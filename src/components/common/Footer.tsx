@@ -231,9 +231,7 @@ function Footer() {
           ) : null}
 
           <div className="text-center text-xs text-white/70">
-            {isHomePage
-              ? '© 2026 Tiny Steps Learning. All rights reserved.'
-              : '© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.'}
+            © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
           </div>
         </div>
       </div>
