@@ -17,7 +17,9 @@ const WHATSAPP_URL = buildPublicWhatsAppUrl(
 );
 const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
 
-export default function FloatingAssistant() {
+type FloatingAssistantProps = { suppressDock?: boolean };
+
+export default function FloatingAssistant({ suppressDock = false }: FloatingAssistantProps) {
   const location = useLocation();
   const [askOpen, setAskOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
@@ -78,10 +80,11 @@ export default function FloatingAssistant() {
   };
 
   const content = (
-    <div
-      data-floating-assistant="1"
-      className="pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4"
-    >
+    <>
+      <div
+        data-floating-assistant="1"
+        className={`pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4 ${suppressDock ? 'hidden' : 'flex'}`}
+      >
       <AnimatePresence mode="wait" initial={false}>
         {showExpandedAssistant ? (
           <motion.button
@@ -168,12 +171,13 @@ export default function FloatingAssistant() {
         </motion.a>
       ) : null}
 
+      </div>
       {askOpen ? (
         <Suspense fallback={null}>
           <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
         </Suspense>
       ) : null}
-    </div>
+    </>
   );
 
   if (typeof document !== 'undefined') {
