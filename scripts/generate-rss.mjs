@@ -601,16 +601,16 @@ function normalizeLlmDiscoveryFiles(aiIndex) {
     // parent decision pathways. These links are discovery hints only:
     // the actual HTML, sitemaps and robots rules remain authoritative.
     if (!isFullDirectory) {
-      const coreHeading = '## Core Pages\\n';
+      const coreHeading = '## Core Pages\n';
       const homepageLink = `- [Tiny Steps Learning homepage](${SITE_URL}/) — live online English classes for children aged 3–12, teaching approach and programme pathways.`;
       if (text.includes(coreHeading) && !text.includes(homepageLink)) {
-        text = text.replace(coreHeading, `${coreHeading}${homepageLink}\\n`);
+        text = text.replace(coreHeading, `${coreHeading}${homepageLink}\n`);
       }
 
-      const decisionHeading = '## Parent Decision Pages\\n';
+      const decisionHeading = '## Parent Decision Pages\n';
       const faqLink = `- [Parent FAQs](${SITE_URL}/faq) — answers about the demo, live classes, teachers, scheduling and progress.`;
       if (text.includes(decisionHeading) && !text.includes(faqLink)) {
-        text = text.replace(decisionHeading, `${decisionHeading}${faqLink}\\n`);
+        text = text.replace(decisionHeading, `${decisionHeading}${faqLink}\n`);
       }
     }
     text = upsertNamedMarkdownSection(
