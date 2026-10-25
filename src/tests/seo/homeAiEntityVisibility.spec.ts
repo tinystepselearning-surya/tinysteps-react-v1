@@ -106,8 +106,8 @@ describe('homepage premium gateway', () => {
     expect(home).toContain('text-[#FF7A00] sm:text-base');
     expect(home).toContain('rounded-lg bg-[#102A43] px-3 py-2');
     expect(home).toContain('mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12');
-    expect(home).toContain('mt-4 flex-1 text-[15px] leading-7 text-slate-600');
-    expect(home).toContain('mt-6 inline-flex items-center gap-3 text-base font-semibold text-[#102A43]');
+    expect(home).toContain('mt-3 flex-1 text-[15px] leading-6 text-slate-600');
+    expect(home).toContain('mt-6 w-fit border-b border-transparent pb-1 text-sm font-semibold');
     expect(home).toContain('From Letter Sounds to Confident Communication.');
     expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
     expect(home).toContain('Instead of following one fixed sequence for every child');
@@ -122,7 +122,7 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain('aspect-[6/5] h-auto w-full');
     expect(hero).toContain('sm:flex-row sm:items-center');
     expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
-    expect(home).toContain('min-h-[225px] min-w-0 flex-col');
+    expect(home).toContain('min-h-[188px] min-w-0 flex-col');
     expect(home).toContain('lg:grid-cols-2');
     expect(home).toContain('max-w-6xl');
     expect(home).not.toContain('whitespace-nowrap');
@@ -130,10 +130,10 @@ describe('homepage premium gateway', () => {
 
   it('uses meaningful educational card copy with clean Explore CTAs and no decorative numbers', () => {
     const cardCopy = [
-      ['Phonics', '/phonics', 'Learn letter–sound connections, blend and decode words, and develop accurate spelling.'],
-      ['Reading', '/reading-classes-for-kids', 'Build reading fluency, vocabulary and comprehension through meaningful texts.'],
-      ['Grammar', '/grammar', 'Strengthen sentence formation, grammar and punctuation—and apply them in speaking and writing.'],
-      ['Public Speaking', '/speaking', 'Practise storytelling, clear explanations, presentations and confident communication.'],
+      ['Phonics', '/phonics', 'Connect sounds to letters, blend and decode words, and build spelling skills.'],
+      ['Reading', '/reading-classes-for-kids', 'Build reading fluency, vocabulary and comprehension with meaningful texts.'],
+      ['Grammar', '/grammar', 'Strengthen grammar, punctuation and sentence building for clearer expression.'],
+      ['Public Speaking', '/speaking', 'Develop storytelling, presentations and confident communication.'],
     ] as const;
 
     for (const [label, destination, description] of cardCopy) {
@@ -149,14 +149,25 @@ describe('homepage premium gateway', () => {
     expect(home).toContain('                Explore');
   });
 
-  it('keeps pathway cards mouse and keyboard interactive without runtime animation costs', () => {
-    expect(home).toContain('motion-safe:hover:-translate-y-1');
-    expect(home).toContain('motion-safe:transition-[transform,box-shadow,border-color]');
-    expect(home).toContain('motion-safe:group-hover:scale-x-100');
-    expect(home).toContain('motion-safe:group-focus-visible:scale-x-100');
+  it('uses one aligned feature panel instead of decorated raised tiles', () => {
+    expect(home).toContain('mt-9 grid gap-px overflow-hidden rounded-[1.75rem]');
+    expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
+    expect(home).toContain('min-h-[188px] min-w-0 flex-col');
+    expect(home).toContain('sm:min-h-[220px] sm:px-7 sm:py-8 lg:px-6');
+    expect(home).toContain('text-[clamp(1.18rem,1.7vw,1.45rem)]');
+    expect(home).toContain('group-hover:border-[#FF7A00]');
+    expect(home).not.toContain('rounded-full border border-orange-200');
+    expect(home).not.toContain('motion-safe:hover:-translate-y-1');
+    expect(home).not.toContain('motion-safe:group-hover:translate-x-[2px]');
+    expect(home).not.toContain('↗</span>');
+  });
+
+  it('preserves gentle hover, visible keyboard focus and reduced-motion behaviour without animation dependencies', () => {
+    expect(home).toContain('motion-safe:transition-colors motion-safe:duration-200');
+    expect(home).toContain('hover:bg-[#FAFBFD]');
     expect(home).toContain('focus-visible:ring-2');
-    expect(home).toContain('motion-reduce:transform-none');
-    expect(home).toContain('motion-safe:group-hover:translate-x-[2px]');
+    expect(home).toContain('focus-visible:ring-inset');
+    expect(home).toContain('group-focus-visible:border-[#FF7A00]');
     expect(home).not.toContain('framer-motion');
     expect(home).not.toContain('react-spring');
     expect(home).not.toContain('requestAnimationFrame');
