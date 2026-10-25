@@ -74,8 +74,8 @@ const approvedPages = [
       'Applies a recently learnt sound pattern to new decodable words.',
     ],
     homeGuidance: 'Practise two or three decodable words that use sounds your child already knows. Praise careful sound-by-sound attempts, avoid asking the child to guess from pictures, and tell the teacher where blending stops.',
-    courseLabel: 'Explore Early Phonics',
-    coursePath: '/courses/phonics-brush-up',
+    courseLabel: 'Explore Phonics Foundations',
+    coursePath: '/courses/phonics-foundation',
     broaderAgePath: '/english-classes-for-5-year-old',
     broaderAgeLabel: 'English learning at age five',
     faqs: [
