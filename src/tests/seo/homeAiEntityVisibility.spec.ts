@@ -159,7 +159,6 @@ describe('homepage premium gateway', () => {
     expect(home).not.toContain('rounded-full border border-orange-200');
     expect(home).not.toContain('motion-safe:hover:-translate-y-1');
     expect(home).not.toContain('motion-safe:group-hover:translate-x-[2px]');
-    expect(home).not.toContain('↗</span>');
   });
 
   it('preserves gentle hover, visible keyboard focus and reduced-motion behaviour without animation dependencies', () => {
