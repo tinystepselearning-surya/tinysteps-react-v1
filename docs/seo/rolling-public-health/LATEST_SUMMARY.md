@@ -1,9 +1,9 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
 
-Generated: 2026-10-25T05:18:42+05:30; hourly slot 6/24.
+Generated: 2026-10-25T07:18:19+05:30; hourly slot 8/24.
 
-**Attempted today:** 10/202. **Pending today:** 192.
-**Statuses today:** PASS 10, WARN 0, FAIL 0, UNVERIFIED 0.
+**Attempted today:** 20/202. **Pending today:** 182.
+**Statuses today:** PASS 20, WARN 0, FAIL 0, UNVERIFIED 0.
 **Important:** GitHub source and sampled HTTP/robots/HTML checks are NOT proof of Google/Bing indexing, ranking, or AI citation.
 
 ## Follow-up URLs
@@ -49,7 +49,7 @@ Generated: 2026-10-25T05:18:42+05:30; hourly slot 6/24.
 - [38] https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading
 - [39] https://tinystepslearning.com/pricing
 - [40] https://tinystepslearning.com/contact
-- ... and 152 more
+- ... and 142 more
 
 ## Source sitemap drift
 - None found in current checked-in sitemap files
