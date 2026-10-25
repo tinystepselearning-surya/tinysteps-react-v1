@@ -10,6 +10,7 @@
  */
 import { PUBLIC_ROUTE_MANIFEST, DYNAMIC_PUBLIC_ROUTE_INTENT_MANIFEST, PUBLIC_REDIRECT_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import { ROUTE_SEO_REGISTRY } from '../src/lib/routeSeoRegistry.js';
+import { PHONICS_AGE_PROGRAMME_PATHS } from '../src/lib/phonicsAgeProgrammeRegistry.js';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -65,14 +66,34 @@ const families = [
 ];
 const expected = { editorial_blogs:83, programmatic_phonics_guides:31,
   programmatic_grammar_guides:38, vocabulary_authority_guides:16, additional_public_routes:111 };
+// Keep the 19 Oct source-evidence baseline frozen even when later approved
+// commercial-support pages extend the generated directory. Do not backdate
+// these newly published routes into the 279-owner historical audit ledger.
+const postBaselineApproved = new Set(PHONICS_AGE_PROGRAMME_PATHS);
+const postBaselineRoutes = [];
 const corpus = families.flatMap(([family, type]) => {
   const entries = index.corpus?.[family];
   if (!Array.isArray(entries)) fail('missing corpus family ' + family);
   if (entries.length !== index.corpus_counts?.[family]) fail('generator count discrepancy: ' + family);
-  if (entries.length !== expected[family]) fail('as-of-2026-10-19 baseline changed; review before updating: ' + family + ' ' + entries.length);
-  return entries.map((entry) => ({ ...entry, family, fallbackType: type }));
+  const baselineEntries = family === 'additional_public_routes'
+    ? entries.filter((entry) => {
+      const p = toPath(entry.canonical_url);
+      if (!postBaselineApproved.has(p)) return true;
+      postBaselineRoutes.push(p);
+      return false;
+    })
+    : entries;
+  if (baselineEntries.length !== expected[family]) fail('as-of-2026-10-19 baseline changed; review before updating: ' + family + ' ' + baselineEntries.length);
+  return baselineEntries.map((entry) => ({ ...entry, family, fallbackType: type }));
 });
-if (corpus.length !== 279 || index.corpus_counts?.connected_public_content !== 279) fail('279-entry directory baseline changed; investigate rather than overwriting old measurements');
+if (new Set(postBaselineRoutes).size !== postBaselineApproved.size ||
+    postBaselineRoutes.some((p) => !postBaselineApproved.has(p))) {
+  fail('approved post-baseline pilot routes missing, duplicated or misclassified');
+}
+if (corpus.length !== 279 ||
+    index.corpus_counts?.connected_public_content !== 279 + postBaselineRoutes.length) {
+  fail('279-entry historical directory plus approved later routes does not reconcile');
+}
 const seen = new Map();
 for (const entry of corpus) {
   const p = toPath(entry.canonical_url);
@@ -275,6 +296,7 @@ const summary={
   answer_eligible_by_design:ledger.filter((row)=>row.answer_eligible_by_design==='true').length,
   technically_checked_on_2026_10_19:168,
   additional_routes_outside_168_scan:111,
+  post_baseline_approved_routes:postBaselineRoutes.sort(),
   search_console_indexed_urls_verified_by_this_script:0,
   layer_counts:layerCounts,
   unique_layer_owner_paths:layerRefs.size,

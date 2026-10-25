@@ -1,4 +1,5 @@
 import { PHONICS_PUBLISHED_RESOURCE_PATHS } from './phonicsPublicationRegistry.js';
+import { PHONICS_AGE_PROGRAMME_PATHS } from './phonicsAgeProgrammeRegistry.js';
 import { GRAMMAR_PROGRAMMATIC_PATHS } from './grammarProgrammaticSeoManifest.js';
 import { GRAMMAR_REFERENCE_EXTENSION_PATHS } from './grammarReferenceExtensionSeoManifest.js';
 import { VOCABULARY_AUTHORITY_PATHS, VOCABULARY_HUB_PATH } from './vocabularyAuthoritySeoManifest.js';
@@ -74,6 +75,7 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/free-balloon-pop-phonics-game-for-kids', 'static'),
   route('/free-games/word-meaning-flashcards', 'static'),
   route('/phonics', 'static'),
+  ...PHONICS_AGE_PROGRAMME_PATHS.map((path) => route(path, 'static')),
   route('/grammar', 'static'),
   route('/speaking', 'static'),
   route('/speaking-progress-framework', 'static'),

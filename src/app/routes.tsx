@@ -62,6 +62,7 @@ const TestimonialsPage = lazy(() => import('../pages/TestimonialsPage'));
 
 // Course Pages
 const PhonicsPage = lazy(() => import('../pages/phonics'));
+const PhonicsByAgePage = lazy(() => import('../pages/public/PhonicsByAgePage'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
 const SpeakingProgressFrameworkPage = lazy(() => import('../pages/public/SpeakingProgressFrameworkPage'));
@@ -660,6 +661,8 @@ const router = createBrowserRouter(
         { path: 'phonics-classes-for-kids', element: <PhonicsClassesForKidsPage /> },
         { path: 'phonics-classes-for-kids/', element: <PhonicsClassesForKidsPage /> },
         { path: 'phonics', element: <PhonicsPage /> },
+        { path: 'phonics/age-4', element: <PhonicsByAgePage age={4} /> },
+        { path: 'phonics/age-5', element: <PhonicsByAgePage age={5} /> },
         { path: 'grammar', element: <GrammarPage /> },
         { path: 'speaking', element: <SpeakingPage /> },
         { path: 'speaking-progress-framework', element: <SpeakingProgressFrameworkPage /> },
