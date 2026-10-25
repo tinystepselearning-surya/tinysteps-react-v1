@@ -24,9 +24,11 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
   const pathname = normalizePathname(location.pathname || '');
   const reduceMotion = useReducedMotion();
   // Keep the premium homepage dock compact and still, and respect OS reduced-motion elsewhere.
-  const quietDock = pathname === '/' || Boolean(reduceMotion);
+  const isHomePage = pathname === '/';
+  const quietDock = isHomePage || Boolean(reduceMotion);
   const [askOpen, setAskOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isMobileHelpOpen, setIsMobileHelpOpen] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined' || askOpen || quietDock) return;
@@ -78,6 +80,7 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
       });
       trackEvent('floating_ask_tinysteps_click', { source: 'floating_assistant_dock' });
     });
+    setIsMobileHelpOpen(false);
     setAskOpen(true);
   };
 
@@ -85,7 +88,13 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
     <>
       <div
         data-floating-assistant="1"
-        className={`pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4 ${suppressDock ? 'hidden' : 'flex'}`}
+        className={`pointer-events-auto fixed right-3 z-[99999] max-w-[calc(100vw-1.5rem)] gap-2 sm:bottom-4 sm:right-4 ${isHomePage ? 'bottom-[max(1rem,env(safe-area-inset-bottom))] flex-col items-end' : 'bottom-[5.25rem] flex-row items-center'} ${suppressDock ? 'hidden' : 'flex'}`}
+      >
+      <div
+        id={isHomePage ? 'homepage-support-actions' : undefined}
+        className={isHomePage
+          ? `${isMobileHelpOpen ? 'flex' : 'hidden'} flex-col items-end gap-2 sm:flex sm:flex-row sm:items-center`
+          : 'flex items-center gap-2'}
       >
       <AnimatePresence mode="wait" initial={false}>
         {showExpandedAssistant ? (
@@ -176,7 +185,19 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
           </svg>
         </motion.a>
       ) : null}
-
+      </div>
+      {isHomePage ? (
+        <button
+          type="button"
+          aria-label={isMobileHelpOpen ? 'Close support options' : 'Open support options'}
+          aria-expanded={isMobileHelpOpen}
+          aria-controls="homepage-support-actions"
+          onClick={() => setIsMobileHelpOpen((open) => !open)}
+          className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#102A43] px-4 text-xs font-semibold text-white shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43] sm:hidden"
+        >
+          {isMobileHelpOpen ? 'Close' : 'Need help?'}
+        </button>
+      ) : null}
       </div>
       {askOpen ? (
         <Suspense fallback={null}>

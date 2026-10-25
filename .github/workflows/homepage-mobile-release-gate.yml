@@ -1,0 +1,73 @@
+name: Homepage Mobile Release Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/HomePage.tsx'
+      - 'src/components/Home/ConversionHero.tsx'
+      - 'src/components/common/Header.tsx'
+      - 'src/components/common/FloatingAssistant.tsx'
+      - 'src/tests/components/FloatingAssistant.test.tsx'
+      - 'src/tests/components/HeaderNavigation.spec.tsx'
+      - 'src/tests/seo/homeAiEntityVisibility.spec.ts'
+      - 'src/tests/seo/homeMachineReadability.spec.ts'
+      - 'tests/homepage-premium-responsive.spec.ts'
+      - 'tests/homepage-gateway-destinations.spec.ts'
+      - '.github/workflows/homepage-mobile-release-gate.yml'
+  push:
+    branches:
+      - 'fix/home-mobile-ux-refinement-20261026'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: homepage-mobile-gate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-homepage:
+    name: TypeScript, homepage regressions, browser, and production build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout proposed code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Focused homepage and navigation unit, SEO contract tests
+        run: >-
+          npx vitest run
+          src/tests/components/FloatingAssistant.test.tsx
+          src/tests/components/HeaderNavigation.spec.tsx
+          src/tests/seo/homeAiEntityVisibility.spec.ts
+          src/tests/seo/homeMachineReadability.spec.ts
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Test mobile and desktop homepage journeys
+        run: >-
+          npx playwright test
+          tests/homepage-premium-responsive.spec.ts
+          tests/homepage-gateway-destinations.spec.ts
+      - name: Build the production Hosting artifact
+        run: npm run build:deploy
+      - name: Upload Playwright failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-mobile-playwright-evidence
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Confirm validation-only execution
+        run: echo "All checks complete. This workflow does not deploy to Firebase."

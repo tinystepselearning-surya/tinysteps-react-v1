@@ -108,9 +108,9 @@ describe('homepage premium gateway', () => {
     expect(home).toContain('max-w-5xl text-3xl');
     expect(home).toContain('text-[#FF7A00] sm:text-base');
     expect(home).toContain('rounded-lg bg-[#102A43] px-3 py-2');
-    expect(home).toContain('mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12');
+    expect(home).toContain('mt-5 grid gap-4 text-base leading-7 text-slate-600 sm:mt-6 sm:gap-5 sm:text-lg sm:leading-8 lg:grid-cols-2 lg:gap-12');
     expect(home).toContain('mt-3 flex-1 text-[15px] leading-6 text-slate-600');
-    expect(home).toContain('mt-6 w-fit border-b border-transparent pb-1 text-sm font-semibold');
+    expect(home).toContain('mt-4 w-fit border-b border-transparent pb-1 text-sm font-semibold');
     expect(home).toContain('From Letter Sounds to Confident Communication.');
     expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
     expect(home).toContain('Instead of following one fixed sequence for every child');
@@ -119,13 +119,13 @@ describe('homepage premium gateway', () => {
 
   it('keeps responsive breakpoints and avoids fixed-width or overflow-prone homepage content', () => {
     expect(hero).toContain('grid max-w-7xl items-center');
-    expect(hero).toContain('px-5 pb-14 pt-24 sm:px-8 sm:pb-20 sm:pt-28');
+    expect(hero).toContain('px-5 pb-10 pt-20 sm:gap-10 sm:px-8 sm:pb-20 sm:pt-28');
     expect(hero).toContain('lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)]');
     expect(hero).toContain('min-w-0');
     expect(hero).toContain('aspect-[6/5] h-auto w-full');
     expect(hero).toContain('sm:flex-row sm:items-center');
     expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
-    expect(home).toContain('min-h-[188px] min-w-0 flex-col');
+    expect(home).toContain('min-h-[164px] min-w-0 flex-col');
     expect(home).toContain('lg:grid-cols-2');
     expect(home).toContain('max-w-6xl');
     expect(home).not.toContain('whitespace-nowrap');
@@ -153,9 +153,9 @@ describe('homepage premium gateway', () => {
   });
 
   it('uses one aligned feature panel instead of decorated raised tiles', () => {
-    expect(home).toContain('mt-9 grid gap-px overflow-hidden rounded-[1.75rem]');
+    expect(home).toContain('mt-6 grid gap-px overflow-hidden rounded-[1.75rem]');
     expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
-    expect(home).toContain('min-h-[188px] min-w-0 flex-col');
+    expect(home).toContain('min-h-[164px] min-w-0 flex-col');
     expect(home).toContain('sm:min-h-[220px] sm:px-7 sm:py-8 lg:px-6');
     expect(home).toContain('text-[clamp(1.18rem,1.7vw,1.45rem)]');
     expect(home).toContain('group-hover:border-[#FF7A00]');
@@ -229,7 +229,7 @@ describe('homepage premium gateway', () => {
   it('uses minimal readable teaching columns and a descriptive link to the method page', () => {
     expect(home).toContain('id="difference-title"');
     expect(home).toContain('aria-labelledby="difference-title"');
-    expect(home).toContain('mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3');
+    expect(home).toContain('mt-7 grid gap-x-10 gap-y-5 sm:mt-10 sm:gap-y-8 md:grid-cols-3');
     expect(home).toContain('min-w-0 border-t border-slate-200 pt-6');
     expect(home).toContain('text-[#9B4300]');
     expect(home).toContain("to=\"/why-tiny-steps\"");
@@ -299,15 +299,15 @@ describe('homepage premium gateway', () => {
   });
 
   it('spaces the two supporting programme pathways for readable mobile navigation', () => {
-    expect(home).toContain('mt-7 flex flex-col gap-x-10 gap-y-3 text-sm leading-7');
-    expect(home).toContain('sm:flex-row sm:flex-wrap');
+    expect(home).toContain('mt-5 flex flex-col gap-x-10 gap-y-2 text-sm leading-6');
+    expect(home).toContain('sm:mt-7 sm:flex-row sm:flex-wrap');
     expect(home).toContain('Explore Spoken English Classes');
     expect(home).toContain('Browse all courses');
   });
 
   it('keeps homepage assistant animation quiet and honours reduced motion', () => {
     expect(floatingAssistant).toContain("useReducedMotion");
-    expect(floatingAssistant).toContain("quietDock = pathname === '/'");
+    expect(floatingAssistant).toContain("quietDock = isHomePage");
     expect(floatingAssistant).toContain('askOpen || quietDock');
     expect(floatingAssistant).toContain('!quietDock && isExpanded');
     expect(floatingAssistant).toContain("quietDock ? '' : 'animate-ping'");

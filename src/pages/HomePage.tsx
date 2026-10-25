@@ -79,13 +79,13 @@ const exploreLinks = [
 
 function LearningPathwaysSection() {
   return (
-    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
+    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="inline-block max-w-full rounded-lg bg-[#102A43] px-3 py-2 text-sm font-bold uppercase leading-6 tracking-[0.08em] text-[#FF7A00] sm:text-base">The complete English-learning journey</p>
         <h2 id="learning-pathways-title" className="mt-5 max-w-5xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           From Letter Sounds to Confident Communication.
         </h2>
-        <div className="mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12">
+        <div className="mt-5 grid gap-4 text-base leading-7 text-slate-600 sm:mt-6 sm:gap-5 sm:text-lg sm:leading-8 lg:grid-cols-2 lg:gap-12">
           <p>
             Tiny Steps brings together phonics, blending and spelling; reading fluency, vocabulary and comprehension; grammar and sentence building; and spoken English, public speaking and communication skills.
           </p>
@@ -93,13 +93,13 @@ function LearningPathwaysSection() {
             Instead of following one fixed sequence for every child, we assess their starting point and build the next skills through age-appropriate activities, guided practice and teacher feedback.
           </p>
         </div>
-        <div className="mt-9 grid gap-px overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-200 shadow-[0_8px_32px_rgba(16,42,67,0.035)] sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-6 grid gap-px overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-200 shadow-[0_8px_32px_rgba(16,42,67,0.035)] sm:mt-9 sm:grid-cols-2 lg:grid-cols-4">
           {learningPaths.map((path) => (
             <Link
               key={path.path}
               to={path.path}
               aria-label={`Explore ${path.label} online classes for kids`}
-              className="group relative flex min-h-[188px] min-w-0 flex-col bg-white px-6 py-6 outline-none motion-safe:transition-colors motion-safe:duration-200 hover:bg-[#FAFBFD] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#102A43] sm:min-h-[220px] sm:px-7 sm:py-8 lg:px-6"
+              className="group relative flex min-h-[164px] min-w-0 flex-col bg-white px-5 py-5 outline-none motion-safe:transition-colors motion-safe:duration-200 hover:bg-[#FAFBFD] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#102A43] sm:min-h-[220px] sm:px-7 sm:py-8 lg:px-6"
             >
               <h3 className="text-[clamp(1.18rem,1.7vw,1.45rem)] font-semibold leading-tight tracking-[-0.035em] text-[#102A43]">
                 {path.label}
@@ -107,13 +107,13 @@ function LearningPathwaysSection() {
               <p className="mt-3 flex-1 text-[15px] leading-6 text-slate-600">
                 {path.description}
               </p>
-              <span className="mt-6 w-fit border-b border-transparent pb-1 text-sm font-semibold tracking-[0.01em] text-[#102A43] motion-safe:transition-[border-color] motion-safe:duration-200 group-hover:border-[#FF7A00] group-focus-visible:border-[#FF7A00]">
+              <span className="mt-4 w-fit border-b border-transparent pb-1 text-sm font-semibold tracking-[0.01em] text-[#102A43] motion-safe:transition-[border-color] motion-safe:duration-200 group-hover:border-[#FF7A00] group-focus-visible:border-[#FF7A00]">
                 Explore
               </span>
             </Link>
           ))}
         </div>
-        <div className="mt-7 flex flex-col gap-x-10 gap-y-3 text-sm leading-7 text-slate-600 sm:flex-row sm:flex-wrap">
+        <div className="mt-5 flex flex-col gap-x-10 gap-y-2 text-sm leading-6 text-slate-600 sm:mt-7 sm:flex-row sm:flex-wrap sm:leading-7">
           <p>
             Need conversation practice?{' '}
             <Link to="/spoken-english-classes-for-kids-online" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
@@ -134,18 +134,18 @@ function LearningPathwaysSection() {
 
 function DifferenceSection() {
   return (
-    <section aria-labelledby="difference-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+    <section aria-labelledby="difference-title" className="bg-white px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">The Tiny Steps approach</p>
         <h2 id="difference-title" className="mt-4 max-w-4xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           Child-Centred Teaching. Meaningful Progress.
         </h2>
-        <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
           Every lesson combines clear learning goals, live teacher guidance and purposeful practice—helping
           children understand, apply and become more independent in English.
         </p>
 
-        <div className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3">
+        <div className="mt-7 grid gap-x-10 gap-y-5 sm:mt-10 sm:gap-y-8 md:grid-cols-3">
           {reasons.map((reason) => (
             <article key={reason.label} className="min-w-0 border-t border-slate-200 pt-6">
               <h3 className="max-w-[18rem] text-xl font-semibold leading-snug tracking-[-0.03em] text-[#102A43]">
@@ -158,7 +158,7 @@ function DifferenceSection() {
 
         <Link
           to="/why-tiny-steps"
-          className="mt-9 inline-block rounded-sm border-b-2 border-[#FF7A00] pb-1 text-sm font-semibold text-[#102A43] transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+          className="mt-7 inline-block rounded-sm border-b-2 border-[#FF7A00] pb-1 text-sm font-semibold text-[#102A43] transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
         >
           See how Tiny Steps teaches
         </Link>
@@ -169,18 +169,18 @@ function DifferenceSection() {
 
 function TechnologySection() {
   return (
-    <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
+    <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
+      <div className="mx-auto grid max-w-6xl items-center gap-7 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Connected learning</p>
           <h2 id="technology-title" className="mt-4 max-w-xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
             Live Teaching. A Connected Learning Experience.
           </h2>
-          <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+          <p className="mt-4 max-w-xl text-base leading-7 text-slate-600 sm:mt-5 sm:text-lg sm:leading-8">
             Children learn with real teachers through interactive online lessons, while parents can access
             class information, learning materials and progress updates through the Tiny Steps platform.
           </p>
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-4 text-sm font-semibold">
+          <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold sm:mt-7 sm:gap-y-4">
             <Link to="/curriculum" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Explore the curriculum
             </Link>
@@ -189,9 +189,9 @@ function TechnologySection() {
             </Link>
           </div>
         </div>
-        <div className="min-w-0 rounded-[1.75rem] bg-[#102A43] p-6 text-white sm:p-8">
+        <div className="min-w-0 rounded-[1.75rem] bg-[#102A43] p-5 text-white sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.12em] text-orange-300">Your learning connection</p>
-          <div className="mt-6 divide-y divide-white/15">
+          <div className="mt-4 divide-y divide-white/15 sm:mt-6">
             <div className="py-4 first:pt-0">
               <h3 className="text-lg font-semibold">Live online classrooms</h3>
               <p className="mt-2 text-sm leading-6 text-slate-200">
@@ -219,18 +219,18 @@ function TechnologySection() {
 
 function BeforeYouBookSection() {
   return (
-    <section aria-labelledby="before-you-book-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+    <section aria-labelledby="before-you-book-title" className="bg-white px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Before you book</p>
         <h2 id="before-you-book-title" className="mt-4 max-w-4xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           See the teaching. Compare the plans. Get answers.
         </h2>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+        <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600 sm:mt-4 sm:text-lg sm:leading-8">
           Explore real class moments, understand our standard live 1:1 options and check the details that matter to your family.
         </p>
 
-        <div className="mt-9 grid items-stretch gap-5 lg:grid-cols-3">
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] bg-[#102A43] p-6 text-white sm:p-7">
+        <div className="mt-6 grid items-stretch gap-4 sm:mt-9 sm:gap-5 lg:grid-cols-3">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] bg-[#102A43] p-5 text-white sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-300">Real class samples</p>
             <span aria-hidden="true" className="mt-6 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/25 bg-white/10 text-xl text-white">
               ▶
@@ -247,7 +247,7 @@ function BeforeYouBookSection() {
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-6 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Standard live 1:1 pricing</p>
             <h3 className="mt-5 text-3xl font-bold tracking-[-0.045em] text-[#102A43]">
               <span>{formatINR(PER_CLASS_PRICE)}</span>{' '}<span className="text-base font-medium tracking-normal text-slate-600">per class</span>
@@ -272,7 +272,7 @@ function BeforeYouBookSection() {
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-[#F7F8FA] p-6 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-[#F7F8FA] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Parent questions</p>
             <h3 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#102A43]">
               A few quick answers.
@@ -322,13 +322,13 @@ function BeforeYouBookSection() {
 
 function ExploreSection() {
   return (
-    <section aria-labelledby="explore-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+    <section aria-labelledby="explore-title" className="bg-white px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Go deeper</p>
         <h2 id="explore-title" className="mt-4 text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           Explore what matters to you.
         </h2>
-        <div className="mt-9 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-x-10 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
           {exploreLinks.map((item) => (
             <Link key={item.path} to={item.path} className="group flex items-start justify-between gap-3 border-b border-slate-200 py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">
               <span><span className="block text-base font-semibold text-slate-950 group-hover:text-orange-700">{item.title}</span>
@@ -345,8 +345,8 @@ function ExploreSection() {
 
 function FinalInvitationSection() {
   return (
-    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-16 sm:px-8 sm:py-20">
-      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 lg:flex-row lg:items-center lg:gap-12">
+    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-12 sm:px-8 sm:py-20">
+      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="min-w-0">
           <h2 id="final-invitation-title" className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
             Start with a conversation about your child's learning.

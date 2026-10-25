@@ -45,6 +45,8 @@ describe('FloatingAssistant', () => {
     // module and Suspense boundary instead of synchronously querying text
     // immediately after the bubble click.
     await act(async () => {
+      const launcher = screen.queryByRole('button', { name: 'Open support options' });
+      if (launcher) fireEvent.click(launcher);
       fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
       await import('../../components/common/AskTinyStepsModal')
     })
@@ -55,6 +57,10 @@ describe('FloatingAssistant', () => {
     await renderWidget()
 
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
+    expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
+    expect(document.querySelector('#homepage-support-actions')).toHaveClass('hidden')
+    fireEvent.click(screen.getByRole('button', { name: 'Open support options' }))
+    expect(screen.getByRole('button', { name: 'Close support options' })).toHaveAttribute('aria-expanded', 'true')
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
     expect(screen.queryByText('Live assistant')).toBeNull()
@@ -111,7 +117,7 @@ describe('FloatingAssistant', () => {
     })
     expect(screen.queryByText('Live assistant')).toBeNull()
     expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
-    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
   })
 
   it('opens the AI modal from the bubble button', async () => {
@@ -134,6 +140,8 @@ describe('FloatingAssistant', () => {
 
   it('renders on public routes even when a user is authenticated', async () => {
     await renderWidget('/', { uid: 'u1', email: 'test@example.com', displayName: 'Test', role: 'parent' })
+    expect(screen.getByRole('button', { name: 'Open support options' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Open support options' }))
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
   })

@@ -9,7 +9,7 @@ const HERO_PROGRAMME_LINK_CLASS =
 function ConversionHero() {
   return (
     <section aria-labelledby="homepage-title" className="relative overflow-hidden bg-white">
-      <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-14 pt-24 sm:px-8 sm:pb-20 sm:pt-28 lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] lg:gap-14 lg:pb-24">
+      <div className="mx-auto grid max-w-7xl items-center gap-7 px-5 pb-10 pt-20 sm:gap-10 sm:px-8 sm:pb-20 sm:pt-28 lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] lg:gap-14 lg:pb-24">
         <div className="min-w-0">
           <h1
             id="homepage-title"
@@ -18,7 +18,7 @@ function ConversionHero() {
             Online English Classes <span className="text-[#FF7A00]">for Kids.</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg sm:leading-9">
+          <p className="mt-5 max-w-xl text-base leading-7 text-slate-600 sm:mt-6 sm:text-lg sm:leading-9">
             Live, personalised one-to-one online English classes for children aged 3–12. Explore{' '}
             <Link to="/phonics" className={HERO_PROGRAMME_LINK_CLASS}>phonics</Link>,{' '}
             <Link to="/reading-classes-for-kids" className={HERO_PROGRAMME_LINK_CLASS}>reading</Link>,{' '}
@@ -29,7 +29,7 @@ function ConversionHero() {
             tailored to your child's learning needs, current skills and pace.
           </p>
 
-          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
+          <div className="mt-6 flex flex-col items-start gap-2 sm:mt-8 sm:flex-row sm:items-center sm:gap-5">
             <Link
               to="/book-demo"
               className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-[#102A43] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0B2138] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
@@ -40,12 +40,20 @@ function ConversionHero() {
               Live 1:1 assessment. No obligation to enrol.
             </p>
           </div>
-          <a
-            href="#learning-pathways"
-            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-4 transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
-          >
-            Explore our learning pathways <span aria-hidden="true">↓</span>
-          </a>
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3 sm:mt-6">
+            <a
+              href="#learning-pathways"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-4 transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+            >
+              Explore our learning pathways <span aria-hidden="true">↓</span>
+            </a>
+            <Link
+              to="/class-samples"
+              className="inline-flex items-center text-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+            >
+              Watch a real class
+            </Link>
+          </div>
         </div>
 
         <figure className="relative mx-auto w-full max-w-[560px] min-w-0 lg:max-w-none">
