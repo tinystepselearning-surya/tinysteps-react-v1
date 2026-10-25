@@ -1,41 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Generated 2026-10-25T19:48:40.135Z by ChatGPT scheduled hourly audit, Slot 2. Latest attempted origin probe 2026-10-25T19:47:58.691755+00:00; individual per-URL UTC timestamps are in the master tracker.
+Updated by ChatGPT-native hourly audit after **Slot 3** (rows 21–30). Latest actual URL probe: **2026-10-25T20:48:55.891140+00:00 UTC** (02:18:55 IST). Individual actual probe UTC timestamps and page-specific evidence are in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
-**Attempted today:** 20/202. **Pending today:** 182.
-**Statuses today:** PASS 0, WARN 0, FAIL 0, UNVERIFIED 20.
-**Fully verified current live technical readiness in this batch:** 0/10. **Provider-text-snapshot-only partial reviews:** 10/10.
+## Daily coverage — 26 October IST
 
-## Current ChatGPT batch — Slot 2, rows 11–20
+| Metric | Count |
+| --- | ---: |
+| Selected unique URLs | 202 |
+| Distinct URLs actually attempted today | **30** |
+| Fully live-verified PASS | **0** |
+| Confirmed FAIL | **0** |
+| Confirmed WARN | **0** |
+| UNVERIFIED / partial provider-text reviews | **30** |
+| Not checked today | **172** |
 
-- Confirmed inventory integrity: exactly 202 unique URLs, slots 1–19 each 10 URLs, slot 20 exactly 12; existing 10 current-day checks were not repeated. Dates/timestamps are valid for Asia/Kolkata.
-- Viewed text snapshots of all ten selected phonics guides: SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E, consonant-LE. Each provider snapshot was labelled **Crawled: today** and included a specific H1, useful educational explanation and a demo CTA. This confirms **provider text retrieval only**, not live HTTP/HTML readiness. Exact provider crawl times were not exposed.
-- Direct `curl -L -I` attempted for each selected URL at its individually recorded UTC timestamp. All ten attempts failed before an HTTP response: 8 exit-code 6 (hostname not resolved), 2 exit-code 28 (DNS resolution timed out). HTTP code `000` is a curl placeholder, **not a production HTTP response**. Direct `/robots.txt` also failed DNS resolution. Web provider `/robots.txt` was inaccessible.
-- Current HTTP status, redirect/final destination, canonical, noindex, bot-specific robots rules, raw HTML and JSON-LD remain **UNVERIFIED**. No indexing, ranking or AI-citation claims were made. The runtime DNS failures do not establish a website outage.
-- No verified meaningful regression/improvement was identified; `CHANGES.md` remains unchanged.
-- GitHub Actions: repository-wide recent runs were checked; last visible rolling audit run was completed `workflow_dispatch` at 2026-10-25T09:49:27Z. No concurrent rolling audit appeared in that recent-run sample. Workflow administrative enabled/disabled state could not be read through the available connector; user-confirmed disabled state remains the working assumption. No GitHub Actions execution was triggered.
+Inventory validated: 202 unique selected URLs, slots 1–19 have 10 URLs each and slot 20 has 12. Existing Slot 1 and Slot 2 observations (20 URLs) were preserved without rechecking. Yesterday's checks were not carried into today's coverage. Slot 3's 10 URLs were eligible and unchecked on 26 October before this batch.
 
-## Daily coverage by attempted slot
+## Current batch — Slot 3 (21–30)
 
-- Slot 1: 10 UNVERIFIED (earlier ChatGPT batch)
-- Slot 2: 10 UNVERIFIED (this ChatGPT batch)
-- Remaining: 182 URLs not checked on 2026-10-26; do not count yesterday's observations as today's.
+All ten selected phonics guides produced page-specific educational text in the web provider's extracted **text/html** view. Provider labelled each snapshot **"Crawled: today"**, but provided no exact crawl timestamp or verifiable raw origin response. Visible H1s and text included Rabbit Rule, Soft C, Soft G, ER/IR/UR, AR, OR, Y as vowel, AU/AW, OI/OY and OO moon/book. Content snapshots include instructional examples and learning-sequence links. **This is only provider text retrieval, not live HTTP/HTML technical verification.**
 
-## Next unchecked URLs
+An independent `curl -L GET` was actually attempted for each URL at its own timestamp, from **2026-10-25T20:48:39.762817+00:00** through **2026-10-25T20:48:55.891140+00:00**. Five returned exit code **6** ("Could not resolve host") and five returned exit code **28** (DNS resolution timed out after ~4 seconds). None reached an HTTP response; `000` is a curl placeholder, **not an HTTP status from the website**. A separate `/robots.txt` curl attempt at **2026-10-25T20:48:59.904923+00:00** failed at DNS (exit 6), and the web provider could not open `/robots.txt`.
 
-- [21] https://tinystepslearning.com/resources/phonics/rabbit-rule-phonics
-- [22] https://tinystepslearning.com/resources/phonics/soft-c-hard-c-phonics
-- [23] https://tinystepslearning.com/resources/phonics/soft-g-hard-g-phonics
-- [24] https://tinystepslearning.com/resources/phonics/er-ir-ur-r-controlled-vowels-phonics
-- [25] https://tinystepslearning.com/resources/phonics/ar-r-controlled-vowels-phonics
-- [26] https://tinystepslearning.com/resources/phonics/or-r-controlled-vowels-phonics
-- [27] https://tinystepslearning.com/resources/phonics/y-as-a-vowel-phonics
-- [28] https://tinystepslearning.com/resources/phonics/au-aw-phonics
-- [29] https://tinystepslearning.com/resources/phonics/oi-oy-phonics
-- [30] https://tinystepslearning.com/resources/phonics/oo-sounds-phonics
-- [31] https://tinystepslearning.com/resources/phonics/ou-ow-phonics
-- [32] https://tinystepslearning.com/resources/phonics/j-sound-spellings-phonics
+Consequently, current live HTTP response codes, final redirect targets, canonical, robots/noindex directives, Googlebot/Bingbot/OAI-SearchBot accessibility, raw HTML, structured data and production deployment health are **UNVERIFIED** for all ten. No Google/Bing indexing, ranking or AI citation evidence was obtained. DNS failure in this audit environment **does not establish a website outage**.
 
-## Operational limitation
+## Regression / workflow checks
 
-ChatGPT-to-GitHub evidence writing is functional, but the current audit runtime cannot perform a complete origin-level readiness audit while DNS resolution is failing. Do not interpret snapshot-only reviews as full technical PASS, nor infer Google/Bing indexing or AI citations.
+No verified before/after regression or improvement was established; [CHANGES.md](./CHANGES.md) was left unchanged. Existing historical PASS observations from 25 October are not counted as current-day verification.
+
+Among the 100 most recent repository-wide GitHub Actions runs inspected, the most recent rolling SEO audit was a **completed** run created **2026-10-25T09:49:27Z** (run ID **40182234236**); no concurrent rolling audit was observed in that sample. The connector could not independently retrieve the workflow's administrative enabled/disabled state. The user-confirmed GitHub UI disablement remains the working assumption. **No GitHub Actions audit was run or enabled.**
+
+## Remaining coverage / next slot
+
+- Slot 1: 10 UNVERIFIED partial reviews.
+- Slot 2: 10 UNVERIFIED partial reviews.
+- Slot 3: 10 UNVERIFIED partial reviews (this run).
+- Slots 4–20: **172 URLs** still unchecked on 26 October.
+- Next scheduled batch: **Slot 4, rows 31–40**; recover earliest eligible missed earlier-slot URLs only if applicable.
+- Prior day (25 October): **130/202 attempted; 72 not checked**, per the previous-day tracker state. No artificial backfill.
+
+## Operating limitation
+
+The ChatGPT-native batch and GitHub evidence writes function, but full origin-level readiness cannot be certified until a tool with working external DNS/HTTPS connectivity is available. Keep all affected technical fields UNVERIFIED; do not infer website outages from tool failures or infer indexing/AI mentions from text snapshots.
+
