@@ -10,7 +10,7 @@
 
 A rolling, hourly production-origin standards audit **already exists**:
 
-- [Hourly readiness workflow](../../.github/workflows/rolling-public-seo-health.yml) (repository-relative workflow path is in GitHub root).
+- [Hourly readiness workflow](../../../.github/workflows/rolling-public-seo-health.yml) (repository-relative workflow path is in GitHub root).
 - Source verifier `scripts/seo/rolling_public_health.py` and an isolated persistent `seo-url-health-tracker` branch: `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, `CHANGES.md`.
 - 202 selected public URLs from static/blog/course/parent XML sitemaps, 10 per slot for the first 19 slots, 12 in slot 20, then catch-up. Each live response checks HTTP status, final URL, self-canonical, X-Robots and HTML robots, visible title/description/H1/text, valid JSON-LD syntax, public sitemap inclusion and robots.txt rules for Googlebot/Bingbot/OAI-SearchBot. Site failures versus unverified transport/crawl state are separated.
 - The prior hourly schedule uses minute 53 UTC (IST :23) and may be delayed or skipped by GitHub. It cannot guarantee 24 uninterrupted successful runs or provider-selected indexing.
