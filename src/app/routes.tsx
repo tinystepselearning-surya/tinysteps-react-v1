@@ -521,10 +521,10 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredSupportWidgets && !hideHomepageBottomWidgets ? (
+      {!hideSupportWidgets && showDeferredSupportWidgets ? (
         <Suspense fallback={null}>
-          <FloatingAssistant />
-          <BackToTopButton />
+          <FloatingAssistant suppressDock={hideHomepageBottomWidgets} />
+          {!hideHomepageBottomWidgets ? <BackToTopButton /> : null}
         </Suspense>
       ) : null}
       {!hideMarketingChrome && normalizedPath !== '/book-demo' && isAssessmentModalOpen ? (
