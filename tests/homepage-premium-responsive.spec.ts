@@ -58,6 +58,12 @@ for (const viewport of viewports) {
     }
     await expect(pathways.locator('a[aria-label^="Explore "]')).toHaveCount(4);
 
+    const programmePanel = pathways.locator('div.grid.gap-px');
+    await expect(programmePanel).toBeVisible();
+    await expect(programmePanel).toHaveCSS('gap', '1px');
+    await expect(programmePanel.locator('a[aria-label^="Explore "]')).toHaveCount(4);
+    await expect(programmePanel.locator('a span.rounded-full')).toHaveCount(0);
+
     const measures = await page.evaluate(() => ({
       viewportWidth: window.innerWidth,
       bodyWidth: document.body.scrollWidth,
@@ -93,4 +99,21 @@ test('premium pathway cards honour reduced-motion preference', async ({ page }) 
   expect(transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
   await card.focus();
   await expect(card).toBeFocused();
+});
+
+
+test('premium cards use restrained hover and visible keyboard focus', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 850 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const panel = page.locator('#learning-pathways div.grid.gap-px');
+  const card = panel.locator('a[href="/grammar"]');
+  await card.scrollIntoViewIfNeeded();
+  await expect(card).toBeVisible();
+  await expect(card).toHaveCSS('background-color', 'rgb(255, 255, 255)');
+  await card.hover();
+  await expect(card).toHaveCSS('background-color', 'rgb(250, 251, 253)');
+  await expect(card.getByText('Explore', { exact: true })).toHaveCSS('border-bottom-color', 'rgb(255, 122, 0)');
+  await card.focus();
+  await expect(card).toBeFocused();
+  await expect(card.getByText('Explore', { exact: true })).toHaveCSS('border-bottom-color', 'rgb(255, 122, 0)');
 });
