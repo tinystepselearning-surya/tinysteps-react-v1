@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
@@ -16,6 +16,11 @@ const WHATSAPP_URL = buildPublicWhatsAppUrl(
   'Hi Tiny Steps! I have a question about your programs.',
 );
 const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
+// Two brief previews are enough to reveal both help channels without endless interruptions.
+const HELP_PREVIEW_FIRST_DELAY_MS = 10000;
+const HELP_PREVIEW_REPEAT_DELAY_MS = 30000;
+const HELP_PREVIEW_VISIBLE_MS = 4000;
+const HELP_PREVIEW_MAX_COUNT = 2;
 
 type FloatingAssistantProps = { suppressDock?: boolean };
 
@@ -29,6 +34,8 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
   const [askOpen, setAskOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMobileHelpOpen, setIsMobileHelpOpen] = useState(false);
+  const helpPreviewCount = useRef(0);
+  const helpInteracted = useRef(false);
 
   useEffect(() => {
     if (typeof window === 'undefined' || askOpen || quietDock) return;
@@ -37,6 +44,49 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
     }, EXPAND_COLLAPSE_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [askOpen, quietDock]);
+  useEffect(() => {
+    // Only the public homepage's phone-sized dock gets automatic discovery previews.
+    // Never animate for reduced-motion visitors, during chat, or at the final CTA.
+    if (
+      !isHomePage || suppressDock || askOpen || reduceMotion || helpInteracted.current ||
+      typeof window === 'undefined' ||
+      !window.matchMedia?.('(max-width: 639px)').matches ||
+      helpPreviewCount.current >= HELP_PREVIEW_MAX_COUNT
+    ) return;
+
+    let previewTimer: number | undefined;
+    let collapseTimer: number | undefined;
+    let active = true;
+
+    const schedulePreview = (delay: number) => {
+      previewTimer = window.setTimeout(() => {
+        if (!active || helpInteracted.current || document.visibilityState !== 'visible') return;
+        helpPreviewCount.current += 1;
+        setIsMobileHelpOpen(true);
+        collapseTimer = window.setTimeout(() => {
+          if (!active || helpInteracted.current) return;
+          setIsMobileHelpOpen(false);
+          if (helpPreviewCount.current < HELP_PREVIEW_MAX_COUNT) {
+            schedulePreview(HELP_PREVIEW_REPEAT_DELAY_MS);
+          }
+        }, HELP_PREVIEW_VISIBLE_MS);
+      }, delay);
+    };
+    schedulePreview(helpPreviewCount.current === 0
+      ? HELP_PREVIEW_FIRST_DELAY_MS
+      : HELP_PREVIEW_REPEAT_DELAY_MS);
+
+    return () => {
+      active = false;
+      window.clearTimeout(previewTimer);
+      window.clearTimeout(collapseTimer);
+    };
+  }, [isHomePage, suppressDock, askOpen, reduceMotion]);
+
+  useEffect(() => {
+    if (suppressDock) setIsMobileHelpOpen(false);
+  }, [suppressDock]);
+
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const isCareersPage = pathname === '/careers';
@@ -54,6 +104,8 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
   };
 
   const openWhatsApp = () => {
+    helpInteracted.current = true;
+    setIsMobileHelpOpen(false);
     trackSafely(() => {
       trackCtaClick({
         page_path: pathname,
@@ -69,6 +121,7 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
   };
 
   const openAskTinySteps = () => {
+    helpInteracted.current = true;
     trackSafely(() => {
       trackCtaClick({
         page_path: pathname,
@@ -92,6 +145,7 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
       >
       <div
         id={isHomePage ? 'homepage-support-actions' : undefined}
+        onFocusCapture={() => { helpInteracted.current = true; }}
         className={isHomePage
           ? `${isMobileHelpOpen ? 'flex' : 'hidden'} flex-col items-end gap-2 sm:flex sm:flex-row sm:items-center`
           : 'flex items-center gap-2'}
@@ -192,7 +246,10 @@ export default function FloatingAssistant({ suppressDock = false }: FloatingAssi
           aria-label={isMobileHelpOpen ? 'Close support options' : 'Open support options'}
           aria-expanded={isMobileHelpOpen}
           aria-controls="homepage-support-actions"
-          onClick={() => setIsMobileHelpOpen((open) => !open)}
+          onClick={() => {
+            helpInteracted.current = true;
+            setIsMobileHelpOpen((open) => !open);
+          }}
           className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#102A43] px-4 text-xs font-semibold text-white shadow-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43] sm:hidden"
         >
           {isMobileHelpOpen ? 'Close' : 'Need help?'}
