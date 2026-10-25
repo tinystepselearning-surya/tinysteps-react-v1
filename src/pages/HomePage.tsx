@@ -35,22 +35,22 @@ const homepageSchemas = [organizationSchema, websiteSchema, homeWebPageSchema];
 const learningPaths = [
   {
     label: 'Phonics',
-    description: 'Learn letter–sound connections, blend and decode words, and develop accurate spelling.',
+    description: 'Connect sounds to letters, blend and decode words, and build spelling skills.',
     path: '/phonics',
   },
   {
     label: 'Reading',
-    description: 'Build reading fluency, vocabulary and comprehension through meaningful texts.',
+    description: 'Build reading fluency, vocabulary and comprehension with meaningful texts.',
     path: '/reading-classes-for-kids',
   },
   {
     label: 'Grammar',
-    description: 'Strengthen sentence formation, grammar and punctuation—and apply them in speaking and writing.',
+    description: 'Strengthen grammar, punctuation and sentence building for clearer expression.',
     path: '/grammar',
   },
   {
     label: 'Public Speaking',
-    description: 'Practise storytelling, clear explanations, presentations and confident communication.',
+    description: 'Develop storytelling, presentations and confident communication.',
     path: '/speaking',
   },
 ];
@@ -95,25 +95,22 @@ function LearningPathwaysSection() {
             Instead of following one fixed sequence for every child, we assess their starting point and build the next skills through age-appropriate activities, guided practice and teacher feedback.
           </p>
         </div>
-        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-9 grid gap-px overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-200 shadow-[0_8px_32px_rgba(16,42,67,0.035)] sm:grid-cols-2 lg:grid-cols-4">
           {learningPaths.map((path) => (
             <Link
               key={path.path}
               to={path.path}
               aria-label={`Explore ${path.label} online classes for kids`}
-              className="group relative isolate flex min-h-[225px] min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(16,42,67,0.02)] outline-none motion-safe:transition-[transform,box-shadow,border-color] motion-safe:duration-300 motion-safe:ease-out motion-safe:hover:-translate-y-1 hover:border-orange-200 hover:shadow-[0_18px_48px_rgba(16,42,67,0.10)] focus-visible:border-orange-400 focus-visible:ring-2 focus-visible:ring-[#102A43] focus-visible:ring-offset-4 motion-reduce:transform-none"
+              className="group relative flex min-h-[188px] min-w-0 flex-col bg-white px-6 py-6 outline-none motion-safe:transition-colors motion-safe:duration-200 hover:bg-[#FAFBFD] focus-visible:z-10 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#102A43] sm:min-h-[220px] sm:px-7 sm:py-8 lg:px-6"
             >
-              <span
-                aria-hidden="true"
-                className="pointer-events-none absolute inset-x-6 top-0 h-[3px] origin-left scale-x-0 rounded-full bg-[#FF7A00] motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-x-100 motion-safe:group-focus-visible:scale-x-100"
-              />
-              <h3 className="text-2xl font-semibold tracking-[-0.035em] text-[#102A43] motion-safe:transition-colors group-hover:text-[#9B4300]">{path.label}</h3>
-              <p className="mt-4 flex-1 text-[15px] leading-7 text-slate-600">{path.description}</p>
-              <span className="mt-6 inline-flex items-center gap-3 text-base font-semibold text-[#102A43]">
+              <h3 className="text-[clamp(1.18rem,1.7vw,1.45rem)] font-semibold leading-tight tracking-[-0.035em] text-[#102A43]">
+                {path.label}
+              </h3>
+              <p className="mt-3 flex-1 text-[15px] leading-6 text-slate-600">
+                {path.description}
+              </p>
+              <span className="mt-6 w-fit border-b border-transparent pb-1 text-sm font-semibold tracking-[0.01em] text-[#102A43] motion-safe:transition-[border-color] motion-safe:duration-200 group-hover:border-[#FF7A00] group-focus-visible:border-[#FF7A00]">
                 Explore
-                <span className="inline-flex size-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50 text-[#9B4300] motion-safe:transition-colors group-hover:border-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-[#102A43]" aria-hidden="true">
-                  <span className="motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:translate-x-[2px] motion-safe:group-hover:-translate-y-[2px]">↗</span>
-                </span>
               </span>
             </Link>
           ))}
