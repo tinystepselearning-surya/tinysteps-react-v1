@@ -10,6 +10,13 @@ on:
       - 'src/tests/components/FloatingAssistant.test.tsx'
       - 'src/tests/components/HeaderNavigation.spec.tsx'
       - 'src/tests/seo/homeAiEntityVisibility.spec.ts'
+      - 'src/tests/seo/homeRuntimeImportBoundary.spec.ts'
+      - 'src/components/common/Meta.tsx'
+      - 'src/lib/seo.ts'
+      - 'src/lib/seoRuntime.ts'
+      - 'src/lib/homeSeoMeta.js'
+      - 'src/lib/homeSeoMeta.d.ts'
+      - 'src/lib/routeSeoRegistry.js'
       - 'src/tests/seo/homeMachineReadability.spec.ts'
       - 'tests/homepage-premium-responsive.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
@@ -49,6 +56,7 @@ jobs:
           src/tests/components/FloatingAssistant.test.tsx
           src/tests/components/HeaderNavigation.spec.tsx
           src/tests/seo/homeAiEntityVisibility.spec.ts
+          src/tests/seo/homeRuntimeImportBoundary.spec.ts
           src/tests/seo/homeMachineReadability.spec.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
