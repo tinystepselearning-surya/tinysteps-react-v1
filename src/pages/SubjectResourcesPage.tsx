@@ -97,6 +97,8 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
           { title: 'Knows sounds but cannot read words', description: 'Separate sound knowledge from blending and decoding transfer.', to: '/blog/why-child-knows-letter-sounds-but-cannot-read-words', label: 'Check the blending gap' },
           { title: 'Reading is slow or effortful', description: 'Look at accuracy, phrasing and meaning before pushing speed.', to: '/blog/how-to-improve-reading-fluency-in-children', label: 'Explore fluency help' },
           { title: 'Accurate word reading, but still choppy in passages', description: 'If unfamiliar-word decoding is reasonably secure, check whether specialist connected-text fluency support fits better than repeating beginner phonics.', to: '/reading-fluency-program', label: 'Compare fluency support' },
+          { title: 'Reads better than they can spell', description: 'Check oral sound segmentation and encoding of patterns already taught before adding harder words.', to: '/blog/phonics-diagnostics', label: 'Check sound-to-spelling skills' },
+          { title: 'Confuses vowel sounds or spellings', description: 'Check short versus long vowel patterns and make sure the example words match what the child has been taught.', to: '/blog/long-vowel-sounds-for-kids', label: 'Understand vowel patterns' },
         ],
       },
     ],
