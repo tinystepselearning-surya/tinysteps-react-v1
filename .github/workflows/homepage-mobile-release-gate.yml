@@ -67,6 +67,19 @@ jobs:
           tests/homepage-gateway-destinations.spec.ts
       - name: Build the production Hosting artifact
         run: npm run build:deploy
+      - name: Inspect first-load JavaScript and homepage SEO chunk graph
+        run: |
+          npm run bundle:public-check
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const entry = JSON.parse(fs.readFileSync('artifacts/public-bundle-report.json', 'utf8'));
+          const chunks = fs.readdirSync('dist/assets').filter(name => name.endsWith('.js'));
+          console.log('First-load JS assets:', JSON.stringify(entry.assets));
+          console.log('Total initial JS gzip bytes:', entry.totals.gzipBytes);
+          console.log('Homepage/SEO chunks:', chunks
+            .filter(name => /HomePage|seo-|Meta-|vocabularyAuthoritySeoManifest|grammarProgrammaticSeoManifest|schemas-/.test(name))
+            .map(name => ({ name, bytes: fs.statSync('dist/assets/' + name).size })));
+          NODE
       - name: Upload Playwright failure evidence
         if: failure()
         uses: actions/upload-artifact@v4
