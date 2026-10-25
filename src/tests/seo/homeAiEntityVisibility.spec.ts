@@ -89,6 +89,26 @@ describe('homepage premium gateway', () => {
     expect(hero).not.toContain('small-group options where suitable');
   });
 
+  it('keeps the hero compact with accessible, non-repetitive branding and clear CTA reassurance', () => {
+    expect(hero).toContain('aria-hidden="true" className="mb-6 h-1 w-14 rounded-full bg-[#FF7A00]"');
+    expect(hero).not.toContain('Tiny Steps Learning <span aria-hidden="true"');
+    expect(hero).toContain('sm:flex-row sm:items-center sm:gap-5');
+    expect(hero).toContain('Live 1:1 assessment. No obligation to enrol.');
+    expect(hero).not.toContain('One free, live 35-minute 1:1 demo assessment.');
+    expect(hero).toContain('href="#learning-pathways"');
+    expect(hero).toContain('Explore our learning pathways');
+    expect(hero).not.toContain('animate-marquee');
+  });
+
+  it('uses the full desktop learning-journey width without sacrificing readable line lengths', () => {
+    expect(home).toContain('max-w-5xl text-3xl');
+    expect(home).toContain('mt-5 grid gap-4 text-base leading-7 text-slate-600 lg:grid-cols-2 lg:gap-12');
+    expect(home).toContain('From Letter Sounds to Confident Communication.');
+    expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
+    expect(home).toContain('Instead of following one fixed sequence for every child');
+    expect(home).toContain('id="learning-pathways"');
+  });
+
   it('keeps a single prominent assessment CTA using the existing modal flow', () => {
     expect(hero).toContain('to="/book-demo"');
     expect(hero.match(/to="\/book-demo"/g)).toHaveLength(1);
