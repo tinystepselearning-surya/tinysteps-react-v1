@@ -11,8 +11,6 @@ function ConversionHero() {
     <section aria-labelledby="homepage-title" className="relative overflow-hidden bg-white">
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-14 lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] lg:gap-14 lg:pb-24 lg:pt-20">
         <div className="min-w-0">
-          <div aria-hidden="true" className="mb-6 h-1 w-14 rounded-full bg-[#FF7A00]" />
-
           <h1
             id="homepage-title"
             className="max-w-3xl text-[clamp(2.7rem,6vw,5.15rem)] font-bold leading-[1.04] tracking-[-0.055em] text-[#102A43]"
