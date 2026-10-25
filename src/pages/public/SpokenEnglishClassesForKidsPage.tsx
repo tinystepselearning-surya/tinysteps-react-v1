@@ -370,7 +370,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             <LeadSectionHeading
               eyebrow="One Spoken English programme"
               title="Spoken English for Hyderabad, India, and families worldwide"
-              description="Tiny Steps uses this same canonical Spoken English programme for subject-specific conversational-English needs rather than creating separate city versions."
+              description="Families in different locations can explore our online Spoken English programme for everyday conversation, fluency and fuller responses."
             />
             <div className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
               <p>
@@ -384,7 +384,7 @@ export default function SpokenEnglishClassesForKidsPage() {
                 remains the local programme chooser.
               </p>
               <p>
-                Families elsewhere in India and internationally use this same Spoken English owner, subject to compatible teacher timings and learning fit.
+                Families elsewhere in India and internationally can explore the same online Spoken English programme, subject to compatible teacher timings and learning needs.
               </p>
             </div>
           </LeadCard>
