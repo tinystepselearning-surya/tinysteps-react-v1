@@ -46,6 +46,11 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain("const HERO_IMAGE = '/blog/hero-families/Tiny_Steps_Speaking.webp'");
     expect(hero).toContain('loading="eager"');
     expect(hero).toContain('fetchPriority="high"');
+    expect(hero).toContain('sizes="(max-width: 639px)');
+    for (const width of [480, 720, 960]) {
+      expect(hero).toContain(`Tiny_Steps_Speaking_${width}.webp ${width}w`);
+    }
+    expect(hero).toContain('${HERO_IMAGE} 1131w');
     expect(hero).toContain('width={1200}');
     expect(hero).toContain('height={1000}');
     expect(hero).toContain('Online English Classes');
