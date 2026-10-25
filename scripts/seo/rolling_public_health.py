@@ -275,6 +275,34 @@ def read_text(path):
     return Path(path).read_text(encoding="utf-8") if Path(path).exists() else ""
 
 
+def select_batch(rows, slot, day):
+    """Prefer the planned batch; use spare attempts to recover missed earlier slots.
+
+    The half-hour backup never repeats checked URLs or steals future batches.
+    Slots 21-22 reconcile and recover; slots 23-24 finish missed coverage.
+    """
+    pending = [r for r in rows if r.get("today_ist") != day
+               or r.get("today_status") in ("NOT_CHECKED", "")
+               or not r.get("checked_at_utc")]
+    if slot <= 19:
+        assigned = rows[(slot - 1) * 10:slot * 10]
+    elif slot == 20:
+        assigned = rows[190:]
+    else:
+        assigned = []
+    assigned_due = [r for r in assigned if r in pending]
+    assigned_urls = {r["url"] for r in assigned_due}
+    limit = 12 if slot == 20 else 10
+    backfill = [r for r in pending
+                if r["url"] not in assigned_urls
+                and (slot >= 21 or int(r["slot"]) < slot)][:limit - len(assigned_due)]
+    selected = assigned_due + backfill
+    mode = ("planned+recovery" if assigned_due and backfill else
+            "planned" if assigned_due else
+            "recovery" if backfill else "already-complete")
+    return selected, mode
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--tracker", required=True)
@@ -291,16 +319,8 @@ def main():
         raise SystemExit("Aborting: expected exactly 202 unique tracked URLs")
     if any(set(HEADINGS) - set(r) for r in rows):
         raise SystemExit("Aborting: master tracker lacks required columns")
-    if slot <= 19:
-        selected = rows[(slot-1)*10:slot*10]
-    elif slot == 20:
-        selected = rows[190:]
-    elif slot in (23, 24):
-        selected = [r for r in rows if r.get("today_ist") != now.date().isoformat()
-                    or r.get("today_status") in ("NOT_CHECKED", "UNVERIFIED")][:10]
-    else:
-        selected = []
-    print(f"Slot {slot}; selected {len(selected)} URLs; local date {now.date()}")
+    selected, batch_mode = select_batch(rows, slot, now.date().isoformat())
+    print(f"Slot {slot}; selected {len(selected)} URLs; mode {batch_mode}; local date {now.date()}")
     changes = read_text(a.changes)
     found_events = []
     if selected and not a.dry_run:
@@ -340,7 +360,8 @@ def main():
              "", f"**Attempted today:** {len(attempted)}/202. **Pending today:** {len(missing)}.",
              f"**Statuses today:** {', '.join(f'{k} {v}' for k,v in counts.items())}.",
              "**Important:** GitHub source and sampled HTTP/robots/HTML checks are NOT proof of Google/Bing indexing, ranking, or AI citation.",
-             "", "## Follow-up URLs"]
+             f"**Batch selection:** {batch_mode}; {len(selected)} URLs selected. Backup runs recover only missed earlier slots.",
+              "", "## Follow-up URLs"]
     for row in priority_issues[:40]:
         notes.append(f"- {row['today_status']} [{row['index']}] {row['url']} — {row.get('reason', '')}")
     if len(priority_issues) > 40:
