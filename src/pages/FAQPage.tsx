@@ -252,12 +252,12 @@ const items: FAQItem[] = [
   {
     id: 'recordings',
     category: 'progress',
-    question: 'Are class recordings available to parents?',
-    shortAnswer: 'Available through the parent class resources when assigned',
+    question: 'Will parents receive a recording of every class?',
+    shortAnswer: 'Yes — every completed live class recording is provided to parents',
     answer:
-      'Tiny Steps may provide class recordings as part of parent support. Where a recording folder has been assigned to the family, available recordings can be opened from the Classes area of the parent dashboard. Recordings depend on processing and upload, so they should not be expected to appear immediately when a class ends.',
-    searchTerms: ['recording', 'class video', 'replay', 'watch class', 'parent dashboard', 'processed'],
-    links: [{ to: '/contact', label: 'Ask the team about a missing recording', emphasis: 'secondary' }],
+      'Yes. Tiny Steps records every live class and provides its recording to the child’s parent or guardian as a mandatory part of our service. Recordings are not optional and are provided for every completed class. Parents can access recordings from the Classes area of the parent dashboard after processing and upload. If a recording is missing or inaccessible, contact the Tiny Steps admin team so we can ensure it is delivered. Recordings are for private family review and must not be shared publicly.',
+    searchTerms: ['recording', 'every class', 'guaranteed recording', 'class video', 'replay', 'watch class', 'parent dashboard', 'processed'],
+    links: [{ to: '/contact', label: 'Contact the team about a missing recording', emphasis: 'secondary' }],
   },
   {
     id: 'worksheets',

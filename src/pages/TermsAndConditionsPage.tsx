@@ -1,7 +1,7 @@
 import Meta from '../components/common/Meta';
 import PageHero from '../components/common/PageHero';
 
-const lastUpdated = 'March 6, 2026';
+const lastUpdated = 'October 26, 2026';
 
 const sections = [
   {
@@ -14,7 +14,7 @@ const sections = [
   {
     title: 'Services and enrolment',
     paragraphs: [
-      'Tiny Steps offers live 1:1 online phonics, grammar, reading, and public speaking classes for children ages 3–12. We may also offer related assessments, parent guidance, progress updates, recordings, worksheets, and practice resources.',
+      'Tiny Steps offers live 1:1 online phonics, grammar, reading, and public speaking classes for children ages 3–12. We record every completed live class and provide its recording to the child’s parent or guardian as part of the service. Recordings may require processing before they appear in the parent dashboard; the Tiny Steps admin team will help ensure delivery if a recording is missing. Recordings are for private family review and must not be shared publicly. We may also offer related assessments, parent guidance, progress updates, worksheets, and practice resources.',
       'Enrolment requires accurate parent and child information, including contact details, age, learning interests, and any relevant educational details that help us place the child appropriately. Families are responsible for keeping this information current. Monthly fees or other applicable charges must be paid before classes begin.',
     ],
   },

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
 import { ASK_TINY_STEPS_KNOWLEDGE_SOURCES } from '../../config/askTinyStepsKnowledgeSources';
@@ -27,4 +28,22 @@ describe('FAQ parent decision hub SEO contract', () => {
       expect.arrayContaining(['fees', 'rescheduling', 'progress', 'recordings', 'microsoft teams']),
     );
   });
+  it('guarantees every completed live class recording in the visible FAQ and terms', () => {
+    const faqSource = readFileSync('src/pages/FAQPage.tsx', 'utf8');
+    const termsSource = readFileSync('src/pages/TermsAndConditionsPage.tsx', 'utf8');
+    const recordingsQuestion = faqSource.match(/id: 'recordings',[\s\S]*?(?=\n  },\n  {)/)?.[0];
+
+    expect(recordingsQuestion).toBeDefined();
+    expect(recordingsQuestion).toContain('every completed live class recording is provided to parents');
+    expect(recordingsQuestion).toContain('records every live class');
+    expect(recordingsQuestion).toContain('mandatory part of our service');
+    expect(recordingsQuestion).toContain('for every completed class');
+    expect(recordingsQuestion).toContain('If a recording is missing or inaccessible');
+    expect(recordingsQuestion).not.toMatch(/may provide class recordings|where a recording folder has been assigned|recordings are optional/i);
+
+    expect(termsSource).toContain('We record every completed live class and provide its recording');
+    expect(termsSource).toContain('Recordings are for private family review');
+    expect(termsSource).toContain("const lastUpdated = 'October 26, 2026'");
+  });
+
 });
