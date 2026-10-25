@@ -295,7 +295,7 @@ def main():
         selected = rows[(slot-1)*10:slot*10]
     elif slot == 20:
         selected = rows[190:]
-    elif slot in (23, 24):
+    elif slot in (21, 22, 23, 24):
         selected = [r for r in rows if r.get("today_ist") != now.date().isoformat()
                     or r.get("today_status") in ("NOT_CHECKED", "UNVERIFIED")][:10]
     else:
