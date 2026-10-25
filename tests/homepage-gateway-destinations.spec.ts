@@ -20,7 +20,7 @@ for (const programme of programmes) {
     await link.click();
 
     await expect.poll(() => new URL(page.url()).pathname).toBe(programme.path);
-    await expect(page.locator('main h1').first()).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1 }).first()).toBeVisible();
 
     const dimensions = await page.evaluate(() => ({
       bodyWidth: document.body.scrollWidth,
