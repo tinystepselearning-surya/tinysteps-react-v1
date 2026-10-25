@@ -19,6 +19,7 @@ on:
       - 'src/lib/routeSeoRegistry.js'
       - 'src/tests/seo/homeMachineReadability.spec.ts'
       - 'tests/homepage-premium-responsive.spec.ts'
+      - 'tests/homepage-seo-runtime-network.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
       - '.github/workflows/homepage-mobile-release-gate.yml'
   push:
@@ -64,6 +65,7 @@ jobs:
         run: >-
           npx playwright test
           tests/homepage-premium-responsive.spec.ts
+          tests/homepage-seo-runtime-network.spec.ts
           tests/homepage-gateway-destinations.spec.ts
       - name: Build the production Hosting artifact
         run: npm run build:deploy
