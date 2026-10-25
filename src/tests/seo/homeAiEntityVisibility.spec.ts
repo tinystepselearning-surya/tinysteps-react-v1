@@ -85,8 +85,8 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain('underline-offset-[5px]');
     expect(hero).toContain('hover:bg-[#FFF1E6]');
     expect(hero).toContain('focus-visible:outline');
-    expect(hero).toContain('Live 1:1 online English classes');
-    expect(hero).toContain('small-group options where suitable');
+    expect(hero).toContain('Live, personalised one-to-one online English classes for children aged 3–12.');
+    expect(hero).not.toContain('small-group options where suitable');
   });
 
   it('keeps a single prominent assessment CTA using the existing modal flow', () => {
@@ -108,16 +108,19 @@ describe('homepage premium gateway', () => {
   });
 
   it('shows a connected English-learning scope while preserving specialist topic ownership', () => {
-    expect(home).toContain('From first sounds to confident communication.');
-    expect(home).toContain('From letter sounds, phonics, blending and spelling');
-    expect(home).toContain('reading, vocabulary, comprehension, grammar, sentence building, spoken English and public speaking');
-    expect(home).toContain('Children begin with what they need, not a fixed age-based sequence.');
+    expect(home).toContain('From Letter Sounds to Confident Communication.');
+    expect(home).toContain('The complete English-learning journey');
+    expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
+    expect(home).toContain('reading fluency, vocabulary and comprehension; grammar and sentence building;');
+    expect(home).toContain('spoken English, public speaking and communication skills.');
+    expect(home).toContain('Instead of following one fixed sequence for every child');
+    expect(home).toContain('age-appropriate activities, guided practice and teacher feedback.');
     expect(home).toContain('Spoken English and everyday conversation');
     expect(home).toContain('Public speaking and communication skills');
     expect(home).toContain("label: 'Public Speaking'");
     expect(home).toContain('Explore Spoken English Classes');
-    expect(hero).toContain('One connected learning journey through');
-    expect(hero).toContain('current skills, readiness and pace');
+    expect(hero).not.toContain('One connected learning journey through');
+    expect(hero).toContain('learning needs, current skills and pace.');
   });
 
   it('keeps pedagogy claims and school-environment context responsible', () => {
