@@ -62,6 +62,10 @@ const post: BlogPost = {
     { type: 'li', content: '**Cause or contrast:** “because”, “so”, “but”, “although” when the relationship is real and the child can manage the sentence.' },
     { type: 'p', content: 'For focused practice on beginner connectives, use [Conjunctions for Kids](/blog/grammar-conjunctions). This paragraph guide stays focused on how relationships work across the whole paragraph.' },
 
+    { type: 'h2', content: 'What if every sentence begins the same way?' },
+    { type: 'p', content: 'Repeated openings are worth checking when they make relationships hard to follow—not merely because the same word appears twice. Compare: **“Trees give us shade. Trees help birds. Trees make parks cooler.”** with **“Trees give us shade. Their branches shelter birds. On hot days, they can also make parks feel cooler.”** The second version uses a meaningful reference and a time/context phrase while preserving the main ideas.' },
+    { type: 'p', content: 'Ask: **“What does this next sentence add, and how does it connect?”** Let the child try one change, read the paragraph aloud and keep the clearer version. Do not replace every opening with “Firstly”, “Secondly” or a random synonym; natural repetition can be useful when the subject needs emphasis.' },
+
     { type: 'h2', content: 'Do children need a concluding sentence in every paragraph?' },
     { type: 'p', content: 'Not every paragraph needs a separate sentence that simply repeats the opening. A conclusion can be useful when it genuinely closes an explanation, opinion or section, but children should not be taught to add a redundant final sentence solely to satisfy a fixed count.' },
     { type: 'p', content: 'A better check is: **Has the paragraph completed the job it started?** Sometimes the final supporting detail is enough. Sometimes a brief closing sentence helps. The answer depends on purpose and genre.' },
