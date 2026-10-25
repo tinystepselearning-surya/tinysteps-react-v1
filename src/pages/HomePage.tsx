@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import ConversionHero from '../components/Home/ConversionHero';
+import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../config/pricing';
 import Meta from '../components/common/Meta';
 import { ROUTE_SEO_REGISTRY } from '../lib/routeSeoRegistry.js';
 import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from '../lib/schemas';
@@ -72,11 +73,8 @@ const reasons = [
 
 const exploreLinks = [
   { title: 'Curriculum', description: 'See how the learning pathways are organised.', path: '/curriculum' },
-  { title: 'Real class samples', description: 'Take a closer look at our teaching.', path: '/class-samples' },
-  { title: 'Pricing', description: 'Understand the available lesson formats and fees.', path: '/pricing' },
   { title: 'Learning resources', description: 'Discover practical English-learning guides.', path: '/resources' },
   { title: 'Parent articles', description: 'Find answers to common learning questions.', path: '/blog' },
-  { title: 'FAQs', description: 'Read the practical details before you begin.', path: '/faq' },
 ];
 
 function LearningPathwaysSection() {
@@ -219,6 +217,109 @@ function TechnologySection() {
   );
 }
 
+function BeforeYouBookSection() {
+  return (
+    <section aria-labelledby="before-you-book-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Before you book</p>
+        <h2 id="before-you-book-title" className="mt-4 max-w-4xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
+          See the teaching. Compare the plans. Get answers.
+        </h2>
+        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+          Explore real class moments, understand our standard live 1:1 options and check the details that matter to your family.
+        </p>
+
+        <div className="mt-9 grid items-stretch gap-5 lg:grid-cols-3">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] bg-[#102A43] p-6 text-white sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-300">Real class samples</p>
+            <span aria-hidden="true" className="mt-6 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/25 bg-white/10 text-xl text-white">
+              ▶
+            </span>
+            <h3 className="mt-6 text-2xl font-semibold leading-tight tracking-[-0.035em]">
+              See how Tiny Steps classes actually work.
+            </h3>
+            <p className="mt-3 flex-1 text-sm leading-7 text-slate-200">
+              Watch short moments from live teaching in phonics, grammar and communication. See children participate, practise and receive guidance.
+            </p>
+            <Link to="/class-samples" className="mt-6 inline-flex w-fit rounded-sm border-b-2 border-[#FF9B45] pb-1 text-sm font-semibold text-white hover:text-orange-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+              Watch real class samples
+              <span aria-hidden="true" className="ml-2">↗</span>
+            </Link>
+          </article>
+
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-6 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Standard live 1:1 pricing</p>
+            <h3 className="mt-5 text-3xl font-bold tracking-[-0.045em] text-[#102A43]">
+              {formatINR(PER_CLASS_PRICE)} <span className="text-base font-medium tracking-normal text-slate-600">per class</span>
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              A dedicated teacher and a 35-minute live session. All standard 1:1 packages use the same per-class rate.
+            </p>
+            <div className="mt-5 divide-y divide-[#EAD6C5] border-y border-[#EAD6C5]">
+              {ONE_TO_ONE_MONTHLY_PACKAGES.map((plan) => (
+                <div key={plan.id} className="flex items-center justify-between gap-4 py-3 text-sm">
+                  <span className="text-slate-700">{plan.classes} classes / month</span>
+                  <span className="font-semibold tabular-nums text-[#102A43]">{formatINR(plan.monthlyFee)}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 text-xs leading-5 text-slate-600">
+              Standard plans only. Other teaching and group formats are priced separately.
+            </p>
+            <Link to="/pricing#standard-pricing" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+              Compare standard plans
+              <span aria-hidden="true" className="ml-2">↗</span>
+            </Link>
+          </article>
+
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-[#F7F8FA] p-6 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Parent questions</p>
+            <h3 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#102A43]">
+              A few quick answers.
+            </h3>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Open only the question you need.
+            </p>
+            <div className="mt-4 divide-y divide-slate-200 border-y border-slate-200">
+              <details className="group py-3">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 rounded-sm text-sm font-semibold leading-6 text-[#102A43] marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43] [&::-webkit-details-marker]:hidden">
+                  What happens in the free demo?
+                  <span aria-hidden="true" className="shrink-0 text-lg font-normal text-slate-500 motion-safe:transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="pt-2 pr-6 text-sm leading-6 text-slate-600">
+                  Your child joins one free 35-minute live 1:1 assessment, helping us recommend a suitable learning starting point.
+                </p>
+              </details>
+              <details className="group py-3">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 rounded-sm text-sm font-semibold leading-6 text-[#102A43] marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43] [&::-webkit-details-marker]:hidden">
+                  Are classes live or recorded?
+                  <span aria-hidden="true" className="shrink-0 text-lg font-normal text-slate-500 motion-safe:transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="pt-2 pr-6 text-sm leading-6 text-slate-600">
+                  Classes are live and teacher-guided. The class samples are recordings that show our teaching approach.
+                </p>
+              </details>
+              <details className="group py-3">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 rounded-sm text-sm font-semibold leading-6 text-[#102A43] marker:hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43] [&::-webkit-details-marker]:hidden">
+                  How can parents follow progress?
+                  <span aria-hidden="true" className="shrink-0 text-lg font-normal text-slate-500 motion-safe:transition-transform group-open:rotate-45">+</span>
+                </summary>
+                <p className="pt-2 pr-6 text-sm leading-6 text-slate-600">
+                  Parents can follow learning progress through teacher feedback and the Tiny Steps parent portal.
+                </p>
+              </details>
+            </div>
+            <Link to="/faq" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+              Browse all parent questions
+              <span aria-hidden="true" className="ml-2">↗</span>
+            </Link>
+          </article>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function ExploreSection() {
   return (
     <section aria-labelledby="explore-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
@@ -276,6 +377,7 @@ export default function HomePage() {
         <LearningPathwaysSection />
         <DifferenceSection />
         <TechnologySection />
+        <BeforeYouBookSection />
         <ExploreSection />
         <FinalInvitationSection />
       </div>
