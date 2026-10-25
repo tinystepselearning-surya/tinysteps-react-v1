@@ -5,6 +5,9 @@ on:
     # UTC :53 translates to IST :23, away from Github's busiest minute.
     # GitHub schedule may be delayed or skipped; coverage reports must show gaps.
     - cron: '53 * * * *'
+    # Backup 30 minutes later: GitHub can delay or drop schedule events.
+    # Identical-hour reruns are idempotent; spare triggers recover missed slots.
+    - cron: '23 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -33,21 +36,33 @@ jobs:
           git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/MASTER_URL_TRACKER.csv > /tmp/master-url-tracker.csv
           git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/CHANGES.md > /tmp/seo-change-ledger.md
 
-      - name: Validate runner syntax and daily batch boundaries
+      - name: Validate syntax, daily selection and missed-slot recovery (offline)
         shell: bash
         run: |
           set -euo pipefail
           python3 -m py_compile scripts/seo/rolling_public_health.py
-          for pair in 1:10 19:10 20:12 21:0 22:0; do
-            slot="${pair%%:*}"
-            expected="${pair##*:}"
-            output="$(python3 scripts/seo/rolling_public_health.py \
-              --tracker /tmp/master-url-tracker.csv \
-              --changes /tmp/seo-change-ledger.md \
-              --out-dir /tmp/seo-validation \
-              --slot "${slot}" --dry-run)"
-            echo "${output}" | grep -Fq "Slot ${slot}; selected ${expected} URLs;"
-          done
+          PYTHONPATH=scripts/seo python3 - <<'PY'
+          from rolling_public_health import select_batch
+
+          day = "2026-10-25"
+          rows = [{"index": str(i + 1), "slot": str(min(i // 10 + 1, 20)),
+                   "url": f"https://example.invalid/{i}",
+                   "today_ist": "", "today_status": "NOT_CHECKED", "checked_at_utc": ""}
+                  for i in range(202)]
+          for slot, expected in ((1, 10), (19, 10), (20, 12), (21, 10),
+                                 (22, 10), (23, 10), (24, 10)):
+              assert len(select_batch(rows, slot, day)[0]) == expected, slot
+          for r in rows[:10]:
+              r.update(today_ist=day, today_status="PASS", checked_at_utc="2026-10-25T00:00:00Z")
+          assert not select_batch(rows, 1, day)[0], "backup must not repeat or scan future URLs"
+          for r in rows[20:30]:
+              r.update(today_ist=day, today_status="PASS", checked_at_utc="2026-10-25T00:00:00Z")
+          assert [int(r["index"]) for r in select_batch(rows, 3, day)[0]] == list(range(11, 21)), "must backfill slot 2"
+          for r in rows:
+              r.update(today_ist=day, today_status="PASS", checked_at_utc="2026-10-25T00:00:00Z")
+          assert not select_batch(rows, 24, day)[0], "complete day must be idempotent"
+          print("Selection validation passed (no site requests).")
+          PY
 
       - name: Audit today's assigned public URLs and prepare reports
         shell: bash
