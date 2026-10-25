@@ -323,6 +323,7 @@ const Layout: FC = () => {
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
   const [showDeferredSupportWidgets, setShowDeferredSupportWidgets] = useState(false);
+  const [hideHomepageBottomWidgets, setHideHomepageBottomWidgets] = useState(false);
 
   useEffect(() => {
     if (hideMarketingChrome || normalizedPath === '/book-demo') {
@@ -380,6 +381,40 @@ const Layout: FC = () => {
       4000,
     );
   }, [hideMarketingChrome, hideSupportWidgets]);
+
+  // Keep fixed support controls away from the final homepage booking CTA and footer.
+  // This is homepage-only: specialist pages retain their existing support widgets.
+  useEffect(() => {
+    if (normalizedPath !== '/' || hideMarketingChrome) {
+      setHideHomepageBottomWidgets(false);
+      return;
+    }
+
+    let frame = 0;
+    const update = () => {
+      frame = 0;
+      const bookingSection = document.getElementById('homepage-final-invitation');
+      const nearFinalBooking = Boolean(
+        bookingSection && bookingSection.getBoundingClientRect().top < window.innerHeight - 48,
+      );
+      setHideHomepageBottomWidgets((wasHidden) =>
+        wasHidden === nearFinalBooking ? wasHidden : nearFinalBooking
+      );
+    };
+    const onScrollOrResize = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(update);
+    };
+
+    onScrollOrResize();
+    window.addEventListener('scroll', onScrollOrResize, { passive: true });
+    window.addEventListener('resize', onScrollOrResize);
+    return () => {
+      window.removeEventListener('scroll', onScrollOrResize);
+      window.removeEventListener('resize', onScrollOrResize);
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [hideMarketingChrome, normalizedPath]);
 
   const closeAssessmentModal = useCallback(() => {
     setIsAssessmentModalOpen(false);
@@ -486,7 +521,7 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredSupportWidgets ? (
+      {!hideSupportWidgets && showDeferredSupportWidgets && !hideHomepageBottomWidgets ? (
         <Suspense fallback={null}>
           <FloatingAssistant />
           <BackToTopButton />
