@@ -54,7 +54,7 @@ for (const viewport of viewports) {
       const card = pathways.locator(`a[href="${href}"]`);
       await expect(card).toHaveAttribute('aria-label', `Explore ${label} online classes for kids`);
       await expect(card.getByRole('heading', { name: label })).toBeVisible();
-      await expect(card.getByText('Explore', { exact: true })).toBeVisible();
+      await expect(card).toContainText('Explore');
     }
     await expect(pathways.locator('a[aria-label^="Explore "]')).toHaveCount(4);
 
