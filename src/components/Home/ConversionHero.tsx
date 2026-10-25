@@ -11,9 +11,7 @@ function ConversionHero() {
     <section aria-labelledby="homepage-title" className="relative overflow-hidden bg-white">
       <div className="mx-auto grid max-w-7xl items-center gap-10 px-5 pb-14 pt-10 sm:px-8 sm:pb-20 sm:pt-14 lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] lg:gap-14 lg:pb-24 lg:pt-20">
         <div className="min-w-0">
-          <p className="mb-5 text-xs font-bold uppercase tracking-[0.16em] text-orange-700 sm:text-sm">
-            Tiny Steps Learning <span aria-hidden="true" className="mx-1 text-slate-300">/</span> Ages 3–12
-          </p>
+          <div aria-hidden="true" className="mb-6 h-1 w-14 rounded-full bg-[#FF7A00]" />
 
           <h1
             id="homepage-title"
@@ -33,21 +31,20 @@ function ConversionHero() {
             tailored to your child's learning needs, current skills and pace.
           </p>
 
-          <div className="mt-8 flex flex-wrap">
+          <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-5">
             <Link
               to="/book-demo"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#102A43] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0B2138] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+              className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-[#102A43] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0B2138] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
             >
               Book Free 35-Minute Demo
             </Link>
+            <p className="max-w-[17rem] text-sm leading-6 text-slate-500">
+              Live 1:1 assessment. No obligation to enrol.
+            </p>
           </div>
-
-          <p className="mt-4 text-sm leading-6 text-slate-500">
-            One free, live 35-minute 1:1 demo assessment. No obligation to enrol.
-          </p>
           <a
             href="#learning-pathways"
-            className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 underline decoration-slate-300 underline-offset-4 transition-colors hover:text-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+            className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-4 transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
           >
             Explore our learning pathways <span aria-hidden="true">↓</span>
           </a>
