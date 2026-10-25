@@ -44,6 +44,20 @@ for (const viewport of viewports) {
     await expect(pathways.locator('a[href="/grammar"]')).toBeVisible();
     await expect(pathways.locator('a[href="/speaking"]')).toBeVisible();
 
+    const expectedCards = [
+      ['Phonics', '/phonics'],
+      ['Reading', '/reading-classes-for-kids'],
+      ['Grammar', '/grammar'],
+      ['Public Speaking', '/speaking'],
+    ] as const;
+    for (const [label, href] of expectedCards) {
+      const card = pathways.locator(`a[href="${href}"]`);
+      await expect(card).toHaveAttribute('aria-label', `Explore ${label} online classes for kids`);
+      await expect(card.getByRole('heading', { name: label })).toBeVisible();
+      await expect(card.getByText('Explore', { exact: true })).toBeVisible();
+    }
+    await expect(pathways.locator('a[aria-label^="Explore "]')).toHaveCount(4);
+
     const measures = await page.evaluate(() => ({
       viewportWidth: window.innerWidth,
       bodyWidth: document.body.scrollWidth,
@@ -65,3 +79,18 @@ for (const viewport of viewports) {
     await expect(pathways).toBeInViewport();
   });
 }
+
+
+test('premium pathway cards honour reduced-motion preference', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 1366, height: 850 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  const card = page.locator('#learning-pathways a[href="/phonics"]');
+  await card.scrollIntoViewIfNeeded();
+  await expect(card).toBeVisible();
+  await card.hover();
+  const transform = await card.evaluate(element => getComputedStyle(element).transform);
+  expect(transform === 'none' || transform === 'matrix(1, 0, 0, 1, 0, 0)').toBe(true);
+  await card.focus();
+  await expect(card).toBeFocused();
+});
