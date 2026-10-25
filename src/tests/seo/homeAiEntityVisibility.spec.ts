@@ -106,8 +106,8 @@ describe('homepage premium gateway', () => {
     expect(home).toContain('text-[#FF7A00] sm:text-base');
     expect(home).toContain('rounded-lg bg-[#102A43] px-3 py-2');
     expect(home).toContain('mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12');
-    expect(home).toContain('mt-3 flex-1 text-[15px] leading-7 text-slate-600');
-    expect(home).toContain('mt-6 text-base font-semibold text-slate-900');
+    expect(home).toContain('mt-4 flex-1 text-[15px] leading-7 text-slate-600');
+    expect(home).toContain('mt-6 inline-flex items-center gap-3 text-base font-semibold text-[#102A43]');
     expect(home).toContain('From Letter Sounds to Confident Communication.');
     expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
     expect(home).toContain('Instead of following one fixed sequence for every child');
@@ -122,10 +122,45 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain('aspect-[6/5] h-auto w-full');
     expect(hero).toContain('sm:flex-row sm:items-center');
     expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
-    expect(home).toContain('min-h-[245px] min-w-0 flex-col');
+    expect(home).toContain('min-h-[225px] min-w-0 flex-col');
     expect(home).toContain('lg:grid-cols-2');
     expect(home).toContain('max-w-6xl');
     expect(home).not.toContain('whitespace-nowrap');
+  });
+
+  it('uses meaningful educational card copy with clean Explore CTAs and no decorative numbers', () => {
+    const cardCopy = [
+      ['Phonics', '/phonics', 'Learn letter–sound connections, blend and decode words, and develop accurate spelling.'],
+      ['Reading', '/reading-classes-for-kids', 'Build reading fluency, vocabulary and comprehension through meaningful texts.'],
+      ['Grammar', '/grammar', 'Strengthen sentence formation, grammar and punctuation—and apply them in speaking and writing.'],
+      ['Public Speaking', '/speaking', 'Practise storytelling, clear explanations, presentations and confident communication.'],
+    ] as const;
+
+    for (const [label, destination, description] of cardCopy) {
+      expect(home).toContain(`label: '${label}'`);
+      expect(home).toContain(`path: '${destination}'`);
+      expect(home).toContain(`description: '${description}'`);
+    }
+
+    expect(home).not.toContain("number: '01'");
+    expect(home).not.toContain('path.number');
+    expect(home).not.toContain('path.action');
+    expect(home).toContain('aria-label={`Explore ${path.label} online classes for kids`}');
+    expect(home).toContain('                Explore');
+  });
+
+  it('keeps pathway cards mouse and keyboard interactive without runtime animation costs', () => {
+    expect(home).toContain('motion-safe:hover:-translate-y-1');
+    expect(home).toContain('motion-safe:transition-[transform,box-shadow,border-color]');
+    expect(home).toContain('motion-safe:group-hover:scale-x-100');
+    expect(home).toContain('motion-safe:group-focus-visible:scale-x-100');
+    expect(home).toContain('focus-visible:ring-2');
+    expect(home).toContain('motion-reduce:transform-none');
+    expect(home).toContain('motion-safe:group-hover:translate-x-[2px]');
+    expect(home).not.toContain('framer-motion');
+    expect(home).not.toContain('react-spring');
+    expect(home).not.toContain('requestAnimationFrame');
+    expect(home).not.toContain('setInterval');
   });
 
   it('keeps a single prominent assessment CTA using the existing modal flow', () => {
