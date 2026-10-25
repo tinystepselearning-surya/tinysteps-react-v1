@@ -1,46 +1,40 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
 
-Generated: 2026-10-25T14:48:49.983Z; ChatGPT hourly audit, earliest missed-slot recovery (Slot 7, indices 61–70).
+Generated: 2026-10-25T15:43:42Z; ChatGPT hourly audit, earliest missed-slot recovery (Slot 9, indices 81–90).
 
-**Attempted today:** 100/202. **Pending today:** 102.
-**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 60.
-**New full live technical readiness checks this run:** 0. **New text-only snapshot reviews:** 10, all marked UNVERIFIED.
+**Attempted today:** 110/202. **Pending today:** 92.
+**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 70.
+**New full live technical readiness checks this run:** 0. **New text-only snapshot reviews:** 10, all UNVERIFIED.
 
 ## This ChatGPT execution
 
-- Validated 202 unique URLs and slots 1–19 of 10 URLs each, slot 20 of 12. Preserved all 90 previously attempted rows and timestamps.
-- Reviewed 10 previously unchecked game URLs in Slot 7, indices 61–70, using cached web-provider text/html snapshots; all 10 had page-specific educational content. Source snapshots were crawled yesterday or last week, not fetched fresh from the production origin.
-- Direct HTTPS GET to a sample game URL and `/robots.txt` failed with `NameResolutionError` in the audit environment. The web-provider `robots.txt` request was also inaccessible. These tool limitations are NOT evidence of a production outage.
-- Current HTTP status, redirects/final URL, canonical, noindex, robots directives, JSON-LD, Googlebot/Bingbot/OAI-SearchBot access and actual interactive game functionality remain UNVERIFIED.
-- **Content observation, not a verified regression:** the cached `/free-speaking-games-for-kids` snapshot advertises 4 games but shows `0 Playable Now` and four `COMING SOON` entries. `/free-speaking-practice-game-for-kids` also says `COMING SOON`. Confirm current deployment and parent experience separately before creating a production defect. These observations may merit a content/expectations review but do not establish a newly broken game.
-- The user confirmed GitHub Actions audit workflow was disabled. Its administrative enabled/disabled state could not be independently read; no conflicting run was observed or triggered by this ChatGPT audit.
-- No verified before/after regression or improvement. `CHANGES.md` left unchanged. No production changes.
+- Validated 202 unique URLs and correct slot distribution (slots 1–19: 10 each; slot 20: 12). Preserved 100 previous attempts and their timestamps.
+- Reviewed 10 previously unchecked parent-intent URLs in Slot 9, indices 81–90. All web-provider text/html snapshots had page-specific educational content and parent demo navigation. Provider crawl ages ranged from today to six months ago.
+- Direct HTTPS GET to /writing-classes-for-kids and /robots.txt failed with NameResolutionError at 15:42:49Z and 15:42:54Z in the audit environment. This is NOT evidence of a production outage.
+- Current origin HTTP status, redirects, canonical, noindex, bot robots, JSON-LD, interactive functionality and current deployment freshness remain UNVERIFIED. The 6-year-old age-band page had a six-month-old provider snapshot; this does not establish a current production defect.
+- No confirmed regressions or improvements. CHANGES.md remains unchanged. The previous 40 PASS entries were made by the former GitHub executor and not independently rechecked here.
+- GitHub Actions is disabled according to the user's confirmation; administrative workflow state was not independently verified.
 
-## Attempted slots today
+## Reviewed URLs (all UNVERIFIED for full live technical readiness)
 
-- Slot 1: 10 attempted
-- Slot 2: 10 attempted
-- Slot 3: 10 attempted
-- Slot 4: 10 attempted
-- Slot 5: 10 attempted
-- Slot 6: 10 attempted
-- Slot 7: 10 attempted
-- Slot 8: 10 attempted
-- Slot 13: 10 attempted
-- Slot 16: 10 attempted
+- [81] https://tinystepslearning.com/writing-classes-for-kids — provider snapshot crawled today
+- [82] https://tinystepslearning.com/phonics-fees-india — provider snapshot crawled yesterday
+- [83] https://tinystepslearning.com/english-grammar-writing-classes — provider snapshot crawled last week
+- [84] https://tinystepslearning.com/spoken-english-classes-for-kids-online — provider snapshot crawled today
+- [85] https://tinystepslearning.com/online-english-classes-for-kids — provider snapshot crawled today
+- [86] https://tinystepslearning.com/online-english-classes-hyderabad — provider snapshot crawled last week
+- [87] https://tinystepslearning.com/english-classes-for-4-year-old — provider snapshot crawled last week
+- [88] https://tinystepslearning.com/english-classes-for-5-year-old — provider snapshot crawled today
+- [89] https://tinystepslearning.com/english-classes-for-6-year-old — provider snapshot crawled 6 months ago
+- [90] https://tinystepslearning.com/english-classes-for-7-10-year-old — provider snapshot crawled last month
 
-## Remaining unchecked today
+## Follow-up
 
-- [81] https://tinystepslearning.com/writing-classes-for-kids
-- [82] https://tinystepslearning.com/phonics-fees-india
-- [83] https://tinystepslearning.com/english-grammar-writing-classes
-- [84] https://tinystepslearning.com/spoken-english-classes-for-kids-online
-- [85] https://tinystepslearning.com/online-english-classes-for-kids
-- [86] https://tinystepslearning.com/online-english-classes-hyderabad
-- [87] https://tinystepslearning.com/english-classes-for-4-year-old
-- [88] https://tinystepslearning.com/english-classes-for-5-year-old
-- [89] https://tinystepslearning.com/english-classes-for-6-year-old
-- [90] https://tinystepslearning.com/english-classes-for-7-10-year-old
+- 92 URLs remain unchecked today. Remaining hours cannot close today's coverage at the current batch size.
+- Obtain reliable fresh origin HTTP/HTML access before certifying HTTP headers, canonical, robots, noindex and structured data. Cached web text alone is not a technical PASS.
+
+## Unchecked today (first 20)
+
 - [91] https://tinystepslearning.com/child-not-reading-properly
 - [92] https://tinystepslearning.com/slow-reader-child-help
 - [93] https://tinystepslearning.com/shy-child-speaking-confidence
@@ -61,20 +55,7 @@ Generated: 2026-10-25T14:48:49.983Z; ChatGPT hourly audit, earliest missed-slot 
 - [108] https://tinystepslearning.com/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme
 - [109] https://tinystepslearning.com/blog/child-gives-one-word-answers
 - [110] https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read
-- [111] https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes
-- [112] https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home
-- [113] https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak
-- [114] https://tinystepslearning.com/blog/conversation-skills-for-kids
-- [115] https://tinystepslearning.com/blog/cvc-words-explained-for-parents
-- [116] https://tinystepslearning.com/blog/digraphs-and-tricky-words
-- [117] https://tinystepslearning.com/blog/does-cbse-include-phonics-ncf-foundational-literacy
-- [118] https://tinystepslearning.com/blog/grammar-assessment
-- [119] https://tinystepslearning.com/blog/grammar-conjunctions
-- [120] https://tinystepslearning.com/blog/grammar-creative-writing
-- ... and 62 more
 
-## Evidence standard
+## Confirmed status transitions
 
-- `UNVERIFIED` denotes an attempted but incomplete technical audit, not a confirmed site failure.
-- GitHub workflow's previous PASS records were preserved, not reverified by ChatGPT.
-- Google/Bing indexing, rankings and AI citations were not independently assessed.
+None. Google/Bing indexing, ranking and AI citations were not assessed.
