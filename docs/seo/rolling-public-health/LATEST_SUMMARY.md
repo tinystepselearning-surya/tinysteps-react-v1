@@ -1,21 +1,20 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
 
-Generated: 2026-10-25T13:47:28Z; ChatGPT scheduled hourly audit, missed-slot recovery batch 5 (indices 41–50, Slot 5).
+Generated: 2026-10-25T14:48:49.983Z; ChatGPT hourly audit, earliest missed-slot recovery (Slot 7, indices 61–70).
 
-**Attempted today:** 90/202. **Pending today:** 112.
-**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 50.
-**Full live technical readiness checks newly verified by ChatGPT this run:** 0. **Text-only web snapshot reviews:** 10; all 10 marked UNVERIFIED.
+**Attempted today:** 100/202. **Pending today:** 102.
+**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 60.
+**New full live technical readiness checks this run:** 0. **New text-only snapshot reviews:** 10, all marked UNVERIFIED.
 
-## This scheduled ChatGPT execution
+## This ChatGPT execution
 
-- Verified 202 unique tracked URLs; slots 1–19 each contain 10 URLs and slot 20 contains 12. Preserved 80 previously attempted rows and their timestamps.
-- Selected 10 earliest eligible unchecked URLs in Slot 5, indices 41–50, without revisiting previously attempted URLs or consuming future slots.
-- All 10 pages had readable text snapshots with meaningful headings and page-specific content. Snapshot crawl freshness ranged from 'today' to 'last month'; these are **not confirmed fresh origin responses**.
-- Direct HTTPS origin GET to a sample URL failed with `NameResolutionError` in the audit environment. This is an **audit-environment limitation**, not evidence of a production outage.
-- Current HTTP status, redirects/final destination, canonical, robots/noindex directives, structured data, and Googlebot/Bingbot/OAI-SearchBot access remain **UNVERIFIED**. No production PASS/FAIL was newly established by ChatGPT.
-- The high-intent phonics comparison page (index 50) has a retrievable text snapshot, but this does not verify Google Search Console impressions, indexing, ranking, or actual AI citations.
-- Could not independently inspect GitHub Actions enabled/disabled state using available connector actions; proceeded based on user's explicit confirmation that workflow is disabled. No GitHub audit job was started.
-- No verified status transitions; `CHANGES.md` remains unchanged. No production code or configuration was modified.
+- Validated 202 unique URLs and slots 1–19 of 10 URLs each, slot 20 of 12. Preserved all 90 previously attempted rows and timestamps.
+- Reviewed 10 previously unchecked game URLs in Slot 7, indices 61–70, using cached web-provider text/html snapshots; all 10 had page-specific educational content. Source snapshots were crawled yesterday or last week, not fetched fresh from the production origin.
+- Direct HTTPS GET to a sample game URL and `/robots.txt` failed with `NameResolutionError` in the audit environment. The web-provider `robots.txt` request was also inaccessible. These tool limitations are NOT evidence of a production outage.
+- Current HTTP status, redirects/final URL, canonical, noindex, robots directives, JSON-LD, Googlebot/Bingbot/OAI-SearchBot access and actual interactive game functionality remain UNVERIFIED.
+- **Content observation, not a verified regression:** the cached `/free-speaking-games-for-kids` snapshot advertises 4 games but shows `0 Playable Now` and four `COMING SOON` entries. `/free-speaking-practice-game-for-kids` also says `COMING SOON`. Confirm current deployment and parent experience separately before creating a production defect. These observations may merit a content/expectations review but do not establish a newly broken game.
+- The user confirmed GitHub Actions audit workflow was disabled. Its administrative enabled/disabled state could not be independently read; no conflicting run was observed or triggered by this ChatGPT audit.
+- No verified before/after regression or improvement. `CHANGES.md` left unchanged. No production changes.
 
 ## Attempted slots today
 
@@ -25,28 +24,13 @@ Generated: 2026-10-25T13:47:28Z; ChatGPT scheduled hourly audit, missed-slot rec
 - Slot 4: 10 attempted
 - Slot 5: 10 attempted
 - Slot 6: 10 attempted
+- Slot 7: 10 attempted
 - Slot 8: 10 attempted
 - Slot 13: 10 attempted
 - Slot 16: 10 attempted
 
-## Outstanding technical verification
+## Remaining unchecked today
 
-- All 10 newly reviewed pages need direct origin HTTP/header/robots/structured-data verification before technical readiness can be certified.
-- Prior web-tool 404 for the Jolly Phonics article (index 38) remains unconfirmed as a production HTTP 404; do not treat as a confirmed outage.
-- **Daily coverage gap:** 112 URLs remain unchecked. At a 10-URL hourly rate, full coverage cannot be completed today without more capacity or changing the audit cadence.
-
-## Unchecked today
-
-- [61] https://tinystepslearning.com/free-speaking-games-for-kids
-- [62] https://tinystepslearning.com/free-letter-sounds-game-for-kids
-- [63] https://tinystepslearning.com/free-sound-listening-game-for-kids
-- [64] https://tinystepslearning.com/free-word-building-game-for-kids
-- [65] https://tinystepslearning.com/free-spelling-game-for-kids
-- [66] https://tinystepslearning.com/free-sentence-making-game-for-kids
-- [67] https://tinystepslearning.com/free-reading-fluency-game-for-kids
-- [68] https://tinystepslearning.com/free-grammar-practice-game-for-kids
-- [69] https://tinystepslearning.com/free-speaking-practice-game-for-kids
-- [70] https://tinystepslearning.com/free-letter-tracing-game-for-kids
 - [81] https://tinystepslearning.com/writing-classes-for-kids
 - [82] https://tinystepslearning.com/phonics-fees-india
 - [83] https://tinystepslearning.com/english-grammar-writing-classes
@@ -87,20 +71,10 @@ Generated: 2026-10-25T13:47:28Z; ChatGPT scheduled hourly audit, missed-slot rec
 - [118] https://tinystepslearning.com/blog/grammar-assessment
 - [119] https://tinystepslearning.com/blog/grammar-conjunctions
 - [120] https://tinystepslearning.com/blog/grammar-creative-writing
-- [131] https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together
-- [132] https://tinystepslearning.com/blog/how-phonics-improves-spelling
-- [133] https://tinystepslearning.com/blog/how-schools-can-assess-decoding-not-memorisation
-- [134] https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home
-- [135] https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children
-- [136] https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids
-- [137] https://tinystepslearning.com/blog/how-to-teach-paragraph-writing-to-kids
-- [138] https://tinystepslearning.com/blog/how-to-teach-storytelling-to-kids
-- [139] https://tinystepslearning.com/blog/how-vocabulary-supports-reading-comprehension
-- [140] https://tinystepslearning.com/blog/international-phonics-benchmarks-for-indian-schools
-- ... and 52 more
+- ... and 62 more
 
-## Confirmed status transitions in this run
+## Evidence standard
 
-- None.
-
-**Evidence policy:** `checked_at_utc` records the actual ChatGPT review attempt, not a verified origin fetch. Cached snapshots and repository source do not establish live search readiness, indexing, ranking, or AI citation.
+- `UNVERIFIED` denotes an attempted but incomplete technical audit, not a confirmed site failure.
+- GitHub workflow's previous PASS records were preserved, not reverified by ChatGPT.
+- Google/Bing indexing, rankings and AI citations were not independently assessed.
