@@ -94,7 +94,7 @@ export default function EnglishClassesFor5YearOldPage() {
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
-        <h2 className="mb-4 text-2xl font-bold text-slate-900">What a 5-year-old usually needs at this stage</h2>
+        <h2 className="mb-4 text-2xl font-bold text-slate-900">Skills we may explore with a five-year-old</h2>
         <ul className="list-disc space-y-2 pl-5 text-slate-700">
           <li>Sound recall that is consistent (not only letter-name recitation).</li>
           <li>Blending practice for short words with less guessing.</li>
