@@ -40,14 +40,40 @@ describe('FloatingAssistant', () => {
     return utils
   }
 
-  it('shows the compact dock by default with exactly one widget mount', async () => {
+  const openChat = async () => {
+    // The actual chat dialog is loaded with React.lazy. Wait for its
+    // module and Suspense boundary instead of synchronously querying text
+    // immediately after the bubble click.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
+      await import('../../components/common/AskTinyStepsModal')
+    })
+    expect(screen.getByRole('dialog', { name: 'Ask TinySteps' })).toBeVisible()
+  }
+
+  it('shows a quiet homepage dock without animated pings', async () => {
     await renderWidget()
 
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
-    expect(screen.getByText('Live assistant')).toBeInTheDocument()
+    expect(screen.queryByText('Live assistant')).toBeNull()
+    expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
   })
+
+  it('hides the dock on homepage booking section without closing an open chat', async () => {
+    const utils = await renderWidget();
+    await openChat();
+
+    utils.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <FloatingAssistant suppressDock />
+      </MemoryRouter>,
+    );
+
+    expect(document.querySelector('[data-floating-assistant="1"]')).toHaveClass('hidden');
+    expect(screen.getByRole('dialog', { name: 'Ask TinySteps' })).toBeVisible();
+  });
 
   it('stays compact on dense Speaking curriculum course pages', async () => {
     await renderWidget('/courses/public-speaking-foundations')
@@ -62,8 +88,8 @@ describe('FloatingAssistant', () => {
     expect(screen.queryByText('Live assistant')).toBeNull()
   })
 
-  it('auto-collapses and auto-expands every 10 seconds', async () => {
-    await renderWidget()
+  it('auto-collapses and auto-expands on specialist pages only', async () => {
+    await renderWidget('/phonics')
 
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
 
@@ -78,11 +104,20 @@ describe('FloatingAssistant', () => {
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
   })
 
+  it('does not auto-expand or pulse on homepage after twenty seconds', async () => {
+    await renderWidget('/')
+    act(() => {
+      vi.advanceTimersByTime(20000)
+    })
+    expect(screen.queryByText('Live assistant')).toBeNull()
+    expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
+  })
+
   it('opens the AI modal from the bubble button', async () => {
     await renderWidget()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+    await openChat()
   })
 
   it('still opens the AI modal when analytics tracking throws', async () => {
@@ -92,8 +127,7 @@ describe('FloatingAssistant', () => {
 
     await renderWidget()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+    await openChat()
 
     trackEventSpy.mockRestore()
   })

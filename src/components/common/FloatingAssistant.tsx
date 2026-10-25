@@ -2,7 +2,7 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { buildPublicWhatsAppUrl } from '../../constants/publicContact';
 import { trackEvent } from '../../lib/analytics';
 import { inferProgramFromPath, trackCtaClick, trackWhatsappClick } from '../../lib/conversionTracking';
@@ -17,27 +17,31 @@ const WHATSAPP_URL = buildPublicWhatsAppUrl(
 );
 const EXPAND_COLLAPSE_INTERVAL_MS = 10000;
 
-export default function FloatingAssistant() {
+type FloatingAssistantProps = { suppressDock?: boolean };
+
+export default function FloatingAssistant({ suppressDock = false }: FloatingAssistantProps) {
   const location = useLocation();
+  const pathname = normalizePathname(location.pathname || '');
+  const reduceMotion = useReducedMotion();
+  // Keep the premium homepage dock compact and still, and respect OS reduced-motion elsewhere.
+  const quietDock = pathname === '/' || Boolean(reduceMotion);
   const [askOpen, setAskOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || askOpen) return;
+    if (typeof window === 'undefined' || askOpen || quietDock) return;
     const timer = window.setInterval(() => {
       setIsExpanded((previous) => !previous);
     }, EXPAND_COLLAPSE_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [askOpen]);
-
-  const pathname = normalizePathname(location.pathname || '');
+  }, [askOpen, quietDock]);
   if (!shouldShowPublicSupportWidgets(pathname)) return null;
 
   const isCareersPage = pathname === '/careers';
   const isDenseSpeakingCourse =
     pathname === '/courses/public-speaking-foundations' ||
     pathname === '/courses/public-speaking-excellence';
-  const showExpandedAssistant = isExpanded && !isCareersPage && !isDenseSpeakingCourse;
+  const showExpandedAssistant = !quietDock && isExpanded && !isCareersPage && !isDenseSpeakingCourse;
 
   const trackSafely = (fn: () => void) => {
     try {
@@ -78,38 +82,41 @@ export default function FloatingAssistant() {
   };
 
   const content = (
-    <div
-      data-floating-assistant="1"
-      className="pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] flex max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4"
-    >
+    <>
+      <div
+        data-floating-assistant="1"
+        className={`pointer-events-auto fixed bottom-[5.25rem] right-3 z-[99999] max-w-[calc(100vw-1.5rem)] items-center gap-2 sm:bottom-4 sm:right-4 ${suppressDock ? 'hidden' : 'flex'}`}
+      >
       <AnimatePresence mode="wait" initial={false}>
         {showExpandedAssistant ? (
           <motion.button
             key="ask-expanded"
             type="button"
             className="relative flex h-12 w-[220px] items-center gap-2 overflow-hidden rounded-full border border-indigo-200/70 bg-white/90 pl-2 pr-3 text-left text-white backdrop-blur"
-            initial={{ opacity: 0.9, scale: 0.97 }}
+            initial={quietDock ? false : { opacity: 0.9, scale: 0.97 }}
             animate={{
               opacity: 1,
               scale: 1,
-              boxShadow: [
-                '0 0 0 0 rgba(99,102,241,0.36)',
-                '0 0 0 8px rgba(99,102,241,0.12)',
-                '0 0 0 0 rgba(99,102,241,0.36)',
-              ],
+              ...(quietDock ? {} : {
+                boxShadow: [
+                  '0 0 0 0 rgba(99,102,241,0.36)',
+                  '0 0 0 8px rgba(99,102,241,0.12)',
+                  '0 0 0 0 rgba(99,102,241,0.36)',
+                ],
+              }),
             }}
             exit={{ opacity: 0.92, scale: 0.97 }}
-            transition={{
+            transition={quietDock ? { duration: 0 } : {
               opacity: { duration: 0.22, ease: 'easeInOut' },
               scale: { duration: 0.22, ease: 'easeInOut' },
               boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
             }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={quietDock ? undefined : { scale: 0.98 }}
             onClick={openAskTinySteps}
             aria-label="Ask TinySteps AI"
           >
             <span className="relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3b82f6] via-[#6366f1] to-[#a855f7] text-xs font-bold">
-              <span className="absolute inset-0 animate-ping rounded-full bg-indigo-300/40 opacity-55" />
+              <span className={`absolute inset-0 rounded-full bg-indigo-300/40 opacity-55 ${quietDock ? '' : 'animate-ping'}`} />
               AI
             </span>
             <span className="min-w-0 leading-tight text-slate-900">
@@ -123,28 +130,30 @@ export default function FloatingAssistant() {
             key="ask-collapsed"
             type="button"
             className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border border-indigo-200/70 bg-white/90 text-white backdrop-blur"
-            initial={{ opacity: 0.88, scale: 0.95 }}
+            initial={quietDock ? false : { opacity: 0.88, scale: 0.95 }}
             animate={{
               opacity: 1,
               scale: 1,
-              boxShadow: [
-                '0 0 0 0 rgba(99,102,241,0.36)',
-                '0 0 0 8px rgba(99,102,241,0.12)',
-                '0 0 0 0 rgba(99,102,241,0.36)',
-              ],
+              ...(quietDock ? {} : {
+                boxShadow: [
+                  '0 0 0 0 rgba(99,102,241,0.36)',
+                  '0 0 0 8px rgba(99,102,241,0.12)',
+                  '0 0 0 0 rgba(99,102,241,0.36)',
+                ],
+              }),
             }}
             exit={{ opacity: 0.88, scale: 0.95 }}
-            transition={{
+            transition={quietDock ? { duration: 0 } : {
               opacity: { duration: 0.2, ease: 'easeInOut' },
               scale: { duration: 0.2, ease: 'easeInOut' },
               boxShadow: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
             }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={quietDock ? undefined : { scale: 0.98 }}
             onClick={openAskTinySteps}
             aria-label="Ask TinySteps AI"
           >
             <span className="relative inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#3b82f6] via-[#6366f1] to-[#a855f7] text-xs font-bold">
-              <span className="absolute inset-0 animate-ping rounded-full bg-indigo-300/40 opacity-55" />
+              <span className={`absolute inset-0 rounded-full bg-indigo-300/40 opacity-55 ${quietDock ? '' : 'animate-ping'}`} />
               AI
             </span>
           </motion.button>
@@ -157,7 +166,7 @@ export default function FloatingAssistant() {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg"
-          whileHover={{ scale: 1.05 }}
+          whileHover={quietDock ? undefined : { scale: 1.05 }}
           onClick={openWhatsApp}
           aria-label="Chat on WhatsApp"
           title="Chat on WhatsApp"
@@ -168,12 +177,13 @@ export default function FloatingAssistant() {
         </motion.a>
       ) : null}
 
+      </div>
       {askOpen ? (
         <Suspense fallback={null}>
           <AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />
         </Suspense>
       ) : null}
-    </div>
+    </>
   );
 
   if (typeof document !== 'undefined') {

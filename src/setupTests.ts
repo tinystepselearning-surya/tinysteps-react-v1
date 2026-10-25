@@ -21,6 +21,9 @@ vi.mock('framer-motion', () => {
     motion,
   AnimatePresence: ({ children }: { children?: React.ReactNode }) => React.createElement(React.Fragment, null, children),
     useAnimation: () => ({ start: vi.fn(), stop: vi.fn() }),
+    // FloatingAssistant reads this hook to honour OS reduced-motion settings.
+    // Default to false here; component tests exercise homepage quiet behaviour separately.
+    useReducedMotion: () => false,
   }
 })
 

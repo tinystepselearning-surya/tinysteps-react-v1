@@ -18,10 +18,14 @@ describe('P0 mobile INP recovery', () => {
     expect(mainSource).not.toContain("addEventListener('scroll', onFirstInteraction");
   });
 
-  it('loads homepage chapters by viewport/idle scheduling rather than input events', () => {
-    expect(homeSource).toContain('deferredAnchorRef');
-    expect(homeSource).toContain('IntersectionObserver');
-    expect(homeSource).toContain('startTransition');
+  it('renders light, static homepage pathways without interaction-triggered chapter activation', () => {
+    expect(homeSource).toContain('<ConversionHero />');
+    expect(homeSource).toContain('<LearningPathwaysSection />');
+    expect(homeSource).toContain('<TechnologySection />');
+    expect(homeSource).not.toContain('IntersectionObserver');
+    expect(homeSource).not.toContain('requestIdleCallback');
+    expect(homeSource).not.toContain('GlobalLearnersMapSection');
+    expect(homeSource).not.toContain('ClassSamplesSection');
     expect(homeSource).not.toContain('onFirstInteraction');
     expect(homeSource).not.toContain('window.addEventListener("pointerdown"');
     expect(homeSource).not.toContain('window.addEventListener("touchstart"');

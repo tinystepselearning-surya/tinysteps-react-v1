@@ -12,9 +12,9 @@ export const ROUTE_SEO_REGISTRY = {
   ...GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO,
   ...VOCABULARY_RESOURCE_SEO,
   '/': {
-    title: 'Online English Classes for Kids That Build Reading, Grammar and Speaking Confidence | Tiny Steps Learning',
+    title: 'Tiny Steps Learning | Online English Classes for Kids',
     description:
-      'Live 1:1 and small-group online English classes for kids with phonics, reading, grammar, spoken-English support, transparent pricing, and one free 35-minute 1:1 demo assessment class.',
+      'Live online English classes for kids aged 3–12. Explore phonics, reading, grammar and speaking at Tiny Steps Learning. Book a free 35-minute 1:1 demo.',
     canonicalPath: '/',
     ogType: 'website',
     ogImage: '/og-default.jpg',

@@ -59,10 +59,28 @@ const legalLinks = [
   { label: 'Refund & Guarantee', href: '/refund-guarantee' },
 ];
 
+// Keep the full shared footer on specialist pages; the homepage is a concise gateway.
+const homeCourseLinks = [
+  { label: 'All English programmes', href: '/courses' },
+  { label: 'Phonics', href: '/phonics' },
+  { label: 'Reading', href: '/reading-classes-for-kids' },
+  { label: 'Grammar', href: '/grammar' },
+  { label: 'Spoken English', href: '/spoken-english-classes-for-kids-online' },
+  { label: 'Public Speaking', href: '/speaking' },
+];
+const homeExploreLinks = exploreLinks.filter((link) =>
+  ['/why-tiny-steps', '/class-samples', '/curriculum', '/resources', '/blog', '/pricing', '/contact'].includes(link.href),
+);
+
 function Footer() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
+  const isHomePage = location.pathname === '/';
+  const visibleCourseLinks = isHomePage ? homeCourseLinks : courseLinks;
+  // Keep the homepage social cluster short; all official networks remain available elsewhere.
+  const visibleSocialLinks = isHomePage ? socialLinks.filter((link) => link.label !== 'Pinterest') : socialLinks;
+  const visibleExploreLinks = isHomePage ? homeExploreLinks : exploreLinks;
 
   const handleGetInTouch = () => {
     const params = new URLSearchParams(location.search);
@@ -100,19 +118,21 @@ function Footer() {
               </div>
             </div>
             <p className="max-w-sm text-sm leading-6 text-white/80">
-              Structured phonics, grammar, and public speaking with live mentors, steady routines, and clear parent updates.
+              {isHomePage
+                ? 'Personalised live English learning across phonics, reading, grammar, spoken English and public speaking.'
+                : 'Structured phonics, grammar, and public speaking with live mentors, steady routines, and clear parent updates.'}
             </p>
-            <div className="flex gap-4">
-              {socialLinks.map((link) => (
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
+              {visibleSocialLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
-                  className="text-white/70 transition hover:text-white"
+                  className="rounded-sm text-white/75 transition-colors hover:text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-300"
                   aria-label={link.label}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {link.icon}
+                  {isHomePage ? <span className="text-xs font-semibold">{link.label}</span> : link.icon}
                 </a>
               ))}
             </div>
@@ -122,7 +142,7 @@ function Footer() {
             <div>
               <h3 className="mb-3 font-semibold text-white">Programs</h3>
               <ul className="space-y-2 text-sm">
-                {courseLinks.map((link) => (
+                {visibleCourseLinks.map((link) => (
                   <li key={link.href}>
                     <Link to={link.href} className="transition hover:text-tiny-blue-300">
                       {link.label}
@@ -148,7 +168,7 @@ function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-white">Explore</h3>
             <ul className="space-y-2 text-sm">
-              {exploreLinks.map((link) => (
+              {visibleExploreLinks.map((link) => (
                 <li key={link.href}>
                   <Link to={link.href} className="transition hover:text-tiny-blue-300">
                     {link.label}
@@ -201,12 +221,14 @@ function Footer() {
         </div>
 
         <div className="space-y-4 border-t border-white/10 pt-6">
-          <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
-            <span>SSL Secure</span>
-            <span>UPI / Cards / Netbanking</span>
-            <span>Data protection aware</span>
-            <span>Family-first support</span>
-          </div>
+          {!isHomePage ? (
+            <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
+              <span>SSL Secure</span>
+              <span>UPI / Cards / Netbanking</span>
+              <span>Data protection aware</span>
+              <span>Family-first support</span>
+            </div>
+          ) : null}
 
           <div className="text-center text-xs text-white/70">
             © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
