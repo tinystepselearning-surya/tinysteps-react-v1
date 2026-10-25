@@ -29,8 +29,8 @@ describe('FAQ parent decision hub SEO contract', () => {
     );
   });
   it('guarantees every completed live class recording in the visible FAQ and terms', () => {
-    const faqSource = readFileSync(new URL('../../pages/FAQPage.tsx', import.meta.url), 'utf8');
-    const termsSource = readFileSync(new URL('../../pages/TermsAndConditionsPage.tsx', import.meta.url), 'utf8');
+    const faqSource = readFileSync('src/pages/FAQPage.tsx', 'utf8');
+    const termsSource = readFileSync('src/pages/TermsAndConditionsPage.tsx', 'utf8');
     const recordingsQuestion = faqSource.match(/id: 'recordings',[\s\S]*?(?=\n  },\n  {)/)?.[0];
 
     expect(recordingsQuestion).toBeDefined();
