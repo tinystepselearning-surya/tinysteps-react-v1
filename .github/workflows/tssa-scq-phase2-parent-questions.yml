@@ -1,0 +1,42 @@
+name: TSSA-SCQ Phase 2 Parent Question Evidence
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa-scq-phase2-parent-questions.mjs'
+      - '.github/workflows/tssa-scq-phase2-parent-questions.yml'
+      - 'src/lib/aiAnswerLayerRegistry.js'
+      - 'src/content/blog/posts/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parent-evidence:
+    name: Read-only evidence for 40 questions and nine commercial intents
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Build production-equivalent public HTML locally
+        run: npm run build:deploy
+      - name: Rebuild established owner maps
+        run: |
+          node scripts/tssa7-b1-content-authority-ledger.mjs
+          node scripts/tssa7-b3-parent-intent-coverage.mjs
+      - name: Inspect rendered question owners and export evidence
+        run: node scripts/tssa-scq-phase2-parent-questions.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa-scq-phase2-parent-question-review
+          path: artifacts/tssa-scq-phase2/
+          if-no-files-found: warn
+          retention-days: 30
