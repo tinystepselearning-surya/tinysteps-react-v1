@@ -208,10 +208,10 @@ export default function Header() {
           : 'border-b border-white/45 bg-white/72 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
       }`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-3 py-3.5 sm:px-4 sm:py-4">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4">
         <button
           type="button"
-          className="flex items-center gap-2 text-left"
+          className="flex min-w-0 shrink items-center gap-1.5 text-left sm:gap-2"
           onClick={() => navigate('/')}
           aria-label="Go to Tiny Steps home page"
         >
@@ -221,24 +221,24 @@ export default function Header() {
             width={44}
             height={44}
             decoding="async"
-            className="h-11 w-11 object-contain"
+            className="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11"
           />
-          <div>
-            <div className="text-xl font-bold leading-none text-orange-500">Tiny Steps</div>
-            <div className="text-[11px] uppercase tracking-[0.24em] text-gray-500 max-[360px]:hidden">Foundations Forever</div>
+          <div className="min-w-0">
+            <div className="whitespace-nowrap text-base font-bold leading-none text-orange-500 sm:text-xl">Tiny Steps</div>
+            <div className="hidden text-[11px] uppercase tracking-[0.24em] text-gray-500 sm:block">Foundations Forever</div>
           </div>
         </button>
 
         {desktopHeaderContent}
 
-        <div className="flex items-center gap-2 lg:hidden">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2 lg:hidden">
           <button
             type="button"
             onClick={handlePrimaryAction}
             disabled={isCareersPage}
-            aria-label={isCareersPage ? 'Teacher recruitment closed on 11 October 2026' : undefined}
+            aria-label={isCareersPage ? 'Teacher recruitment closed on 11 October 2026' : isSchoolsPage ? 'School partnership options' : 'Book Free 35-Minute Demo'}
             data-no-booking-intercept={location.pathname === '/contact' ? '1' : undefined}
-            className={`rounded-full border px-3.5 py-2 text-xs font-semibold max-[380px]:px-3 max-[380px]:text-[11px] ${
+            className={`min-h-10 shrink-0 rounded-full border px-2.5 py-2 text-[11px] font-semibold sm:px-3.5 sm:text-xs ${
               isCareersPage
                 ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600'
                 : isSchoolsPage
@@ -246,11 +246,16 @@ export default function Header() {
                 : 'border-slate-900 bg-slate-900 text-white'
             }`}
           >
-            {isCareersPage ? 'Recruitment Closed' : isSchoolsPage ? 'School Options' : 'Book Free 35-Minute Demo'}
+            {isCareersPage ? 'Recruitment Closed' : isSchoolsPage ? 'School Options' : (
+              <>
+                <span className="sm:hidden">Free 35-min Demo</span>
+                <span className="hidden sm:inline">Book Free 35-Minute Demo</span>
+              </>
+            )}
           </button>
           <button
             type="button"
-            className="flex flex-col gap-1"
+            className="flex h-10 w-9 shrink-0 flex-col items-center justify-center gap-1 sm:w-10"
             aria-label="Toggle menu"
             aria-expanded={isOpen}
             aria-controls="mobile-nav-menu"
