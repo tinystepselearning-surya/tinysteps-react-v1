@@ -2,6 +2,47 @@
 // This is a commercial-support family, separate from the 31 Phonics topic resources.
 const approvedPages = [
   {
+    age: 3,
+    path: '/phonics/age-3',
+    title: 'Play-Based Phonics Readiness for 3-Year-Olds | Tiny Steps',
+    description: 'Explore playful online phonics readiness for 3-year-olds: listening games, rhymes, speech sounds and individual assessment-led guidance, without reading pressure.',
+    heading: 'Play-Based Phonics Readiness for 3-Year-Olds',
+    introduction: 'At three, children learn language through conversation, songs, stories and play. There is no need to rush into printed-word reading or work through an alphabet worksheet. We begin by noticing how your child listens and plays with sounds, then decide whether any letter–sound exploration is welcome and appropriate.',
+    directAnswer: 'For most three-year-olds, phonics readiness means playful listening, rhyme, speech-sound noticing and responsive conversation. Formal blending or decoding is not a compulsory milestone; any introduction to print should follow the child’s interest and readiness.',
+    parentQuestions: [
+      'My child enjoys songs and stories but loses interest when shown letter worksheets.',
+      'I wonder whether my three-year-old should already recognise letter sounds.',
+      'I want gentle, individual guidance that respects play, attention and confidence.',
+    ],
+    assessmentFocus: [
+      'Does the child enjoy and respond to familiar songs, rhymes and spoken-word games?',
+      'Can the child notice or imitate sounds during playful conversation, without pressure to perform?',
+      'Is the child curious about a letter or sound in a meaningful story or object, or would listening play be a better starting point?',
+    ],
+    classApproach: [
+      { title: 'Follow the child’s interests', detail: 'Start with a favourite animal, rhyme or story and observe participation; the teacher adapts the interaction to the child’s cues.' },
+      { title: 'Play with spoken sounds', detail: 'Explore a familiar sound using voices, actions or short rhymes. Pointing to printed letters is optional, never a required starting task.' },
+      { title: 'Keep it responsive', detail: 'Alternate listening, conversation and movement; when attention shifts, adapt or end the sound game instead of drilling responses.' },
+    ],
+    activityHeading: 'A sound-play example for home',
+    activityExample: 'Make an animal sound together: “Moo! Which animal made that sound?” Invite your child to choose another animal and copy its sound. Follow their ideas; if they move to a different game, that is a natural ending. This is playful listening, not a reading test.',
+    progressSigns: [
+      'Joins a short rhyme or familiar sound game with growing interest.',
+      'Notices and responds to contrasting sounds in play, with supportive modelling.',
+      'Shows curiosity about sounds, stories or meaningful print without being pressured to read.',
+    ],
+    homeGuidance: 'Enjoy short conversations, favourite books, songs and pretend play. Do not expect every three-year-old to identify letters, blend words or remain seated for a formal lesson. If you have broader concerns about hearing or speech, discuss them with a qualified professional rather than treating Phonics classes as an assessment of those conditions.',
+    courseLabel: 'Explore Phonics Foundations when ready',
+    coursePath: '/courses/phonics-foundation',
+    broaderAgePath: '/phonics',
+    broaderAgeLabel: 'Explore the complete Phonics programme',
+    faqs: [
+      { question: 'Should my three-year-old start reading words?', answer: 'Not as a universal requirement. Play, language interaction, speech-sound awareness and curiosity are appropriate starting points. Formal decoding is introduced later when the child demonstrates readiness.' },
+      { question: 'Is tracing letters or completing phonics worksheets necessary at age three?', answer: 'No. Stories, rhymes, listening, conversation and child-led sound games can provide valuable foundations without tracing drills or worksheets.' },
+      { question: 'What happens if my child is not interested in a live online activity?', answer: 'The teacher should adapt the invitation and pace to the child’s participation. An initial conversation with parents can help decide whether online teaching is suitable now or playful home activities would be a better fit.' },
+    ],
+  },
+  {
     age: 4,
     path: '/phonics/age-4',
     title: 'Online Phonics Classes for 4-Year-Olds | Tiny Steps',
@@ -84,6 +125,48 @@ const approvedPages = [
       { question: 'How quickly should blending improve?', answer: 'There is no universal number of classes. We look for accuracy, independence, retention and successful reading of new words at the child’s assessed level.' },
     ],
   },
+  {
+    age: 6,
+    path: '/phonics/age-6',
+    title: 'Online Phonics Classes for 6-Year-Olds | Tiny Steps',
+    description: 'Explore 1:1 phonics for 6-year-olds: check blending accuracy, digraphs, vowel patterns, spelling transfer and decodable reading with assessment-led placement.',
+    heading: 'Online Phonics Classes for 6-Year-Olds',
+    introduction: 'At six, reading needs may vary widely. Some children still need reliable CVC blending; others can decode simple words but stumble on digraphs, vowel patterns or spelling. Instead of assigning a level from age, we identify the exact pattern that is insecure and practise it in meaningful words and short decodable text.',
+    directAnswer: 'Effective Phonics support for a six-year-old checks whether basic sound–letter links and blending are secure, then targets the next appropriate decoding and spelling pattern. The focus is accurate reading of unfamiliar words and transfer into connected text, not memorising word lists.',
+    parentQuestions: [
+      'My child can read “cat” but hesitates when two letters make one sound, as in “ship”.',
+      'My child reads familiar words but guesses when a new vowel pattern appears.',
+      'My child can read a pattern during class but does not use it consistently when spelling or reading a sentence.',
+    ],
+    assessmentFocus: [
+      'Does the child blend unfamiliar CVC words accurately and without guessing?',
+      'Which taught consonant digraphs, such as sh or ch, can the child recognise in new words?',
+      'Can the child notice and use a known vowel pattern in reading and spelling?',
+      'Can the child apply a taught pattern while reading a short suitable decodable sentence?',
+    ],
+    classApproach: [
+      { title: 'Confirm the foundation', detail: 'Check sound recall, oral blending and simple-word decoding before moving to more complex phonics patterns.' },
+      { title: 'Contrast one new pattern', detail: 'Where ready, teach one relevant digraph or vowel pattern explicitly and compare suitable decodable words with teacher feedback.' },
+      { title: 'Transfer into reading and spelling', detail: 'Use unfamiliar words and short decodable text, then invite the child to segment an appropriate word for spelling to check independent use.' },
+    ],
+    activityHeading: 'A pattern-check example',
+    activityExample: 'If the child already knows sh, i and p, offer “ship” and ask which letters work together to represent the first sound. Then try “shop” only after checking that its other sounds are known. Notice whether the child decodes the vowel rather than guessing. Do not introduce both patterns as a speed test.',
+    progressSigns: [
+      'Reads newly introduced decodable words using taught digraphs or vowel patterns.',
+      'Explains which grapheme represents a sound and checks the whole word rather than guessing.',
+      'Uses an appropriate taught pattern in spelling and connected decodable reading with increasing independence.',
+    ],
+    homeGuidance: 'Ask the teacher which pattern is currently secure, then practise a small set of decodable words or a short text containing that pattern. Invite your child to explain a choice; avoid introducing unrelated advanced spellings or demanding rapid reading before accuracy.',
+    courseLabel: 'Explore Early Phonics if assessment confirms readiness',
+    coursePath: '/courses/phonics-brush-up',
+    broaderAgePath: '/english-classes-for-6-year-old',
+    broaderAgeLabel: 'English learning at age six',
+    faqs: [
+      { question: 'My six-year-old still struggles with three-letter words. Is Early Phonics the right level?', answer: 'Not necessarily. Secure blending comes first. Children who still struggle with basic decoding may need Phonics Foundations before moving into digraphs and more complex vowel patterns.' },
+      { question: 'Does learning digraphs mean my child can read longer books?', answer: 'One pattern does not automatically produce fluent reading. Teachers check accuracy on new decodable words and short connected text, then gradually extend complexity as skills become reliable.' },
+      { question: 'How can I help my child stop guessing words?', answer: 'Encourage left-to-right attention to all the graphemes in a word, blending only sounds the child knows. Ask the teacher for decodable examples matched to the assessed pattern rather than relying on pictures or whole-word memorisation.' },
+    ],
+  },
 ];
 
 export const PHONICS_AGE_PROGRAMME_PAGES = Object.freeze(
@@ -103,7 +186,7 @@ export const PHONICS_AGE_PROGRAMME_SEO = Object.freeze(
 );
 
 for (const page of PHONICS_AGE_PROGRAMME_PAGES) {
-  if (!/^\/phonics\/age-[45]$/.test(page.path) || page.age !== Number(page.path.at(-1))) {
+  if (!/^\/phonics\/age-[3-6]$/.test(page.path) || page.age !== Number(page.path.at(-1))) {
     throw new Error('Unapproved Phonics age URL in publication registry');
   }
   if (!page.title || !page.description || !page.heading || page.faqs.length < 3 ||
@@ -112,8 +195,8 @@ for (const page of PHONICS_AGE_PROGRAMME_PAGES) {
     throw new Error(`Incomplete editorial contract for ${page.path}`);
   }
 }
-if (PHONICS_AGE_PROGRAMME_PATHS.length !== 2 || new Set(PHONICS_AGE_PROGRAMME_PATHS).size !== 2) {
-  throw new Error('Phonics age pilot must contain two unique approved pages');
+if (PHONICS_AGE_PROGRAMME_PATHS.length !== 4 || new Set(PHONICS_AGE_PROGRAMME_PATHS).size !== 4) {
+  throw new Error('Phonics age family must contain exactly four approved pages (ages 3–6)');
 }
 
 export function getPublishedPhonicsAgeProgramme(age) {
