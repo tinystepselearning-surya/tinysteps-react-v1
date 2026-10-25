@@ -170,6 +170,22 @@ test('fixed homepage support dock yields to final booking and footer', async ({ 
   await expect(dock).toBeVisible({ timeout: 5000 });
 });
 
+test('homepage floating AI control opens and closes the real lazy-loaded chat', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  // No question is sent: opening and closing the dialog must not call the AI.
+  const dock = page.locator('[data-floating-assistant="1"]');
+  await expect(dock).toBeVisible({ timeout: 35000 });
+  await dock.getByRole('button', { name: 'Ask TinySteps AI' }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Ask TinySteps' });
+  await expect(dialog).toBeVisible({ timeout: 15000 });
+  await expect(dialog.getByRole('button', { name: 'Close' })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toHaveCount(0);
+});
+
 test('homepage footer keeps programme and legal links without changing the lead flow', async ({ page }) => {
   await page.setViewportSize({ width: 1366, height: 850 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
