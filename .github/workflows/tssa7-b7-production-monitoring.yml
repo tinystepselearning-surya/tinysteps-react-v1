@@ -1,0 +1,129 @@
+name: TSSA-7 B7 Production Search Monitoring and Alerts
+
+on:
+  schedule:
+    # Twice daily: ~08:17 and ~21:17 IST; schedules may be delayed/skipped.
+    - cron: '47 2 * * *'
+    - cron: '47 15 * * *'
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/tssa7-b7-production-monitoring.yml'
+      - '.github/workflows/rolling-public-seo-health.yml'
+      - 'scripts/seo/rolling_public_health.py'
+      - 'scripts/seo/tssa7_b7_monitor.py'
+      - 'scripts/seo/test_tssa7_b7_monitor.py'
+      - 'docs/seo/tssa-7/B7_PRODUCTION_MONITORING_2026-10-25.md'
+      - 'scripts/tssa7-b6-native-benchmark.mjs'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tssa7-b7-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  monitoring:
+    name: Read-only 202-URL tracker and native evidence reconciliation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 17
+    outputs:
+      alert: ${{ steps.audit.outputs.alert }}
+    steps:
+      - name: Checkout repository source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: Read production marker and isolated health-data branch
+        run: |
+          set -euo pipefail
+          git fetch origin \
+            +refs/heads/seo-url-health-tracker:refs/remotes/origin/seo-url-health-tracker \
+            +refs/heads/ci/hosting-production:refs/remotes/origin/ci/hosting-production
+          git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/MASTER_URL_TRACKER.csv > /tmp/b7-master.csv
+          git show origin/seo-url-health-tracker:docs/seo/rolling-public-health/LATEST_SUMMARY.md > /tmp/b7-hourly-summary.md
+          git rev-parse origin/ci/hosting-production > /tmp/b7-hosting-marker.sha
+          echo "A production marker is historic evidence, not a new live release verification."
+      - name: Validate monitor tests and all late-day catch-up slots
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/seo/rolling_public_health.py scripts/seo/tssa7_b7_monitor.py
+          python3 -m unittest discover -s scripts/seo -p 'test_tssa7_b7_monitor.py' -v
+          PYTHONPATH=scripts/seo python3 - <<'PY'
+          from rolling_public_health import select_batch
+
+          day = "2026-10-25"
+          rows = [{"index": str(i + 1), "slot": str(min(i // 10 + 1, 20)),
+                   "url": f"https://example.invalid/{i}",
+                   "today_ist": "", "today_status": "NOT_CHECKED", "checked_at_utc": ""}
+                  for i in range(202)]
+          for slot, expected in ((1, 10), (19, 10), (20, 12),
+                                 (21, 10), (22, 10), (23, 10), (24, 10)):
+              assert len(select_batch(rows, slot, day)[0]) == expected, slot
+          for row in rows[:10]:
+              row.update(today_ist=day, today_status="PASS", checked_at_utc="2026-10-25T00:00:00Z")
+          assert not select_batch(rows, 1, day)[0], "backup must not repeat checked URLs"
+          for row in rows[20:30]:
+              row.update(today_ist=day, today_status="PASS", checked_at_utc="2026-10-25T00:00:00Z")
+          assert [int(r["index"]) for r in select_batch(rows, 3, day)[0]] == list(range(11, 21)), "missing-slot recovery"
+          print("Recovery selection and idempotency verified.")
+          PY
+      - name: Reconcile B6 provider evidence without impersonation or invented answers
+        run: node scripts/tssa7-b6-native-benchmark.mjs
+      - name: Report actual recorded monitoring coverage
+        id: audit
+        run: |
+          set -euo pipefail
+          python3 scripts/seo/tssa7_b7_monitor.py \
+            --tracker /tmp/b7-master.csv \
+            --source-summary /tmp/b7-hourly-summary.md \
+            --native-summary artifacts/tssa7-b6/SUMMARY.json \
+            --hosting-marker "$(cat /tmp/b7-hosting-marker.sha)" \
+            --out-dir artifacts/tssa7-b7
+          python3 - <<'PY'
+          import json, os
+          with open('artifacts/tssa7-b7/B7_STATUS.json', encoding='utf8') as f:
+              report = json.load(f)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf8') as out:
+              out.write('alert=' + str(report['alert_needed']).lower() + '\n')
+          PY
+      - name: Preserve reviewable evidence artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa7-b7-production-search-monitoring
+          path: |
+            artifacts/tssa7-b7/B7_STATUS.json
+            artifacts/tssa7-b7/B7_STATUS.md
+            artifacts/tssa7-b6/SUMMARY.json
+          retention-days: 45
+          if-no-files-found: warn
+      - name: Declare read-only mode
+        run: echo "B7 observes recorded states. The hourly workflow makes the live web requests; B7 never deploys."
+
+  notify:
+    name: Post actionable exception to operations issue
+    if: github.event_name == 'schedule' && needs.monitoring.outputs.alert == 'true'
+    needs: monitoring
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: tssa7-b7-production-search-monitoring
+          path: artifacts/tssa7-b7-download
+      - name: Log actual failures and late coverage gaps
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh issue comment 772 \
+            --repo tinystepselearning-surya/tinysteps-react-v1 \
+            --body-file artifacts/tssa7-b7-download/B7_STATUS.md
