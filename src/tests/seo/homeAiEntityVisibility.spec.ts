@@ -107,6 +107,31 @@ describe('homepage premium gateway', () => {
     expect(home).not.toContain("ages: 'Ages 3–12'");
   });
 
+  it('shows a connected English-learning scope while preserving specialist topic ownership', () => {
+    expect(home).toContain('From first sounds to confident communication.');
+    expect(home).toContain('From letter sounds, phonics, blending and spelling');
+    expect(home).toContain('reading, vocabulary, comprehension, grammar, sentence building, spoken English and public speaking');
+    expect(home).toContain('Children begin with what they need, not a fixed age-based sequence.');
+    expect(home).toContain('Spoken English and everyday conversation');
+    expect(home).toContain('Public speaking and communication skills');
+    expect(home).toContain("label: 'Public Speaking'");
+    expect(home).toContain('Explore Spoken English Classes');
+    expect(hero).toContain('One connected learning journey through');
+    expect(hero).toContain('current skills, readiness and pace');
+  });
+
+  it('keeps pedagogy claims and school-environment context responsible', () => {
+    expect(home).toContain('Age-aware, skill-led placement');
+    expect(home).toContain('Purposeful, engaging activities');
+    expect(home).toContain('Individual pace, visible progress');
+    expect(home).toContain('helping each learner understand, practise and use English');
+    expect(home).toContain('CBSE, ICSE, IB, Cambridge and other school environments');
+    expect(home).toContain('not formally affiliated with these school systems');
+    expect(home).not.toContain('internationally certified');
+    expect(home).not.toContain('aligned to every curriculum');
+    expect(home).not.toContain('guaranteed fluency');
+  });
+
   it('shows technology responsibly, without fabricated AI capability', () => {
     expect(home).toContain('Thoughtful learning, without the guesswork.');
     expect(home).toContain('Human-led learning. Technology that helps.');
