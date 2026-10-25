@@ -163,40 +163,46 @@ function TechnologySection() {
   return (
     <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Connected learning</p>
-          <h2 id="technology-title" className="mt-3 max-w-lg text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
-            Human-led learning. Technology that helps.
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Connected learning</p>
+          <h2 id="technology-title" className="mt-4 max-w-xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
+            Live Teaching. A Connected Learning Experience.
           </h2>
-          <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">
-            Live online classes, purposeful practice and a parent portal make learning accessible and progress easier to follow.
-            Technology supports the teacher-child connection; it does not replace it.
+          <p className="mt-5 max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+            Children learn with real teachers through interactive online lessons, while parents can access
+            class information, learning materials and progress updates through the Tiny Steps platform.
           </p>
-          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
-            <Link to="/curriculum" className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-4 text-sm font-semibold">
+            <Link to="/curriculum" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Explore the curriculum
             </Link>
-            <Link to="/class-samples" className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+            <Link to="/class-samples" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Watch real classes
             </Link>
           </div>
         </div>
-        <div className="rounded-[1.75rem] bg-slate-950 p-6 text-white sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-300">Your learning connection</p>
-          <ol className="mt-6 divide-y divide-white/15">
-            <li className="flex gap-5 py-4">
-              <span className="font-semibold text-orange-300">01</span>
-              <div><h3 className="font-semibold">Live teacher-led classes</h3><p className="mt-1 text-sm leading-6 text-slate-300">Interact, ask questions and practise in real time.</p></div>
-            </li>
-            <li className="flex gap-5 py-4">
-              <span className="font-semibold text-orange-300">02</span>
-              <div><h3 className="font-semibold">Skill-focused activities</h3><p className="mt-1 text-sm leading-6 text-slate-300">Apply new knowledge through meaningful practice.</p></div>
-            </li>
-            <li className="flex gap-5 py-4">
-              <span className="font-semibold text-orange-300">03</span>
-              <div><h3 className="font-semibold">Parent visibility</h3><p className="mt-1 text-sm leading-6 text-slate-300">Access class information and follow learning progress.</p></div>
-            </li>
-          </ol>
+        <div className="min-w-0 rounded-[1.75rem] bg-[#102A43] p-6 text-white sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-orange-300">Your learning connection</p>
+          <div className="mt-6 divide-y divide-white/15">
+            <div className="py-4 first:pt-0">
+              <h3 className="text-lg font-semibold">Live online classrooms</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                Children participate, ask questions and receive teacher guidance in real time.
+              </p>
+            </div>
+            <div className="py-4">
+              <h3 className="text-lg font-semibold">Purposeful practice</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                Worksheets and interactive activities reinforce skills beyond the live lesson.
+              </p>
+            </div>
+            <div className="py-4 last:pb-0">
+              <h3 className="text-lg font-semibold">Parent portal</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-200">
+                Parents can join scheduled classes, access worksheets and follow learning progress.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -207,8 +213,8 @@ function ExploreSection() {
   return (
     <section aria-labelledby="explore-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Go deeper</p>
-        <h2 id="explore-title" className="mt-3 text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Go deeper</p>
+        <h2 id="explore-title" className="mt-4 text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           Explore what matters to you.
         </h2>
         <div className="mt-9 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
@@ -228,17 +234,17 @@ function ExploreSection() {
 
 function FinalInvitationSection() {
   return (
-    <section aria-labelledby="final-invitation-title" className="bg-slate-950 px-5 py-16 text-white sm:px-8 sm:py-20">
-      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 md:flex-row md:items-center">
-        <div>
-          <h2 id="final-invitation-title" className="max-w-xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 lg:flex-row lg:items-center lg:gap-12">
+        <div className="min-w-0">
+          <h2 id="final-invitation-title" className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
             Start with a conversation about your child's learning.
           </h2>
-          <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
+          <p className="mt-4 max-w-xl text-base leading-7 text-slate-600">
             One free 35-minute 1:1 demo assessment helps identify a suitable starting point.
           </p>
         </div>
-        <Link to="/book-demo" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-300">
+        <Link to="/book-demo" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-[#102A43] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0B2138] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
           Book Free 35-Minute Demo
         </Link>
       </div>
