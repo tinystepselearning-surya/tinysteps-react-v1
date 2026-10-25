@@ -1,320 +1,256 @@
-// src/pages/HomePage.tsx
-// @ts-nocheck
-import React, { lazy, startTransition, Suspense, useEffect, useRef, useState } from "react";
-import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from "../lib/schemas";
-import { STANDARD_PRICING_SUMMARY } from "../config/publicOffer";
-import Meta from "../components/common/Meta";
-import ConversionHero from "../components/Home/ConversionHero";
-import HomeEntitySummarySection from "../components/Home/HomeEntitySummarySection";
-import {
-  AssessmentStartPointsSection,
-  ClassSamplesSection,
-  HomeFaqSection,
-  LearningPathsSection,
-  ParentProblemRecognitionSection,
-  TrustSnapshotSection,
-  WhyTinyStepsSection,
-} from "../components/Home/HomeScrollJourneySections";
+import { Link } from 'react-router-dom';
+import ConversionHero from '../components/Home/ConversionHero';
+import Meta from '../components/common/Meta';
+import { ROUTE_SEO_REGISTRY } from '../lib/routeSeoRegistry.js';
+import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from '../lib/schemas';
 
-const ParentReassurance = lazy(() => import("../components/programs/ParentReassurance"));
-const GlobalLearnersMapSection = lazy(() => import("../components/Home/GlobalLearnersMapSection"));
-const StepTimeline = lazy(() => import("../components/Home/StepTimeline"));
-const PricingCrispSection = lazy(() => import("../components/Home/PricingCrispSection"));
-const FinalCTASection = lazy(() => import("../components/Home/FinalCTASection"));
-
-const homeSeoTitle = "Tiny Steps Learning | Online English Learning for Kids Ages 3–12";
-const homeSeoDescription =
-  "Tiny Steps Learning offers live 1:1 and small-group English learning for ages 3–12 across phonics and reading, grammar and sentence building, and speaking and communication. Start with a free 35-minute 1:1 online demo assessment.";
-const homeCanonicalPath = "/";
-const homeCanonicalUrl =
-  homeCanonicalPath === "/" ? `${PUBLIC_FACTS.primaryWebsite}/` : `${PUBLIC_FACTS.primaryWebsite}${homeCanonicalPath}`;
+const homeSeo = ROUTE_SEO_REGISTRY['/'];
+const homeUrl = PUBLIC_FACTS.primaryWebsite + '/';
 
 const homeWebPageSchema = {
   ...createWebPageSchema({
-    name: "Tiny Steps Learning — Online English Learning for Kids Ages 3–12",
-    description: homeSeoDescription,
-    url: homeCanonicalUrl,
+    name: homeSeo.title,
+    description: homeSeo.description,
+    url: homeUrl,
   }),
-  "@id": `${homeCanonicalUrl}#webpage`,
-  mainEntity: {
-    "@id": `${PUBLIC_FACTS.primaryWebsite}/#educational-organization`,
-  },
+  '@id': homeUrl + '#webpage',
+  mainEntity: { '@id': PUBLIC_FACTS.primaryWebsite + '/#educational-organization' },
   about: [
-    { "@type": "Thing", name: "Online English learning for children" },
-    { "@type": "Thing", name: "Phonics and decoding" },
-    { "@type": "Thing", name: "Reading fluency and comprehension" },
-    { "@type": "Thing", name: "Grammar and sentence building" },
-    { "@type": "Thing", name: "Speaking and communication" },
+    { '@type': 'Thing', name: 'Online English learning for children' },
+    { '@type': 'Thing', name: 'Phonics and word reading' },
+    { '@type': 'Thing', name: 'Reading fluency and comprehension' },
+    { '@type': 'Thing', name: 'Grammar and sentence building' },
+    { '@type': 'Thing', name: 'Speaking and communication' },
   ],
   audience: {
-    "@type": "EducationalAudience",
-    educationalRole: "student",
-    audienceType: "Children aged 3–12",
+    '@type': 'EducationalAudience',
+    educationalRole: 'student',
+    audienceType: 'Children aged 3–12',
   },
 };
 
-const homeFaqItems = [
-  {
-    question: "What age group does Tiny Steps teach?",
-    answer:
-      "Tiny Steps teaches children ages 3–12. Age helps us choose appropriate tasks, but the recommended starting point is based on the child’s current skill level rather than age alone.",
-  },
-  {
-    question: "What happens in the free 35-minute demo assessment?",
-    answer:
-      "The teacher checks the skills most relevant to the concern you shared, such as letter sounds, blending, reading fluency, sentence formation, grammar accuracy, pronunciation, or speaking confidence. The goal is to recommend the right starting point before enrolment.",
-  },
-  {
-    question: "How do you choose between phonics, reading, grammar, and speaking?",
-    answer:
-      "Tiny Steps starts with the strongest current learning gap. Difficulty decoding unfamiliar words may point toward phonics; accurate but effortful reading may need fluency support; repeated sentence errors may need grammar; short or hesitant answers may need speaking support.",
-  },
-  {
-    question: "Are Tiny Steps classes 1:1 or group classes?",
-    answer:
-      `Classes are conducted through ${PUBLIC_FACTS.deliveryModel} in one-on-one and small-group formats. Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}; small-group sessions are longer because more children need individual response time.`,
-  },
-  {
-    question: "How long is each Tiny Steps class?",
-    answer:
-      `Standard 1:1 classes are ${PUBLIC_FACTS.sessionDuration}. Small-group class duration varies by group size and format, so the current pricing page is the source of truth for the exact option you are considering.`,
-  },
-  {
-    question: "Which platform does Tiny Steps use for live classes?",
-    answer:
-      "Tiny Steps conducts live online classes through Microsoft Teams. Enrolled families receive access through the scheduled class flow and parent portal.",
-  },
-  {
-    question: "How much do Tiny Steps classes cost?",
-    answer:
-      `${STANDARD_PRICING_SUMMARY}. Package and teacher-format options can differ, so check the pricing page for the current complete fee structure before enrolment.`,
-  },
-  {
-    question: "How do parents know whether their child is improving?",
-    answer:
-      "Parents receive clear visibility into what the child is learning, where improvement is showing, and what the next focus should be. Progress is organised around named skills and learning stages rather than unrelated topics.",
-  },
-  {
-    question: "What if I need to cancel or reschedule a class?",
-    answer:
-      "Parents should give at least 24 hours’ notice when they need to cancel or reschedule. With that notice, Tiny Steps will make reasonable efforts to offer a replacement class or alternate slot, subject to teacher availability and scheduling constraints.",
-  },
-]
+const homepageSchemas = [organizationSchema, websiteSchema, homeWebPageSchema];
 
-const homeFaqSchema = {
-  "@context": "https://schema.org",
-  "@type": "FAQPage",
-  "@id": "https://tinystepslearning.com/#parent-faq",
-  mainEntity: homeFaqItems.map((item) => ({
-    "@type": "Question",
-    name: item.question,
-    acceptedAnswer: {
-      "@type": "Answer",
-      text: item.answer,
-    },
-  })),
-};
+const learningPaths = [
+  {
+    number: '01',
+    label: 'Phonics',
+    description: 'From letter sounds and blending to more independent word reading.',
+    path: '/phonics',
+    action: 'Explore phonics',
+  },
+  {
+    number: '02',
+    label: 'Reading',
+    description: 'Develop reading fluency, comprehension and confidence with texts.',
+    path: '/reading-classes-for-kids',
+    action: 'Explore reading',
+  },
+  {
+    number: '03',
+    label: 'Grammar',
+    description: 'Use grammar and sentence-building skills for clearer expression.',
+    path: '/grammar',
+    action: 'Explore grammar',
+  },
+  {
+    number: '04',
+    label: 'Speaking',
+    description: 'Build clearer answers, storytelling and communication with others.',
+    path: '/speaking',
+    action: 'Explore speaking',
+  },
+];
+
+const reasons = [
+  {
+    label: 'A starting point that fits',
+    description: 'We assess current skills before recommending the most relevant programme.',
+  },
+  {
+    label: 'Real teacher interaction',
+    description: 'Live lessons give children opportunities to respond, practise and try again.',
+  },
+  {
+    label: 'Progress parents can follow',
+    description: 'Learning goals and parent updates help make the next step understandable.',
+  },
+];
+
+const exploreLinks = [
+  { title: 'Curriculum', description: 'See how the learning pathways are organised.', path: '/curriculum' },
+  { title: 'Real class samples', description: 'Take a closer look at our teaching.', path: '/class-samples' },
+  { title: 'Pricing', description: 'Understand the available lesson formats and fees.', path: '/pricing' },
+  { title: 'Learning resources', description: 'Discover practical English-learning guides.', path: '/resources' },
+  { title: 'Parent articles', description: 'Find answers to common learning questions.', path: '/blog' },
+  { title: 'FAQs', description: 'Read the practical details before you begin.', path: '/faq' },
+];
+
+function LearningPathwaysSection() {
+  return (
+    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Find the right direction</p>
+        <h2 id="learning-pathways-title" className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          One child. One clear next step.
+        </h2>
+        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
+          Explore our four core learning areas. Each programme page explains the skills, teaching approach and options in detail.
+        </p>
+        <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {learningPaths.map((path) => (
+            <Link
+              key={path.path}
+              to={path.path}
+              className="group flex min-h-[245px] flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 transition-colors hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+            >
+              <span className="text-xs font-semibold tracking-[0.12em] text-orange-600" aria-hidden="true">{path.number}</span>
+              <h3 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-slate-950">{path.label}</h3>
+              <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">{path.description}</p>
+              <span className="mt-6 text-sm font-semibold text-slate-900 group-hover:text-orange-700">
+                {path.action} <span aria-hidden="true">↗</span>
+              </span>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-6 text-sm leading-7 text-slate-600">
+          Need everyday conversation practice? <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Explore Spoken English</Link>.
+          {' '}Looking for more courses? <Link to="/courses" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Browse all courses</Link>.
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function DifferenceSection() {
+  return (
+    <section aria-labelledby="difference-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">The Tiny Steps approach</p>
+        <h2 id="difference-title" className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          Thoughtful learning, without the guesswork.
+        </h2>
+        <div className="mt-10 grid gap-8 border-t border-slate-200 pt-8 md:grid-cols-3">
+          {reasons.map((reason, index) => (
+            <article key={reason.label}>
+              <p className="text-sm font-semibold text-orange-700">0{index + 1}</p>
+              <h3 className="mt-3 text-xl font-semibold tracking-[-0.025em] text-slate-950">{reason.label}</h3>
+              <p className="mt-3 text-sm leading-7 text-slate-600">{reason.description}</p>
+            </article>
+          ))}
+        </div>
+        <Link to="/why-tiny-steps" className="mt-9 inline-block text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+          See how Tiny Steps teaches <span aria-hidden="true">↗</span>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function TechnologySection() {
+  return (
+    <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Connected learning</p>
+          <h2 id="technology-title" className="mt-3 max-w-lg text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+            Human-led learning. Technology that helps.
+          </h2>
+          <p className="mt-5 max-w-xl text-base leading-8 text-slate-600">
+            Live online classes, purposeful practice and a parent portal make learning accessible and progress easier to follow.
+            Technology supports the teacher-child connection; it does not replace it.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold">
+            <Link to="/curriculum" className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+              Explore the curriculum
+            </Link>
+            <Link to="/class-samples" className="text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+              Watch real classes
+            </Link>
+          </div>
+        </div>
+        <div className="rounded-[1.75rem] bg-slate-950 p-6 text-white sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-300">Your learning connection</p>
+          <ol className="mt-6 divide-y divide-white/15">
+            <li className="flex gap-5 py-4">
+              <span className="font-semibold text-orange-300">01</span>
+              <div><h3 className="font-semibold">Live teacher-led classes</h3><p className="mt-1 text-sm leading-6 text-slate-300">Interact, ask questions and practise in real time.</p></div>
+            </li>
+            <li className="flex gap-5 py-4">
+              <span className="font-semibold text-orange-300">02</span>
+              <div><h3 className="font-semibold">Skill-focused activities</h3><p className="mt-1 text-sm leading-6 text-slate-300">Apply new knowledge through meaningful practice.</p></div>
+            </li>
+            <li className="flex gap-5 py-4">
+              <span className="font-semibold text-orange-300">03</span>
+              <div><h3 className="font-semibold">Parent visibility</h3><p className="mt-1 text-sm leading-6 text-slate-300">Access class information and follow learning progress.</p></div>
+            </li>
+          </ol>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ExploreSection() {
+  return (
+    <section aria-labelledby="explore-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Go deeper</p>
+        <h2 id="explore-title" className="mt-3 text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+          Explore what matters to you.
+        </h2>
+        <div className="mt-9 grid gap-x-10 sm:grid-cols-2 lg:grid-cols-3">
+          {exploreLinks.map((item) => (
+            <Link key={item.path} to={item.path} className="group flex items-start justify-between gap-3 border-b border-slate-200 py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">
+              <span><span className="block text-base font-semibold text-slate-950 group-hover:text-orange-700">{item.title}</span>
+                <span className="mt-1 block text-sm leading-6 text-slate-600">{item.description}</span>
+              </span>
+              <span aria-hidden="true" className="text-slate-400 group-hover:text-orange-700">↗</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FinalInvitationSection() {
+  return (
+    <section aria-labelledby="final-invitation-title" className="bg-slate-950 px-5 py-16 text-white sm:px-8 sm:py-20">
+      <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 md:flex-row md:items-center">
+        <div>
+          <h2 id="final-invitation-title" className="max-w-xl text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">
+            Start with a conversation about your child's learning.
+          </h2>
+          <p className="mt-4 max-w-xl text-base leading-7 text-slate-300">
+            One free 35-minute 1:1 demo assessment helps identify a suitable starting point.
+          </p>
+        </div>
+        <Link to="/book-demo" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-950 transition-colors hover:bg-orange-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-300">
+          Book Free 35-Minute Demo
+        </Link>
+      </div>
+    </section>
+  );
+}
 
 export default function HomePage() {
-  const belowFoldAnchorRef = useRef<HTMLDivElement | null>(null);
-  const deferredAnchorRef = useRef<HTMLDivElement | null>(null);
-  const [showPrimaryBelowFoldSections, setShowPrimaryBelowFoldSections] = useState(false);
-  const [showDeferredSections, setShowDeferredSections] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    let settled = false;
-    let observer: IntersectionObserver | null = null;
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
-
-    const activate = () => {
-      if (settled) return;
-      settled = true;
-      startTransition(() => setShowPrimaryBelowFoldSections(true));
-      observer?.disconnect();
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-        idleId = undefined;
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-        timeoutId = undefined;
-      }
-    };
-
-    const target = belowFoldAnchorRef.current;
-    if (target && "IntersectionObserver" in window) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) activate();
-        },
-        { rootMargin: "900px 0px 900px 0px", threshold: 0.01 }
-      );
-      observer.observe(target);
-    }
-
-    if (typeof win.requestIdleCallback === "function") {
-      idleId = win.requestIdleCallback(activate, { timeout: 6000 });
-    } else {
-      timeoutId = window.setTimeout(activate, 4200);
-    }
-
-    return () => {
-      observer?.disconnect();
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (typeof navigator !== "undefined" && navigator.webdriver) return;
-
-    const win = window as Window & {
-      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
-      cancelIdleCallback?: (id: number) => void;
-    };
-    const isMobileViewport = window.matchMedia("(max-width: 767px)").matches;
-    const connection = (navigator as any)?.connection;
-    const effectiveType =
-      typeof connection?.effectiveType === "string" ? connection.effectiveType.toLowerCase() : "";
-    const isConstrainedNetwork =
-      Boolean(connection?.saveData) || effectiveType === "slow-2g" || effectiveType === "2g";
-    const fallbackDelayMs = isMobileViewport
-      ? isConstrainedNetwork ? 18000 : 14000
-      : isConstrainedNetwork ? 20000 : 16000;
-
-    let settled = false;
-    let observer: IntersectionObserver | null = null;
-    let idleId: number | undefined;
-    let timeoutId: number | undefined;
-
-    const activate = () => {
-      if (settled) return;
-      settled = true;
-      startTransition(() => setShowDeferredSections(true));
-      observer?.disconnect();
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-        idleId = undefined;
-      }
-      if (timeoutId !== undefined) {
-        window.clearTimeout(timeoutId);
-        timeoutId = undefined;
-      }
-    };
-
-    const target = deferredAnchorRef.current;
-    if (target && "IntersectionObserver" in window) {
-      observer = new IntersectionObserver(
-        (entries) => {
-          if (entries.some((entry) => entry.isIntersecting)) activate();
-        },
-        { rootMargin: "1200px 0px 1200px 0px", threshold: 0.01 }
-      );
-      observer.observe(target);
-    }
-
-    if (!isConstrainedNetwork) {
-      if (typeof win.requestIdleCallback === "function") {
-        idleId = win.requestIdleCallback(activate, { timeout: fallbackDelayMs });
-      } else {
-        timeoutId = window.setTimeout(activate, fallbackDelayMs);
-      }
-    }
-
-    return () => {
-      observer?.disconnect();
-      if (idleId !== undefined && typeof win.cancelIdleCallback === "function") {
-        win.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
-    };
-  }, []);
-
   return (
     <>
       <Meta
-        title={homeSeoTitle}
-        description={homeSeoDescription}
-        keywords="online english classes for kids, online english classes for children, phonics classes for kids, online grammar classes for kids, spoken english classes for kids online, english tutor for kids online"
-        canonical={homeCanonicalUrl}
-        jsonLd={[organizationSchema, websiteSchema, homeWebPageSchema, homeFaqSchema]}
+        title={homeSeo.title}
+        description={homeSeo.description}
+        canonical={homeUrl}
+        jsonLd={homepageSchemas}
       />
-
-      {/* REVIEW ACTION 01 — HOOK: Keep the existing hero focused on what Tiny Steps is and the primary demo action. */}
-      <ConversionHero />
-
-      {/* REVIEW ACTION 02 — IDENTIFICATION: Preserve the parent-first recognition step immediately after the hero. */}
-      <ParentProblemRecognitionSection />
-
-      {/* AI/ENTITY BRIDGE: Clarify the brand and intent owners without interrupting the hero → problem-recognition flow. */}
-      <HomeEntitySummarySection />
-
-      {/* REVIEW ACTION 03 — EARLY TRUST: Give a compact credibility snapshot without restarting the company story. */}
-      <TrustSnapshotSection />
-
-      {/* REVIEW ACTION 04 — DIAGNOSIS: Explain what the assessment may check without assigning children by age alone. */}
-      <AssessmentStartPointsSection />
-
-      <div ref={belowFoldAnchorRef} className="h-px w-full" aria-hidden="true" />
-
-      {showPrimaryBelowFoldSections ? (
-        <>
-          {/* REVIEW ACTION 05 — PROGRAMMES: Keep the four parent-relevant learning paths; remove SEO/location entry-point navigation. */}
-          <LearningPathsSection />
-
-          {/* REVIEW ACTION 06 — DIFFERENTIATION: Explain why the Tiny Steps system is different before asking for deeper trust. */}
-          <WhyTinyStepsSection />
-        </>
-      ) : null}
-
-      <div ref={deferredAnchorRef} className="h-px w-full" aria-hidden="true" />
-
-      {showDeferredSections ? (
-        <>
-          {/* REVIEW ACTION 07 — GLOBAL PROOF: Move directly into concrete social proof instead of adding a directory of proof cards. */}
-          <div id="global-learners-proof">
-            <Suspense fallback={null}>
-              <GlobalLearnersMapSection />
-            </Suspense>
-          </div>
-
-          {/* REVIEW ACTION 08 — METHOD: Explain how each pathway works without adding a second, competing journey model. */}
-          <Suspense fallback={null}>
-            <StepTimeline />
-          </Suspense>
-
-          {/* REVIEW ACTION 09 — CLASS SAMPLES: Give concrete classroom evidence immediately before the pricing decision. */}
-          <ClassSamplesSection />
-
-          {/* REVIEW ACTION 10 — PRICE: Show plans only after the parent understands fit, method, and classroom experience. */}
-          <Suspense fallback={null}>
-            <PricingCrispSection />
-          </Suspense>
-
-          {/* REVIEW ACTION 11 — RISK REVERSAL: Explain assessment → recommended starting point → parent decides. */}
-          <Suspense fallback={null}>
-            <ParentReassurance />
-          </Suspense>
-
-          {/* REVIEW ACTION 12 — OBJECTIONS: Keep a short practical FAQ near conversion. */}
-          <HomeFaqSection items={homeFaqItems} />
-
-          {/* REVIEW ACTION 13 — FINAL CONVERSION: End with one concise booking action, not another full information block. */}
-          <Suspense fallback={null}>
-            <FinalCTASection />
-          </Suspense>
-        </>
-      ) : null}
+      <div className="bg-white">
+        <ConversionHero />
+        <LearningPathwaysSection />
+        <DifferenceSection />
+        <TechnologySection />
+        <ExploreSection />
+        <FinalInvitationSection />
+      </div>
     </>
   );
 }
