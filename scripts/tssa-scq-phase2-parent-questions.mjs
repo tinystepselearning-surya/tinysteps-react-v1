@@ -96,7 +96,11 @@ const childAnswersDoc=new JSDOM(childAnswersHtml,{url:origin+'/blog/child-gives-
 const expectedHeading='A three-step check for building fuller answers';
 const childAnswersHeading=[...childAnswersDoc.querySelectorAll('h2')]
   .find(h=>clean(h.textContent)===expectedHeading);
-if(!childAnswersHeading?.id)die('Child answer expansion heading was not prerendered with an anchor');
+if(!childAnswersHeading?.id){
+  console.error('TSSA-SCQ TOC debug headings: '+JSON.stringify([...childAnswersDoc.querySelectorAll('h2')].map(h=>({text:clean(h.textContent),id:h.id})).filter(h=>/answer|checkpoint|step|fuller/i.test(h.text)).slice(0,20)));
+  console.error('TSSA-SCQ TOC debug links: '+JSON.stringify([...childAnswersDoc.querySelectorAll('nav a[href^="#"]')].map(a=>({text:clean(a.textContent),href:a.getAttribute('href')})).slice(0,20)));
+  die('Child answer expansion heading was not prerendered with an anchor');
+}
 const tocMatch=[...childAnswersDoc.querySelectorAll('nav a[href^="#"]')]
   .find(a=>clean(a.textContent)===expectedHeading && a.getAttribute('href')==='#'+childAnswersHeading.id);
 if(!tocMatch)die('Child answer expansion table of contents entry absent or broken');
