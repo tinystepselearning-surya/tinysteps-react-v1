@@ -14,6 +14,8 @@ on:
       - 'tests/homepage-premium-responsive.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
       - '.github/workflows/homepage-mobile-release-gate.yml'
+      - 'scripts/generate-homepage-hero-variants.py'
+      - 'public/blog/hero-families/Tiny_Steps_Speaking_*.webp'
   push:
     branches:
       - 'fix/home-mobile-ux-refinement-20261026'
@@ -71,3 +73,39 @@ jobs:
           retention-days: 7
       - name: Confirm validation-only execution
         run: echo "All checks complete. This workflow does not deploy to Firebase."
+
+
+  generate-responsive-hero-assets:
+    name: Generate approved hero image derivatives on isolated perf branch
+    if: github.event_name == 'pull_request' && github.head_ref == 'perf/homepage-hero-responsive-20261026' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact PR branch for generated binary assets
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - name: Generate WebP variants with pinned Pillow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m venv /tmp/hero-pillow
+          /tmp/hero-pillow/bin/pip install --quiet Pillow==11.3.0
+          /tmp/hero-pillow/bin/python scripts/generate-homepage-hero-variants.py
+      - name: Commit assets only when changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add public/blog/hero-families/Tiny_Steps_Speaking_480.webp
+          git add public/blog/hero-families/Tiny_Steps_Speaking_720.webp
+          git add public/blog/hero-families/Tiny_Steps_Speaking_960.webp
+          if git diff --cached --quiet; then
+            echo "Responsive hero assets already current"
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -m "perf(home): add approved responsive hero WebP derivatives"
+          git push origin "HEAD:${{ github.head_ref }}"
