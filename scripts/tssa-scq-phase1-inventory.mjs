@@ -4,13 +4,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { JSDOM } from 'jsdom';
+import { PHONICS_AGE_PROGRAMME_PATHS } from '../src/lib/phonicsAgeProgrammeRegistry.js';
 
 const root = process.cwd();
 const dist = path.join(root, 'dist');
 const output = path.join(root, 'artifacts', 'tssa-scq-phase1');
 const origin = 'https://tinystepslearning.com';
+// This is the current generated inventory; the frozen 19 Oct 260/279
+// reference remains in tssa7-b1-content-authority-ledger.mjs.
+const additionalApprovedCount = PHONICS_AGE_PROGRAMME_PATHS.length;
+const expectedIndexableCount = 260 + additionalApprovedCount;
+const expectedCorpusCount = 279 + additionalApprovedCount;
 const expectedChildCounts = new Map([
-  ['sitemap-static.xml', 159],
+  ['sitemap-static.xml', 159 + additionalApprovedCount],
   ['sitemap-blog.xml', 83],
   ['sitemap-courses.xml', 7],
   ['sitemap-parents.xml', 11],
@@ -70,10 +76,10 @@ for (const entry of corpus) {
 }
 const indexIntended = corpus.filter(e => e.indexing_state === 'indexable');
 const noindex = corpus.filter(e => e.indexing_state === 'noindex');
-if (corpus.length !== 279 || indexIntended.length !== 260 || noindex.length !== 19)
+if (corpus.length !== expectedCorpusCount || indexIntended.length !== expectedIndexableCount || noindex.length !== 19)
   issue('ERROR', 'machine-directory', 'SOURCE_COUNT_DRIFT',
     'Corpus=' + corpus.length + '; indexable=' + indexIntended.length + '; excluded=' + noindex.length);
-if (sitemapCount !== 260 || membership.size !== 260)
+if (sitemapCount !== expectedIndexableCount || membership.size !== expectedIndexableCount)
   issue('ERROR', 'sitemaps', 'SITEMAP_COUNT_DRIFT',
     'Entries=' + sitemapCount + '; unique=' + membership.size);
 
@@ -166,10 +172,10 @@ const csvColumns = [
   'jsonld_blocks', 'invalid_jsonld', 'robots_directives', 'result',
 ];
 const csv = value => '"' + String(value ?? '').replaceAll('"', '""').replace(/^[=+@-]/, m => "'" + m) + '"';
-fs.writeFileSync(path.join(output, 'URL_MACHINE_READABILITY_260.csv'),
+fs.writeFileSync(path.join(output, `URL_MACHINE_READABILITY_${expectedIndexableCount}.csv`),
   csvColumns.join(',') + '\n' + pages.map(p => csvColumns.map(k => csv(p[k])).join(',')).join('\n') + '\n');
 fs.writeFileSync(path.join(output, 'FINDINGS.json'), JSON.stringify(findings, null, 2) + '\n');
-fs.writeFileSync(path.join(output, 'CANONICAL_INVENTORY_279.json'), JSON.stringify(
+fs.writeFileSync(path.join(output, `CANONICAL_INVENTORY_${expectedCorpusCount}.json`), JSON.stringify(
   [...corpusByUrl.entries()].map(([url, e]) => ({
     url, family: e.family, indexing_state: e.indexing_state,
     in_sitemap: membership.has(url), sitemap: membership.get(url) || null,
@@ -177,6 +183,8 @@ fs.writeFileSync(path.join(output, 'CANONICAL_INVENTORY_279.json'), JSON.stringi
 const summary = {
   audited_at_utc: new Date().toISOString(),
   evidence: 'generated local build artifact; NOT live HTTP, current Google or Bing indexed state, or AI citation evidence',
+  frozen_2026_10_19_baseline: { content: 279, indexable: 260, noindex: 19 },
+  additional_approved_age_routes: PHONICS_AGE_PROGRAMME_PATHS,
   source_content_count: corpus.length,
   source_indexable: indexIntended.length,
   source_noindex: noindex.length,
