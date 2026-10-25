@@ -34,32 +34,24 @@ const homepageSchemas = [organizationSchema, websiteSchema, homeWebPageSchema];
 
 const learningPaths = [
   {
-    number: '01',
     label: 'Phonics',
-    description: 'Letter sounds, sound–letter patterns, blending, decoding and spelling for more independent word reading.',
+    description: 'Learn letter–sound connections, blend and decode words, and develop accurate spelling.',
     path: '/phonics',
-    action: 'Explore phonics',
   },
   {
-    number: '02',
     label: 'Reading',
-    description: 'Build reading accuracy, fluency, vocabulary, comprehension and confidence with texts.',
+    description: 'Build reading fluency, vocabulary and comprehension through meaningful texts.',
     path: '/reading-classes-for-kids',
-    action: 'Explore reading',
   },
   {
-    number: '03',
     label: 'Grammar',
-    description: 'Understand grammar, build clear sentences and apply language rules in speaking and writing.',
+    description: 'Strengthen sentence formation, grammar and punctuation—and apply them in speaking and writing.',
     path: '/grammar',
-    action: 'Explore grammar',
   },
   {
-    number: '04',
     label: 'Public Speaking',
-    description: 'Develop storytelling, organised answers, presentation skills and confident communication.',
+    description: 'Practise storytelling, clear explanations, presentations and confident communication.',
     path: '/speaking',
-    action: 'Explore public speaking',
   },
 ];
 
@@ -108,13 +100,20 @@ function LearningPathwaysSection() {
             <Link
               key={path.path}
               to={path.path}
-              className="group flex min-h-[245px] min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 transition-colors hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+              aria-label={`Explore ${path.label} online classes for kids`}
+              className="group relative isolate flex min-h-[225px] min-w-0 flex-col overflow-hidden rounded-[1.5rem] border border-slate-200 bg-white p-6 shadow-[0_1px_2px_rgba(16,42,67,0.02)] outline-none motion-safe:transition-[transform,box-shadow,border-color] motion-safe:duration-300 motion-safe:ease-out motion-safe:hover:-translate-y-1 hover:border-orange-200 hover:shadow-[0_18px_48px_rgba(16,42,67,0.10)] focus-visible:border-orange-400 focus-visible:ring-2 focus-visible:ring-[#102A43] focus-visible:ring-offset-4 motion-reduce:transform-none"
             >
-              <span className="text-xs font-semibold tracking-[0.12em] text-orange-600" aria-hidden="true">{path.number}</span>
-              <h3 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-slate-950">{path.label}</h3>
-              <p className="mt-3 flex-1 text-[15px] leading-7 text-slate-600">{path.description}</p>
-              <span className="mt-6 text-base font-semibold text-slate-900 group-hover:text-orange-700">
-                {path.action} <span aria-hidden="true">↗</span>
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-x-6 top-0 h-[3px] origin-left scale-x-0 rounded-full bg-[#FF7A00] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+              />
+              <h3 className="text-2xl font-semibold tracking-[-0.035em] text-[#102A43] transition-colors group-hover:text-[#9B4300]">{path.label}</h3>
+              <p className="mt-4 flex-1 text-[15px] leading-7 text-slate-600">{path.description}</p>
+              <span className="mt-6 inline-flex items-center gap-3 text-base font-semibold text-[#102A43]">
+                Explore
+                <span className="inline-flex size-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50 text-[#9B4300] transition-colors group-hover:border-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-[#102A43]" aria-hidden="true">
+                  <span className="motion-safe:transition-transform motion-safe:duration-300 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]">↗</span>
+                </span>
               </span>
             </Link>
           ))}
