@@ -157,7 +157,7 @@ test('fixed homepage support dock yields to final booking and footer', async ({ 
   await expect(dock).toBeVisible({ timeout: 35000 });
 
   await page.locator('#homepage-final-invitation').scrollIntoViewIfNeeded();
-  await expect(dock).toHaveCount(0, { timeout: 5000 });
+  await expect(dock).toBeHidden({ timeout: 5000 });
   await expect(page.getByRole('button', { name: 'Back to top' })).toHaveCount(0);
   await expect(page.locator('#homepage-final-invitation').getByRole('link', { name: 'Book Free 35-Minute Demo' })).toBeVisible();
 
