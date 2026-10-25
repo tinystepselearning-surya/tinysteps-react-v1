@@ -58,6 +58,19 @@ for (const viewport of viewports) {
     }
     await expect(pathways.locator('a[aria-label^="Explore "]')).toHaveCount(4);
 
+    const teaching = page.locator('section[aria-labelledby="difference-title"]');
+    await expect(teaching.getByRole('heading', { level: 2, name: 'Child-Centred Teaching. Meaningful Progress.' })).toBeVisible();
+    await expect(teaching.locator('article')).toHaveCount(3);
+    for (const name of [
+      'Start with what the child knows',
+      'Learn through active participation',
+      'Make progress visible',
+    ]) {
+      await expect(teaching.getByRole('heading', { level: 3, name })).toBeVisible();
+    }
+    await expect(teaching.getByRole('link', { name: 'See how Tiny Steps teaches' })).toHaveAttribute('href', '/why-tiny-steps');
+
+
     const programmePanel = pathways.locator('div.grid.gap-px');
     await expect(programmePanel).toBeVisible();
     await expect(programmePanel).toHaveCSS('gap', '1px');
