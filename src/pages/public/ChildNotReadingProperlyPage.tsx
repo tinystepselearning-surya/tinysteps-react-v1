@@ -161,6 +161,15 @@ export default function ChildNotReadingProperlyPage() {
             </Link>
           </article>
         </div>
+        <p className="mt-4 text-sm leading-7 text-slate-700">
+          If your child guesses a word from the picture or first letter, check whether they can
+          <Link to="/blog/why-child-knows-letter-sounds-but-cannot-read-words" className="ml-1 font-semibold underline underline-offset-2">blend a fresh word using known sounds</Link>.
+          If familiar words are easy but new words are difficult, try the
+          <Link to="/blog/how-kids-learn-blending" className="ml-1 font-semibold underline underline-offset-2">blending progression</Link>;
+          older readers who struggle with longer words can explore
+          <Link to="/blog/phonics-multisyllabic" className="ml-1 font-semibold underline underline-offset-2">multisyllabic decoding</Link>.
+          Use patterns already taught rather than guessing or introducing harder spellings too soon.
+        </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
