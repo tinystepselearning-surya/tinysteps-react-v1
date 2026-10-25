@@ -22,6 +22,7 @@ for (const viewport of viewports) {
     await expect(heading).toBeVisible();
     await expect(hero.getByRole('link', { name: 'Book Free 35-Minute Demo' })).toBeVisible();
     await expect(hero.getByRole('link', { name: /Explore our learning pathways/i })).toBeVisible();
+    await expect(hero.getByRole('link', { name: 'Watch a real class' })).toHaveAttribute('href', '/class-samples');
     await expect(pathways.getByRole('heading', { level: 2, name: /From Letter Sounds to Confident Communication/i })).toBeVisible();
 
     for (const href of [
@@ -215,6 +216,7 @@ test('homepage floating AI control opens and closes the real lazy-loaded chat', 
   // No question is sent: opening and closing the dialog must not call the AI.
   const dock = page.locator('[data-floating-assistant="1"]');
   await expect(dock).toBeVisible({ timeout: 35000 });
+  await dock.getByRole('button', { name: 'Open support options' }).click();
   await dock.getByRole('button', { name: 'Ask TinySteps AI' }).click();
 
   const dialog = page.getByRole('dialog', { name: 'Ask TinySteps' });
@@ -241,4 +243,49 @@ test('homepage footer keeps programme and legal links without changing the lead 
   }
   await expect(footer.getByRole('link', { name: 'Pinterest' })).toHaveCount(0);
   await expect(footer.getByText('© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.')).toBeVisible();
+});
+
+test('compact mobile header keeps booking and menu accessible without horizontal overflow', async ({ page }) => {
+  for (const width of [320, 375, 390]) {
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+    const booking = page.getByRole('button', { name: 'Book Free 35-Minute Demo' });
+    const menu = page.getByRole('button', { name: 'Toggle menu' });
+    await expect(booking).toBeVisible();
+    await expect(menu).toBeVisible();
+    await expect(booking).toBeInViewport();
+    await expect(menu).toBeInViewport();
+    await expect(page.getByRole('button', { name: 'Go to Tiny Steps home page' })).toBeVisible();
+
+    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(scrollWidth, `header must not overflow at ${width}px`).toBeLessThanOrEqual(width + 1);
+
+    await menu.click();
+    await expect(menu).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#mobile-nav-menu').getByRole('link', { name: 'Courses' })).toBeVisible();
+    await menu.click();
+    await expect(menu).toHaveAttribute('aria-expanded', 'false');
+  }
+});
+
+test('mobile help launcher exposes AI and WhatsApp only when requested', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  const dock = page.locator('[data-floating-assistant="1"]');
+  const open = dock.getByRole('button', { name: 'Open support options' });
+  await expect(open).toBeVisible({ timeout: 35000 });
+  await expect(dock.getByRole('button', { name: 'Ask TinySteps AI' })).toBeHidden();
+  await expect(dock.getByRole('link', { name: 'Chat on WhatsApp' })).toBeHidden();
+
+  await open.click();
+  await expect(dock.getByRole('button', { name: 'Ask TinySteps AI' })).toBeVisible();
+  const whatsapp = dock.getByRole('link', { name: 'Chat on WhatsApp' });
+  await expect(whatsapp).toBeVisible();
+  await expect(whatsapp).toHaveAttribute('href', /wa\.me\//);
+
+  await dock.getByRole('button', { name: 'Close support options' }).click();
+  await expect(dock.getByRole('button', { name: 'Ask TinySteps AI' })).toBeHidden();
+  await expect(dock.getByRole('link', { name: 'Chat on WhatsApp' })).toBeHidden();
 });
