@@ -1,59 +1,71 @@
-# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Generated: 2026-10-25T17:47:59Z; ChatGPT hourly audit, late-day missed-slot recovery (Slot 11, indices 101–110).
+Generated after ChatGPT hourly Slot 1 review, latest attempted probe 2026-10-25T18:40:27Z (2026-10-26 00:10:27 IST).
 
-**Attempted today:** 130/202. **Pending today:** 72.
-**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 90.
-**New full live technical readiness checks this run:** 0. **New text-only snapshot reviews:** 10, all UNVERIFIED.
+**Attempted today:** 10/202. **Pending today:** 192.
+**Statuses today:** PASS 0, WARN 0, FAIL 0, UNVERIFIED 10.
+**Full current live technical readiness PASS in this batch:** 0. **Text-snapshot-only partial reviews:** 10.
 
-## This ChatGPT execution
+## Review and evidence
 
-- Verified 202 unique tracked URLs, 19 slots of 10 URLs and one final slot of 12. Preserved the prior 120 checked rows and timestamps.
-- At 2026-10-25T17:47:59Z, reviewed ten previously unchecked Slot 11 pages. The web provider returned HTML text snapshots with page-specific headings and substantive text, but crawl freshness varied from today to three months ago.
-- A direct origin HTTPS probe at 2026-10-25T17:47:40Z for /summer-camps/phonics-fast-track and /robots.txt failed with `curl: (6) Could not resolve host: tinystepslearning.com` in the audit environment. This is NOT proof of a website outage.
-- Live HTTP status, redirects, final URL, canonical, noindex, bot-specific robots rules, JSON-LD, current deployment and interactive CTA functionality remain UNVERIFIED. Web text snapshots are not production readiness PASS.
-- **Potential stale-content follow-up (not live-confirmed):** the phonics fast-track page's 3-month-old snapshot still advertises 2026 camp dates, an enrollment price of ₹2,400 and enrollment link, whereas the grammar and speaking fast-track snapshots say the 2026 season ended. Confirm the current phonics page directly before classifying as a regression or modifying anything. No confirmed new website failure or verified transition was found.
-- `CHANGES.md` is unchanged because no verified before/after production transition was established. The 40 PASS entries were recorded by the former GitHub executor and were not rechecked by ChatGPT.
-- GitHub Actions is disabled per user's confirmation; actual workflow administrative state and recent overlapping runs could not be independently verified through available connected actions. No workflow was triggered or modified.
+- Tracker validated: exactly 202 unique URLs, slots 1–19 contain 10 each, slot 20 contains 12. No URL had already been checked on 2026-10-26 IST. Yesterday's checked rows were not counted for today.
+- Reviewed Slot 1, indices 1–10. All ten web.open text snapshots returned page-specific headings and useful educational or navigation text; the provider labelled each snapshot “Crawled: today” but did not expose the exact crawl timestamp or raw HTTP headers. This is evidence only of retrievable **provider text snapshots**, not a live origin readiness PASS.
+- Direct `curl -I` attempts for each URL between 2026-10-25T18:40:07Z and 18:40:27Z returned exit 6 (hostname not resolved) or 28 (DNS resolving timed out). An additional direct `curl` probe and `--resolve` fixed-IP attempt were unsuccessful in the audit environment. **These are audit-runtime network limitations, not confirmed production outages.**
+- HTTP status, final URL, redirects, canonical, noindex, robots for Googlebot/Bingbot/OAI-SearchBot, raw HTML and JSON-LD remain **UNVERIFIED**. `/robots.txt` was also inaccessible through the web provider. No Google/Bing indexing, ranking or AI citations were tested or asserted.
+- GitHub Actions repository runs were inspected through GitHub API (100 most recent). The last visible `rolling-public-seo-health.yml` run was a successful `workflow_dispatch` started 2026-10-25T09:49:27Z; earlier scheduled runs started at 07:00:09Z and 01:48:10Z. **No concurrent or more recent run was found within those 100 runs.** Administrative enabled/disabled workflow state was not accessible; user-confirmed disabled state remains the working assumption. No workflow was triggered or enabled.
+- No verified before/after production transition. `CHANGES.md` was not modified. Previous GitHub-generated PASS results are historical and do not establish today's live readiness.
 
-## Reviewed URLs (full live technical readiness UNVERIFIED)
+## Reviewed URLs — all UNVERIFIED for current technical readiness
 
-- [101] https://tinystepslearning.com/summer-camps/phonics-fast-track — provider snapshot crawled 3 months ago
-- [102] https://tinystepslearning.com/summer-camps/grammar-fast-track — provider snapshot crawled 2 months ago
-- [103] https://tinystepslearning.com/summer-camps/speaking-fast-track — provider snapshot crawled last week
-- [104] https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids — provider snapshot crawled last month
-- [105] https://tinystepslearning.com/blog/back-to-school-english-confidence-plan — provider snapshot crawled last week
-- [106] https://tinystepslearning.com/blog/benefits-of-phonics-for-kids — provider snapshot crawled 4 weeks ago
-- [107] https://tinystepslearning.com/blog/can-child-improve-english-in-10-days — provider snapshot crawled 2 weeks ago
-- [108] https://tinystepslearning.com/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme — provider snapshot crawled last week
-- [109] https://tinystepslearning.com/blog/child-gives-one-word-answers — provider snapshot crawled today
-- [110] https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read — provider snapshot crawled 2 weeks ago
+- [1] https://tinystepslearning.com/ — provider snapshot shows “Online English Classes for Kids”; direct HEAD probe 2026-10-25T18:40:07Z exit 6 (Could not resolve host).
+- [2] https://tinystepslearning.com/blog — provider snapshot shows “Find the right English-learning answer”; direct HEAD probe 2026-10-25T18:40:07Z exit 28 (Resolving timed out after 5001 milliseconds).
+- [3] https://tinystepslearning.com/resources — provider snapshot shows “English Learning Resources for Kids, Parents & Educators”; direct HEAD probe 2026-10-25T18:40:12Z exit 6 (Could not resolve host).
+- [4] https://tinystepslearning.com/resources/phonics — provider snapshot shows “Phonics & Reading Resources”; direct HEAD probe 2026-10-25T18:40:12Z exit 28 (Resolving timed out after 5000 milliseconds).
+- [5] https://tinystepslearning.com/resources/phonics/ck-rule-phonics — provider snapshot shows “When should a child use ck instead of k at the end of a word?”; direct HEAD probe 2026-10-25T18:40:17Z exit 6 (Could not resolve host).
+- [6] https://tinystepslearning.com/resources/phonics/floss-rule-phonics — provider snapshot shows “Why do words such as puff, hill, miss and buzz end with doubled consonants?”; direct HEAD probe 2026-10-25T18:40:17Z exit 28 (Resolving timed out after 5001 milliseconds).
+- [7] https://tinystepslearning.com/resources/phonics/qu-sound-phonics — provider snapshot shows “Why is q usually taught together with u?”; direct HEAD probe 2026-10-25T18:40:22Z exit 6 (Could not resolve host).
+- [8] https://tinystepslearning.com/resources/phonics/ch-digraph-phonics — provider snapshot shows “How should children read ch without sounding c and h separately?”; direct HEAD probe 2026-10-25T18:40:22Z exit 28 (Resolving timed out after 5001 milliseconds).
+- [9] https://tinystepslearning.com/resources/phonics/kn-silent-k-phonics — provider snapshot shows “Why do knee and knot begin with a letter we do not say?”; direct HEAD probe 2026-10-25T18:40:27Z exit 6 (Could not resolve host).
+- [10] https://tinystepslearning.com/resources/phonics/ng-digraph-phonics — provider snapshot shows “Why should ng be read as one sound in words such as sing?”; direct HEAD probe 2026-10-25T18:40:27Z exit 28 (Resolving timed out after 5000 milliseconds).
 
-## Follow-up
+## Previous-day coverage reconciliation
 
-- **72 URLs remain unchecked today.** At the current batch size, full 202-URL coverage cannot be completed before the local day ends.
-- Reliable fresh origin HTTP access is required to certify canonical, robots/noindex, JSON-LD and redirect status. Text snapshots do not qualify.
-- Verify whether the phonics fast-track page still advertises the completed 2026 camp; do not assume the three-month-old provider snapshot reflects the current live page.
+2026-10-25 IST ended with **130/202 attempted** (40 historical GitHub PASS, 90 ChatGPT UNVERIFIED) and **72 unchecked**. Those 72 were not backfilled. The new daily cycle starts at zero and records only actual 2026-10-26 IST attempts.
 
-## Unchecked today (first 20)
+## Unchecked today
 
-- [111] https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes
-- [112] https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home
-- [113] https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak
-- [114] https://tinystepslearning.com/blog/conversation-skills-for-kids
-- [115] https://tinystepslearning.com/blog/cvc-words-explained-for-parents
-- [116] https://tinystepslearning.com/blog/digraphs-and-tricky-words
-- [117] https://tinystepslearning.com/blog/does-cbse-include-phonics-ncf-foundational-literacy
-- [118] https://tinystepslearning.com/blog/grammar-assessment
-- [119] https://tinystepslearning.com/blog/grammar-conjunctions
-- [120] https://tinystepslearning.com/blog/grammar-creative-writing
-- [131] https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together
-- [132] https://tinystepslearning.com/blog/how-phonics-improves-spelling
-- [133] https://tinystepslearning.com/blog/how-schools-can-assess-decoding-not-memorisation
-- [134] https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home
-- [135] https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children
-- [136] https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids
-- [137] https://tinystepslearning.com/blog/how-to-teach-paragraph-writing-to-kids
-- [138] https://tinystepslearning.com/blog/how-to-teach-storytelling-to-kids
-- [139] https://tinystepslearning.com/blog/how-vocabulary-supports-reading-comprehension
-- [140] https://tinystepslearning.com/blog/international-phonics-benchmarks-for-indian-schools
+- [11] https://tinystepslearning.com/resources/phonics/sh-digraph-phonics
+- [12] https://tinystepslearning.com/resources/phonics/th-digraph-phonics
+- [13] https://tinystepslearning.com/resources/phonics/ai-vowel-team-phonics
+- [14] https://tinystepslearning.com/resources/phonics/ch-tch-spelling-phonics
+- [15] https://tinystepslearning.com/resources/phonics/ea-vowel-team-phonics
+- [16] https://tinystepslearning.com/resources/phonics/ee-vowel-team-phonics
+- [17] https://tinystepslearning.com/resources/phonics/ie-vowel-team-phonics
+- [18] https://tinystepslearning.com/resources/phonics/oa-vowel-team-phonics
+- [19] https://tinystepslearning.com/resources/phonics/magic-e-phonics
+- [20] https://tinystepslearning.com/resources/phonics/consonant-le-phonics
+- [21] https://tinystepslearning.com/resources/phonics/rabbit-rule-phonics
+- [22] https://tinystepslearning.com/resources/phonics/soft-c-hard-c-phonics
+- [23] https://tinystepslearning.com/resources/phonics/soft-g-hard-g-phonics
+- [24] https://tinystepslearning.com/resources/phonics/er-ir-ur-r-controlled-vowels-phonics
+- [25] https://tinystepslearning.com/resources/phonics/ar-r-controlled-vowels-phonics
+- [26] https://tinystepslearning.com/resources/phonics/or-r-controlled-vowels-phonics
+- [27] https://tinystepslearning.com/resources/phonics/y-as-a-vowel-phonics
+- [28] https://tinystepslearning.com/resources/phonics/au-aw-phonics
+- [29] https://tinystepslearning.com/resources/phonics/oi-oy-phonics
+- [30] https://tinystepslearning.com/resources/phonics/oo-sounds-phonics
+- [31] https://tinystepslearning.com/resources/phonics/ou-ow-phonics
+- [32] https://tinystepslearning.com/resources/phonics/j-sound-spellings-phonics
+- [33] https://tinystepslearning.com/resources/phonics/shun-sound-family-phonics
+- [34] https://tinystepslearning.com/resources/phonics/ui-vowel-sound-phonics
+- [35] https://tinystepslearning.com/resources/phonics/schwa-sound-for-kids-phonics
+- [36] https://tinystepslearning.com/resources/grammar
+- [37] https://tinystepslearning.com/resources/speaking
+- [38] https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading
+- [39] https://tinystepslearning.com/pricing
+- [40] https://tinystepslearning.com/contact
+- …and 162 more. All remain eligible for their assigned daily slots/recovery.
+
+## Operational boundary
+
+ChatGPT is the audit executor; GitHub is only the tracker destination. No production code, workflows, Firebase or Hosting settings changed. Reliable direct origin access remains required for full technical readiness verification.
