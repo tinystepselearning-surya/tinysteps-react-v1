@@ -48,6 +48,8 @@ describe('TSSA-SCQ Phonics age 4/5 commercial-support pilot', () => {
     expect(four.directAnswer).toMatch(/sound awareness/i);
     expect(five.directAnswer).toMatch(/blending|decode/i);
     expect(four.activityExample).not.toEqual(five.activityExample);
+    expect(five.coursePath).toBe('/courses/phonics-foundation');
+    expect(four.coursePath).toBe('/courses/phonics-foundation');
     expect(four.assessmentFocus).not.toEqual(five.assessmentFocus);
     for (const page of PHONICS_AGE_PROGRAMME_PAGES) {
       expect(page.parentQuestions).toHaveLength(3);
