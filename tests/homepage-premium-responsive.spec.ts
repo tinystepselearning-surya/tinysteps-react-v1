@@ -86,9 +86,25 @@ for (const viewport of viewports) {
     }
     await expect(connected.getByRole('link', { name: 'Watch real classes' })).toHaveAttribute('href', '/class-samples');
 
+    const decision = page.locator('section[aria-labelledby="before-you-book-title"]');
+    await expect(decision.getByRole('heading', { level: 2, name: 'See the teaching. Compare the plans. Get answers.' })).toBeVisible();
+    await expect(decision.locator('article')).toHaveCount(3);
+    await expect(decision.getByRole('link', { name: /Watch real class samples/i })).toHaveAttribute('href', '/class-samples');
+    await expect(decision.getByRole('link', { name: /Compare standard plans/i })).toHaveAttribute('href', '/pricing#standard-pricing');
+    await expect(decision.getByText('₹400', { exact: true })).toBeVisible();
+    for (const amount of ['₹4,800', '₹6,400', '₹9,600']) {
+      await expect(decision.getByText(amount, { exact: true })).toBeVisible();
+    }
+    const questions = decision.locator('details');
+    await expect(questions).toHaveCount(3);
+    for (const question of await questions.all()) {
+      await expect(question).not.toHaveAttribute('open', '');
+    }
+    await expect(decision.getByRole('link', { name: /Browse all parent questions/i })).toHaveAttribute('href', '/faq');
+
     const exploration = page.locator('section[aria-labelledby="explore-title"]');
     await expect(exploration.getByRole('heading', { name: 'Explore what matters to you.' })).toBeVisible();
-    await expect(exploration.locator('a')).toHaveCount(6);
+    await expect(exploration.locator('a')).toHaveCount(3);
 
     const finalBooking = page.locator('#homepage-final-invitation');
     await expect(finalBooking.getByRole('heading', { name: /Start with a conversation about your child's learning/i })).toBeVisible();
@@ -117,6 +133,28 @@ for (const viewport of viewports) {
   });
 }
 
+
+
+test('short parent FAQs start collapsed and expand using native keyboard interaction', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+
+  const section = page.locator('section[aria-labelledby="before-you-book-title"]');
+  const first = section.locator('details').first();
+  const trigger = first.locator('summary');
+  const answer = first.getByText(/Your child joins one free 35-minute live 1:1 assessment/);
+
+  await expect(answer).toBeHidden();
+  await trigger.scrollIntoViewIfNeeded();
+  await trigger.focus();
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press('Enter');
+  await expect(first).toHaveAttribute('open', '');
+  await expect(answer).toBeVisible();
+  await page.keyboard.press('Enter');
+  await expect(first).not.toHaveAttribute('open', '');
+  await expect(answer).toBeHidden();
+});
 
 test('premium pathway cards honour reduced-motion preference', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
