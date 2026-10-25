@@ -1,0 +1,48 @@
+name: TSSA-SCQ Phase 1 Inventory Evidence
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/tssa-scq-phase1-inventory.mjs'
+      - '.github/workflows/tssa-scq-phase1-inventory.yml'
+      - 'scripts/generate-sitemaps.js'
+      - 'scripts/generate-rss.mjs'
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'scripts/prerender.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    name: Reconcile all 260 generated URLs and 279 content owners (no deploy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Install Chromium for production-style prerender
+        run: npx playwright install --with-deps chromium
+      - name: Generate production-equivalent HTML locally without deployment
+        run: npm run build:deploy
+      - name: Reconcile TSSA-7 279-entry source authority ledger
+        run: node scripts/tssa7-b1-content-authority-ledger.mjs
+      - name: Audit all 260 index-intended generated HTML pages
+        run: node scripts/tssa-scq-phase1-inventory.mjs
+      - name: Upload read-only Phase 1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tssa-scq-phase1-generated-inventory
+          path: |
+            artifacts/tssa-scq-phase1/
+            artifacts/tssa7-b1/
+          if-no-files-found: warn
+          retention-days: 30
