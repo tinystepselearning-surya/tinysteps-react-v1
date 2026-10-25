@@ -771,6 +771,30 @@ export default function PhonicsPage({
         </PremiumCard>
       </SectionShell>
 
+      <SectionShell id="age-guide" className="pt-0">
+        <div className="rounded-[2rem] border border-orange-100 bg-white p-5 shadow-sm sm:p-7">
+          <div className="max-w-3xl">
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-orange-700">Age-specific parent guidance</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Find Phonics support for your child's starting point</h2>
+            <p className="mt-3 leading-7 text-slate-700">
+              Age provides context, but we choose the first skill from the child's actual sound and reading readiness. Explore two focused parent guides; the main Phonics programme remains the complete learning path for ages 3–12.
+            </p>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Link to="/phonics/age-4" className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 transition hover:border-orange-400 hover:bg-orange-50">
+              <h3 className="text-lg font-bold text-slate-950">Phonics at age 4</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Playful sound awareness, first letter–sound connections, and blending readiness.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-orange-800 underline underline-offset-2">Explore the age-four guide</span>
+            </Link>
+            <Link to="/phonics/age-5" className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 transition hover:border-sky-400 hover:bg-sky-50">
+              <h3 className="text-lg font-bold text-slate-950">Phonics at age 5</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Help for children who know letter sounds but struggle to blend and read unfamiliar words.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-sky-900 underline underline-offset-2">Explore the age-five guide</span>
+            </Link>
+          </div>
+        </div>
+      </SectionShell>
+
       <SectionShell id="problems">
         <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-sky-50/30 to-orange-50/30 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] sm:p-8">
           <SectionHeader
