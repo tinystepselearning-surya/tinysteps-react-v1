@@ -91,12 +91,15 @@ function LearningPathwaysSection() {
   return (
     <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Find the right direction</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">The complete English-learning journey</p>
         <h2 id="learning-pathways-title" className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
-          From first sounds to confident communication.
+          From Letter Sounds to Confident Communication.
         </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          From letter sounds, phonics, blending and spelling to reading, vocabulary, comprehension, grammar, sentence building, spoken English and public speaking, Tiny Steps brings English learning together in one place. Children begin with what they need, not a fixed age-based sequence.
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          Tiny Steps brings together phonics, blending and spelling; reading fluency, vocabulary and comprehension; grammar and sentence building; and spoken English, public speaking and communication skills.
+        </p>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          Instead of following one fixed sequence for every child, we assess their starting point and build the next skills through age-appropriate activities, guided practice and teacher feedback.
         </p>
         <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {learningPaths.map((path) => (
