@@ -422,7 +422,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <LeadSectionHeading
             eyebrow="International access"
             title="Online English classes for NRI and worldwide families"
-            description="We use one global programme owner rather than creating thin country pages. The child’s need and a workable live schedule matter more than a duplicated country landing page."
+            description="Families in different countries can explore the same live English programmes. Choose based on the child’s learning needs and a workable teaching schedule."
           />
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {internationalMarkets.map(([market, detail]) => (
@@ -484,7 +484,7 @@ export default function OnlineEnglishClassesForKidsPage() {
         <LeadCard>
           <LeadSectionHeading
             eyebrow="Explore the exact programme"
-            title="Move from the broad English page to the right specialist owner"
+            title="Choose a specialist programme for your child’s needs"
             description="These links keep broad English, subject-specific classes, local Hyderabad intent, pricing and demo intent clearly separated."
           />
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-900">
