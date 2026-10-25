@@ -14,6 +14,7 @@ const robots = read('public/robots.txt');
 const sitemap = read('public/sitemap-static.xml');
 const sitemapIndex = read('public/sitemap.xml');
 const llms = read('public/llms.txt');
+const llmsGenerator = read('scripts/generate-rss.mjs');
 const hosting = JSON.parse(read('firebase.json')) as {
   hosting: { headers?: Array<{ source?: string; headers: Array<{ key: string; value: string }> }> };
 };
@@ -109,6 +110,15 @@ describe('homepage machine readability and AI-search eligibility', () => {
         expect(header.value.toLowerCase()).not.toContain('noindex');
       }
     }
+  });
+
+  it('keeps the generated LLM directory linked to the homepage and parent FAQ without touching full editorial directory', () => {
+    expect(llmsGenerator).toContain("const isFullDirectory = filePath.endsWith('llms-full.txt')");
+    expect(llmsGenerator).toContain('if (!isFullDirectory)');
+    expect(llmsGenerator).toContain('Tiny Steps Learning homepage');
+    expect(llmsGenerator).toContain('Parent FAQs');
+    expect(llmsGenerator).toContain('text.replace(coreHeading');
+    expect(llmsGenerator).toContain('text.replace(decisionHeading');
   });
 
   it('preserves existing LLM discovery links to authoritative commercial pages', () => {
