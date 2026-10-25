@@ -28,6 +28,11 @@ on:
       - 'src/lib/publicResourcePrerenderRecovery.d.ts'
       - 'src/main.tsx'
       - 'src/app/routes.tsx'
+      - 'src/lib/phonicsAgeProgrammeRegistry.js'
+      - 'src/lib/phonicsAgeProgrammeRegistry.d.ts'
+      - 'src/pages/public/PhonicsByAgePage.tsx'
+      - 'src/tests/seo/phonicsAgeProgrammePilot.spec.ts'
+      - 'scripts/test/phonics-age-pages-rendered.node-test.mjs'
       - 'src/lib/phonicsPublicationRegistry.js'
       - 'src/lib/grammarProgrammaticSeoManifest.js'
       - 'src/lib/vocabularyAuthoritySeoManifest.js'
@@ -88,10 +93,14 @@ jobs:
         run: npx vitest run src/tests/seo/gsc735PhonicsComparisonIntent.spec.ts
       - name: Verify public prerender chunk recovery guards
         run: node --test scripts/test/gsc735-public-resource-fallback.node-test.mjs
+      - name: Guard approved Phonics age routes and editorial differentiation
+        run: npx vitest run src/tests/seo/phonicsAgeProgrammePilot.spec.ts
       - name: Check TypeScript source
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
         run: npm run build:deploy
+      - name: Verify generated Phonics age pages and unpublished-age exclusion
+        run: node --test scripts/test/phonics-age-pages-rendered.node-test.mjs
       - name: Simulate failed public resource chunks in mobile Chromium
         run: node --test scripts/test/gsc735-resource-chunk-mobile.node-test.mjs
       - name: Simulate failed blog chunks in mobile Chromium

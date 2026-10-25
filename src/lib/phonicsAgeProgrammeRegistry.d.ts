@@ -1,6 +1,6 @@
 /** Type contract for the Node-importable publication registry. */
 export interface PhonicsAgeProgrammeGuide {
-  readonly age: 4 | 5;
+  readonly age: 3 | 4 | 5 | 6;
   readonly path: string;
   readonly title: string;
   readonly description: string;

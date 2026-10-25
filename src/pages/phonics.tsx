@@ -777,10 +777,15 @@ export default function PhonicsPage({
             <p className="text-xs font-bold uppercase tracking-[0.15em] text-orange-700">Age-specific parent guidance</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Find Phonics support for your child's starting point</h2>
             <p className="mt-3 leading-7 text-slate-700">
-              Age provides context, but we choose the first skill from the child's actual sound and reading readiness. Explore two focused parent guides; the main Phonics programme remains the complete learning path for ages 3–12.
+              Age provides context, but we choose the first skill from the child's actual sound and reading readiness. Explore four differentiated age guides; the main Phonics programme remains the complete learning path for ages 3–12.
             </p>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Link to="/phonics/age-3" className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 transition hover:border-emerald-400 hover:bg-emerald-50">
+              <h3 className="text-lg font-bold text-slate-950">Phonics readiness at age 3</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Child-led listening, stories and playful sound exploration, without pressure to decode words.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-emerald-800 underline underline-offset-2">Explore the age-three guide</span>
+            </Link>
             <Link to="/phonics/age-4" className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 transition hover:border-orange-400 hover:bg-orange-50">
               <h3 className="text-lg font-bold text-slate-950">Phonics at age 4</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">Playful sound awareness, first letter–sound connections, and blending readiness.</p>
@@ -790,6 +795,11 @@ export default function PhonicsPage({
               <h3 className="text-lg font-bold text-slate-950">Phonics at age 5</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">Help for children who know letter sounds but struggle to blend and read unfamiliar words.</p>
               <span className="mt-3 inline-block text-sm font-semibold text-sky-900 underline underline-offset-2">Explore the age-five guide</span>
+            </Link>
+            <Link to="/phonics/age-6" className="rounded-2xl border border-violet-200 bg-violet-50/70 p-5 transition hover:border-violet-400 hover:bg-violet-50">
+              <h3 className="text-lg font-bold text-slate-950">Phonics at age 6</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Check decoding accuracy, digraphs, vowel patterns and reading transfer at the child's current level.</p>
+              <span className="mt-3 inline-block text-sm font-semibold text-violet-900 underline underline-offset-2">Explore the age-six guide</span>
             </Link>
           </div>
         </div>
