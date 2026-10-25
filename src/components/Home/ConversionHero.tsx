@@ -24,19 +24,12 @@ function ConversionHero() {
             We find the right starting point for your child, then build skills step by step.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+          <div className="mt-8 flex flex-wrap">
             <Link
               to="/book-demo"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
             >
               Book Free 35-Minute Demo
-            </Link>
-            <Link
-              to="/book-demo#assessment-form"
-              data-no-booking-intercept="1"
-              className="inline-flex min-h-12 items-center justify-center rounded-full border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-900 transition-colors hover:border-slate-500 hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
-            >
-              Open Assessment Form
             </Link>
           </div>
 
