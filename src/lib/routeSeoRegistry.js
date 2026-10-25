@@ -1,3 +1,4 @@
+import { HOMEPAGE_SEO_META } from './homeSeoMeta.js';
 import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 import { PHONICS_PUBLISHED_RESOURCE_SEO } from './phonicsPublicationRegistry.js';
 import { PHONICS_AGE_PROGRAMME_SEO } from './phonicsAgeProgrammeRegistry.js';
@@ -11,14 +12,7 @@ export const ROUTE_SEO_REGISTRY = {
   ...GRAMMAR_PROGRAMMATIC_RESOURCE_SEO,
   ...GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO,
   ...VOCABULARY_RESOURCE_SEO,
-  '/': {
-    title: 'Tiny Steps Learning | Online English Classes for Kids',
-    description:
-      'Live online English classes for kids aged 3–12. Explore phonics, reading, grammar and speaking at Tiny Steps Learning. Book a free 35-minute 1:1 demo.',
-    canonicalPath: '/',
-    ogType: 'website',
-    ogImage: '/og-default.jpg',
-  },
+  '/': HOMEPAGE_SEO_META,
   '/courses': {
     title: 'English Courses for Kids: Phonics, Grammar and Public Speaking | Tiny Steps Learning',
     description:
