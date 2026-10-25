@@ -18,10 +18,10 @@ const post: BlogPost = {
     { type: 'h2', content: 'Quick answer: build the sentence before trying to make it longer or more grammatical' },
     { type: 'p', content: 'If a child knows useful words but cannot turn them into a clear sentence, the first goal is not a longer answer or a bigger grammar worksheet. Start by helping the child express one complete idea in a stable order. Once the core sentence is secure, add one useful detail, connect related ideas, and then check whether the same structure survives in writing.' },
     { type: 'p', content: 'Sentence formation sits between **having an idea** and **expressing that idea clearly**. A child may know the vocabulary, understand the question and still need help deciding who or what the sentence is about, what is happening, which words belong together, and what order makes the meaning clear.' },
-    { type: 'p', content: 'Tiny Steps protects a four-stage sentence-formation checkpoint for this problem: **Oral sentence → Core structure → Expansion → Writing transfer**. The first stage that repeatedly breaks becomes the practice target. This is an editorial teaching framework, not a standardized language or writing assessment.' },
+    { type: 'p', content: 'A useful four-stage sentence-building check is **Oral sentence → Core structure → Expansion → Writing transfer**. Find the first stage where the child needs support and practise there. This educational guide is not a standardised language or writing assessment.' },
 
-    { type: 'h2', content: 'First separate sentence formation from the nearby English problems' },
-    { type: 'p', content: 'This page owns **building and expanding the sentence itself**. If your child can build the sentence but known grammar rules disappear during fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That article owns grammar transfer.' },
+    { type: 'h2', content: 'When sentence-building support is the right starting point' },
+    { type: 'p', content: 'This guide focuses on **building and expanding clear sentences**. If your child can already build a sentence but known grammar rules disappear in fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes) to practise applying those rules independently.' },
     { type: 'p', content: 'If the child already answers independently but the response stays unnecessarily brief, use [My Child Gives Only One-Word Answers](/blog/child-gives-one-word-answers). If the child understands the question but cannot initiate an independent response in class, use [My Child Understands English but Does Not Speak in Class](/blog/child-understands-english-but-does-not-speak). For the broader relationship between phonics, grammar and communication, use [How Phonics, Grammar and Communication Work Together](/blog/how-phonics-grammar-and-communication-work-together).' },
 
     { type: 'h2', content: 'What sentence formation actually requires' },
@@ -42,7 +42,7 @@ const post: BlogPost = {
     { type: 'h3', content: '6. Spoken sentence control does not yet transfer into writing' },
     { type: 'p', content: 'Some children can say a clear sentence but omit words, change word order or lose grammar when writing it. That does not mean the oral work failed; it shows that transcription and writing load are changing performance.' },
 
-    { type: 'h2', content: 'The protected Tiny Steps four-stage sentence-formation check' },
+    { type: 'h2', content: 'A four-step check for building clearer sentences' },
     { type: 'p', content: 'Use a familiar picture, event or topic so difficult background knowledge is not the hidden problem. Check one stage at a time and avoid correcting several unrelated features during the same attempt.' },
     { type: 'h3', content: 'Stage 1 — Oral sentence check' },
     { type: 'p', content: 'Can the child describe one familiar picture, action or idea in a complete understandable sentence without an adult finishing it? The sentence does not have to be sophisticated. First establish whether the child can hold and express one complete thought.' },

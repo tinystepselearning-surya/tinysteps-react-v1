@@ -1,0 +1,53 @@
+name: TSSA-SCQ Phase 0 Semantic Content Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/EnglishClassesFor5YearOldPage.tsx'
+      - 'src/pages/public/ShyChildSpeakingConfidencePage.tsx'
+      - 'src/pages/grammar.tsx'
+      - 'src/pages/CourseDetailPage.tsx'
+      - 'src/pages/BlogPostPage.tsx'
+      - 'src/content/blog/posts/parent-tips/why-child-knows-letter-sounds-but-cannot-read-words.ts'
+      - 'src/content/blog/posts/parent-tips/how-to-improve-sentence-formation-in-kids.ts'
+      - 'src/content/blog/posts/parent-tips/child-knows-grammar-but-makes-mistakes.ts'
+      - 'src/content/blog/posts/parent-tips/child-understands-english-but-does-not-speak.ts'
+      - 'src/content/blog/posts/public-speaking/how-to-teach-storytelling-to-kids.ts'
+      - 'src/config/semanticFacts.ts'
+      - 'scripts/prerender.mjs'
+      - 'scripts/test/tssa-scq-phase0-rendered.node-test.mjs'
+      - '.github/workflows/tssa-scq-phase0-content-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tssa-scq-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-content:
+    name: Validate all 13 owner pages from production-style HTML (no deploy)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate source types
+        run: npm run typecheck
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Generate complete hosting HTML artifact without deploying
+        run: npm run build:deploy
+      - name: Validate 13 semantic owners, metadata, schema and parent copy
+        run: node --test scripts/test/tssa-scq-phase0-rendered.node-test.mjs
+      - name: Confirm read-only publication policy
+        run: echo "No deployment, URL indexing action, or external AI citation claim."
