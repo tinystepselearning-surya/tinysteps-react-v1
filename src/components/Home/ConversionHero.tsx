@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom';
 
 const HERO_IMAGE = '/blog/hero-families/Tiny_Steps_Speaking.webp';
 
+const HERO_PROGRAMME_LINK_CLASS =
+  'rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-[5px] transition-colors duration-150 hover:bg-[#FFF1E6] hover:text-[#9B4300] hover:decoration-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]';
+
 function ConversionHero() {
   return (
     <section aria-labelledby="homepage-title" className="relative overflow-hidden bg-white">
@@ -20,8 +23,14 @@ function ConversionHero() {
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg sm:leading-9">
-            Live 1:1 and small-group learning in phonics, reading, grammar and communication.
-            We find the right starting point for your child, then build skills step by step.
+            Live 1:1 online English classes, with small-group options where suitable. Explore{' '}
+            <Link to="/phonics" className={HERO_PROGRAMME_LINK_CLASS}>phonics</Link>,{' '}
+            <Link to="/reading-classes-for-kids" className={HERO_PROGRAMME_LINK_CLASS}>reading</Link>,{' '}
+            <Link to="/grammar" className={HERO_PROGRAMME_LINK_CLASS}>grammar</Link>,{' '}
+            <Link to="/spoken-english-classes-for-kids-online" className={HERO_PROGRAMME_LINK_CLASS}>spoken English</Link>{' '}
+            and{' '}
+            <Link to="/speaking" className={HERO_PROGRAMME_LINK_CLASS}>public speaking</Link>—with
+            a learning path matched to your child's needs.
           </p>
 
           <div className="mt-8 flex flex-wrap">
