@@ -49,6 +49,21 @@ describe('FloatingAssistant', () => {
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
   })
 
+  it('hides the dock on homepage booking section without closing an open chat', async () => {
+    const utils = await renderWidget();
+    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }));
+    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0);
+
+    utils.rerender(
+      <MemoryRouter initialEntries={['/']}>
+        <FloatingAssistant suppressDock />
+      </MemoryRouter>,
+    );
+
+    expect(document.querySelector('[data-floating-assistant="1"]')).toHaveClass('hidden');
+    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0);
+  });
+
   it('stays compact on dense Speaking curriculum course pages', async () => {
     await renderWidget('/courses/public-speaking-foundations')
 
