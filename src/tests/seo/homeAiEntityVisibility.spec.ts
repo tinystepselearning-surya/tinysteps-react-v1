@@ -328,11 +328,41 @@ describe('homepage premium gateway', () => {
     expect(backToTop).toContain("prefers-reduced-motion: reduce");
   });
 
-  it('provides links to deeper resources and legal-page access through existing footer', () => {
-    for (const destination of ['/curriculum', '/class-samples', '/pricing', '/resources', '/blog', '/faq']) {
+  it('keeps all six deep destinations without duplicating the previewed pages in Explore', () => {
+    for (const destination of ['/curriculum', '/resources', '/blog']) {
       expect(home).toContain("path: '" + destination + "'");
     }
+    for (const destination of ['/class-samples', '/pricing#standard-pricing', '/faq']) {
+      expect(home).toContain('to="' + destination + '"');
+    }
     expect(home).toContain('to="/why-tiny-steps"');
+    const explore = home.slice(home.indexOf('const exploreLinks = ['), home.indexOf('function LearningPathwaysSection()'));
+    expect(explore).not.toContain("path: '/class-samples'");
+    expect(explore).not.toContain("path: '/pricing'");
+    expect(explore).not.toContain("path: '/faq'");
+  });
+
+  it('provides useful class samples, canonical standard pricing and a compact collapsed FAQ', () => {
+    const decisions = home.slice(home.indexOf('function BeforeYouBookSection()'), home.indexOf('function ExploreSection()'));
+    expect(decisions).toContain('aria-labelledby="before-you-book-title"');
+    expect(decisions).toContain('See how Tiny Steps classes actually work.');
+    expect(decisions).toContain('to="/class-samples"');
+    expect(decisions).toContain('Real class samples');
+    expect(decisions).toContain('ONE_TO_ONE_MONTHLY_PACKAGES.map((plan)');
+    expect(decisions).toContain('formatINR(plan.monthlyFee)');
+    expect(decisions).toContain('formatINR(PER_CLASS_PRICE)');
+    expect(decisions).toContain('to="/pricing#standard-pricing"');
+    expect(decisions).toContain('Standard plans only.');
+    expect(decisions).not.toContain('ULTRA_PREMIUM_PRICING');
+    expect(decisions).toContain('to="/faq"');
+    expect(decisions.match(/<details className="group py-3">/g)).toHaveLength(3);
+    expect(decisions).not.toContain(' defaultOpen');
+    expect(decisions).not.toContain(' open=');
+    expect(decisions).toContain('What happens in the free demo?');
+    expect(decisions).toContain('Are classes live or recorded?');
+    expect(decisions).toContain('How can parents follow progress?');
+    expect(home).not.toContain('FAQPage');
+    expect(home).not.toContain('createFAQPageSchema');
   });
 
   it('renders essential sections without interaction- or idle-dependent mounting', () => {
@@ -341,6 +371,7 @@ describe('homepage premium gateway', () => {
       '<LearningPathwaysSection />',
       '<DifferenceSection />',
       '<TechnologySection />',
+      '<BeforeYouBookSection />',
       '<ExploreSection />',
       '<FinalInvitationSection />',
     ].map((chapter) => home.indexOf(chapter));
