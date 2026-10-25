@@ -2,9 +2,9 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo } from '../../lib/seo';
 import { createFAQPageSchema } from '../../lib/schemas';
-import { getPublishedPhonicsAgeProgramme } from '../../lib/phonicsAgeProgrammeRegistry.js';
+import { getPublishedPhonicsAgeProgramme, PHONICS_AGE_PROGRAMME_PAGES } from '../../lib/phonicsAgeProgrammeRegistry.js';
 
-type Props = { age: 4 | 5 };
+type Props = { age: 3 | 4 | 5 | 6 };
 
 const pill = 'inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900';
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6';
@@ -34,7 +34,7 @@ export default function PhonicsByAgePage({ age }: Props) {
   }, [page]);
 
   if (!page) return null;
-  const siblingAge = age === 4 ? 5 : 4;
+  const relatedAges = PHONICS_AGE_PROGRAMME_PAGES.filter((item) => item.age !== age);
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50/70 via-white to-sky-50/40 text-slate-900">
@@ -143,7 +143,9 @@ export default function PhonicsByAgePage({ age }: Props) {
           <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
             <Link to={page.coursePath} className="rounded-full bg-white px-5 py-3 text-slate-900 shadow-sm underline underline-offset-2">{page.courseLabel}</Link>
             <Link to={page.broaderAgePath} className="rounded-full bg-white px-5 py-3 text-slate-900 shadow-sm underline underline-offset-2">{page.broaderAgeLabel}</Link>
-            <Link to={`/phonics/age-${siblingAge}`} className="rounded-full bg-white px-5 py-3 text-slate-900 shadow-sm underline underline-offset-2">Phonics at age {siblingAge}</Link>
+            {relatedAges.map((other) => (
+              <Link key={other.path} to={other.path} className="rounded-full bg-white px-5 py-3 text-slate-900 shadow-sm underline underline-offset-2">Phonics at age {other.age}</Link>
+            ))}
           </div>
         </section>
       </div>
