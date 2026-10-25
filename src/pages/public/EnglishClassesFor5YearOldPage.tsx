@@ -7,12 +7,12 @@ const faqItems = [
   {
     question: 'What should a 5-year-old learn in online English classes?',
     answer:
-      'At age 5, children should focus on letter sounds, blending readiness, early reading, vocabulary growth, simple sentence formation, and confident responses.',
+      'At age 5, children can be at different stages. Some benefit from sound–letter knowledge and blending practice, while others are ready for early reading, vocabulary, sentence-building or speaking activities.',
   },
   {
     question: 'Is age 5 the right time to start phonics?',
     answer:
-      'Yes. Age 5 is a strong stage to begin or strengthen phonics, especially when classes are interactive and focused on sounds, blending, and early reading confidence.',
+      'Age 5 can be a good time to begin or strengthen phonics, but the right starting point depends on the child’s current sound knowledge and reading readiness. Interactive practice can be adapted to that stage.',
   },
   {
     question: 'What if my 5-year-old knows letters but cannot read words?',
@@ -79,60 +79,60 @@ export default function EnglishClassesFor5YearOldPage() {
       <section className="mb-10 rounded-xl border border-sky-100 bg-sky-50 p-6">
         <h2 className="mb-2 text-lg font-bold text-slate-900">Quick Answer for Parents</h2>
         <p className="text-slate-700">
-          At age 5, children should move from letter familiarity to blending, early reading, and simple sentence confidence. The best results come from interactive, age-appropriate classes with step-by-step guidance.
+          Five-year-olds can be at different stages of English learning. Some are developing sound–letter knowledge, others are beginning to blend and read simple words, and some are ready for more complex reading or sentence activities. Teaching should begin with the child's current skills, interests and confidence rather than age alone.
         </p>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Who this page is for</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Parents of 5-year-olds who need structured early English support.</li>
-          <li>• Children who know some letters but are not yet reading confidently.</li>
-          <li>• Children who give short answers and need sentence confidence.</li>
-          <li>• Families looking for a clear next step before choosing a full program.</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Parents of 5-year-olds who need structured early English support.</li>
+          <li>Children who know some letters but are not yet reading confidently.</li>
+          <li>Children who give short answers and need sentence confidence.</li>
+          <li>Families looking for a clear next step before choosing a full program.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">What a 5-year-old usually needs at this stage</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Sound recall that is consistent (not only letter-name recitation).</li>
-          <li>• Blending practice for short words with less guessing.</li>
-          <li>• Early sentence reading confidence through decodable text.</li>
-          <li>• Vocabulary and sentence-speaking routines for classroom participation.</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Sound recall that is consistent (not only letter-name recitation).</li>
+          <li>Blending practice for short words with less guessing.</li>
+          <li>Early sentence reading confidence through decodable text.</li>
+          <li>Vocabulary and sentence-speaking routines for classroom participation.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Common parent concerns at age 5</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Letter sounds are inconsistent even though alphabet names are known.</li>
-          <li>• Blending readiness is low and word reading remains effortful.</li>
-          <li>• Child gives short answers and avoids longer responses.</li>
-          <li>• Vocabulary range is limited during conversation.</li>
-          <li>• Attention span drops when tasks are too long or repetitive.</li>
-          <li>• Confidence decreases when reading or answering in class-like settings.</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Letter sounds are inconsistent even though alphabet names are known.</li>
+          <li>Blending readiness is low and word reading remains effortful.</li>
+          <li>Child gives short answers and avoids longer responses.</li>
+          <li>Vocabulary range is limited during conversation.</li>
+          <li>Attention span drops when tasks are too long or repetitive.</li>
+          <li>Confidence decreases when reading or answering in class-like settings.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-emerald-100 bg-emerald-50 p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">What Tiny Steps teaches for 5-year-olds</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Letter sounds and blending foundations for early reading readiness.</li>
-          <li>• Age-appropriate vocabulary building through guided interaction.</li>
-          <li>• Simple sentence formation for clearer responses.</li>
-          <li>• Early reading routines that reduce guessing and build confidence.</li>
-          <li>• Communication practice for confident short classroom-style answers.</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Letter sounds and blending foundations for early reading readiness.</li>
+          <li>Age-appropriate vocabulary building through guided interaction.</li>
+          <li>Simple sentence formation for clearer responses.</li>
+          <li>Early reading routines that reduce guessing and build confidence.</li>
+          <li>Communication practice for confident short classroom-style answers.</li>
         </ul>
       </section>
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">How we keep classes interactive and age-appropriate</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Short, focused learning segments that match age-5 attention patterns.</li>
-          <li>• Guided prompts and visual cues to support comprehension and participation.</li>
-          <li>• Frequent response opportunities instead of passive listening.</li>
-          <li>• Positive correction and repeat practice to build confidence gradually.</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Short, focused learning segments that match age-5 attention patterns.</li>
+          <li>Guided prompts and visual cues to support comprehension and participation.</li>
+          <li>Frequent response opportunities instead of passive listening.</li>
+          <li>Positive correction and repeat practice to build confidence gradually.</li>
         </ul>
       </section>
 
@@ -145,12 +145,12 @@ export default function EnglishClassesFor5YearOldPage() {
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-slate-50 p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">What we check in the assessment</h2>
-        <ul className="space-y-2 text-slate-700">
-          <li>• Letter-sound stability and blending readiness</li>
-          <li>• Early reading behavior and decoding confidence</li>
-          <li>• Vocabulary use and response length</li>
-          <li>• Sentence formation quality for age-appropriate speaking</li>
-          <li>• Confidence and participation patterns in guided tasks</li>
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
+          <li>Letter-sound stability and blending readiness</li>
+          <li>Early reading behavior and decoding confidence</li>
+          <li>Vocabulary use and response length</li>
+          <li>Sentence formation quality for age-appropriate speaking</li>
+          <li>Confidence and participation patterns in guided tasks</li>
         </ul>
       </section>
 
@@ -168,39 +168,39 @@ export default function EnglishClassesFor5YearOldPage() {
 
       <section className="mb-10 rounded-xl border border-slate-200 bg-white p-6">
         <h2 className="mb-4 text-2xl font-bold text-slate-900">Relevant next-step links</h2>
-        <ul className="space-y-2 text-slate-700">
+        <ul className="list-disc space-y-2 pl-5 text-slate-700">
           <li>
-            • For focused phonics support:{' '}
+            For focused phonics support:{' '}
             <Link to="/phonics" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Phonics Program
             </Link>
           </li>
           <li>
-            • For reading-readiness progression:{' '}
+            For reading-readiness progression:{' '}
             <Link to="/reading-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Reading Classes for Kids
             </Link>
           </li>
           <li>
-            • For age progression after this stage:{' '}
+            For age progression after this stage:{' '}
             <Link to="/english-classes-for-7-10-year-old" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               English Classes for 7-10 Year Old
             </Link>
           </li>
           <li>
-            • For broader national pathway overview:{' '}
+            For a broader English programme overview:{' '}
             <Link to="/online-english-classes-for-kids" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Online English Classes for Kids in India
             </Link>
           </li>
           <li>
-            • For course comparison before enrollment:{' '}
+            For course comparison before enrollment:{' '}
             <Link to="/courses" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Explore Courses
             </Link>
           </li>
           <li>
-            • For immediate assessment booking:{' '}
+            For immediate assessment booking:{' '}
             <Link to="/book-demo" className="font-semibold underline underline-offset-2 hover:text-slate-900">
               Book Free 35-Minute Demo
             </Link>
