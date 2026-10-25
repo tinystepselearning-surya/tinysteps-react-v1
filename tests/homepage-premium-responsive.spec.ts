@@ -124,9 +124,15 @@ for (const viewport of viewports) {
 
     const image = hero.locator('img[src="/blog/hero-families/Tiny_Steps_Speaking.webp"]');
     await expect(image).toBeVisible();
+    await expect(image).toHaveAttribute('srcset', /Tiny_Steps_Speaking_720\.webp 720w/);
     await expect
       .poll(() => image.evaluate((element) => (element as HTMLImageElement).naturalWidth))
       .toBeGreaterThan(0);
+    // Whether the browser selects a right-sized WebP or the original high-DPR fallback,
+    // it must actually decode and paint an asset at every approved viewport.
+    await expect
+      .poll(() => image.evaluate((element) => (element as HTMLImageElement).currentSrc))
+      .toMatch(/Tiny_Steps_Speaking(?:_480|_720|_960)?\.webp$/);
 
     await hero.getByRole('link', { name: /Explore our learning pathways/i }).click();
     await expect(page).toHaveURL(/#learning-pathways$/);
