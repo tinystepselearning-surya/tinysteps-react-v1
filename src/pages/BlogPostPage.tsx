@@ -480,7 +480,7 @@ const AUTHORITY_BATCH_2_TOC_PREFIXES: Record<string, string[]> = {
     'Quick answer:',
     'First check whether your child struggles to start speaking or to expand an answer',
     'The Tiny Steps six-question cause map for one-word answers',
-    'The protected Tiny Steps answer-expansion checkpoint',
+    'A three-step check for building fuller answers',
     'Use the smallest prompt that works',
     'A short home routine that keeps conversation natural',
     'How to measure progress without counting words alone',
