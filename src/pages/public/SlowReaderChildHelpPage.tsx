@@ -169,6 +169,13 @@ export default function SlowReaderChildHelpPage() {
             </p>
           </article>
         </div>
+        <p className="mt-4 text-sm leading-7 text-slate-700">
+          If decoding is accurate but still slow or word-by-word, see our
+          <Link to="/blog/how-to-improve-reading-fluency-in-children" className="ml-1 font-semibold underline underline-offset-2">parent guide to reading fluency</Link>.
+          For a child who continues sounding out familiar words, read how
+          <Link to="/blog/how-children-recognise-words-automatically-after-phonics" className="ml-1 font-semibold underline underline-offset-2">accurate decoding becomes quicker word recognition</Link>.
+          If unfamiliar words are still guessed or misread, strengthen the taught phonics patterns before focusing on speed.
+        </p>
         <div className="mt-4 flex flex-wrap gap-4 text-sm font-semibold">
           <Link to="/phonics" className="underline underline-offset-2">Explore Phonics Support</Link>
           <Link to="/reading-classes-for-kids" className="underline underline-offset-2">Explore Reading Classes</Link>
