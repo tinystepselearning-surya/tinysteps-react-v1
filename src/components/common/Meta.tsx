@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import type { FC } from 'react';
 import { ORGANIZATION_SAME_AS_URLS } from '../../config/semanticFacts';
-import { applySeo } from '../../lib/seo';
+import { applySeo } from '../../lib/seoRuntime';
 import { organizationSchema } from '../../lib/schemas';
 
 type MetaProps = {
