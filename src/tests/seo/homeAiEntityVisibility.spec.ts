@@ -65,6 +65,30 @@ describe('homepage premium gateway', () => {
     expect(form).toContain('navigateToWhatsapp(whatsappWindow, whatsappUrl)');
   });
 
+  it('links each hero learning phrase to its canonical specialist programme', () => {
+    const expected = [
+      ['/phonics', 'phonics'],
+      ['/reading-classes-for-kids', 'reading'],
+      ['/grammar', 'grammar'],
+      ['/spoken-english-classes-for-kids-online', 'spoken English'],
+      ['/speaking', 'public speaking'],
+    ] as const;
+
+    for (const [destination, label] of expected) {
+      expect(hero).toContain(
+        `<Link to="${destination}" className={HERO_PROGRAMME_LINK_CLASS}>${label}</Link>`,
+      );
+    }
+
+    expect(hero.match(/className=\{HERO_PROGRAMME_LINK_CLASS\}/g)).toHaveLength(5);
+    expect(hero).toContain('decoration-[#FF7A00]');
+    expect(hero).toContain('underline-offset-[5px]');
+    expect(hero).toContain('hover:bg-[#FFF1E6]');
+    expect(hero).toContain('focus-visible:outline');
+    expect(hero).toContain('Live 1:1 online English classes');
+    expect(hero).toContain('small-group options where suitable');
+  });
+
   it('keeps a single prominent assessment CTA using the existing modal flow', () => {
     expect(hero).toContain('to="/book-demo"');
     expect(hero.match(/to="\/book-demo"/g)).toHaveLength(1);
