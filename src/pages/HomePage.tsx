@@ -105,14 +105,14 @@ function LearningPathwaysSection() {
             >
               <span
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-x-6 top-0 h-[3px] origin-left scale-x-0 rounded-full bg-[#FF7A00] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-x-100 group-focus-visible:scale-x-100"
+                className="pointer-events-none absolute inset-x-6 top-0 h-[3px] origin-left scale-x-0 rounded-full bg-[#FF7A00] motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:scale-x-100 motion-safe:group-focus-visible:scale-x-100"
               />
-              <h3 className="text-2xl font-semibold tracking-[-0.035em] text-[#102A43] transition-colors group-hover:text-[#9B4300]">{path.label}</h3>
+              <h3 className="text-2xl font-semibold tracking-[-0.035em] text-[#102A43] motion-safe:transition-colors group-hover:text-[#9B4300]">{path.label}</h3>
               <p className="mt-4 flex-1 text-[15px] leading-7 text-slate-600">{path.description}</p>
               <span className="mt-6 inline-flex items-center gap-3 text-base font-semibold text-[#102A43]">
                 Explore
-                <span className="inline-flex size-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50 text-[#9B4300] transition-colors group-hover:border-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-[#102A43]" aria-hidden="true">
-                  <span className="motion-safe:transition-transform motion-safe:duration-300 group-hover:translate-x-[2px] group-hover:-translate-y-[2px]">↗</span>
+                <span className="inline-flex size-8 items-center justify-center rounded-full border border-orange-200 bg-orange-50 text-[#9B4300] motion-safe:transition-colors group-hover:border-[#FF7A00] group-hover:bg-[#FF7A00] group-hover:text-[#102A43]" aria-hidden="true">
+                  <span className="motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:translate-x-[2px] motion-safe:group-hover:-translate-y-[2px]">↗</span>
                 </span>
               </span>
             </Link>
