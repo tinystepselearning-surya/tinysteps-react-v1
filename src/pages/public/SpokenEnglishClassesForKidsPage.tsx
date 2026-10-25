@@ -381,7 +381,7 @@ export default function SpokenEnglishClassesForKidsPage() {
                 <Link to="/online-english-classes-hyderabad" className="font-semibold underline underline-offset-4">
                   broad Hyderabad English page
                 </Link>{' '}
-                remains the local programme chooser.
+                is a useful starting point for local families.
               </p>
               <p>
                 Families elsewhere in India and internationally can explore the same online Spoken English programme, subject to compatible teacher timings and learning needs.
