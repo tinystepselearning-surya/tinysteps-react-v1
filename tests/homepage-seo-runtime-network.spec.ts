@@ -18,5 +18,20 @@ test('homepage does not fetch specialist route SEO manifests on initial load', a
 
   // The actual browser must still expose the canonical metadata and structured data.
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://tinystepslearning.com/');
-  await expect(page.locator('#ts-jsonld')).toContainText('Organization');
+  // Playwright's toContainText uses rendered innerText for script elements;
+  // read the JSON-LD script's raw textContent and validate parsed schema types.
+  await expect.poll(async () => {
+    const raw = await page.locator('script#ts-jsonld[type="application/ld+json"]').textContent();
+    if (!raw) return false;
+    try {
+      const graph = JSON.parse(raw);
+      const nodes = Array.isArray(graph) ? graph : [graph];
+      return nodes.some((node) => {
+        const types = Array.isArray(node?.['@type']) ? node['@type'] : [node?.['@type']];
+        return types.some((type: unknown) => typeof type === 'string' && type.includes('Organization'));
+      });
+    } catch {
+      return false;
+    }
+  }).toBe(true);
 });
