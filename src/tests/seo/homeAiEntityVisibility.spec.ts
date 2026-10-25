@@ -287,6 +287,34 @@ describe('homepage premium gateway', () => {
     expect(footer).toContain("label: 'Refund & Guarantee'");
   });
 
+  it('keeps the homepage footer concise without generic trust claims or personal credits', () => {
+    expect(footer).toContain("!isHomePage ? (");
+    expect(footer).toContain('SSL Secure');
+    expect(footer).toContain('UPI / Cards / Netbanking');
+    expect(footer).toContain("link.label !== 'Pinterest'");
+    expect(footer).toContain("'© 2026 Tiny Steps Learning. All rights reserved.'");
+    expect(footer).toContain("label: 'Privacy Policy'");
+    expect(footer).toContain("label: 'Terms & Conditions'");
+    expect(footer).toContain("label: 'Refund & Guarantee'");
+  });
+
+  it('spaces the two supporting programme pathways for readable mobile navigation', () => {
+    expect(home).toContain('mt-7 flex flex-col gap-x-10 gap-y-3 text-sm leading-7');
+    expect(home).toContain('sm:flex-row sm:flex-wrap');
+    expect(home).toContain('Explore Spoken English Classes');
+    expect(home).toContain('Browse all courses');
+  });
+
+  it('keeps homepage assistant animation quiet and honours reduced motion', () => {
+    expect(floatingAssistant).toContain("useReducedMotion");
+    expect(floatingAssistant).toContain("quietDock = pathname === '/'");
+    expect(floatingAssistant).toContain('askOpen || quietDock');
+    expect(floatingAssistant).toContain('!quietDock && isExpanded');
+    expect(floatingAssistant).toContain("quietDock ? '' : 'animate-ping'");
+    expect(floatingAssistant).toContain('transition={quietDock ? { duration: 0 }');
+    expect(floatingAssistant).toContain('suppressDock = false');
+  });
+
   it('keeps fixed support widgets away from the final homepage booking area', () => {
     expect(routes).toContain("normalizedPath !== '/' || hideMarketingChrome");
     expect(routes).toContain("document.getElementById('homepage-final-invitation')");
