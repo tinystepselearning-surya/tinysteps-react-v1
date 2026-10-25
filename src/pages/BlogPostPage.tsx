@@ -416,7 +416,7 @@ const AUTHORITY_PILOT_TOC_PREFIXES: Record<string, string[]> = {
   'child-understands-english-but-does-not-speak': [
     'Quick answer:',
     'Why a child may understand English',
-    'The protected Tiny Steps four-stage understanding-to-speaking check',
+    'A four-step check for moving from understanding to speaking',
     'Confidence, language or both?',
     'A low-pressure home routine',
     'How to measure progress',
