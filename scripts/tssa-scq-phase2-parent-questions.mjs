@@ -91,6 +91,20 @@ for(const c of commercial){
   interpretation:'Distinct buyer intent does not imply page cannibalisation'});
 }
 if(results.length!==40||buyers.length!==9)die('Unexpected missing rows: '+results.length+' '+buyers.length);
+const childAnswersHtml=read('dist/blog/child-gives-one-word-answers/index.html');
+const childAnswersDoc=new JSDOM(childAnswersHtml,{url:origin+'/blog/child-gives-one-word-answers'}).window.document;
+const expectedHeading='A three-step check for building fuller answers';
+const childAnswersHeading=[...childAnswersDoc.querySelectorAll('h2')]
+  .find(h=>clean(h.textContent)===expectedHeading);
+// AuthorityBlogExperience anchors the surrounding section, not its H2.
+const targetId=childAnswersHeading?.closest('section[id]')?.id || childAnswersHeading?.id;
+if(!targetId)die('Child answer expansion heading was not prerendered within an anchored section');
+const tocMatch=[...childAnswersDoc.querySelectorAll('nav a[href^="#"]')]
+  .find(a=>a.getAttribute('href')==='#'+targetId && clean(a.textContent).includes(expectedHeading));
+if(!tocMatch)die('Child answer expansion table of contents entry absent or broken');
+if(childAnswersDoc.body.textContent.includes('The protected Tiny Steps answer-expansion checkpoint') ||
+   childAnswersDoc.body.textContent.includes('Tiny Steps protects a simple response-expansion checkpoint'))
+  die('Obsolete internal checkpoint wording leaked into prerender');
 const quote=v=>'"'+String(v??'').replace(/^[=+@-]/,m=>"'"+m).replaceAll('"','""')+'"';
 const exportRows=(file,items,fields)=>fs.writeFileSync(path.join(out,file),
  [fields.join(','),...items.map(i=>fields.map(f=>quote(i[f])).join(','))].join('\n')+'\n');
