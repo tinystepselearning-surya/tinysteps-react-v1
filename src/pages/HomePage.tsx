@@ -17,10 +17,11 @@ const homeWebPageSchema = {
   mainEntity: { '@id': PUBLIC_FACTS.primaryWebsite + '/#educational-organization' },
   about: [
     { '@type': 'Thing', name: 'Online English learning for children' },
-    { '@type': 'Thing', name: 'Phonics and word reading' },
-    { '@type': 'Thing', name: 'Reading fluency and comprehension' },
+    { '@type': 'Thing', name: 'Letter sounds, phonics, blending, decoding and spelling' },
+    { '@type': 'Thing', name: 'Reading fluency, vocabulary and comprehension' },
     { '@type': 'Thing', name: 'Grammar and sentence building' },
-    { '@type': 'Thing', name: 'Speaking and communication' },
+    { '@type': 'Thing', name: 'Spoken English and everyday conversation' },
+    { '@type': 'Thing', name: 'Public speaking and communication skills' },
   ],
   audience: {
     '@type': 'EducationalAudience',
@@ -35,45 +36,45 @@ const learningPaths = [
   {
     number: '01',
     label: 'Phonics',
-    description: 'From letter sounds and blending to more independent word reading.',
+    description: 'Letter sounds, sound–letter patterns, blending, decoding and spelling for more independent word reading.',
     path: '/phonics',
     action: 'Explore phonics',
   },
   {
     number: '02',
     label: 'Reading',
-    description: 'Develop reading fluency, comprehension and confidence with texts.',
+    description: 'Build reading accuracy, fluency, vocabulary, comprehension and confidence with texts.',
     path: '/reading-classes-for-kids',
     action: 'Explore reading',
   },
   {
     number: '03',
     label: 'Grammar',
-    description: 'Use grammar and sentence-building skills for clearer expression.',
+    description: 'Understand grammar, build clear sentences and apply language rules in speaking and writing.',
     path: '/grammar',
     action: 'Explore grammar',
   },
   {
     number: '04',
-    label: 'Speaking',
-    description: 'Build clearer answers, storytelling and communication with others.',
+    label: 'Public Speaking',
+    description: 'Develop storytelling, organised answers, presentation skills and confident communication.',
     path: '/speaking',
-    action: 'Explore speaking',
+    action: 'Explore public speaking',
   },
 ];
 
 const reasons = [
   {
-    label: 'A starting point that fits',
-    description: 'We assess current skills before recommending the most relevant programme.',
+    label: 'Age-aware, skill-led placement',
+    description: 'We consider the child’s age, current skills and readiness before recommending a useful starting point.',
   },
   {
-    label: 'Real teacher interaction',
-    description: 'Live lessons give children opportunities to respond, practise and try again.',
+    label: 'Purposeful, engaging activities',
+    description: 'Teachers use stories, questions, guided practice and feedback to help children think, participate and apply new skills.',
   },
   {
-    label: 'Progress parents can follow',
-    description: 'Learning goals and parent updates help make the next step understandable.',
+    label: 'Individual pace, visible progress',
+    description: 'Teachers adjust their support as children grow more independent, with clear learning goals and next steps for parents.',
   },
 ];
 
@@ -92,10 +93,10 @@ function LearningPathwaysSection() {
       <div className="mx-auto max-w-6xl">
         <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">Find the right direction</p>
         <h2 id="learning-pathways-title" className="mt-3 max-w-2xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
-          One child. One clear next step.
+          From first sounds to confident communication.
         </h2>
         <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-          Explore our four core learning areas. Each programme page explains the skills, teaching approach and options in detail.
+          From letter sounds, phonics, blending and spelling to reading, vocabulary, comprehension, grammar, sentence building, spoken English and public speaking, Tiny Steps brings English learning together in one place. Children begin with what they need, not a fixed age-based sequence.
         </p>
         <div className="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {learningPaths.map((path) => (
@@ -114,7 +115,7 @@ function LearningPathwaysSection() {
           ))}
         </div>
         <p className="mt-6 text-sm leading-7 text-slate-600">
-          Need everyday conversation practice? <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Explore Spoken English</Link>.
+          Need everyday conversation practice? <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Explore Spoken English Classes</Link>.
           {' '}Looking for more courses? <Link to="/courses" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Browse all courses</Link>.
         </p>
       </div>
@@ -130,6 +131,9 @@ function DifferenceSection() {
         <h2 id="difference-title" className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
           Thoughtful learning, without the guesswork.
         </h2>
+        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          Child-centred teaching means helping each learner understand, practise and use English with growing independence—not simply memorise rules or rush through lessons.
+        </p>
         <div className="mt-10 grid gap-8 border-t border-slate-200 pt-8 md:grid-cols-3">
           {reasons.map((reason, index) => (
             <article key={reason.label}>
@@ -139,7 +143,10 @@ function DifferenceSection() {
             </article>
           ))}
         </div>
-        <Link to="/why-tiny-steps" className="mt-9 inline-block text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
+        <p className="mt-9 max-w-4xl border-t border-slate-200 pt-6 text-sm leading-7 text-slate-600">
+          Our transferable English skills support children studying in CBSE, ICSE, IB, Cambridge and other school environments. Tiny Steps is an independent learning provider, not formally affiliated with these school systems.
+        </p>
+        <Link to="/why-tiny-steps" className="mt-6 inline-block text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
           See how Tiny Steps teaches <span aria-hidden="true">↗</span>
         </Link>
       </div>
