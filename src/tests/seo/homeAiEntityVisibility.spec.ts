@@ -287,12 +287,12 @@ describe('homepage premium gateway', () => {
     expect(footer).toContain("label: 'Refund & Guarantee'");
   });
 
-  it('keeps the homepage footer concise without generic trust claims or personal credits', () => {
+  it('keeps the homepage footer concise while preserving the original Surya credit', () => {
     expect(footer).toContain("!isHomePage ? (");
     expect(footer).toContain('SSL Secure');
     expect(footer).toContain('UPI / Cards / Netbanking');
     expect(footer).toContain("link.label !== 'Pinterest'");
-    expect(footer).toContain("'© 2026 Tiny Steps Learning. All rights reserved.'");
+    expect(footer).toContain('© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.');
     expect(footer).toContain("label: 'Privacy Policy'");
     expect(footer).toContain("label: 'Terms & Conditions'");
     expect(footer).toContain("label: 'Refund & Guarantee'");
