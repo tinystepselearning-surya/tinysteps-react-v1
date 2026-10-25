@@ -60,6 +60,13 @@ function ConversionHero() {
           <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-[#F7F4F0] shadow-[0_16px_50px_rgba(15,23,42,0.07)]">
             <img
               src={HERO_IMAGE}
+              srcSet={[
+                '/blog/hero-families/Tiny_Steps_Speaking_480.webp 480w',
+                '/blog/hero-families/Tiny_Steps_Speaking_720.webp 720w',
+                '/blog/hero-families/Tiny_Steps_Speaking_960.webp 960w',
+                `${HERO_IMAGE} 1131w`,
+              ].join(', ')}
+              sizes="(max-width: 639px) calc(100vw - 40px), (max-width: 1023px) min(calc(100vw - 64px), 560px), 45vw"
               alt="A child speaking confidently while using a laptop at home"
               width={1200}
               height={1000}
