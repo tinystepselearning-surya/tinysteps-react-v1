@@ -22,10 +22,24 @@ describe('FloatingAssistant', () => {
     useAuthStore.setState({ user: null })
     window.history.replaceState({}, '', '/')
     vi.useRealTimers()
+    vi.unstubAllGlobals()
 
     // @ts-ignore
     global.requestAnimationFrame = rafBackup
   })
+
+  const enableMobileViewport = () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(max-width: 639px)',
+      media: query,
+      onchange: null,
+      addListener: vi.fn(),
+      removeListener: vi.fn(),
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+      dispatchEvent: vi.fn(),
+    }));
+  }
 
   const renderWidget = async (path = '/', user: any = null) => {
     act(() => useAuthStore.setState({ user }))
@@ -117,6 +131,62 @@ describe('FloatingAssistant', () => {
     })
     expect(screen.queryByText('Live assistant')).toBeNull()
     expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('briefly previews mobile help twice and then stays collapsed', async () => {
+    enableMobileViewport()
+    await renderWidget('/')
+    const launcher = () => screen.getByRole('button', { name: /support options/i })
+
+    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+    act(() => vi.advanceTimersByTime(9999))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+
+    act(() => vi.advanceTimersByTime(1))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'true')
+    expect(document.querySelector('#homepage-support-actions')).toHaveClass('flex')
+
+    act(() => vi.advanceTimersByTime(4000))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+
+    act(() => vi.advanceTimersByTime(30000))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'true')
+    act(() => vi.advanceTimersByTime(4000))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+
+    act(() => vi.advanceTimersByTime(120000))
+    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('stops automatic previews after manual help interaction', async () => {
+    enableMobileViewport()
+    await renderWidget('/')
+    fireEvent.click(screen.getByRole('button', { name: 'Open support options' }))
+    expect(screen.getByRole('button', { name: 'Close support options' })).toBeInTheDocument()
+
+    act(() => vi.advanceTimersByTime(70000))
+    expect(screen.getByRole('button', { name: 'Close support options' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close support options' }))
+    act(() => vi.advanceTimersByTime(120000))
+    expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('stops a live preview when manually dismissed', async () => {
+    enableMobileViewport()
+    await renderWidget('/')
+    act(() => vi.advanceTimersByTime(10000))
+    expect(screen.getByRole('button', { name: 'Close support options' })).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close support options' }))
+    act(() => vi.advanceTimersByTime(120000))
+    expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('does not auto-show help shortcuts on desktop', async () => {
+    await renderWidget('/')
+    act(() => vi.advanceTimersByTime(120000))
     expect(screen.getByRole('button', { name: 'Open support options' })).toHaveAttribute('aria-expanded', 'false')
   })
 
