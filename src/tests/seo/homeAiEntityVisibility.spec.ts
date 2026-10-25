@@ -116,7 +116,7 @@ describe('homepage premium gateway', () => {
 
   it('keeps responsive breakpoints and avoids fixed-width or overflow-prone homepage content', () => {
     expect(hero).toContain('grid max-w-7xl items-center');
-    expect(hero).toContain('px-5 pb-14 pt-10 sm:px-8');
+    expect(hero).toContain('px-5 pb-14 pt-24 sm:px-8 sm:pb-20 sm:pt-28');
     expect(hero).toContain('lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)]');
     expect(hero).toContain('min-w-0');
     expect(hero).toContain('aspect-[6/5] h-auto w-full');
