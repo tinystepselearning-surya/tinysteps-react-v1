@@ -40,13 +40,14 @@ describe('FloatingAssistant', () => {
     return utils
   }
 
-  it('shows the compact dock by default with exactly one widget mount', async () => {
+  it('shows a quiet homepage dock without animated pings', async () => {
     await renderWidget()
 
     expect(document.querySelectorAll('[data-floating-assistant="1"]').length).toBe(1)
     expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Chat on WhatsApp' })).toBeInTheDocument()
-    expect(screen.getByText('Live assistant')).toBeInTheDocument()
+    expect(screen.queryByText('Live assistant')).toBeNull()
+    expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
   })
 
   it('hides the dock on homepage booking section without closing an open chat', async () => {
@@ -77,8 +78,8 @@ describe('FloatingAssistant', () => {
     expect(screen.queryByText('Live assistant')).toBeNull()
   })
 
-  it('auto-collapses and auto-expands every 10 seconds', async () => {
-    await renderWidget()
+  it('auto-collapses and auto-expands on specialist pages only', async () => {
+    await renderWidget('/phonics')
 
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
 
@@ -91,6 +92,16 @@ describe('FloatingAssistant', () => {
       vi.advanceTimersByTime(10000)
     })
     expect(screen.getByText('Live assistant')).toBeInTheDocument()
+  })
+
+  it('does not auto-expand or pulse on homepage after twenty seconds', async () => {
+    await renderWidget('/')
+    act(() => {
+      vi.advanceTimersByTime(20000)
+    })
+    expect(screen.queryByText('Live assistant')).toBeNull()
+    expect(document.querySelectorAll('.animate-ping')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Ask TinySteps AI' })).toBeInTheDocument()
   })
 
   it('opens the AI modal from the bubble button', async () => {
