@@ -90,7 +90,8 @@ describe('homepage premium gateway', () => {
   });
 
   it('keeps the hero compact with accessible, non-repetitive branding and clear CTA reassurance', () => {
-    expect(hero).toContain('aria-hidden="true" className="mb-6 h-1 w-14 rounded-full bg-[#FF7A00]"');
+    expect(hero).not.toContain('mb-6 h-1 w-14 rounded-full bg-[#FF7A00]');
+    expect(hero).toContain('id="homepage-title"');
     expect(hero).not.toContain('Tiny Steps Learning <span aria-hidden="true"');
     expect(hero).toContain('sm:flex-row sm:items-center sm:gap-5');
     expect(hero).toContain('Live 1:1 assessment. No obligation to enrol.');
@@ -102,11 +103,29 @@ describe('homepage premium gateway', () => {
 
   it('uses the full desktop learning-journey width without sacrificing readable line lengths', () => {
     expect(home).toContain('max-w-5xl text-3xl');
-    expect(home).toContain('mt-5 grid gap-4 text-base leading-7 text-slate-600 lg:grid-cols-2 lg:gap-12');
+    expect(home).toContain('text-[#FF7A00] sm:text-base');
+    expect(home).toContain('rounded-lg bg-[#102A43] px-3 py-2');
+    expect(home).toContain('mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12');
+    expect(home).toContain('mt-3 flex-1 text-[15px] leading-7 text-slate-600');
+    expect(home).toContain('mt-6 text-base font-semibold text-slate-900');
     expect(home).toContain('From Letter Sounds to Confident Communication.');
     expect(home).toContain('Tiny Steps brings together phonics, blending and spelling;');
     expect(home).toContain('Instead of following one fixed sequence for every child');
     expect(home).toContain('id="learning-pathways"');
+  });
+
+  it('keeps responsive breakpoints and avoids fixed-width or overflow-prone homepage content', () => {
+    expect(hero).toContain('grid max-w-7xl items-center');
+    expect(hero).toContain('px-5 pb-14 pt-10 sm:px-8');
+    expect(hero).toContain('lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)]');
+    expect(hero).toContain('min-w-0');
+    expect(hero).toContain('aspect-[6/5] h-auto w-full');
+    expect(hero).toContain('sm:flex-row sm:items-center');
+    expect(home).toContain('sm:grid-cols-2 lg:grid-cols-4');
+    expect(home).toContain('min-h-[245px] min-w-0 flex-col');
+    expect(home).toContain('lg:grid-cols-2');
+    expect(home).toContain('max-w-6xl');
+    expect(home).not.toContain('whitespace-nowrap');
   });
 
   it('keeps a single prominent assessment CTA using the existing modal flow', () => {
