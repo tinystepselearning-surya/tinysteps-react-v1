@@ -57,6 +57,8 @@ for (const viewport of viewports) {
       await expect(card).toContainText('Explore');
     }
     await expect(pathways.locator('a[aria-label^="Explore "]')).toHaveCount(4);
+    await expect(pathways.getByRole('link', { name: 'Explore Spoken English Classes' })).toHaveAttribute('href', '/spoken-english-classes-for-kids-online');
+    await expect(pathways.getByRole('link', { name: 'Browse all courses' })).toHaveAttribute('href', '/courses');
 
     const teaching = page.locator('section[aria-labelledby="difference-title"]');
     await expect(teaching.getByRole('heading', { level: 2, name: 'Child-Centred Teaching. Meaningful Progress.' })).toBeVisible();
@@ -155,6 +157,9 @@ test('fixed homepage support dock yields to final booking and footer', async ({ 
   // The support dock is intentionally delayed for performance.
   const dock = page.locator('[data-floating-assistant="1"]');
   await expect(dock).toBeVisible({ timeout: 35000 });
+  // No expanding label or infinite ping loop on the premium homepage.
+  await expect(dock.getByRole('button', { name: 'Ask TinySteps AI' })).toHaveCSS('width', '48px');
+  await expect(dock.locator('.animate-ping')).toHaveCount(0);
 
   await page.locator('#homepage-final-invitation').scrollIntoViewIfNeeded();
   await expect(dock).toBeHidden({ timeout: 5000 });
@@ -177,4 +182,9 @@ test('homepage footer keeps programme and legal links without changing the lead 
     await expect(footer.locator(`a[href="${path}"]`)).toHaveCount(1);
   }
   await expect(footer.getByRole('button', { name: 'Get in Touch' })).toBeVisible();
+  for (const genericClaim of ['SSL Secure', 'UPI / Cards / Netbanking', 'Data protection aware', 'Family-first support']) {
+    await expect(footer.getByText(genericClaim, { exact: true })).toHaveCount(0);
+  }
+  await expect(footer.getByRole('link', { name: 'Pinterest' })).toHaveCount(0);
+  await expect(footer.getByText('© 2026 Tiny Steps Learning. All rights reserved.')).toBeVisible();
 });
