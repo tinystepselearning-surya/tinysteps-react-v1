@@ -1,11 +1,13 @@
 import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 import { PHONICS_PUBLISHED_RESOURCE_SEO } from './phonicsPublicationRegistry.js';
+import { PHONICS_AGE_PROGRAMME_SEO } from './phonicsAgeProgrammeRegistry.js';
 import { GRAMMAR_PROGRAMMATIC_RESOURCE_SEO } from './grammarProgrammaticSeoManifest.js';
 import { GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO } from './grammarReferenceExtensionSeoManifest.js';
 import { VOCABULARY_RESOURCE_SEO } from './vocabularyAuthoritySeoManifest.js';
 
 export const ROUTE_SEO_REGISTRY = {
   ...PHONICS_PUBLISHED_RESOURCE_SEO,
+  ...PHONICS_AGE_PROGRAMME_SEO,
   ...GRAMMAR_PROGRAMMATIC_RESOURCE_SEO,
   ...GRAMMAR_REFERENCE_EXTENSION_RESOURCE_SEO,
   ...VOCABULARY_RESOURCE_SEO,
