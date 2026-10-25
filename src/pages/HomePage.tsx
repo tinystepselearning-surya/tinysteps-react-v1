@@ -57,16 +57,16 @@ const learningPaths = [
 
 const reasons = [
   {
-    label: 'Age-aware, skill-led placement',
-    description: 'We consider the child’s age, current skills and readiness before recommending a useful starting point.',
+    label: 'Start with what the child knows',
+    description: 'We identify strengths, learning gaps and readiness before choosing what to teach next.',
   },
   {
-    label: 'Purposeful, engaging activities',
-    description: 'Teachers use stories, questions, guided practice and feedback to help children think, participate and apply new skills.',
+    label: 'Learn through active participation',
+    description: 'Children think, read, speak, practise and try again with supportive teacher feedback.',
   },
   {
-    label: 'Individual pace, visible progress',
-    description: 'Teachers adjust their support as children grow more independent, with clear learning goals and next steps for parents.',
+    label: 'Make progress visible',
+    description: 'Teachers check how independently children use new skills and identify the next learning focus for parents.',
   },
 ];
 
@@ -128,27 +128,31 @@ function DifferenceSection() {
   return (
     <section aria-labelledby="difference-title" className="bg-white px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">The Tiny Steps approach</p>
-        <h2 id="difference-title" className="mt-3 max-w-3xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
-          Thoughtful learning, without the guesswork.
+        <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">The Tiny Steps approach</p>
+        <h2 id="difference-title" className="mt-4 max-w-4xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
+          Child-Centred Teaching. Meaningful Progress.
         </h2>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-slate-600">
-          Child-centred teaching means helping each learner understand, practise and use English with growing independence—not simply memorise rules or rush through lessons.
+        <p className="mt-5 max-w-3xl text-base leading-8 text-slate-600 sm:text-lg">
+          Every lesson combines clear learning goals, live teacher guidance and purposeful practice—helping
+          children understand, apply and become more independent in English.
         </p>
-        <div className="mt-10 grid gap-8 border-t border-slate-200 pt-8 md:grid-cols-3">
-          {reasons.map((reason, index) => (
-            <article key={reason.label}>
-              <p className="text-sm font-semibold text-orange-700">0{index + 1}</p>
-              <h3 className="mt-3 text-xl font-semibold tracking-[-0.025em] text-slate-950">{reason.label}</h3>
-              <p className="mt-3 text-sm leading-7 text-slate-600">{reason.description}</p>
+
+        <div className="mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3">
+          {reasons.map((reason) => (
+            <article key={reason.label} className="min-w-0 border-t border-slate-200 pt-6">
+              <h3 className="max-w-[18rem] text-xl font-semibold leading-snug tracking-[-0.03em] text-[#102A43]">
+                {reason.label}
+              </h3>
+              <p className="mt-3 text-[15px] leading-7 text-slate-600">{reason.description}</p>
             </article>
           ))}
         </div>
-        <p className="mt-9 max-w-4xl border-t border-slate-200 pt-6 text-sm leading-7 text-slate-600">
-          Our transferable English skills support children studying in CBSE, ICSE, IB, Cambridge and other school environments. Tiny Steps is an independent learning provider, not formally affiliated with these school systems.
-        </p>
-        <Link to="/why-tiny-steps" className="mt-6 inline-block text-sm font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">
-          See how Tiny Steps teaches <span aria-hidden="true">↗</span>
+
+        <Link
+          to="/why-tiny-steps"
+          className="mt-9 inline-block rounded-sm border-b-2 border-[#FF7A00] pb-1 text-sm font-semibold text-[#102A43] transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+        >
+          See how Tiny Steps teaches
         </Link>
       </div>
     </section>
