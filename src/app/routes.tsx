@@ -472,7 +472,9 @@ const Layout: FC = () => {
         className={
           isContactPage
             ? `${hideMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
-            : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
+            : normalizedPath === '/'
+              ? 'min-h-screen bg-white pb-0 pt-0'
+              : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
         }
       >
         <Suspense fallback={routeLoaderFallback}>
