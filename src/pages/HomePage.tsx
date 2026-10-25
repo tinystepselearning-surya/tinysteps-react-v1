@@ -253,7 +253,7 @@ function BeforeYouBookSection() {
               {formatINR(PER_CLASS_PRICE)} <span className="text-base font-medium tracking-normal text-slate-600">per class</span>
             </h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              A dedicated teacher and a 35-minute live session. All standard 1:1 packages use the same per-class rate.
+              A dedicated teacher and a {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes}-minute live session. All standard 1:1 packages use the same per-class rate.
             </p>
             <div className="mt-5 divide-y divide-[#EAD6C5] border-y border-[#EAD6C5]">
               {ONE_TO_ONE_MONTHLY_PACKAGES.map((plan) => (
