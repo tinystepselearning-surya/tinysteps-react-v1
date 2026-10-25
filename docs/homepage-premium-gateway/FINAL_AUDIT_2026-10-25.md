@@ -86,3 +86,28 @@ The full build should again report the expected prerender, rendered HTML, route 
 - No production merge/deploy, real transaction, test lead, or GitHub deployment workflow was performed.
 
 **Release recommendation:** Conditional **GO for owner visual review**, **NO-GO for merging** until final commands pass and the owner explicitly approves production.
+
+## Addendum — 2026-10-26: parent decision pathways requested after visual review
+
+The owner requested more helpful homepage routes to real class samples, **standard (not Ultra Premium) live 1:1 pricing**, and a compact set of initially collapsed parent FAQs.
+
+**Implemented only in the same unmerged feature branch:**
+- A single lightweight `BeforeYouBookSection`, placed after Connected Learning, with three restrained preview cards.
+- Class samples: a static CTA to `/class-samples` without embedding videos, loading third-party iframes or adding new imagery to the homepage.
+- Standard pricing: values and duration are rendered from `PER_CLASS_PRICE` and `ONE_TO_ONE_MONTHLY_PACKAGES` in `src/config/pricing.ts`. The direct destination is `/pricing#standard-pricing` (an existing target on the pricing page). Do not present Ultra Premium prices on the homepage.
+- Parent FAQ: three closed-by-default native HTML `details/summary` questions and a route to the complete `/faq`. No homepage FAQPage JSON-LD was introduced.
+- The redundant class-sample, pricing and FAQ items were removed from the Explore directory; Curriculum, Learning Resources and Parent Articles remain there. Thus, all six original informational destinations are preserved.
+- Separate source assertions, seven-width responsive preview assertions, keyboard accordion test and three linked-destination Playwright smoke tests were added.
+
+The 2026-10-25 visual freeze applied to the earlier six-section design; these are subsequent owner-requested adjustments. The prior 40/40 Vitest and 18/18 Playwright results do not validate the new previews. Rerun the focused source/component test and both Playwright suites, then typecheck/build, before any merge.
+
+```bash
+git switch feature/homepage-premium-gateway-20261025
+git pull --ff-only
+npm run typecheck
+npx vitest run src/tests/seo/homeAiEntityVisibility.spec.ts src/tests/components/FloatingAssistant.test.tsx
+npx playwright test tests/homepage-premium-responsive.spec.ts tests/homepage-gateway-destinations.spec.ts
+npm run build
+```
+
+**Release gate remains:** no production merge without fresh passing checks and explicit owner approval.
