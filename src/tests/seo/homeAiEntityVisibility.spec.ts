@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROUTE_SEO_REGISTRY } from '../../lib/routeSeoRegistry.js';
+import { HOMEPAGE_SEO_META } from '../../lib/homeSeoMeta.js';
 
 const root = process.cwd();
 const read = (relativePath: string) => fs.readFileSync(path.join(root, relativePath), 'utf8');
@@ -21,7 +22,9 @@ describe('homepage premium gateway', () => {
     expect(registry.title).toBe('Tiny Steps Learning | Online English Classes for Kids');
     expect(registry.description).toContain('phonics, reading, grammar and speaking');
     expect(registry.canonicalPath).toBe('/');
-    expect(home).toContain("const homeSeo = ROUTE_SEO_REGISTRY['/']");
+    expect(ROUTE_SEO_REGISTRY['/']).toEqual(HOMEPAGE_SEO_META);
+    expect(home).toContain('const homeSeo = HOMEPAGE_SEO_META;');
+    expect(home).not.toContain('ROUTE_SEO_REGISTRY');
     expect(home).toContain('title={homeSeo.title}');
     expect(home).toContain('description={homeSeo.description}');
     expect(index).toContain('<title>' + registry.title + '</title>');
