@@ -278,10 +278,6 @@ export default function PublicAssessmentForm({
       urgency: submittedForm.urgency,
     };
 
-    trackLeadFormSubmit({
-      ...trackingPayload,
-    });
-
     setIsSubmitting(true);
     try {
       const [
@@ -310,6 +306,12 @@ export default function PublicAssessmentForm({
         createdAt: serverTimestamp(),
         requestedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
+      });
+
+      // Report a completed submission only when the canonical lead save succeeded.
+      // Failed saves can still open WhatsApp, but must not count as saved website leads.
+      trackLeadFormSubmit({
+        ...trackingPayload,
       });
 
       // Attribution enrichment is server-side so anonymous Firestore create rules remain strict.
