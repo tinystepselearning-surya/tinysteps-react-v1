@@ -1,38 +1,42 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
 
-Generated: 2026-10-25T12:40:48.832Z; ChatGPT scheduled hourly audit, missed-slot recovery batch 4 (indices 31–40).
+Generated: 2026-10-25T13:47:28Z; ChatGPT scheduled hourly audit, missed-slot recovery batch 5 (indices 41–50, Slot 5).
 
-**Attempted today:** 80/202. **Pending today:** 122.
-**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 40.
-**Full live technical readiness checks newly verified by ChatGPT this run:** 0. **Partial web snapshot reviews this run:** 9; **web-tool 404/inaccessible review:** 1; all 10 marked UNVERIFIED.
+**Attempted today:** 90/202. **Pending today:** 112.
+**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 50.
+**Full live technical readiness checks newly verified by ChatGPT this run:** 0. **Text-only web snapshot reviews:** 10; all 10 marked UNVERIFIED.
 
 ## This scheduled ChatGPT execution
 
-- Confirmed 202 unique URLs; slots 1–19 contain 10 URLs each and slot 20 contains 12. Previous 70 attempted records and their timestamps were preserved.
-- Selected 10 earliest eligible unchecked URLs from slot 4 (indices 31–40); no future slots consumed and no repeats.
-- Nine URLs had readable text-extraction snapshots (OU/OW from search index; J sound, SHUN, UI, schwa, grammar hub, speaking hub, pricing, contact). Cached snapshots range from last week to 'today', but are not independently confirmed fresh origin HTML.
-- **Follow-up needed:** index 38, `https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading`: web.open reported 404, and alternate URLs were inaccessible. This is a search-tool observation only, **not a confirmed website HTTP 404 or regression**. GitHub source lists a route but does not prove deployment. Verify using an independent public origin HTTP checker or browser.
-- Direct origin HTTPS GETs to sample pages and robots.txt failed with `NameResolutionError` in the audit container at 12:40 UTC. This is **not evidence of a public website outage or crawler block**.
-- Current HTTP status, redirect destinations, canonical, robots/noindex, JSON-LD and Googlebot/Bingbot/OAI-SearchBot access remain **UNVERIFIED** for all 10. Review timestamps represent attempted audit observations, **not fresh origin responses**.
-- Previous 40 PASS results were recorded by GitHub Actions before cutover; ChatGPT has not independently re-certified them. No verified regression or improvement was established, so CHANGES.md remains unchanged.
+- Verified 202 unique tracked URLs; slots 1–19 each contain 10 URLs and slot 20 contains 12. Preserved 80 previously attempted rows and their timestamps.
+- Selected 10 earliest eligible unchecked URLs in Slot 5, indices 41–50, without revisiting previously attempted URLs or consuming future slots.
+- All 10 pages had readable text snapshots with meaningful headings and page-specific content. Snapshot crawl freshness ranged from 'today' to 'last month'; these are **not confirmed fresh origin responses**.
+- Direct HTTPS origin GET to a sample URL failed with `NameResolutionError` in the audit environment. This is an **audit-environment limitation**, not evidence of a production outage.
+- Current HTTP status, redirects/final destination, canonical, robots/noindex directives, structured data, and Googlebot/Bingbot/OAI-SearchBot access remain **UNVERIFIED**. No production PASS/FAIL was newly established by ChatGPT.
+- The high-intent phonics comparison page (index 50) has a retrievable text snapshot, but this does not verify Google Search Console impressions, indexing, ranking, or actual AI citations.
+- Could not independently inspect GitHub Actions enabled/disabled state using available connector actions; proceeded based on user's explicit confirmation that workflow is disabled. No GitHub audit job was started.
+- No verified status transitions; `CHANGES.md` remains unchanged. No production code or configuration was modified.
 
-## Follow-up URLs
+## Attempted slots today
 
-- [38] https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading — web-tool 404, verify independently before diagnosing a live 404.
-- [31–40] Full live HTTP/header/robots/structured-data checks remain outstanding; snapshots do not justify PASS.
+- Slot 1: 10 attempted
+- Slot 2: 10 attempted
+- Slot 3: 10 attempted
+- Slot 4: 10 attempted
+- Slot 5: 10 attempted
+- Slot 6: 10 attempted
+- Slot 8: 10 attempted
+- Slot 13: 10 attempted
+- Slot 16: 10 attempted
+
+## Outstanding technical verification
+
+- All 10 newly reviewed pages need direct origin HTTP/header/robots/structured-data verification before technical readiness can be certified.
+- Prior web-tool 404 for the Jolly Phonics article (index 38) remains unconfirmed as a production HTTP 404; do not treat as a confirmed outage.
+- **Daily coverage gap:** 112 URLs remain unchecked. At a 10-URL hourly rate, full coverage cannot be completed today without more capacity or changing the audit cadence.
 
 ## Unchecked today
 
-- [41] https://tinystepslearning.com/why-tiny-steps
-- [42] https://tinystepslearning.com/team
-- [43] https://tinystepslearning.com/team/vannala-ravali-priya
-- [44] https://tinystepslearning.com/class-samples
-- [45] https://tinystepslearning.com/testimonials
-- [46] https://tinystepslearning.com/careers
-- [47] https://tinystepslearning.com/courses
-- [48] https://tinystepslearning.com/curriculum
-- [49] https://tinystepslearning.com/faq
-- [50] https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india
 - [61] https://tinystepslearning.com/free-speaking-games-for-kids
 - [62] https://tinystepslearning.com/free-letter-sounds-game-for-kids
 - [63] https://tinystepslearning.com/free-sound-listening-game-for-kids
@@ -63,10 +67,40 @@ Generated: 2026-10-25T12:40:48.832Z; ChatGPT scheduled hourly audit, missed-slot
 - [98] https://tinystepslearning.com/summer-camp-for-kids-india
 - [99] https://tinystepslearning.com/summer-reading-program-kids
 - [100] https://tinystepslearning.com/summer-speaking-camp-kids
-- ... and 82 more
+- [101] https://tinystepslearning.com/summer-camps/phonics-fast-track
+- [102] https://tinystepslearning.com/summer-camps/grammar-fast-track
+- [103] https://tinystepslearning.com/summer-camps/speaking-fast-track
+- [104] https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids
+- [105] https://tinystepslearning.com/blog/back-to-school-english-confidence-plan
+- [106] https://tinystepslearning.com/blog/benefits-of-phonics-for-kids
+- [107] https://tinystepslearning.com/blog/can-child-improve-english-in-10-days
+- [108] https://tinystepslearning.com/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme
+- [109] https://tinystepslearning.com/blog/child-gives-one-word-answers
+- [110] https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read
+- [111] https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes
+- [112] https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home
+- [113] https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak
+- [114] https://tinystepslearning.com/blog/conversation-skills-for-kids
+- [115] https://tinystepslearning.com/blog/cvc-words-explained-for-parents
+- [116] https://tinystepslearning.com/blog/digraphs-and-tricky-words
+- [117] https://tinystepslearning.com/blog/does-cbse-include-phonics-ncf-foundational-literacy
+- [118] https://tinystepslearning.com/blog/grammar-assessment
+- [119] https://tinystepslearning.com/blog/grammar-conjunctions
+- [120] https://tinystepslearning.com/blog/grammar-creative-writing
+- [131] https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together
+- [132] https://tinystepslearning.com/blog/how-phonics-improves-spelling
+- [133] https://tinystepslearning.com/blog/how-schools-can-assess-decoding-not-memorisation
+- [134] https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home
+- [135] https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children
+- [136] https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids
+- [137] https://tinystepslearning.com/blog/how-to-teach-paragraph-writing-to-kids
+- [138] https://tinystepslearning.com/blog/how-to-teach-storytelling-to-kids
+- [139] https://tinystepslearning.com/blog/how-vocabulary-supports-reading-comprehension
+- [140] https://tinystepslearning.com/blog/international-phonics-benchmarks-for-indian-schools
+- ... and 52 more
 
 ## Confirmed status transitions in this run
 
 - None.
 
-The status of each URL reflects only observed evidence; no Google/Bing indexing, ranking or AI citation is inferred.
+**Evidence policy:** `checked_at_utc` records the actual ChatGPT review attempt, not a verified origin fetch. Cached snapshots and repository source do not establish live search readiness, indexing, ranking, or AI citation.
