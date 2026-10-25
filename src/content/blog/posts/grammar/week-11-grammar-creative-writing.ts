@@ -165,6 +165,21 @@ const post: BlogPost = {
 
     {
       type: 'h2',
+      content: 'When a child knows describing words but cannot find them while writing',
+    },
+    {
+      type: 'p',
+      content:
+        'First separate **knowing a word** from **retrieving it while drafting**. Read one plain sentence aloud, ask what the child wants the reader to picture, then offer two meaningful choices only if needed. For example: “The bird moved” could become “The sparrow hopped along the wall” when that really describes the scene. The precise action does more work than a list of fancy adjectives.',
+    },
+    {
+      type: 'p',
+      content:
+        'Let the child choose one useful word, say the improved sentence, and try a new sentence without the choices. A tiny word bank can help temporarily; fade it rather than requiring complicated vocabulary in every line. If the child does not yet know a word, explain and use it naturally before expecting independent recall.',
+    },
+
+    {
+      type: 'h2',
       content: 'Build stronger sentences without forcing every sentence to be long',
     },
     {
