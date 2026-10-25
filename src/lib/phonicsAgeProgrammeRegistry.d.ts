@@ -18,7 +18,7 @@ export interface PhonicsAgeProgrammeGuide {
   readonly coursePath: string;
   readonly broaderAgePath: string;
   readonly broaderAgeLabel: string;
-  readonly faqs: readonly { readonly question: string; readonly answer: string }[];
+  readonly faqs: { question: string; answer: string }[];
 }
 
 export interface PhonicsAgeProgrammeSeo {
