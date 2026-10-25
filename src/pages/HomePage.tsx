@@ -91,11 +91,11 @@ function LearningPathwaysSection() {
   return (
     <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-orange-700">The complete English-learning journey</p>
-        <h2 id="learning-pathways-title" className="mt-3 max-w-5xl text-3xl font-bold tracking-[-0.04em] text-slate-950 sm:text-4xl">
+        <p className="inline-block max-w-full rounded-lg bg-[#102A43] px-3 py-2 text-sm font-bold uppercase leading-6 tracking-[0.08em] text-[#FF7A00] sm:text-base">The complete English-learning journey</p>
+        <h2 id="learning-pathways-title" className="mt-5 max-w-5xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
           From Letter Sounds to Confident Communication.
         </h2>
-        <div className="mt-5 grid gap-4 text-base leading-7 text-slate-600 lg:grid-cols-2 lg:gap-12">
+        <div className="mt-6 grid gap-5 text-base leading-8 text-slate-600 sm:text-lg lg:grid-cols-2 lg:gap-12">
           <p>
             Tiny Steps brings together phonics, blending and spelling; reading fluency, vocabulary and comprehension; grammar and sentence building; and spoken English, public speaking and communication skills.
           </p>
@@ -108,12 +108,12 @@ function LearningPathwaysSection() {
             <Link
               key={path.path}
               to={path.path}
-              className="group flex min-h-[245px] flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 transition-colors hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+              className="group flex min-h-[245px] min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-white p-6 transition-colors hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
             >
               <span className="text-xs font-semibold tracking-[0.12em] text-orange-600" aria-hidden="true">{path.number}</span>
               <h3 className="mt-7 text-2xl font-semibold tracking-[-0.035em] text-slate-950">{path.label}</h3>
-              <p className="mt-3 flex-1 text-sm leading-6 text-slate-600">{path.description}</p>
-              <span className="mt-6 text-sm font-semibold text-slate-900 group-hover:text-orange-700">
+              <p className="mt-3 flex-1 text-[15px] leading-7 text-slate-600">{path.description}</p>
+              <span className="mt-6 text-base font-semibold text-slate-900 group-hover:text-orange-700">
                 {path.action} <span aria-hidden="true">↗</span>
               </span>
             </Link>
