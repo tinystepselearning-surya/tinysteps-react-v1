@@ -8,6 +8,7 @@
 - First-party user-uploaded Bing Webmaster Tools `tinystepslearning.com_AISearchQueriesReport_10_25_2026.csv`: **168 grounding-query rows** with query-level citation counts and share, **no reporting period in that CSV**.
 - Google page rows can differ slightly from the GA4-linked query-only CSV totals due to how the connectors/dimensions aggregate or suppress queries; do not mix their denominators.
 - **Google page impressions mean appearances, not enrolment. Bing citation counts are query-level and MUST NOT be attributed to a URL** until the Bing Grounding Query→Pages mapping is retrieved.
+- **Crosswalk aggregation warning:** the same Bing query-level citation number is repeated on each Google page row matching that query for reference only; it is **NON-ADDITIVE** across the CSV rows. Do not sum Bing citations across Google URLs, infer their cited URL, or combine Google and Bing metrics in one denominator.
 - No ChatGPT/Gemini/Google-AI-Overview citations or causal ranking claims established.
 
 ## Verified commercial Phonics ownership
