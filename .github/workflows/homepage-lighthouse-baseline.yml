@@ -1,0 +1,95 @@
+name: Homepage Lighthouse Baseline (Read-Only)
+
+on:
+  push:
+    branches:
+      - audit/home-mobile-pagespeed-baseline-20261026
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: homepage-lighthouse-baseline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  measure-homepage:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install pinned site dependencies
+        run: npm ci
+      - name: Install Chromium and dependencies
+        run: npx playwright install --with-deps chromium
+      - name: Run Lighthouse performance only (mobile)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          CHROME_PATH="$(node -p "require('playwright').chromium.executablePath()")"
+          npx --yes lighthouse@12.8.2 https://tinystepslearning.com/ \
+            --chrome-path="$CHROME_PATH" \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance \
+            --form-factor=mobile \
+            --output=json \
+            --output-path=artifacts/homepage-lighthouse-mobile.json \
+            --quiet
+      - name: Run Lighthouse performance only (desktop)
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(node -p "require('playwright').chromium.executablePath()")"
+          npx --yes lighthouse@12.8.2 https://tinystepslearning.com/ \
+            --chrome-path="$CHROME_PATH" \
+            --chrome-flags="--headless --no-sandbox --disable-dev-shm-usage" \
+            --only-categories=performance \
+            --preset=desktop \
+            --output=json \
+            --output-path=artifacts/homepage-lighthouse-desktop.json \
+            --quiet
+      - name: Summarise measured timings and dominant audits
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          for (const device of ['mobile', 'desktop']) {
+            const r = JSON.parse(fs.readFileSync(`artifacts/homepage-lighthouse-${device}.json`, 'utf8'));
+            const a = r.audits;
+            console.log(JSON.stringify({
+              device,
+              url: r.finalDisplayedUrl,
+              fetchTime: r.fetchTime,
+              lighthouseVersion: r.lighthouseVersion,
+              performanceScore: Math.round(r.categories.performance.score * 100),
+              fcpMs: a['first-contentful-paint']?.numericValue,
+              lcpMs: a['largest-contentful-paint']?.numericValue,
+              tbtMs: a['total-blocking-time']?.numericValue,
+              cls: a['cumulative-layout-shift']?.numericValue,
+              speedIndexMs: a['speed-index']?.numericValue,
+              opportunities: Object.values(a)
+                .filter(x => x?.details?.overallSavingsMs > 100 || x?.details?.overallSavingsBytes > 10000)
+                .map(x => ({
+                  id:x.id,
+                  title:x.title,
+                  savingsMs:x.details?.overallSavingsMs,
+                  savingsBytes:x.details?.overallSavingsBytes,
+                })).slice(0,12),
+            }, null, 2));
+          }
+          NODE
+      - name: Upload inspectable Lighthouse JSON and trace detail
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-lighthouse-live-baseline
+          path: artifacts/homepage-lighthouse-*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Confirmation
+        run: echo "No source edits, server writes, Firebase deployments or analytics modifications performed."
