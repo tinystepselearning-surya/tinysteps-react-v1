@@ -46,7 +46,7 @@ Microsoft's official 13 Oct 2026 Topics Portfolio release defines `Topic Size` a
 
 Topics include Education (1B–5B ecosystem citation range), Grammar & Language Structure (100M–500M), K–12 Education (100M–500M), Language Courses & Tutoring (50M–100M), Public Speaking & Presentations (10M–50M), and Pronunciation & Phonetics (100M–500M). These are NOT impressions, inquiries, total Tiny Steps citations, or addressable market estimates.
 
-**Top Opportunity Queries** are queries on which **other sites were cited but Tiny Steps was not**, not 'Tiny Steps top citations'. The 50 rows contain many irrelevant adults' or non-English learning queries (Chinese, Mandarin, Spanish, generic language platforms), video games, and poor ML taxonomies; do not optimise for those merely because the ecosystem range is large.
+**Top Opportunity Queries** are queries on which **other sites were cited but Tiny Steps was not**, not 'Tiny Steps top citations'. All 50 opportunity phrases have **zero exact casefolded matches** among the 168 grounding phrases in the earlier unfiltered site-citation export. This consistency check supports (but does not independently prove) the 'uncited opportunities' interpretation. The 50 rows contain many irrelevant adults' or non-English learning queries (Chinese, Mandarin, Spanish, generic language platforms), video games, and poor ML taxonomies; do not optimise for those merely because the ecosystem range is large.
 
 ### Prioritised, existing-content-first opportunity groups
 
