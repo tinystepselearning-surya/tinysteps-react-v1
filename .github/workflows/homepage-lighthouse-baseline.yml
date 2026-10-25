@@ -1,6 +1,9 @@
 name: Homepage Lighthouse Baseline (Read-Only)
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/homepage-lighthouse-baseline.yml'
   push:
     branches:
       - audit/home-mobile-pagespeed-baseline-20261026
