@@ -23,14 +23,14 @@ function ConversionHero() {
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg sm:leading-9">
-            Live 1:1 online English classes, with small-group options where suitable. Explore{' '}
+            Live 1:1 online English classes, with small-group options where suitable. One connected learning journey through{' '}
             <Link to="/phonics" className={HERO_PROGRAMME_LINK_CLASS}>phonics</Link>,{' '}
             <Link to="/reading-classes-for-kids" className={HERO_PROGRAMME_LINK_CLASS}>reading</Link>,{' '}
             <Link to="/grammar" className={HERO_PROGRAMME_LINK_CLASS}>grammar</Link>,{' '}
             <Link to="/spoken-english-classes-for-kids-online" className={HERO_PROGRAMME_LINK_CLASS}>spoken English</Link>{' '}
             and{' '}
-            <Link to="/speaking" className={HERO_PROGRAMME_LINK_CLASS}>public speaking</Link>—with
-            a learning path matched to your child's needs.
+            <Link to="/speaking" className={HERO_PROGRAMME_LINK_CLASS}>public speaking</Link>—guided
+            by your child's current skills, readiness and pace.
           </p>
 
           <div className="mt-8 flex flex-wrap">
