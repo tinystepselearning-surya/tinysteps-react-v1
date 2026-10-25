@@ -131,4 +131,5 @@ const doc=[
 ];
 fs.writeFileSync(path.join(out,'REVIEW_QUEUE.md'),doc.join('\n')+'\n');
 console.log('TSSA-SCQ Phase2 result '+JSON.stringify(summary));
+for(const finding of findings) console.log('TSSA-SCQ Phase2 flag '+JSON.stringify(finding));
 if(summary.hard_errors)process.exitCode=1;
