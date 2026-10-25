@@ -207,20 +207,37 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain('learning needs, current skills and pace.');
   });
 
-  it('keeps pedagogy claims and school-environment context responsible', () => {
-    expect(home).toContain('Age-aware, skill-led placement');
-    expect(home).toContain('Purposeful, engaging activities');
-    expect(home).toContain('Individual pace, visible progress');
-    expect(home).toContain('helping each learner understand, practise and use English');
-    expect(home).toContain('CBSE, ICSE, IB, Cambridge and other school environments');
-    expect(home).toContain('not formally affiliated with these school systems');
+  it('shows distinct, useful child-centred teaching principles without curriculum-affiliation overclaims', () => {
+    expect(home).toContain('Child-Centred Teaching. Meaningful Progress.');
+    expect(home).toContain('Every lesson combines clear learning goals, live teacher guidance and purposeful practice');
+    expect(home).toContain('Start with what the child knows');
+    expect(home).toContain('We identify strengths, learning gaps and readiness');
+    expect(home).toContain('Learn through active participation');
+    expect(home).toContain('Children think, read, speak, practise and try again with supportive teacher feedback.');
+    expect(home).toContain('Make progress visible');
+    expect(home).toContain('how independently children use new skills');
+    expect(home).not.toContain('CBSE, ICSE, IB, Cambridge and other school environments');
+    expect(home).not.toContain('not formally affiliated with these school systems');
     expect(home).not.toContain('internationally certified');
     expect(home).not.toContain('aligned to every curriculum');
     expect(home).not.toContain('guaranteed fluency');
   });
 
+  it('uses minimal readable teaching columns and a descriptive link to the method page', () => {
+    expect(home).toContain('id="difference-title"');
+    expect(home).toContain('aria-labelledby="difference-title"');
+    expect(home).toContain('mt-10 grid gap-x-10 gap-y-8 md:grid-cols-3');
+    expect(home).toContain('min-w-0 border-t border-slate-200 pt-6');
+    expect(home).toContain('text-[#9B4300]');
+    expect(home).toContain("to=\"/why-tiny-steps\"");
+    expect(home).toContain('See how Tiny Steps teaches');
+    expect(home).not.toContain('{reason.label} <span');
+    expect(home).not.toContain('0{index + 1}');
+    expect(home).not.toContain('animate-');
+  });
+
   it('shows technology responsibly, without fabricated AI capability', () => {
-    expect(home).toContain('Thoughtful learning, without the guesswork.');
+    expect(home).toContain('Child-Centred Teaching. Meaningful Progress.');
     expect(home).toContain('Human-led learning. Technology that helps.');
     expect(home).toContain('Technology supports the teacher-child connection; it does not replace it.');
     expect(home).not.toContain('AI-powered');
