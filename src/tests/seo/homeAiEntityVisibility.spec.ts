@@ -12,6 +12,8 @@ describe('homepage premium gateway', () => {
   const index = read('index.html');
   const routes = read('src/app/routes.tsx');
   const form = read('src/components/forms/PublicAssessmentForm.tsx');
+  const footer = read('src/components/common/Footer.tsx');
+  const backToTop = read('src/components/common/BackToTopButton.tsx');
   const registry = ROUTE_SEO_REGISTRY['/'];
 
   it('keeps shared homepage metadata and canonical ownership', () => {
@@ -238,10 +240,59 @@ describe('homepage premium gateway', () => {
 
   it('shows technology responsibly, without fabricated AI capability', () => {
     expect(home).toContain('Child-Centred Teaching. Meaningful Progress.');
-    expect(home).toContain('Human-led learning. Technology that helps.');
-    expect(home).toContain('Technology supports the teacher-child connection; it does not replace it.');
+    expect(home).toContain('Live Teaching. A Connected Learning Experience.');
+    expect(home).toContain('Children learn with real teachers through interactive online lessons');
+    expect(home).toContain('Live online classrooms');
+    expect(home).toContain('Purposeful practice');
+    expect(home).toContain('Parent portal');
+    expect(home).toContain('Parents can join scheduled classes, access worksheets and follow learning progress.');
     expect(home).not.toContain('AI-powered');
     expect(home).not.toContain('guaranteed results');
+  });
+
+  it('keeps platform features factual, accessible and light without number decorations', () => {
+    const technology = home.slice(home.indexOf('function TechnologySection()'), home.indexOf('function ExploreSection()'));
+    expect(technology).toContain('aria-labelledby="technology-title"');
+    expect(technology).toContain('bg-[#102A43]');
+    expect(technology).toContain('Live online classrooms');
+    expect(technology).toContain('Purposeful practice');
+    expect(technology).toContain('Parent portal');
+    expect(technology).not.toContain('0{index + 1}');
+    expect(technology).not.toContain('AI-powered');
+    expect(technology).not.toContain('setInterval');
+    expect(technology).toContain('to="/curriculum"');
+    expect(technology).toContain('to="/class-samples"');
+  });
+
+  it('distinguishes the final booking CTA from the dark footer and preserves one booking action', () => {
+    const final = home.slice(home.indexOf('function FinalInvitationSection()'), home.indexOf('export default function HomePage()'));
+    expect(final).toContain('id="homepage-final-invitation"');
+    expect(final).toContain('bg-[#FFF8F1]');
+    expect(final).toContain('text-[#102A43]');
+    expect(final).toContain('Book Free 35-Minute Demo');
+    expect(final.match(/to="\/book-demo"/g)).toHaveLength(1);
+  });
+
+  it('scopes concise programme and resource footer navigation to the homepage', () => {
+    expect(footer).toContain("const isHomePage = location.pathname === '/'");
+    expect(footer).toContain('isHomePage ? homeCourseLinks : courseLinks');
+    expect(footer).toContain('isHomePage ? homeExploreLinks : exploreLinks');
+    for (const route of ['/phonics', '/reading-classes-for-kids', '/grammar', '/spoken-english-classes-for-kids-online', '/speaking']) {
+      expect(footer).toContain("href: '" + route + "'");
+    }
+    expect(footer).toContain("isHomePage ? <span className=\"text-xs font-semibold\">{link.label}</span> : link.icon");
+    expect(footer).toContain("label: 'Privacy Policy'");
+    expect(footer).toContain("label: 'Terms & Conditions'");
+    expect(footer).toContain("label: 'Refund & Guarantee'");
+  });
+
+  it('keeps fixed support widgets away from the final homepage booking area', () => {
+    expect(routes).toContain("normalizedPath !== '/' || hideMarketingChrome");
+    expect(routes).toContain("document.getElementById('homepage-final-invitation')");
+    expect(routes).toContain('!hideHomepageBottomWidgets');
+    expect(routes).toContain('showDeferredSupportWidgets');
+    expect(backToTop).toContain("const isHomePage = pathname === '/'");
+    expect(backToTop).toContain("prefers-reduced-motion: reduce");
   });
 
   it('provides links to deeper resources and legal-page access through existing footer', () => {
