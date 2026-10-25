@@ -248,7 +248,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               Tiny Steps offers live online English classes for children ages 3–12 in India and worldwide, with live 1:1 teaching and selected small-group options across phonics, reading, grammar, writing, spoken English, and public speaking and communication.
             </p>
             <p className="mt-3">
-              Parents who are not yet sure which English programme fits can begin with one free {demoMinutes}-minute 1:1 assessment, then review the recommended owner programme, transparent pricing, class samples, and compatible timings before enrolment.
+              Parents who are not yet sure which English programme fits can begin with one free {demoMinutes}-minute 1:1 assessment, then review the recommended learning programme, transparent pricing, class samples, and compatible timings before enrolment.
             </p>
           </>
         }
@@ -301,7 +301,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <LeadSectionHeading
             eyebrow="Who this is for"
             title="Parents comparing structured English support, not generic tuition"
-            description="This is the canonical broad English page for online English classes, live 1:1 English tutoring, and worldwide/NRI family searches."
+            description="Explore live 1:1 English teaching for children in India and abroad, with phonics, reading, grammar, writing and speaking options."
           />
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {[
@@ -336,7 +336,7 @@ export default function OnlineEnglishClassesForKidsPage() {
           <div className="mt-5 rounded-2xl border border-slate-200 bg-white/90 p-5">
             <h3 className="text-lg font-semibold text-slate-900">General English tutor or subject-specific support?</h3>
             <p className="mt-2 text-sm leading-7 text-slate-700">
-              Use this broad English page when you want a live 1:1 English tutor but are not yet sure whether the main gap is phonics, reading, grammar, writing, spoken English, or public speaking and communication. If the need is already clear, the subject programme should remain the primary page rather than competing with this generic tutor owner.
+              Use this broad English page when you want a live 1:1 English tutor but are not yet sure whether the main gap is phonics, reading, grammar, writing, spoken English, or public speaking and communication. If the main need is already clear, explore the corresponding subject programme for more specific learning goals and lesson information.
             </p>
             <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold text-slate-900">
               <Link to="/phonics" className="underline underline-offset-4">Phonics support</Link>
