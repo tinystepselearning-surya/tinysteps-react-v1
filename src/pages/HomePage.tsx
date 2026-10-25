@@ -115,10 +115,20 @@ function LearningPathwaysSection() {
             </Link>
           ))}
         </div>
-        <p className="mt-6 text-sm leading-7 text-slate-600">
-          Need everyday conversation practice? <Link to="/spoken-english-classes-for-kids-online" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Explore Spoken English Classes</Link>.
-          {' '}Looking for more courses? <Link to="/courses" className="font-semibold text-slate-900 underline decoration-slate-300 underline-offset-4 hover:text-orange-700">Browse all courses</Link>.
-        </p>
+        <div className="mt-7 flex flex-col gap-x-10 gap-y-3 text-sm leading-7 text-slate-600 sm:flex-row sm:flex-wrap">
+          <p>
+            Need conversation practice?{' '}
+            <Link to="/spoken-english-classes-for-kids-online" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+              Explore Spoken English Classes
+            </Link>
+          </p>
+          <p>
+            Looking for more courses?{' '}
+            <Link to="/courses" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+              Browse all courses
+            </Link>
+          </p>
+        </div>
       </div>
     </section>
   );
