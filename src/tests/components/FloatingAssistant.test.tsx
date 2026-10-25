@@ -40,6 +40,17 @@ describe('FloatingAssistant', () => {
     return utils
   }
 
+  const openChat = async () => {
+    // The actual chat dialog is loaded with React.lazy. Wait for its
+    // module and Suspense boundary instead of synchronously querying text
+    // immediately after the bubble click.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
+      await import('../../components/common/AskTinyStepsModal')
+    })
+    expect(screen.getByRole('dialog', { name: 'Ask TinySteps' })).toBeVisible()
+  }
+
   it('shows a quiet homepage dock without animated pings', async () => {
     await renderWidget()
 
@@ -52,8 +63,7 @@ describe('FloatingAssistant', () => {
 
   it('hides the dock on homepage booking section without closing an open chat', async () => {
     const utils = await renderWidget();
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }));
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0);
+    await openChat();
 
     utils.rerender(
       <MemoryRouter initialEntries={['/']}>
@@ -62,7 +72,7 @@ describe('FloatingAssistant', () => {
     );
 
     expect(document.querySelector('[data-floating-assistant="1"]')).toHaveClass('hidden');
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0);
+    expect(screen.getByRole('dialog', { name: 'Ask TinySteps' })).toBeVisible();
   });
 
   it('stays compact on dense Speaking curriculum course pages', async () => {
@@ -107,8 +117,7 @@ describe('FloatingAssistant', () => {
   it('opens the AI modal from the bubble button', async () => {
     await renderWidget()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+    await openChat()
   })
 
   it('still opens the AI modal when analytics tracking throws', async () => {
@@ -118,8 +127,7 @@ describe('FloatingAssistant', () => {
 
     await renderWidget()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ask TinySteps AI' }))
-    expect(screen.getAllByText(/TinySteps AI/i).length).toBeGreaterThan(0)
+    await openChat()
 
     trackEventSpy.mockRestore()
   })
