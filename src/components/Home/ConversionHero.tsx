@@ -14,9 +14,9 @@ function ConversionHero() {
 
           <h1
             id="homepage-title"
-            className="max-w-3xl text-[clamp(2.7rem,6vw,5.15rem)] font-bold leading-[1.04] tracking-[-0.055em] text-slate-950"
+            className="max-w-3xl text-[clamp(2.7rem,6vw,5.15rem)] font-bold leading-[1.04] tracking-[-0.055em] text-[#102A43]"
           >
-            Online English Classes <span className="text-orange-600">for Kids.</span>
+            Online English Classes <span className="text-[#FF7A00]">for Kids.</span>
           </h1>
 
           <p className="mt-6 max-w-xl text-base leading-8 text-slate-600 sm:text-lg sm:leading-9">
@@ -27,7 +27,7 @@ function ConversionHero() {
           <div className="mt-8 flex flex-wrap">
             <Link
               to="/book-demo"
-              className="inline-flex min-h-12 items-center justify-center rounded-full bg-slate-950 px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+              className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#102A43] px-7 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0B2138] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
             >
               Book Free 35-Minute Demo
             </Link>
