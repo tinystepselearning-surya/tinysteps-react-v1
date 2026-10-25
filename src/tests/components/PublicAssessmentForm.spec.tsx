@@ -200,7 +200,9 @@ describe('PublicAssessmentForm analytics', () => {
     const whatsappOrder = trackingMocks.trackWhatsappClick.mock.invocationCallOrder[0];
 
     expect(openOrder).toBeLessThan(saveOrder);
-    expect(saveOrder).toBeLessThan(generateLeadOrder);
+    const submitOrder = trackingMocks.trackLeadFormSubmit.mock.invocationCallOrder[0];
+    expect(saveOrder).toBeLessThan(submitOrder);
+    expect(submitOrder).toBeLessThan(generateLeadOrder);
     expect(generateLeadOrder).toBeLessThan(navigateOrder);
     expect(navigateOrder).toBeLessThan(whatsappOrder);
   });
@@ -254,7 +256,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
-    expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
@@ -286,9 +288,11 @@ describe('PublicAssessmentForm analytics', () => {
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
 
     resolveSave?.();
 
+    await waitFor(() => expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1));
     expect(popupLocationReplace).toHaveBeenCalledTimes(1);
     expect(locationAssignMock).not.toHaveBeenCalled();
