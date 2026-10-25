@@ -1,25 +1,33 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-25 IST)
 
-Generated: 2026-10-25T15:19:36+05:30; hourly slot 16/24.
+Generated: 2026-10-25T10:18:49Z by ChatGPT hourly audit (manual initial execution; hourly scheduled task enabled).
 
-**Attempted today:** 40/202. **Pending today:** 162.
-**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 0.
-**Important:** GitHub source and sampled HTTP/robots/HTML checks are NOT proof of Google/Bing indexing, ranking, or AI citation.
-**Batch selection:** planned; 10 URLs selected. Backup runs recover only missed earlier slots.
+**Attempted today:** 50/202. **Pending today:** 152.
+**Statuses today:** PASS 40, WARN 0, FAIL 0, UNVERIFIED 10.
+**Important:** Only URLs with date-matched, actual check timestamps count as attempted today. UNVERIFIED does not mean failed or verified healthy. These audits are not evidence of Google/Bing indexing, rankings, or AI citations.
+
+## This ChatGPT execution
+
+- Selected the 10 previously unchecked URLs in historical Slot 1, using missed-slot recovery. No future slots consumed and no already-checked rows revisited.
+- Viewed text-extraction snapshots for all 10 URLs. Some snapshots were crawled previously rather than live at this UTC timestamp. Readable headings and educational text appeared in the snapshots, but **direct HTTP status, final URL, canonical, indexing directives, bot-specific robots rules, JSON-LD and current deployment status could not be independently checked**. All 10 were therefore recorded as **UNVERIFIED**, not PASS.
+- Evidence is preserved per URL in `MASTER_URL_TRACKER.csv`. The `checked_at_utc` time for these 10 rows records the ChatGPT attempted review, **not proof of a fresh origin fetch**.
+- No verified status transitions were identified; `CHANGES.md` is unchanged.
+- The previously recorded 40 PASS results were preserved as historical GitHub workflow observations and were **not re-audited by ChatGPT**.
+
+## Attempted slots today
+
+- Slot 1: 10 attempted
+- Slot 6: 10 attempted
+- Slot 8: 10 attempted
+- Slot 13: 10 attempted
+- Slot 16: 10 attempted
 
 ## Follow-up URLs
 
+- Slot 1, indices 1–10: full live HTTP/header/robots/structured-data verification remains required. Text-only snapshot findings must not be presented as full production readiness PASS.
+
 ## Unchecked today
-- [1] https://tinystepslearning.com/
-- [2] https://tinystepslearning.com/blog
-- [3] https://tinystepslearning.com/resources
-- [4] https://tinystepslearning.com/resources/phonics
-- [5] https://tinystepslearning.com/resources/phonics/ck-rule-phonics
-- [6] https://tinystepslearning.com/resources/phonics/floss-rule-phonics
-- [7] https://tinystepslearning.com/resources/phonics/qu-sound-phonics
-- [8] https://tinystepslearning.com/resources/phonics/ch-digraph-phonics
-- [9] https://tinystepslearning.com/resources/phonics/kn-silent-k-phonics
-- [10] https://tinystepslearning.com/resources/phonics/ng-digraph-phonics
+
 - [11] https://tinystepslearning.com/resources/phonics/sh-digraph-phonics
 - [12] https://tinystepslearning.com/resources/phonics/th-digraph-phonics
 - [13] https://tinystepslearning.com/resources/phonics/ai-vowel-team-phonics
@@ -50,12 +58,24 @@ Generated: 2026-10-25T15:19:36+05:30; hourly slot 16/24.
 - [38] https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading
 - [39] https://tinystepslearning.com/pricing
 - [40] https://tinystepslearning.com/contact
-- ... and 122 more
+- [41] https://tinystepslearning.com/why-tiny-steps
+- [42] https://tinystepslearning.com/team
+- [43] https://tinystepslearning.com/team/vannala-ravali-priya
+- [44] https://tinystepslearning.com/class-samples
+- [45] https://tinystepslearning.com/testimonials
+- [46] https://tinystepslearning.com/careers
+- [47] https://tinystepslearning.com/courses
+- [48] https://tinystepslearning.com/curriculum
+- [49] https://tinystepslearning.com/faq
+- [50] https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india
+- ... and 112 more
 
 ## Source sitemap drift
-- None found in current checked-in sitemap files
+
+- Not evaluated by this ChatGPT execution.
 
 ## Confirmed status transitions in this run
-- None
 
-Statuses refer only to checks actually observed on their recorded dates; stale rows do not count towards today's coverage.
+- None. No before/after production evidence was established.
+
+Statuses refer only to checks actually attempted on their recorded dates; stale rows do not count towards today's coverage.
