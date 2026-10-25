@@ -202,5 +202,5 @@ test('homepage footer keeps programme and legal links without changing the lead 
     await expect(footer.getByText(genericClaim, { exact: true })).toHaveCount(0);
   }
   await expect(footer.getByRole('link', { name: 'Pinterest' })).toHaveCount(0);
-  await expect(footer.getByText('© 2026 Tiny Steps Learning. All rights reserved.')).toBeVisible();
+  await expect(footer.getByText('© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.')).toBeVisible();
 });
