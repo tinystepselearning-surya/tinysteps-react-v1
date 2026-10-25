@@ -10,8 +10,16 @@ on:
       - 'src/tests/components/FloatingAssistant.test.tsx'
       - 'src/tests/components/HeaderNavigation.spec.tsx'
       - 'src/tests/seo/homeAiEntityVisibility.spec.ts'
+      - 'src/tests/seo/homeRuntimeImportBoundary.spec.ts'
+      - 'src/components/common/Meta.tsx'
+      - 'src/lib/seo.ts'
+      - 'src/lib/seoRuntime.ts'
+      - 'src/lib/homeSeoMeta.js'
+      - 'src/lib/homeSeoMeta.d.ts'
+      - 'src/lib/routeSeoRegistry.js'
       - 'src/tests/seo/homeMachineReadability.spec.ts'
       - 'tests/homepage-premium-responsive.spec.ts'
+      - 'tests/homepage-seo-runtime-network.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
       - '.github/workflows/homepage-mobile-release-gate.yml'
   push:
@@ -49,6 +57,7 @@ jobs:
           src/tests/components/FloatingAssistant.test.tsx
           src/tests/components/HeaderNavigation.spec.tsx
           src/tests/seo/homeAiEntityVisibility.spec.ts
+          src/tests/seo/homeRuntimeImportBoundary.spec.ts
           src/tests/seo/homeMachineReadability.spec.ts
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
@@ -56,9 +65,34 @@ jobs:
         run: >-
           npx playwright test
           tests/homepage-premium-responsive.spec.ts
+          tests/homepage-seo-runtime-network.spec.ts
           tests/homepage-gateway-destinations.spec.ts
       - name: Build the production Hosting artifact
         run: npm run build:deploy
+      - name: Verify production browser SEO requests
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort > /tmp/homepage-production-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/ -o /dev/null; then break; fi
+            sleep 1
+          done
+          curl --fail --silent --show-error http://127.0.0.1:4173/ -o /dev/null
+          PW_BASE_URL=http://127.0.0.1:4173 npx playwright test tests/homepage-seo-runtime-network.spec.ts
+      - name: Inspect first-load JavaScript and homepage SEO chunk graph
+        run: |
+          npm run bundle:public-check
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const entry = JSON.parse(fs.readFileSync('artifacts/public-bundle-report.json', 'utf8'));
+          const chunks = fs.readdirSync('dist/assets').filter(name => name.endsWith('.js'));
+          console.log('First-load JS assets:', JSON.stringify(entry.assets));
+          console.log('Total initial JS gzip bytes:', entry.totals.gzipBytes);
+          console.log('Homepage/SEO chunks:', chunks
+            .filter(name => /HomePage|seo-|Meta-|vocabularyAuthoritySeoManifest|grammarProgrammaticSeoManifest|schemas-/.test(name))
+            .map(name => ({ name, bytes: fs.statSync('dist/assets/' + name).size })));
+          NODE
       - name: Upload Playwright failure evidence
         if: failure()
         uses: actions/upload-artifact@v4

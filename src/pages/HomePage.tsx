@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import ConversionHero from '../components/Home/ConversionHero';
 import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../config/pricing';
 import Meta from '../components/common/Meta';
-import { ROUTE_SEO_REGISTRY } from '../lib/routeSeoRegistry.js';
+import { HOMEPAGE_SEO_META } from '../lib/homeSeoMeta.js';
 import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from '../lib/schemas';
 
-const homeSeo = ROUTE_SEO_REGISTRY['/'];
+const homeSeo = HOMEPAGE_SEO_META;
 const homeUrl = PUBLIC_FACTS.primaryWebsite + '/';
 
 const homeWebPageSchema = {
