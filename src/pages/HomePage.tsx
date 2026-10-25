@@ -250,7 +250,7 @@ function BeforeYouBookSection() {
           <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-6 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Standard live 1:1 pricing</p>
             <h3 className="mt-5 text-3xl font-bold tracking-[-0.045em] text-[#102A43]">
-              {formatINR(PER_CLASS_PRICE)} <span className="text-base font-medium tracking-normal text-slate-600">per class</span>
+              <span>{formatINR(PER_CLASS_PRICE)}</span>{' '}<span className="text-base font-medium tracking-normal text-slate-600">per class</span>
             </h3>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               A dedicated teacher and a {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes}-minute live session. All standard 1:1 packages use the same per-class rate.
