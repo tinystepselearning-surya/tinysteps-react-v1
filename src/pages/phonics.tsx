@@ -122,6 +122,11 @@ const faqItems = [
       'Yes. Tiny Steps offers live 1:1 online phonics guidance with level-based progression and personalized correction.',
   },
   {
+    question: 'Do parents receive recordings of every live phonics class?',
+    answer:
+      'Yes. Tiny Steps provides the recording of every completed live phonics class to the parent or guardian. After processing and upload, the team shares the student-specific OneDrive recording-folder link through WhatsApp. Recordings are for private family review; contact the admin team if a recording is missing or inaccessible.',
+  },
+  {
     question: 'Do parents get progress updates?',
     answer:
       'Yes. Parents receive practical updates on milestones, current gaps, and the next steps in the child’s phonics learning path.',
