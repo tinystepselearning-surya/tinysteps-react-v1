@@ -14,6 +14,7 @@ describe('homepage premium gateway', () => {
   const form = read('src/components/forms/PublicAssessmentForm.tsx');
   const footer = read('src/components/common/Footer.tsx');
   const backToTop = read('src/components/common/BackToTopButton.tsx');
+  const floatingAssistant = read('src/components/common/FloatingAssistant.tsx');
   const registry = ROUTE_SEO_REGISTRY['/'];
 
   it('keeps shared homepage metadata and canonical ownership', () => {
@@ -289,7 +290,11 @@ describe('homepage premium gateway', () => {
   it('keeps fixed support widgets away from the final homepage booking area', () => {
     expect(routes).toContain("normalizedPath !== '/' || hideMarketingChrome");
     expect(routes).toContain("document.getElementById('homepage-final-invitation')");
-    expect(routes).toContain('!hideHomepageBottomWidgets');
+    expect(routes).toContain('suppressDock={hideHomepageBottomWidgets}');
+    expect(routes).toContain('!hideHomepageBottomWidgets ? <BackToTopButton /> : null');
+    expect(floatingAssistant).toContain("suppressDock = false");
+    expect(floatingAssistant).toContain("${suppressDock ? 'hidden' : 'flex'}");
+    expect(floatingAssistant).toContain('<AskTinyStepsModal open={askOpen} onClose={() => setAskOpen(false)} />');
     expect(routes).toContain('showDeferredSupportWidgets');
     expect(backToTop).toContain("const isHomePage = pathname === '/'");
     expect(backToTop).toContain("prefers-reduced-motion: reduce");
