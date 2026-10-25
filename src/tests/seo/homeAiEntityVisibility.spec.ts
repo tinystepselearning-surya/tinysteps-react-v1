@@ -49,6 +49,15 @@ describe('homepage premium gateway', () => {
     expect(hero).toContain('for Kids.');
   });
 
+  it('uses approved deep navy and bright sun orange consistently in the hero', () => {
+    expect(hero).toContain('text-[#102A43]');
+    expect(hero).toContain('text-[#FF7A00]');
+    expect(hero).toContain('bg-[#102A43]');
+    expect(hero).toContain('hover:bg-[#0B2138]');
+    expect(hero).not.toContain('tracking-[-0.055em] text-slate-950');
+    expect(hero).not.toContain('<span className="text-orange-600">for Kids.</span>');
+  });
+
   it('removes the homepage hero form, not the shared lead capture flow', () => {
     expect(hero).not.toContain('BookAssessmentForm');
     expect(home).not.toContain('firebase/firestore');
