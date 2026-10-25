@@ -56,13 +56,12 @@ describe('homepage premium gateway', () => {
     expect(form).toContain('navigateToWhatsapp(whatsappWindow, whatsappUrl)');
   });
 
-  it('keeps a modal CTA and a true direct-page CTA', () => {
+  it('keeps a single prominent assessment CTA using the existing modal flow', () => {
     expect(hero).toContain('to="/book-demo"');
-    expect(hero).toContain('to="/book-demo#assessment-form"');
-    expect(hero).toContain('data-no-booking-intercept="1"');
+    expect(hero.match(/to="\/book-demo"/g)).toHaveLength(1);
     expect(hero).toContain('Book Free 35-Minute Demo');
-    expect(hero).toContain('Open Assessment Form');
-    expect(routes).toContain("if (node.getAttribute('data-no-booking-intercept') === '1') return;");
+    expect(hero).not.toContain('Open Assessment Form');
+    expect(hero).not.toContain('to="/book-demo#assessment-form"');
     expect(routes).toContain('setIsAssessmentModalOpen(true)');
   });
 
