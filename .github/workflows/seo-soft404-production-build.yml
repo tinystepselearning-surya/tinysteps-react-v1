@@ -42,6 +42,9 @@ on:
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/content/blog/posts/phonics/online-phonics-classes-vs-school.ts'
       - 'src/tests/seo/gsc735PhonicsComparisonIntent.spec.ts'
+      - 'src/pages/FAQPage.tsx'
+      - 'src/pages/TermsAndConditionsPage.tsx'
+      - 'src/tests/seo/faqPageDecisionHub.spec.ts'
       - 'src/pages/grammar.tsx'
       - 'src/pages/speaking.tsx'
       - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
@@ -95,6 +98,8 @@ jobs:
         run: node --test scripts/test/gsc735-public-resource-fallback.node-test.mjs
       - name: Guard approved Phonics age routes and editorial differentiation
         run: npx vitest run src/tests/seo/phonicsAgeProgrammePilot.spec.ts
+      - name: Verify mandatory parent class-recordings policy on FAQ and Terms
+        run: npx vitest run src/tests/seo/faqPageDecisionHub.spec.ts
       - name: Check TypeScript source
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
