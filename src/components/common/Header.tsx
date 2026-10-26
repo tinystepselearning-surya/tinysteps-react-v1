@@ -204,8 +204,8 @@ export default function Header() {
     <nav
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         isSticky
-          ? 'border-b border-slate-200/90 bg-white/95 shadow-[0_14px_34px_rgba(8,15,40,0.14)] backdrop-blur-xl'
-          : 'border-b border-white/45 bg-white/72 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
+          ? 'border-b border-[#D7E5F4] bg-white/95 shadow-[0_14px_34px_rgba(8,15,40,0.14)] backdrop-blur-xl'
+          : 'border-b border-[#D7E5F4]/65 bg-white/82 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4">
@@ -281,7 +281,7 @@ export default function Header() {
 
       <div
         id="mobile-nav-menu"
-        className={`overflow-hidden border-t border-slate-200/80 bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
+        className={`overflow-hidden border-t border-[#D7E5F4] bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
           isOpen ? "max-h-[520px]" : "max-h-0"
         }`}
       >
