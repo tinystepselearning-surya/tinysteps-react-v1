@@ -10,6 +10,7 @@ import {
   type ClassSampleItem,
 } from '../lib/classSamples';
 import { createFAQPageSchema } from '../lib/schemas';
+import { PUBLIC_SPEAKING_VIDEO_EVIDENCE } from '../lib/publicSpeakingVideoEvidence';
 import AutoLinkedText from '../components/seo/AutoLinkedText';
 import LazySection from '../components/common/LazySection';
 
@@ -506,6 +507,9 @@ export default function ClassSamplesPage() {
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-950">Class sample gallery</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
               <AutoLinkedText text="Filter by phonics, reading, grammar, communication, or confidence to explore the class moments most relevant to your child." />
+            </p>
+            <p data-static-speaking-video-link className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              See the published <Link to="/speaking#real-class-sample" className="font-semibold text-violet-800 underline underline-offset-2">{PUBLIC_SPEAKING_VIDEO_EVIDENCE.title}</Link> example on our Public Speaking programme page.
             </p>
           </div>
           <div className="text-sm text-slate-500">Start with the learning area you care about most, then explore how Tiny Steps teaching feels in practice.</div>
