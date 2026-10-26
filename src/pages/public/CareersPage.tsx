@@ -67,7 +67,7 @@ const BENEFITS = [
     title: 'Clear per-class compensation',
     description: '₹175 for regular-timing classes and ₹200 for classes before 9 AM or after 9 PM IST.',
     cardClass: 'border-amber-100 bg-gradient-to-br from-amber-50 via-white to-white hover:border-amber-200',
-    iconClass: 'bg-amber-100 text-amber-700',
+    iconClass: 'bg-[#FFF5DF] text-[#634713]',
   },
   {
     icon: GraduationCap,
@@ -80,8 +80,8 @@ const BENEFITS = [
     icon: Users,
     title: '1:1 child-focused teaching',
     description: 'Work closely with individual learners and adapt delivery to each child’s pace within a structured curriculum.',
-    cardClass: 'border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white hover:border-orange-200',
-    iconClass: 'bg-orange-100 text-orange-700',
+    cardClass: 'border-[#E5DDF8] bg-gradient-to-br from-[#FFE5EB] via-white to-white hover:border-[#E5C7D8]',
+    iconClass: 'bg-[#FFD1DC] text-[#604577]',
   },
 ];
 
@@ -99,8 +99,8 @@ const PAY_RATES = [
     hours: 'Before 9:00 AM or after 9:00 PM IST',
     rate: '₹200',
     note: 'per completed 35-minute class',
-    cardClass: 'border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50',
-    badgeClass: 'bg-orange-100 text-orange-800',
+    cardClass: 'border-[#E5C7D8] bg-gradient-to-br from-[#FFE5EB] via-white to-[#FFF5DF]',
+    badgeClass: 'bg-[#FFD1DC] text-[#54345D]',
   },
 ];
 
@@ -160,7 +160,7 @@ const PROCESS_STEPS = [
   {
     title: 'Onboarding + schedule building',
     description: 'Confirm your reliable slots and our team actively works on learner matching and building your regular teaching schedule.',
-    tone: 'border-orange-200 bg-orange-50/80',
+    tone: 'border-[#E5C7D8] bg-[#FFE5EB]/80',
   },
 ];
 
@@ -278,13 +278,13 @@ export default function CareersPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
-      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-orange-50 via-white to-blue-50 px-5 py-10 md:px-6 md:py-14">
-        <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-orange-200/30 blur-3xl" />
+      <section className="relative overflow-hidden border-b border-slate-200 bg-gradient-to-br from-[#FFE5EB] via-white to-blue-50 px-5 py-10 md:px-6 md:py-14">
+        <div className="pointer-events-none absolute -left-24 top-8 h-64 w-64 rounded-full bg-[#CC8994]/30 blur-3xl" />
         <div className="pointer-events-none absolute -right-16 top-4 h-72 w-72 rounded-full bg-blue-200/35 blur-3xl" />
 
         <div className="relative mx-auto grid max-w-6xl gap-7 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/90 px-4 py-2 text-sm font-bold text-orange-800 shadow-sm backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E5C7D8] bg-white/90 px-4 py-2 text-sm font-bold text-[#54345D] shadow-sm backdrop-blur">
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Teacher recruitment closed · 11 October 2026
             </div>
@@ -374,7 +374,7 @@ export default function CareersPage() {
       <section className="border-y border-slate-200 bg-white px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-5xl">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">Teaching compensation</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-[#604577]">Teaching compensation</p>
             <h2 className="mt-3 text-3xl font-black tracking-tight md:text-4xl">Compensation in the completed 2026 hiring cycle</h2>
             <p className="mt-3 text-lg leading-8 text-slate-600">
               For reference, these are the rates published during the completed recruitment cycle, not a current job offer. Future rates may differ.
@@ -460,9 +460,9 @@ export default function CareersPage() {
       <section id="role" className="scroll-mt-24 px-5 py-10 md:px-6 md:py-12">
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-2">
-            <Card className="overflow-hidden border border-orange-100 bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
-              <div className="border-b border-orange-100 bg-gradient-to-r from-orange-50 to-amber-50 px-7 py-5 md:px-8">
-                <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-700">What you will do</p>
+            <Card className="overflow-hidden border border-[#E5DDF8] bg-white p-0 shadow-sm transition duration-300 hover:shadow-lg">
+              <div className="border-b border-[#E5DDF8] bg-gradient-to-r from-[#FFE5EB] to-[#FFF5DF] px-7 py-5 md:px-8">
+                <p className="text-sm font-black uppercase tracking-[0.2em] text-[#604577]">What you will do</p>
                 <h2 className="mt-2 text-3xl font-black tracking-tight">Online English Teacher responsibilities</h2>
               </div>
               <ul className="space-y-3 p-7 md:p-8">
@@ -545,7 +545,7 @@ export default function CareersPage() {
         </div>
       </section>
 
-      <section id="apply" aria-labelledby="careers-closed-title" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-orange-50 px-5 py-12 md:px-6 md:py-16">
+      <section id="apply" aria-labelledby="careers-closed-title" className="scroll-mt-20 bg-gradient-to-br from-blue-50 via-white to-[#FFE5EB] px-5 py-12 md:px-6 md:py-16">
         <div className="mx-auto max-w-4xl rounded-[2rem] border border-slate-200 bg-white px-7 py-10 text-center shadow-xl shadow-slate-200/60 md:px-12 md:py-14">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
             <CheckCircle2 className="h-7 w-7" aria-hidden="true" />
@@ -602,7 +602,7 @@ export default function CareersPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-5 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="rounded-[2rem] bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-7 text-white shadow-xl md:p-9">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-300">Explore our academic approach</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#FFE5EB]">Explore our academic approach</p>
               <h2 className="mt-3 text-3xl font-black tracking-tight">Explore the Tiny Steps academic approach</h2>
               <p className="mt-3 max-w-2xl text-base leading-7 text-slate-300">
                 Review our public program pages to understand the skills, learner ages and teaching style behind Tiny Steps classes.
