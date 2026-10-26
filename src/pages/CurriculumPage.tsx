@@ -453,7 +453,7 @@ const CurriculumPage: FC = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[#fbfaf7] pb-24 text-slate-950">
+    <div className="min-h-screen overflow-x-clip bg-[#F4F8FF] pb-24 text-slate-950">
       <Meta
         title={curriculumSeoTitle}
         description={curriculumSeoDescription}
@@ -507,7 +507,7 @@ const CurriculumPage: FC = () => {
           </div>
 
           <div className="relative overflow-hidden rounded-[30px] bg-slate-950 p-5 text-white shadow-[0_26px_70px_rgba(15,23,42,0.22)] sm:p-6">
-            <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
+            <div className="absolute -right-16 -top-20 h-44 w-44 rounded-full bg-[#CC8994]/20 blur-3xl" aria-hidden="true" />
             <div className="absolute -bottom-20 -left-16 h-44 w-44 rounded-full bg-sky-400/15 blur-3xl" aria-hidden="true" />
 
             <div className="relative">
@@ -572,7 +572,7 @@ const CurriculumPage: FC = () => {
 
       <nav
         aria-label="Curriculum sections"
-        className="sticky top-[72px] z-30 hidden border-y border-slate-200/80 bg-[#fbfaf7]/95 backdrop-blur md:block"
+        className="sticky top-[72px] z-30 hidden border-y border-slate-200/80 bg-[#F4F8FF]/95 backdrop-blur md:block"
       >
         <div className="mx-auto flex max-w-7xl items-center gap-7 overflow-x-auto px-6 py-3 text-xs font-bold text-slate-600 lg:px-8">
           {curriculumNavItems.map((item) => {
@@ -862,7 +862,7 @@ const CurriculumPage: FC = () => {
                 </div>
               </div>
 
-              <div className="border-y border-slate-200 bg-[#fbfaf7] px-5 py-6 sm:px-6">
+              <div className="border-y border-slate-200 bg-[#F4F8FF] px-5 py-6 sm:px-6">
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Progression rule</p>
                 <p className="mt-2 text-lg font-bold text-slate-950">
                   Model → guide → fade support → independent use → fresh-task transfer
@@ -888,7 +888,7 @@ const CurriculumPage: FC = () => {
                   description: 'For children ready for deeper communication: purposeful dialogue, questioning, reasoning, evidence, perspective, mediation, discussion, presentations, and supervised AI-era communication.',
                 },
               ] as const).map(({ course, path, eyebrow, description }) => (
-                <article key={course.id} className="rounded-[28px] border border-slate-200 bg-[#fbfaf7] p-5 sm:p-7">
+                <article key={course.id} className="rounded-[28px] border border-[#D7E5F4] bg-[#F4F8FF] p-5 sm:p-7">
                   <div className="grid gap-5 border-b border-slate-200 pb-6 lg:grid-cols-[1fr_auto] lg:items-end">
                     <div>
                       <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-700">{eyebrow}</p>
