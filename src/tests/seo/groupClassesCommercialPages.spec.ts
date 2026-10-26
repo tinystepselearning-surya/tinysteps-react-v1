@@ -60,7 +60,7 @@ describe('Group-class commercial page integration', () => {
   });
 
   it('keeps the new programme pages light and sky-blue except for the navy pricing band', () => {
-    expect(content).toContain('bg-[#F0F8FF]');
+    expect(content).toContain('bg-[#F4F8FF]');
     expect(content).toContain('from-[#D9EEFF]');
     expect(content).toContain('bg-gradient-to-br from-[#0C2846]');
     expect(content).toContain("Move beyond memorising grammar rules");
