@@ -304,6 +304,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           <LeadCard className="bg-slate-900 text-white">
             <LeadSectionHeading
               eyebrow="Internal next steps"
+              tone="dark"
               title="Parents usually compare these pages next"
               description={
                 <span className="text-slate-200">
