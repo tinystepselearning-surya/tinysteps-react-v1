@@ -314,7 +314,7 @@ test('public pages reuse one lightweight scroll progress bar that tracks scrolli
       if (maxScroll > 0) window.scrollTo(0, maxScroll * 0.65);
     });
     await expect.poll(async () => progress.locator('span').evaluate((element) => {
-      const match = element.getAttribute('style')?.match(/scaleX\\(([^)]+)\\)/);
+      const match = element.getAttribute('style')?.match(/scaleX\(([^)]+)\)/);
       return match ? Number(match[1]) : 0;
     })).toBeGreaterThan(0.3);
   }
