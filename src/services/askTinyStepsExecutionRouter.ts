@@ -123,7 +123,7 @@ function assessmentAnswer(): string {
 
 function classModeAnswer(): string {
   return withSource(
-    `Yes. Tiny Steps offers live 1:1 online classes and one newly advertised group format: 1 teacher with 4 students. New batches depend on level-matched placement and suitable schedules.`, 
+    `Yes. Tiny Steps offers One-to-One Classes and Group Classes. Group batches depend on level matching and suitable schedules. You can check the group-size FAQ for class capacity.`, 
     'pricing',
   );
 }
@@ -138,7 +138,7 @@ function durationAnswer(question: string): string {
 
   const oneToOneMinutes = ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes;
   return withSource(
-    `Standard 1:1 classes are ${oneToOneMinutes} minutes. The single advertised 1:4 small-group class lasts ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes.`, 
+    `One-to-One Classes last ${oneToOneMinutes} minutes and Group Classes last ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes.`, 
     'pricing',
   );
 }
