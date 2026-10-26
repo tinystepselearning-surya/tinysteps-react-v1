@@ -66,3 +66,25 @@ test('approved core text colours meet AA for normal-size text', () => {
     ['#FFFFFF', '#212B5C'],
   ]) assert.ok(contrast(fg, bg) >= 4.5, `${fg} on ${bg}`);
 });
+
+
+test('consolidated portal headers retain readable light and dark text', () => {
+  const header = read('src/components/common/AppShellHeader.tsx');
+  for (const required of ['text-[#17284C] dark:text-white', 'text-[#405678] dark:text-[#D3B9E1]', 'text-[#604577] dark:text-[#D3B9E1]']) {
+    assert.ok(header.includes(required), required);
+  }
+  assert.ok(read('src/pages/parent/components/layout/ParentHeader.tsx').includes('ts-app-parent-hero'));
+  assert.ok(read('src/pages/lp/components/layout/LPHeader.tsx').includes('dark:text-white'));
+  assert.ok(read('src/pages/admin/components/Header.tsx').includes('dark:text-white'));
+  assert.ok(css.includes('[data-ts-surface="app"] .ts-app-header.ts-app-parent-hero'));
+  assert.ok(css.includes('html.dark [data-ts-surface="app"] .ts-app-header.ts-app-parent-hero'));
+});
+
+test('reconciliation preserves curriculum/error colours and removes competing root themes', () => {
+  const routes = read('src/app/routes.tsx');
+  assert.ok(routes.includes("data-ts-surface={hideMarketingChrome ? 'app'"), 'authenticated styling stays routed');
+  assert.ok(!css.includes('.ts-auth-surface {'), 'avoid a second conflicting authenticated root theme');
+  assert.ok(read('src/pages/school/SchoolPortalFoundationPage.tsx').includes('text-red-700'), 'preserve errors');
+  assert.ok(read('src/pages/admin/AdminDashboard.tsx').includes('text-red-600'), 'preserve access alerts');
+  assert.ok(read('src/pages/parent/ParentDashboard.tsx').includes('ts-native-no-x-scroll'), 'preserve native viewport safety');
+});
