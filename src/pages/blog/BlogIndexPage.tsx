@@ -95,7 +95,7 @@ const DISCOVERY_STYLES: Record<BlogDiscoveryCategory, { chip: string; wash: stri
     wash: 'from-[#EAF6F5] to-[#D9EEFF]',
   },
   'Speaking & Communication': {
-    chip: 'bg-amber-100 text-amber-800',
+    chip: 'bg-[#F1EDFC] text-[#604577]',
     wash: 'from-[#F1EDFC] to-[#FDECF0]',
   },
   'Parent Guides': {
