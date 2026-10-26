@@ -1,0 +1,57 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+
+const groupPages = [
+  ['group-phonics-classes-for-kids', 'GroupPhonicsClassesPage', 'Online Group Phonics Classes for Kids'],
+  ['group-grammar-classes-for-kids', 'GroupGrammarClassesPage', 'Online Group Grammar Classes for Kids'],
+  ['group-public-speaking-classes-for-kids', 'GroupPublicSpeakingClassesPage', 'Group Public Speaking Classes for Kids'],
+] as const;
+
+describe('Group-class commercial page integration', () => {
+  const routes = read('src/app/routes.tsx');
+  const seo = read('src/lib/routeSeoRegistry.js');
+  const manifest = read('src/lib/publicRouteManifest.js');
+  const content = read('src/pages/public/GroupClassPage.tsx');
+
+  it('registers distinct public canonical and prerendered routes for all group programmes', () => {
+    groupPages.forEach(([slug, component, title]) => {
+      expect(routes).toContain(`{ path: '${slug}', element: <${component} /> }`);
+      expect(seo).toContain(`'/${slug}': {`);
+      expect(seo).toContain(`title: '${title} | Tiny Steps'`);
+      expect(seo).toContain(`canonicalPath: '/${slug}'`);
+      expect(manifest).toContain(`route('/${slug}', 'static')`);
+    });
+  });
+
+  it('uses original format-specific page content and a qualified group-enquiry CTA', () => {
+    expect(content).toContain('Register Group Interest');
+    expect(content).toContain('/book-demo?format=small_group&program=');
+    expect(content).toContain('not guarantee an immediate batch');
+    expect(content).toContain('createCourseSchema');
+    expect(content).toContain('createFAQPageSchema');
+    expect(content).toContain('createWebPageSchema');
+    expect(content).toContain("premiumPath: '/phonics'");
+    expect(content).toContain("premiumPath: '/grammar'");
+    expect(content).toContain("premiumPath: '/speaking'");
+  });
+
+  it('preserves existing premium commercial titles and links to groups from discovery pages', () => {
+    expect(seo).toContain("title: 'Online Phonics Classes for Kids | Live 1:1 | Tiny Steps'");
+    expect(seo).toContain("title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps'");
+    expect(seo).toContain("title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps'");
+    for (const page of ['src/pages/HomePage.tsx', 'src/pages/CoursesPage.tsx', 'src/pages/CurriculumPage.tsx']) {
+      const source = read(page);
+      groupPages.forEach(([slug]) => expect(source).toContain('/' + slug));
+    }
+  });
+
+  it('keeps group preference in the lead schema and prevents automatic 1:1 demo creation', () => {
+    expect(read('src/lib/publicLeadForm.ts')).toContain("classFormatPreference: form.classFormatPreference || 'one_to_one'");
+    expect(read('firestore.rules')).toContain("'one_to_one', 'small_group', 'unsure'");
+    expect(read('functions/src/leadDemoAutoWorkflow.ts')).toContain("lead.classFormatPreference === 'small_group'");
+    expect(read('src/pages/public/BookDemoPage.tsx')).toContain('Register Interest in Group');
+  });
+});
