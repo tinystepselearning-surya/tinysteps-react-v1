@@ -4788,7 +4788,7 @@ export default function ParentDashboard() {
   if (!user) return null;
 
   return (
-    <div className={`mobile-app-scroll ts-parent-page ts-native-no-x-scroll w-full min-w-0 max-w-full lg:h-screen lg:overflow-hidden ${
+    <div className={`mobile-app-scroll ts-parent-page ts-auth-surface ts-native-no-x-scroll w-full min-w-0 max-w-full lg:h-screen lg:overflow-hidden ${
       isNativeIOSApp
         ? "ts-native-app-shell ts-native-no-x-scroll overflow-hidden"
         : "min-h-[100dvh] overflow-x-hidden [overscroll-behavior-x:none]"
