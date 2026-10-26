@@ -379,7 +379,7 @@ const CourseDetailPage: FC = () => {
                   href={step.href}
                   className="group flex h-full items-start gap-3 rounded-2xl border border-slate-100 bg-slate-50/70 px-3.5 py-3 transition hover:border-slate-200 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
                 >
-                  <span className="mt-0.5 text-xs font-black tracking-[0.12em] text-orange-600">{step.number}</span>
+                  <span className="mt-0.5 text-xs font-black tracking-[0.12em] text-[#C2410C]">{step.number}</span>
                   <span>
                     <span className="block text-sm font-semibold text-slate-900 group-hover:text-slate-950">{step.title}</span>
                     <span className="mt-0.5 block text-xs leading-5 text-slate-500">{step.detail}</span>
