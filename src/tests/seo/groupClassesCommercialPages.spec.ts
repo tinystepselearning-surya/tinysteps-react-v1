@@ -38,15 +38,23 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain("premiumPath: '/speaking'");
   });
 
-  it('markets only the canonical 1:4 group and retains ₹400/35-minute premium 1:1', () => {
+  it('shows only two parent-facing class formats and correct prices', () => {
     expect(content).toContain('const GROUP_PLAN = NEW_GROUP_CLASS_PLAN');
     expect(content).toContain('GROUP_PLAN.monthlyFee / GROUP_PLAN.classes');
     expect(content).toContain('GROUP_PLAN.durationMinutes');
-    expect(content).toContain('Only one group format: 1 teacher to 4 students.');
+    expect(content).toContain('Group Classes or One-to-One Classes?');
+    expect(content).toContain('maximum of four children per teacher');
+    expect(content).toContain('₹250 per child');
     expect(content).toContain('formatINR(PER_CLASS_PRICE)');
     expect(content).toContain('ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes');
     expect(content).not.toContain('1:2 Group');
     expect(content).not.toContain('Maximum: 5 children per teacher.');
+    expect(content).not.toContain('1:4 group');
+    expect(content).not.toContain('₹220');
+    expect(read('src/config/pricing.ts')).toContain('monthlyFee: 3000');
+    expect(read('src/pages/HomePage.tsx')).toContain('Group Classes');
+    expect(read('src/pages/HomePage.tsx')).toContain('One-to-One Classes');
+    expect(read('src/pages/HomePage.tsx')).toContain('NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes');
     expect(read('src/config/pricing.ts')).toContain("NEW_GROUP_CLASS_RATIO = '1:4'");
     expect(read('src/pages/PricingPage.tsx')).toContain('const standardGroups = [NEW_GROUP_CLASS_PLAN]');
   });
