@@ -30,14 +30,14 @@ export default function AppShellHeader({
         <div className="min-w-0 space-y-3 sm:space-y-4">
           <TinyStepsBrand subtitle={`${roleLabel} workspace`} />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-slate-400">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#604577] dark:text-[#D3B9E1]">
               {roleLabel}
             </p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#17284C] dark:text-white sm:text-2xl">
               {title}
             </h1>
             {subtitle ? (
-              <p className="mt-1 text-sm text-slate-600">{subtitle}</p>
+              <p className="mt-1 text-sm text-[#405678] dark:text-[#D3B9E1]">{subtitle}</p>
             ) : null}
           </div>
         </div>
@@ -47,7 +47,7 @@ export default function AppShellHeader({
         ) : null}
       </div>
 
-      {footer ? <div className="mt-4 border-t border-slate-100 pt-4">{footer}</div> : null}
+      {footer ? <div className="mt-4 border-t border-[#D7E5F4] pt-4 dark:border-[#384C80]">{footer}</div> : null}
     </header>
   );
 }
