@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
-import { GROUP_MONTHLY_FEES, formatINR } from '../../config/pricing';
+import { GROUP_MONTHLY_FEES, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { getRouteConfig } from '../../lib/seo';
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
@@ -26,25 +26,25 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     path: '/group-phonics-classes-for-kids',
     premiumPath: '/phonics',
     name: 'Group Phonics',
-    eyebrow: 'Early reading · Phonics · Live small-group learning',
+    eyebrow: 'Phonics · Early reading · Live online small groups',
     heading: 'Live Online Group Phonics Classes for Kids',
-    description: 'Build early reading skills through letter-sound connections, oral blending, decoding and purposeful practice with other children at a comparable stage. New groups are formed when suitable learners and timings can be matched.',
-    ageNote: 'Designed primarily for children developing early phonics foundations, often ages 3–6. Younger children may need shorter, play-based practice; online group placement depends on readiness, attention and ability to take turns, not age alone.',
+    description: 'From hearing letter sounds to blending first words, our live small-group phonics classes help children build early reading foundations with a teacher, individual practice turns and level-matched peers.',
+    ageNote: 'Especially suited to early learners around ages 3–6 who are ready for shared online activities. Younger children may need shorter, play-based practice. We consider attention, listening and phonics readiness before recommending a group.',
     idealFor: [
-      'A child starting to connect letters with their sounds who can take turns in a live class.',
-      'A child learning to blend and segment short spoken or written words.',
-      'Families wanting structured peer participation and a fixed group learning rhythm.',
+      'Children beginning to hear, recognise and connect letter sounds.',
+      'Emerging readers practising how sounds join to make words.',
+      'Families looking for a structured phonics routine with a few peers at a similar stage.',
     ],
     learningSteps: [
-      { title: 'Hear and notice sounds', detail: 'Use listening, rhyme and sound-awareness activities appropriate to the learners\' developmental stage.' },
-      { title: 'Connect sounds and symbols', detail: 'Work with explicitly introduced letter-sound patterns before expecting independent word reading.' },
-      { title: 'Blend and segment', detail: 'Model how spoken sounds join into words and how words can be broken into sounds for spelling.' },
-      { title: 'Transfer into reading', detail: 'Apply known correspondences to fresh decodable words and suitable short texts, with individual checks.' },
+      { title: 'Listen to sounds', detail: 'Playful listening, rhymes and oral sound games build awareness before formal word reading.' },
+      { title: 'Match sounds to letters', detail: 'Children learn and practise useful letter-sound connections through modelling and active responses.' },
+      { title: 'Blend and build words', detail: 'Guided turns help each learner join sounds to read and separate sounds to spell.' },
+      { title: 'Read with growing independence', detail: 'Children apply familiar sound patterns to fresh, decodable words and short texts when ready.' },
     ],
     participation: [
-      'Each child gets opportunities to say sounds, blend and read aloud rather than only watching the teacher.',
-      'The teacher checks errors and gives a fresh attempt, with prompts adjusted to the group\'s shared level.',
-      'Families receive guidance when individual support would be a better fit than a group.',
+      'Each child has opportunities to say sounds, blend words and read aloud—not just watch others.',
+      'The teacher models, listens, corrects and invites a fresh attempt at the group\'s shared level.',
+      'A child who needs more individual attention can be guided towards premium one-to-one phonics.',
     ],
     questions: [
       { question: 'What is the difference between group phonics and premium 1:1 phonics?', answer: 'A small group follows a shared progression with children at a similar level. Premium 1:1 adjusts pace and practice continuously to one child. The right format depends on current decoding ability, attention and correction needs.' },
@@ -58,25 +58,25 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     path: '/group-grammar-classes-for-kids',
     premiumPath: '/grammar',
     name: 'Group Grammar',
-    eyebrow: 'Sentence building · Grammar in use · Live small groups',
+    eyebrow: 'Grammar · Sentence building · Live online small groups',
     heading: 'Small-Group Online Grammar Classes for Kids',
-    description: 'Learn to form clearer sentences, notice patterns and apply grammar when speaking and writing. Each group follows a shared learning goal, with time for individual answers and corrective practice.',
-    ageNote: 'Relevant to children developing sentence knowledge, often ages 5–12. Placement depends on reading and sentence readiness, with beginner and advanced learners matched separately.',
+    description: 'Move beyond memorising grammar rules. Our live small-group classes help children understand sentence patterns, build accurate sentences and use grammar confidently in real speaking and writing tasks.',
+    ageNote: 'Generally suited to children around ages 5–12 who are ready to work with sentences. Beginner and advanced learners are matched separately after considering their current grammar and reading skills.'
     idealFor: [
-      'A child who speaks or writes understandable ideas but needs clearer sentence structure.',
-      'A learner practising parts of speech, tense choices, punctuation and accurate word order.',
-      'Families seeking discussion and applied practice with children of a similar grammar level.',
+      'Children who have ideas but need help building clear, complete sentences.',
+      'Learners working on tenses, punctuation, word order and grammar accuracy.',
+      'Families who value guided discussion, correction and independent application in small groups.',
     ],
     learningSteps: [
-      { title: 'Understand the pattern', detail: 'Introduce a focused grammatical idea using clear examples and contrasting sentences.' },
-      { title: 'Build a sentence', detail: 'Choose or arrange words to show how meaning changes when grammar changes.' },
-      { title: 'Explain and correct', detail: 'Find a meaningful error, explain the correction and make a new sentence independently.' },
-      { title: 'Apply in context', detail: 'Use the idea in a short answer, conversation, paragraph or real-world writing task.' },
+      { title: 'Notice the pattern', detail: 'Compare meaningful sentences to understand one grammar idea at a time.' },
+      { title: 'Create clear sentences', detail: 'Choose, order and change words to communicate ideas more accurately.' },
+      { title: 'Think, explain and correct', detail: 'Spot an error, explain the correction and create a fresh sentence independently.' },
+      { title: 'Use grammar in real tasks', detail: 'Apply learning to answers, conversations, short writing and meaningful examples.' },
     ],
     participation: [
-      'Children answer independently before comparing their reasoning with classmates.',
-      'The teacher checks understanding with new examples instead of relying on repeated worksheets.',
-      'Level matching prevents a beginner from being placed into an advanced tense or writing group.',
+      'Every learner first thinks and answers independently before discussing ideas with peers.',
+      'The teacher checks understanding through fresh examples, explanation and guided correction.',
+      'Beginner and advanced grammar learners join separate, suitably matched groups.',
     ],
     questions: [
       { question: 'What ages are group grammar classes suitable for?', answer: 'Placement is based on sentence readiness and current grammar understanding, not just the child\'s age. Children need to be able to participate in the intended group tasks.' },
@@ -90,25 +90,25 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     path: '/group-public-speaking-classes-for-kids',
     premiumPath: '/speaking',
     name: 'Group Public Speaking',
-    eyebrow: 'Ideas · Storytelling · Presentations · Live small groups',
+    eyebrow: 'Public speaking · Storytelling · Confident expression',
     heading: 'Live Online Group Public Speaking Classes for Kids',
-    description: 'Develop organised speaking, storytelling and presentation skills in a supportive small group. Children practise expressing ideas to an audience, listening to others and responding to questions.',
-    ageNote: 'For children developing structured expression, generally ages 4–12. Placement depends on speaking readiness and a compatible peer group, not a promise that all children of one age should speak in the same way.',
+    description: 'Help your child express ideas clearly, tell engaging stories and speak to an audience. Our live small-group public speaking classes combine individual speaking turns, thoughtful listening and supportive teacher feedback.',
+    ageNote: 'Generally suited to children around ages 4–12 who can participate in age-appropriate speaking and listening activities. We match children by communication needs and confidence, not by age alone.'
     idealFor: [
-      'A child who has ideas but needs practice organising them for listeners.',
-      'A learner working on show-and-tell, storytelling, presentations or classroom responses.',
-      'Children ready for collaborative activities, listening turns and supported audience practice.',
+      'Children who have ideas but need practice organising and sharing them clearly.',
+      'Learners building confidence with storytelling, show-and-tell and presentations.',
+      'Children ready to practise speaking to peers, listening carefully and responding to questions.',
     ],
     learningSteps: [
-      { title: 'Plan an idea', detail: 'Choose a clear message and organise a beginning, supporting details and ending.' },
-      { title: 'Speak for a listener', detail: 'Practise describing, explaining or telling a short story with age-appropriate prompts.' },
-      { title: 'Listen and respond', detail: 'Ask relevant questions, notice another perspective and adjust an answer when needed.' },
-      { title: 'Try again with feedback', detail: 'Use specific feedback to improve organisation, clarity and independent expression on a fresh task.' },
+      { title: 'Organise an idea', detail: 'Plan a clear beginning, useful details and a strong ending before speaking.' },
+      { title: 'Speak with purpose', detail: 'Practise short explanations, show-and-tell, stories and presentations with thoughtful prompts.' },
+      { title: 'Listen and connect', detail: 'Learn to ask relevant questions, consider other viewpoints and respond to an audience.' },
+      { title: 'Improve with feedback', detail: 'Use teacher feedback to try again with clearer structure, expression and independence.' },
     ],
     participation: [
-      'Every child needs a meaningful individual speaking turn; observing others is only part of the lesson.',
-      'Peer listening and questions are structured activities rather than a contest to speak the loudest.',
-      'Children who need more gradual participation may be better supported through premium 1:1 sessions.',
+      'Each child has meaningful opportunities to speak, rather than spending the lesson only listening.',
+      'Peers practise listening, asking questions and offering respectful responses.',
+      'Children needing gradual, individualised support can choose premium one-to-one speaking classes.',
     ],
     questions: [
       { question: 'How is public speaking different from spoken English?', answer: 'Public speaking focuses on communicating organised ideas to listeners through storytelling, explanations, show-and-tell and presentations. Everyday conversational fluency is a separate learning need.' },
@@ -120,8 +120,10 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
   },
 };
 
-const groupFee = GROUP_MONTHLY_FEES.find((row) => row.ratio === '1:3');
-const groupPrice = groupFee ? formatINR(Math.round(groupFee.monthlyFee / groupFee.classes)) : null;
+const GROUP_TIERS = GROUP_MONTHLY_FEES.filter((row) =>
+  ['1:2', '1:3', '1:4', '1:5'].includes(row.ratio),
+);
+const PREMIUM_DURATION_MINUTES = ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes;
 
 export default function GroupClassPage({ track }: { track: GroupTrack }) {
   const page = GROUP_CONTENT[track];
