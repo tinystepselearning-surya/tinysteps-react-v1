@@ -238,7 +238,7 @@ const PricingPage: FC = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_56%,#f8fbff_100%)] pb-20 text-slate-950">
+    <div className="min-h-screen overflow-x-clip bg-[linear-gradient(125deg,#E7F3FF_0%,#F1EDFC_38%,#FFFFFF_72%,#F4F8FF_100%)] pb-20 text-slate-950">
       <Meta
         title={pricingSeoTitle}
         description={pricingSeoDescription}
@@ -249,8 +249,8 @@ const PricingPage: FC = () => {
       />
 
       <section className="relative px-4 pb-12 pt-10 sm:px-6 md:pt-14 lg:px-8">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 px-6 py-10 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 md:py-12">
-          <div className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">Fees, packages & value comparison</div>
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-[#D7E5F4] bg-white/95 px-6 py-10 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 md:py-12">
+          <div className="mx-auto inline-flex rounded-full border border-[#E3DDF3] bg-[#F1EDFC] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#755E96]">Fees, packages & value comparison</div>
           <h1 className="mt-5 font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.75rem]">
             Online English Classes for Kids: Fees & Pricing
           </h1>
