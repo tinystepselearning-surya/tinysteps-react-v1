@@ -18,6 +18,8 @@ const legacyText = /(?<![\w-])(?:(?:hover|group-hover|focus|focus-visible|dark|s
 const rawText = /(?<![\w-])(?:text|hover:text|group-hover:text)-\[#[a-fA-F0-9]{6}\]/g;
 const cssText = /(?:^|[;{\s])color\s*:\s*#[a-fA-F0-9]{6}\b/g;
 const protectedPath = /(?:^|\/)(?:admin|teacher|parent|lp|kid|kids|school|schools|payments|messages|founder|auth|login|dev)(?:\/|$)/i;
+// Inner games/classroom directories must be separated from the surrounding parent/kids portal scope.
+const interactiveSpecialDirectory = /(?:^|\/)(?:games|dailypractice|classroom|annotation|effects)(?:\/|$)/i;
 const specialPath = /(?:^|\/)(?:games|dailypractice|classroom|annotation|effects)(?:\/|$)|(?:^|\/)(?:Kids\w*|Admin|Login\w*|Debug\w*|PublicEnglishGame\w*|FreeEnglishGameLandingPage|FreeLetterTracingGamePage|LetterTracingWithSoundsGamePage)\.(?:tsx|jsx)$/i;
 const publicComponent = /^src\/components\/(?:Home|blog|common|marketing|programs|resources|seo|entity)\//;
 const publicPage = /^src\/pages\//;
@@ -45,6 +47,7 @@ function list(dir) {
   });
 }
 function scope(file) {
+  if (interactiveSpecialDirectory.test(file)) return 'specialised';
   if (protectedPath.test(file)) return 'protected';
   if (specialPath.test(file)) return 'specialised';
   if (publicPage.test(file) || publicComponent.test(file) || file === 'src/index.css') return 'public';
