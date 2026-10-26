@@ -656,12 +656,12 @@ export default function SpeakingPage() {
 
   return (
     <div className="bg-[#F0F8FF] pb-12">
-      <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
+      <section className="ts-sunrise-hero relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at 82% 32%, rgba(147, 197, 253, 0.25) 0%, transparent 48%), radial-gradient(circle at 12% 18%, rgba(186, 230, 253, 0.30) 0%, transparent 50%), linear-gradient(180deg, #D9EEFF 0%, #F4FAFF 55%, #EAF6FF 100%)',
+              'radial-gradient(circle at 82% 32%, rgba(110, 149, 210, 0.16) 0%, transparent 48%), radial-gradient(circle at 12% 18%, rgba(204, 137, 148, 0.12) 0%, transparent 50%)',
           }}
         />
         <div className="pointer-events-none absolute left-[-10%] top-[-34%] h-[560px] w-[560px] rounded-full bg-sky-200/30 blur-[128px]" />
