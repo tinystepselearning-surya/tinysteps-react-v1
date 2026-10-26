@@ -2,6 +2,7 @@ import { classifyLeadAcquisition, type AcquisitionChannel } from './leadAcquisit
 import { captureLeadAttribution } from './leadAttribution';
 
 export type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
+export type ClassFormatPreference = 'one_to_one' | 'small_group' | 'unsure';
 export type MainConcernOption =
   | 'Starting to read words after learning ABC/sounds'
   | 'Blending sounds to read words'
@@ -33,6 +34,7 @@ export type PublicAssessmentFormState = {
   whatsapp: string;
   childAge: string;
   mainConcern: MainConcernOption | '';
+  classFormatPreference?: ClassFormatPreference;
   urgency: '' | 'Today' | 'This week' | 'This month' | 'Just exploring';
 };
 
@@ -184,6 +186,7 @@ export function buildPublicLeadPayload(
     urgency: form.urgency || null,
     initialMessageSnippet: null,
     mainConcern: form.mainConcern,
+    classFormatPreference: form.classFormatPreference || 'one_to_one',
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
     // Keep the anonymous Firestore create schema intentionally narrow.
@@ -202,13 +205,18 @@ export function buildPublicWhatsappMessage(form: PublicAssessmentFormState) {
   const lines = [
     'Hello Tiny Steps,',
     '',
-    'I would like to book one free 35-minute 1:1 online demo assessment class.',
+    form.classFormatPreference === 'small_group'
+      ? 'I would like to register interest in a suitable small-group online class.'
+      : form.classFormatPreference === 'unsure'
+        ? 'Please help me choose between one-to-one and small-group classes.'
+        : 'I would like to book one free 35-minute 1:1 online demo assessment class.',
     '',
     `Parent name: ${form.parentName || '-'}`,
     `Child name: ${form.childName || '-'}`,
     `WhatsApp number: ${form.whatsapp || '-'}`,
     `Child age: ${form.childAge || '-'}`,
     `Support area: ${form.mainConcern || '-'}`,
+    `Preferred class format: ${form.classFormatPreference === 'small_group' ? 'Small group' : form.classFormatPreference === 'unsure' ? 'Help me choose' : 'Premium one-to-one'}`,
     '',
   ];
 
