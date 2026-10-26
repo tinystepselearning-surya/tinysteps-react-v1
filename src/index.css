@@ -2133,3 +2133,18 @@ html.dark [data-ts-surface="app"] .ts-app-mobile-tabs {
 html.dark [data-ts-surface="app"] .ts-app-mobile-tabs button[data-active="true"] > span:first-child {
   background-color: #384C80;
 }
+
+
+/*
+ * Parent app header: subtle Sunrise/Ocean wash without changing the public
+ * header or the parent navigation/mobile safe-area implementation.
+ * More specific than the shared app header and the Tailwind utility class.
+ */
+[data-ts-surface="app"] .ts-app-header.ts-app-parent-hero {
+  background: linear-gradient(110deg, #E7F3FF 0%, #F1EDFC 57%, #FFE5EB 100%);
+  color: #17284C;
+}
+html.dark [data-ts-surface="app"] .ts-app-header.ts-app-parent-hero {
+  background: linear-gradient(115deg, #17284C, #212B5C);
+  color: #FFFFFF;
+}
