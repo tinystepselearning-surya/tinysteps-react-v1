@@ -43,7 +43,7 @@ export function OfficialProfilesSection() {
                     <span className="mt-1 block text-xs leading-5 text-slate-500">{profile.purpose}</span>
                   </span>
                   <ExternalLink
-                    className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-orange-600"
+                    className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-[#604577]"
                     aria-hidden="true"
                   />
                 </a>
@@ -71,7 +71,7 @@ export function OfficialProfilesSection() {
                   <span className="mt-1 block text-xs leading-5 text-slate-500">{profile.purpose}</span>
                 </span>
                 <ExternalLink
-                  className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-orange-600"
+                  className="h-4 w-4 shrink-0 text-slate-400 transition group-hover:text-[#604577]"
                   aria-hidden="true"
                 />
               </a>
