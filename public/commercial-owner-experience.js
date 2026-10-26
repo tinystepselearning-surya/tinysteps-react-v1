@@ -21,7 +21,6 @@
   const OWNER_SET = new Set(OWNER_PATHS);
   const DESKTOP_CTA_DISABLED_PATHS = new Set(['/reading-classes-for-kids', '/grammar', '/speaking']);
   const STYLE_ID = 'ts-commercial-owner-experience-css';
-  const PROGRESS_ID = 'ts-commercial-owner-progress';
   const CTA_ID = 'ts-commercial-owner-cta';
   const ROOT_ACTIVE_CLASS = 'ts-commercial-owner-active';
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches === true;
@@ -143,24 +142,6 @@ html[data-ts-commercial-path="/confidence-building-program-kids"] #root main.con
   box-shadow: 0 10px 32px rgba(15,23,42,.045);
 }
 
-#${PROGRESS_ID} {
-  position: fixed;
-  inset: 0 0 auto 0;
-  z-index: 90;
-  height: 3px;
-  pointer-events: none;
-  background: transparent;
-}
-#${PROGRESS_ID} > span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform: scaleX(0);
-  transform-origin: left center;
-  background: linear-gradient(90deg,#f97316 0%,#fb7185 52%,#0ea5e9 100%);
-  box-shadow: 0 0 16px rgba(249,115,22,.28);
-  will-change: transform;
-}
 #${CTA_ID} {
   position: fixed;
   left: 20px;
@@ -259,17 +240,6 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     document.head.appendChild(style);
   }
 
-  function ensureProgress() {
-    let progress = document.getElementById(PROGRESS_ID);
-    if (progress) return progress;
-    progress = document.createElement('div');
-    progress.id = PROGRESS_ID;
-    progress.setAttribute('aria-hidden', 'true');
-    progress.innerHTML = '<span></span>';
-    document.body.appendChild(progress);
-    return progress;
-  }
-
   function triggerExistingAssessmentAction() {
     // The floating CTA lives outside React; request the app's existing booking modal.
     // If the app is unavailable, the dedicated booking page remains a safe fallback.
@@ -361,8 +331,6 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     const doc = document.documentElement;
     const maxScroll = Math.max(1, doc.scrollHeight - window.innerHeight);
     const progressValue = Math.min(1, Math.max(0, window.scrollY / maxScroll));
-    const progress = ensureProgress().firstElementChild;
-    if (progress instanceof HTMLElement) progress.style.transform = `scaleX(${progressValue})`;
 
     const cta = ensureCta();
     const desktopCtaDisabled = DESKTOP_CTA_DISABLED_PATHS.has(currentPath) && window.innerWidth >= 768;
@@ -389,7 +357,6 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     ensureStyles();
     document.documentElement.classList.add(ROOT_ACTIVE_CLASS);
     document.documentElement.dataset.tsCommercialPath = path;
-    ensureProgress().hidden = false;
     ensureCta().hidden = false;
     if (routeChanged) setupSectionReveals();
     requestScrollUpdate();
@@ -400,8 +367,6 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
     currentPath = '';
     document.documentElement.classList.remove(ROOT_ACTIVE_CLASS);
     delete document.documentElement.dataset.tsCommercialPath;
-    const progress = document.getElementById(PROGRESS_ID);
-    if (progress) progress.hidden = true;
     const cta = document.getElementById(CTA_ID);
     if (cta) {
       cta.classList.remove('is-visible');
