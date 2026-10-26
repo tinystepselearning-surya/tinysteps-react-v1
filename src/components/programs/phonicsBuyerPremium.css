@@ -1,8 +1,8 @@
-:root {
-  --ts-sunrise-orange-deep: #d94a00;
-  --ts-sunrise-orange: #ff6a00;
-  --ts-sunrise-orange-bright: #ff8800;
-  --ts-sunrise-gold: #ffb347;
+.ts-phonics-buyer-premium {
+  --ts-sunrise-orange-deep: #C2410C;
+  --ts-sunrise-orange: #FF7A00;
+  --ts-sunrise-orange-bright: #FF7A00;
+  --ts-sunrise-gold: #F6CF7E;
   --ts-sunrise-soft: #fff7ef;
   --ts-sunrise-soft-2: #fffaf6;
 }
@@ -79,7 +79,7 @@
   }
 
   .ts-phonics-buyer-premium [class*="text-orange-"]:hover {
-    color: #c43f00 !important;
+    color: #C2410C !important;
   }
 }
 
