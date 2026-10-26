@@ -147,8 +147,8 @@ export default function Header() {
               key={link.href}
               to={link.href}
               aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
-              className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-8' : ''
+              className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96] ${
+                matchesPrimaryLink(location.pathname, link.href) ? 'text-[#604577] underline decoration-[#755E96] decoration-2 underline-offset-8' : ''
               }`}
             >
               {link.label}
@@ -188,7 +188,7 @@ export default function Header() {
               isCareersPage
                 ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600 shadow-none'
                 : isSchoolsPage
-                ? 'border-orange-400 bg-gradient-to-r from-orange-400 to-amber-300 text-slate-950 hover:from-orange-300 hover:to-amber-200'
+                ? 'border-[#CBB7E0] bg-gradient-to-r from-[#F1EDFC] to-[#F6CF7E] text-[#17284C] hover:from-[#E5DDF8] hover:to-[#FFE5B4]'
                 : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
@@ -242,7 +242,7 @@ export default function Header() {
               isCareersPage
                 ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600'
                 : isSchoolsPage
-                ? 'border-orange-400 bg-orange-400 text-slate-950'
+                ? 'border-[#CBB7E0] bg-[#F1EDFC] text-[#17284C]'
                 : 'border-slate-900 bg-slate-900 text-white'
             }`}
           >
@@ -293,8 +293,8 @@ export default function Header() {
                 to={link.href}
                 aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
                 onClick={() => setIsOpen(false)}
-                className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                  matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700' : ''
+                className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96] ${
+                  matchesPrimaryLink(location.pathname, link.href) ? 'text-[#604577]' : ''
                 }`}
               >
                 {link.label}
