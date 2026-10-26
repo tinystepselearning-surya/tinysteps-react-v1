@@ -1595,6 +1595,7 @@ function teacherProgressIdentityUnchanged() {
           'sourceDetail',
           'initialMessageSnippet',
           'mainConcern',
+          'classFormatPreference',
           'urgency',
           'timezone',
           'sourcePath',
@@ -1654,6 +1655,10 @@ function teacherProgressIdentityUnchanged() {
           !('initialMessageSnippet' in request.resource.data)
           || request.resource.data.initialMessageSnippet == null
           || (request.resource.data.initialMessageSnippet is string && request.resource.data.initialMessageSnippet.size() <= 1000)
+        )
+        && (
+          !('classFormatPreference' in request.resource.data)
+          || request.resource.data.classFormatPreference in ['one_to_one', 'small_group', 'unsure']
         )
         && request.resource.data.mainConcern in [
           'Starting to read words after learning ABC/sounds',
