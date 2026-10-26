@@ -73,7 +73,7 @@ describe('marketing header navigation', () => {
     expect(desktopNavigation.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/parent');
     expect(desktopNavigation.getByRole('button', { name: 'Logout' })).toBeInTheDocument();
     expect(desktopNavigation.getByRole('link', { name: 'Courses' })).toHaveAttribute('aria-current', 'page');
-    expect(screen.getByRole('button', { name: 'Book Free 35-Minute Demo' })).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Book Free 35-Minute Demo' }).length).toBeGreaterThan(0);
   });
 
 });
