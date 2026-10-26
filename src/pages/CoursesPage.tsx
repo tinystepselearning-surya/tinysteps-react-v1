@@ -188,6 +188,34 @@ function CoursesPage() {
       })),
     });
 
+    // A separate course list allows discovery of all three live group programmes
+    // without changing the canonical ownership of our premium 1:1 courses.
+    const groupCourseListSchema = createCourseListSchema({
+      name: 'Tiny Steps live online group classes for kids',
+      url: coursesCanonicalUrl,
+      description: 'Group phonics, grammar and public speaking classes for children with level-matched peer learning.',
+      courses: [
+        {
+          name: 'Online Group Phonics Classes for Kids',
+          description: 'Live phonics learning with sounds, blending and early reading.',
+          url: 'https://tinystepslearning.com/group-phonics-classes-for-kids',
+          audienceType: 'Children developing early reading foundations',
+        },
+        {
+          name: 'Online Group Grammar Classes for Kids',
+          description: 'Live grammar lessons with sentence building and usage.',
+          url: 'https://tinystepslearning.com/group-grammar-classes-for-kids',
+          audienceType: 'Children practising sentence formation',
+        },
+        {
+          name: 'Online Group Public Speaking Classes for Kids',
+          description: 'Live public speaking through storytelling and presentations.',
+          url: 'https://tinystepslearning.com/group-public-speaking-classes-for-kids',
+          audienceType: 'Children developing speaking confidence',
+        },
+      ],
+    });
+
     const mainPathItemListSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -210,7 +238,7 @@ function CoursesPage() {
       description: coursesSeoDescription,
       canonicalPath: coursesCanonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumb, courseListSchema, mainPathItemListSchema, quickAnswerFaqSchema],
+      jsonLd: [breadcrumb, courseListSchema, groupCourseListSchema, mainPathItemListSchema, quickAnswerFaqSchema],
     });
   }, []);
 
