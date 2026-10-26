@@ -63,7 +63,7 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({
   return (
     <aside className={cn('w-full shrink-0 lg:w-72', className)}>
       <div className="space-y-4">
-        <div className="min-h-[92px] rounded-2xl border border-slate-200 bg-white/90 p-3 shadow-sm">
+        <div className="min-h-[92px] rounded-2xl border border-[#D7E5F4] bg-white/95 p-3 shadow-sm">
           <div className="flex items-start justify-between gap-2">
             <TinyStepsBrand
               subtitle={null}
@@ -88,13 +88,13 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({
                 onClick={handleLogout}
                 title="Logout"
                 aria-label="Logout"
-                className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                className="h-8 w-8 rounded-full text-[#405678] hover:bg-[#F1EDFC] hover:text-[#17284C]"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <div className="mt-1 truncate bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 bg-clip-text text-base font-semibold text-transparent">
+          <div className="mt-1 truncate bg-gradient-to-r from-[#604577] via-[#6E95D2] to-[#C2410C] bg-clip-text text-base font-semibold text-transparent">
             Hi, {teacherName || 'Teacher'}
           </div>
         </div>
@@ -112,8 +112,8 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({
                 className={cn(
                   'group flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition',
                   isActive
-                    ? 'bg-slate-900 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
+                    ? 'bg-[#212B5C] text-white shadow-sm'
+                    : 'text-[#405678] hover:bg-[#F1EDFC] hover:text-[#17284C]',
                 )}
                 data-testid={item.id === 'lessons' ? 'teacher-tab-lessons' : undefined}
               >
