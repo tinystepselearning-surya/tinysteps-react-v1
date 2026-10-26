@@ -343,6 +343,32 @@ function ExploreSection() {
   );
 }
 
+function GroupClassDiscoverySection() {
+  const formats = [
+    { label: 'Phonics', path: '/group-phonics-classes-for-kids', description: 'Letter sounds, blending and early reading.' },
+    { label: 'Grammar', path: '/group-grammar-classes-for-kids', description: 'Sentence formation and grammar in use.' },
+    { label: 'Public Speaking', path: '/group-public-speaking-classes-for-kids', description: 'Storytelling, clear answers and speaking turns.' },
+  ];
+  return (
+    <section aria-labelledby="group-classes-title" className="border-t border-slate-100 bg-[#fbfaf8] px-5 py-12 sm:px-8 sm:py-16">
+      <div className="mx-auto max-w-6xl">
+        <p className="text-xs font-bold uppercase tracking-wider text-[#9B4300]">Choose your learning format</p>
+        <h2 id="group-classes-title" className="mt-3 text-3xl font-bold tracking-tight text-[#102A43]">One-to-one or a small group?</h2>
+        <p className="mt-3 max-w-3xl leading-7 text-slate-700">Premium one-to-one classes remain our personalised learning option. Families interested in learning with a few level-matched peers can also explore small groups. New batches depend on suitable children and timing availability.</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          {formats.map((format) => (
+            <Link to={format.path} key={format.path} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">
+              <span className="block text-lg font-bold text-[#102A43]">Group {format.label}</span>
+              <span className="mt-2 block text-sm leading-6 text-slate-600">{format.description}</span>
+              <span className="mt-3 block text-sm font-semibold text-orange-700">Explore group option →</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function FinalInvitationSection() {
   return (
     <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-12 sm:px-8 sm:py-20">
@@ -379,6 +405,7 @@ export default function HomePage() {
         <TechnologySection />
         <BeforeYouBookSection />
         <ExploreSection />
+        <GroupClassDiscoverySection />
         <FinalInvitationSection />
       </div>
     </>
