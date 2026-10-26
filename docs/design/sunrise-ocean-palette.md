@@ -56,3 +56,28 @@ The hero gradient `--ts-sunrise-hero` moves from powder blue through pale lavend
 **Future page-by-page evaluation:** Landing pages with standalone hero templates, parent/school campaign pages, static research articles outside the shared blog renderer, and accessibility of any specialty components. App dashboards/games are not blanket-recoloured to preserve learning functionality.
 
 **Before merging:** Review desktop (1440 px) and mobile (375 px), visual contrast, actual links, blog content flow, above-fold conversion CTAs, and CI/prerender. Do not equate static source assertions with browser-tested proof.
+
+
+## 26 October follow-up — contrast and legacy colour sweep
+
+User screenshot findings resolved on the draft branch:
+- `src/pages/public/SpokenEnglishClassesForKidsPage.tsx`: dark card was using the default dark-text `LeadSectionHeading`; explicitly set `tone="dark"` and use the unified navy gradient.
+- Same dark-heading bug corrected in `src/pages/parents/choosing-course.tsx` and `src/pages/public/OnlinePhonicsReadingClassesPage.tsx`; test coverage also protects the existing correctly toned confidence/school pages.
+- `src/pages/phonics.tsx`: pyramid now descends from sunset gold `#F6CF7E`, lavender `#D3B9E1`, sky `#A5CCEA`, ocean `#6E95D2`, to navy `#212B5C`. Ink `#17284C` is used on the four light levels; white on navy. Each checked pair exceeds the WCAG normal-text 4.5:1 minimum.
+- `src/pages/phonics.tsx`: the coral gradient/white primary CTA was switched to accessible navy-purple.
+- Public global nav, shared LeadSectionHeading/LeadHero/LeadPageShell, and programme snapshots use brand colours. The orange Tiny Steps logo remains intact.
+- Bespoke high-intent paths received scoped palette updates: Contact, public demo enquiry page, phonics comparison, school partnerships, classes by age, reading, class samples, careers, parent and subject resource hubs, plus relevant shared templates.
+- No change to course fees, form schemas, canonical URLs, search metadata, robots, tracking events or production deployment.
+
+### Repeatable repository inventory
+
+Run `node scripts/audit-public-theme.mjs` from the repository root. It prints per-file legacy warm utility counts, selected older HEX colour counts, and potential light-surface/white-text or missing dark-card heading issues. The command is **read-only**; `--strict` returns nonzero when potential contrast risks remain.
+
+The script covers public-facing page and shared component source; it intentionally excludes protected app, admin, teacher, child/game and dashboard subdirectories. Its results are **heuristics**: every flagged item must be reviewed in context. In particular, the presence of amber/gold is not intrinsically a defect: caution, featured or supporting information may legitimately need a gold accent.
+
+### Remaining verification requirements
+
+- Desktop and mobile browser visual comparison for bespoke pages and image-backed components.
+- Automated axe/Lighthouse accessibility audit and manual WCAG contrast inspection of text over actual gradients or images.
+- New dark-card heading test plus full TypeScript, Vitest and production prerender gates.
+- Sitewide contrast scan and any remaining legacy warm colour review should precede merge, but do not erase semantic caution/success/error colours.
