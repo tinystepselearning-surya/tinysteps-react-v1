@@ -56,19 +56,19 @@ export const ROUTE_SEO_REGISTRY = {
   },
   '/group-phonics-classes-for-kids': {
     title: 'Online Group Phonics Classes for Kids | Tiny Steps',
-    description: 'Live online group phonics classes for kids in India. Letter sounds, blending and early reading with guided practice. ₹250 per child/class. Register interest.',
+    description: 'Live online group phonics classes for kids in India. Learn letter sounds, blending and early reading with guided practice. ₹250 per child/class.',
     canonicalPath: '/group-phonics-classes-for-kids',
     ogType: 'website',
   },
   '/group-grammar-classes-for-kids': {
     title: 'Online Group Grammar Classes for Kids | Tiny Steps',
-    description: 'Online group grammar classes for kids. Practise sentence building, grammar accuracy and confident expression with guided teacher feedback. ₹250 per child/class.',
+    description: 'Live online group grammar classes for kids. Practise sentence building, tenses and grammar in speaking and writing. ₹250 per child/class.',
     canonicalPath: '/group-grammar-classes-for-kids',
     ogType: 'website',
   },
   '/group-public-speaking-classes-for-kids': {
-    title: 'Group Public Speaking Classes for Kids | Tiny Steps',
-    description: 'Online group public speaking classes for kids. Practise storytelling, structured speaking and presentations with supportive peers. ₹250 per child/class.',
+    title: 'Online Group Public Speaking Classes for Kids | Tiny Steps',
+    description: 'Live online group public speaking classes for kids. Practise storytelling, presentations and communication with teacher feedback. ₹250 per child/class.',
     canonicalPath: '/group-public-speaking-classes-for-kids',
     ogType: 'website',
   },
