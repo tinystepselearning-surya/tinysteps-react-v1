@@ -300,3 +300,22 @@ test('mobile help launcher exposes AI and WhatsApp only when requested', async (
   await expect(dock.getByRole('button', { name: 'Ask TinySteps AI' })).toBeHidden();
   await expect(dock.getByRole('link', { name: 'Chat on WhatsApp' })).toBeHidden();
 });
+
+test('public pages reuse one lightweight scroll progress bar that tracks scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 800 });
+  for (const route of ['/', '/pricing', '/blog']) {
+    await page.goto(route, { waitUntil: 'domcontentloaded' });
+    const progress = page.locator('[data-testid="public-scroll-progress"]');
+    await expect(progress).toHaveCount(1);
+    await expect(page.locator('#ts-commercial-owner-progress')).toHaveCount(0);
+    await expect(progress).toHaveAttribute('aria-hidden', 'true');
+    await page.evaluate(() => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (maxScroll > 0) window.scrollTo(0, maxScroll * 0.65);
+    });
+    await expect.poll(async () => progress.locator('span').evaluate((element) => {
+      const match = element.getAttribute('style')?.match(/scaleX\\(([^)]+)\\)/);
+      return match ? Number(match[1]) : 0;
+    })).toBeGreaterThan(0.3);
+  }
+});
