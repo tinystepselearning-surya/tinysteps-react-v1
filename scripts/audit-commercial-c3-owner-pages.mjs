@@ -136,7 +136,7 @@ if (exists(vitePath)) {
 
 if (exists('src/pages/PricingPage.tsx')) {
   const pricing = read('src/pages/PricingPage.tsx');
-  for (const required of ['ONE_TO_ONE_MONTHLY_PACKAGES', 'GROUP_MONTHLY_FEES', 'ULTRA_PREMIUM_PRICING', "'@type': 'OfferCatalog'", '/phonics-fees-india']) {
+  for (const required of ['ONE_TO_ONE_MONTHLY_PACKAGES', 'NEW_GROUP_CLASS_PLAN', 'ULTRA_PREMIUM_PRICING', "'@type': 'OfferCatalog'", '/phonics-fees-india']) {
     if (!pricing.includes(required)) failures.push(`pricing owner missing ${JSON.stringify(required)}`);
   }
   for (const forbidden of [
