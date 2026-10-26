@@ -23,7 +23,7 @@ const MENU_ITEMS = [
 export const LPSidebar: FC<LPSidebarProps> = ({ active, onSelect, messageUnreadCount }) => {
   return (
     <aside className="w-64 hidden lg:block">
-      <Card className="p-4">
+      <Card className="ts-app-card p-4">
         <nav className="space-y-2">
           {MENU_ITEMS.map((item) => (
             <Button
