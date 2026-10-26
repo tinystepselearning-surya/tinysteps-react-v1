@@ -1,41 +1,41 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Updated by the ChatGPT-native audit after **Slot 11 (rows 101–110)** on 26 October 2026. Ten independent HTTPS GET probes began between **2026-10-26T04:48:01.071292Z** and **2026-10-26T04:48:01.081229Z** (10:18 IST), each with its own actual UTC initiation and completion timestamp in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+Updated by the ChatGPT-native audit after **Slot 12 (rows 111–120)** on **26 October 2026**. Ten independent HTTPS GET attempts began between **2026-10-26T05:41:48.309966Z and 2026-10-26T05:42:08.346741Z** (11:11–11:12 IST); each has its own actual UTC start and completion timestamp in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
 ## Daily coverage — 26 October IST
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **110** |
+| Distinct URLs actually attempted today | **120** |
 | Fully live-verified PASS today | **0** |
 | Confirmed FAIL today | **0** |
 | Confirmed WARN today | **0** |
-| UNVERIFIED / provider-text-only reviews today | **110** |
-| Not checked today | **92** |
+| UNVERIFIED / provider-text-only reviews today | **120** |
+| Not checked today | **82** |
 
-Validated the latest tracker before auditing: exactly 202 unique URLs, slots 1–19 contain 10 each, and slot 20 contains 12. All 100 previous current-day records have valid UTC timestamps that resolve to 26 October IST; the ten new rows also resolve to 26 October IST. Slot 11 had only 25 October records before this run, so no URLs were rechecked today. Prior-day results were not counted toward today's coverage.
+Validated the tracker before and after auditing: exactly 202 unique URLs; slots 1–19 have 10 each, slot 20 has 12. Slots 1–12 have 10 unique current-day records each. All 120 check timestamps resolve to **26 October IST**; earlier-day records were not counted or reused. Rows 111–120 had no current-day checks before this batch and were not rechecked.
 
-## Current batch — Slot 11 (rows 101–110)
+## Current batch — Slot 12 (rows 111–120)
 
-Reviewed three historical summer-camp programme pages (phonics, grammar, speaking), plus seven articles on phonics apps, back-to-school speaking confidence, phonics benefits, ten-day English progress, CBSE vs systematic phonics, one-word answers, and ABC-to-reading gaps.
+Ten parent-facing educational articles: grammar-rule transfer, class-to-home reading transfer, understanding English without speaking, conversation skills, CVC decoding, digraphs and tricky words, CBSE/NCF foundational literacy, grammar assessment, conjunctions and creative writing.
 
-All ten URLs returned page-specific readable text via the web retrieval provider, which labeled them **Crawled: today** without supplying a precise crawl timestamp or raw origin HTML. Representative visible headings: “Phonics Fast Track”, “Back-to-School English Confidence Plan for Kids: Speaking, Participation and Classroom Routines”, and “Child Knows ABC but Cannot Read: What Parents Should Check First”. The three camp pages describe Summer Camp 2026 as concluded on **13 June 2026** and link to year-round pathways. This is provider text evidence only, not a current origin-response certification.
+The web retrieval provider returned **readable page-specific text for all ten** (not raw origin HTML). Example exact headings: **“My Child Knows Grammar Rules but Still Makes Mistakes — Why?”**, **“CVC Words Explained for Parents: The First Real Decoding Milestone”**, and **“Does CBSE Include Phonics? What the NCF Says About Foundational Literacy and Early Reading”**. Provider crawl labels ranged from **“Crawled: today”** to **“Crawled: 4 weeks ago”**; these are not current origin-response or deployment verification and have no precise provider crawl timestamp. The page snapshots show relevant educational body text and programme/assessment links, but those links were not transactionally tested.
 
-Ten separate `requests.get` probes were executed for the selected URLs with distinct UTC start times. **All ten failed before receiving an HTTP response**, with `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. The probe failures are an audit-runtime limitation, not confirmed production downtime.
+**All ten independent `requests.get` attempts failed before receiving HTTP responses** with `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. The errors are an **audit-runtime DNS limitation**, not confirmed production downtime. Actual per-URL UTC request start/end times and H1 evidence are stored in the tracker.
 
-**UNVERIFIED technical fields:** HTTP status, final/redirect destination, canonical, meta robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot robots access, raw HTML, JSON-LD. The provider's extracted text is insufficient to certify origin-level readiness. No first-party Google/Bing indexing, rankings, or AI citation data were collected.
+**UNVERIFIED technical fields:** live HTTP status, redirect/final destination, canonical, meta robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot robots access, raw origin HTML and JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were observed or asserted.
 
 ## Historical comparison and workflow safety
 
-Rows 101–110 were also UNVERIFIED on **25 October**. Provider recrawl labels do not establish a verified origin-state change; no evidence-backed production regression or improvement was detected. [CHANGES.md](./CHANGES.md) remains unchanged.
+Rows 111–120 were NOT_CHECKED in today's tracker before this run; no before/after live-origin evidence exists for a verified regression or improvement. [CHANGES.md](./CHANGES.md) remains unchanged.
 
-Connected GitHub actions expose file reads/writes but not a repository-wide workflow-state or recent-run listing in this run. Attempts to retrieve the public GitHub API workflow-state/runs URLs through web access were inaccessible. Consequently **the administrative disabled state and concurrent-run status could not be independently verified in this run**. The user's explicit 25 October confirmation of disabling the old workflow remains the operating assumption; cron YAML presence is not evidence of workflow enablement. No GitHub Actions workflow was run or enabled.
+The available connected GitHub operations allow tracker reads and writes, but do not provide repository-wide workflow-state or latest-run listing. Direct web access to GitHub Actions pages and the public API was inaccessible in this batch. **The old workflow's administrative disabled state and absence of concurrent runs could not be independently verified.** The user's explicit 25 October confirmation of disabling it remains the operating assumption; cron YAML presence is not evidence of an enabled workflow. No workflow was triggered or enabled.
 
 ## Coverage and operating limitation
 
-- Slots 1–11: **110 partial reviews, all UNVERIFIED** for full live technical readiness.
-- Slots 12–20: **92 unchecked today**.
-- Next eligible batch: **Slot 12 (rows 111–120)** when its scheduled hour arrives, subject to earliest eligible missed-slot recovery rules.
-- Reliable independent origin HTTP access remains necessary for full readiness checks.
-- No repo source, workflows, Firebase or Hosting settings were changed. The separate six-hour outside-in visibility task remains unchanged.
+- Slots 1–12: **120 attempted/partially reviewed; all 120 UNVERIFIED** for full live technical readiness.
+- Slots 13–20: **82 unchecked today**.
+- Next eligible scheduled batch: **Slot 13 (rows 121–130)**, subject to earlier-slot recovery rules.
+- Reliable origin-level HTTPS access is still required to establish technical SEO/AEO/GEO readiness. Provider text cannot certify deployed HTTP, canonical, robots or structured data.
+- No repository source, workflows, Firebase or Hosting settings were changed. The separate six-hour outside-in visibility task was not modified.
