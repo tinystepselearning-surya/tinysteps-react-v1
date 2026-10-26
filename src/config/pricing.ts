@@ -42,12 +42,15 @@ export const GROUP_MONTHLY_FEES = [
   { ratio: '1:6', classes: 12, monthlyFee: 2160, durationMinutes: 60 },
 ] as const;
 
-// New publicly marketed group offering. Preserve other configured ratios for
-// existing sibling/friend groups and historical billing records.
+// Current advertised small-group offer. This is independent of the historical
+// ratio-based prices above: do not retroactively reprice existing family batches.
 export const NEW_GROUP_CLASS_RATIO = '1:4' as const;
-export const NEW_GROUP_CLASS_PLAN = GROUP_MONTHLY_FEES.find(
-  (row) => row.ratio === NEW_GROUP_CLASS_RATIO,
-)!;
+export const NEW_GROUP_CLASS_PLAN = {
+  ratio: NEW_GROUP_CLASS_RATIO,
+  classes: 12,
+  monthlyFee: 3000,
+  durationMinutes: 50,
+} as const;
 
 // Ultra Premium pricing (source of truth for native English-speaking teachers)
 export const ULTRA_PREMIUM_PRICING = [
