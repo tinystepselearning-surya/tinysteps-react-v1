@@ -1946,6 +1946,11 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
 :root {
   --ts-sunrise-navy: #212B5C;
   --ts-sunrise-ink: #17284C;
+  --ts-sunrise-orange: #FF7A00; /* Decorative/large on dark navy, not small text on white */
+  --ts-sunrise-text-orange: #C2410C; /* Readable sunrise-orange emphasis on white, sky or lavender */
+  --ts-sunrise-text-ocean: #315B8A;
+  --ts-sunrise-text-purple: #604577;
+  --ts-sunrise-text-on-dark: #D3B9E1;
   --ts-sunrise-body: #405678;
   --ts-sunrise-ocean: #6E95D2;
   --ts-sunrise-purple: #755E96;
