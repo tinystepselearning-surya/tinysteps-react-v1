@@ -92,6 +92,7 @@ interface LeadRecord {
   childGrade?: string | null;
   interestTrack?: string | null;
   programInterest?: string | null;
+  classFormatPreference?: string | null;
   source?: string | null;
   sourceDetail?: string | null;
   acquisitionChannel?: string | null;
@@ -138,6 +139,7 @@ interface SimpleRow {
   updatedAtMs: number;
   followUpAtMs: number;
   statusLabel: string;
+  classFormatPreference: string;
 }
 
 interface OutcomeFormState {
@@ -543,6 +545,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         updatedAtMs: Math.max(toMs(lead?.updatedAt || lead?.createdAt), toMs(demo?.lastUpdatedAt || demo?.createdAt)),
         followUpAtMs,
         statusLabel: resolveSimpleStatusLabel(workflow),
+        classFormatPreference: normalizeText(lead?.classFormatPreference) || 'one_to_one',
       };
     };
 
@@ -624,6 +627,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         row.childName,
         row.parentPhone,
         row.course,
+        row.classFormatPreference,
         row.source,
         row.acquisitionLabel,
         row.contentInfluenceLabel,
@@ -944,6 +948,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div><div className="font-semibold text-slate-950">{row.parentName}</div><div className="text-sm text-slate-600">{row.childName} · {row.parentPhone}</div></div>
           <div>
             <div className="text-sm font-medium text-slate-800">{row.course}</div>
+            <div className="text-xs font-semibold text-orange-700">{row.classFormatPreference === 'small_group' ? 'Small-group interest · Awaiting match' : row.classFormatPreference === 'unsure' ? 'Format guidance requested' : 'Premium one-to-one'}</div>
             <div className="text-xs text-slate-500">{row.source}</div>
             <div className="mt-1 text-xs font-semibold text-slate-700">{row.acquisitionLabel}</div>
             {row.contentInfluenceLabel && (
