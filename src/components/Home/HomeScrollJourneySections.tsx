@@ -45,7 +45,7 @@ export function ParentProblemRecognitionSection() {
     <section className="px-6 pb-8 pt-7 sm:pb-10 sm:pt-9">
       <div className="mx-auto max-w-6xl">
         <div className="text-center">
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-orange-700">Start with the real learning gap</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-[#604577]">Start with the real learning gap</p>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Does this sound like your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">
             Parents often notice the difficulty before they know whether the right next step is phonics, reading, grammar, sentence building, or speaking support.
@@ -59,7 +59,7 @@ export function ParentProblemRecognitionSection() {
               className="rounded-[22px] border border-slate-200 bg-white p-4 shadow-[0_14px_34px_rgba(15,23,42,0.05)] sm:rounded-[26px] sm:p-5"
             >
               <div className="flex items-start gap-3">
-                <div className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-sm font-bold text-orange-700">✓</div>
+                <div className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#FFE5EB] text-sm font-bold text-[#604577]">✓</div>
                 <div>
                   <h3 className="text-[0.95rem] font-semibold leading-6 text-slate-900 sm:text-base">{signal.title}</h3>
                   <p className="mt-1.5 text-sm leading-5 text-slate-600 sm:leading-6">{signal.detail}</p>
@@ -69,7 +69,7 @@ export function ParentProblemRecognitionSection() {
           ))}
         </div>
 
-        <div className="mt-6 rounded-[24px] border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-orange-50 px-5 py-5 text-center sm:px-8">
+        <div className="mt-6 rounded-[24px] border border-sky-100 bg-gradient-to-r from-sky-50 via-white to-[#FFE5EB] px-5 py-5 text-center sm:px-8">
           <p className="text-sm font-semibold leading-6 text-slate-800 sm:text-base">
             Every child starts from a different point. Tiny Steps begins by identifying the current bottleneck before recommending a learning path.
           </p>
