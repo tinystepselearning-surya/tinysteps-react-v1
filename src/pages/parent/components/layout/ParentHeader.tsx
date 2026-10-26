@@ -35,7 +35,7 @@ export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpe
           )
           : 'Track classes, progress, and payments in one place.'
       }
-      className="bg-gradient-to-r from-rose-50 via-white to-orange-50 dark:from-slate-900 dark:to-slate-800"
+      className="bg-gradient-to-r from-[#E7F3FF] via-[#F1EDFC] to-[#FFE5EB] dark:from-[#17284C] dark:to-[#212B5C]"
       actions={
         <>
           {onOpenKidsView ? <Button variant="default" onClick={onOpenKidsView}>Kids Page</Button> : null}
