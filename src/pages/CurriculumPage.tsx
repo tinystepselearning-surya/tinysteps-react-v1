@@ -494,7 +494,7 @@ const CurriculumPage: FC = () => {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-orange-800">
-              <span className="text-slate-600">Prefer a small group?</span>
+              <span className="text-slate-600">Interested in group classes?</span>
               <Link to="/group-phonics-classes-for-kids" className="underline underline-offset-4">Group Phonics</Link>
               <Link to="/group-grammar-classes-for-kids" className="underline underline-offset-4">Group Grammar</Link>
               <Link to="/group-public-speaking-classes-for-kids" className="underline underline-offset-4">Group Public Speaking</Link>
