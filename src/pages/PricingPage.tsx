@@ -5,7 +5,8 @@ import Meta from '../components/common/Meta';
 import { getRouteConfig } from '../lib/seo';
 import {
   formatINR,
-  GROUP_MONTHLY_FEES,
+  NEW_GROUP_CLASS_PLAN,
+  NEW_GROUP_CLASS_RATIO,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
   ULTRA_PREMIUM_PRICING,
@@ -29,7 +30,7 @@ const pricingSeoTitle =
   pricingSeo?.title ?? 'Online English Classes for Kids Fees & Pricing | Tiny Steps';
 const pricingSeoDescription =
   pricingSeo?.description ??
-  `See Tiny Steps online English class fees: standard live 1:1 ${formatINR(PER_CLASS_PRICE)}/class, 12 classes ${formatINR(ONE_TO_ONE_MONTHLY_PACKAGES[0].monthlyFee)}, small groups ${formatINR(180)}–${formatINR(300)} per child/class, plus native-teacher options.`;
+  `See Tiny Steps online English fees: live premium 1:1 ${formatINR(PER_CLASS_PRICE)}/35-minute class and ${NEW_GROUP_CLASS_RATIO} small-group classes at ${formatINR(NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes)} per child per 50-minute class, plus separate native-teacher options.`;
 
 const pricingKeywords = [
   'online English classes for kids fees',
@@ -47,10 +48,11 @@ const pricingKeywords = [
 ];
 
 const standardOneToOne = ONE_TO_ONE_MONTHLY_PACKAGES;
-const standardGroups = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
-const smallGroupPerClassValues = standardGroups.map((row) => Math.round(row.monthlyFee / row.classes));
-const smallGroupMin = Math.min(...smallGroupPerClassValues);
-const smallGroupMax = Math.max(...smallGroupPerClassValues);
+const standardGroups = [NEW_GROUP_CLASS_PLAN];
+const advertisedUltraPricing = ULTRA_PREMIUM_PRICING.filter(
+  (row) => row.ratio === '1:1' || row.ratio === NEW_GROUP_CLASS_RATIO,
+);
+const smallGroupPerClassPrice = NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes;
 
 const faqItems = [
   {
@@ -61,12 +63,12 @@ const faqItems = [
   {
     question: 'How long is a standard 1:1 class?',
     answer:
-      `Each standard live 1:1 class is ${ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} minutes. Small-group duration varies by group size and is shown in the pricing table.`,
+      `Each standard live 1:1 class is ${ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} minutes. The advertised ${NEW_GROUP_CLASS_RATIO} group class lasts ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes.`, 
   },
   {
     question: 'How much do Tiny Steps small-group English classes cost?',
     answer:
-      `Standard small-group pricing ranges from ${formatINR(smallGroupMin)} to ${formatINR(smallGroupMax)} per child per live class depending on group size. Current 12-class package totals and session durations are shown on this page.`,
+      `Tiny Steps currently advertises one group format: ${NEW_GROUP_CLASS_RATIO} (one teacher with four students), ${formatINR(smallGroupPerClassPrice)} per child for a ${NEW_GROUP_CLASS_PLAN.durationMinutes}-minute class, or ${formatINR(NEW_GROUP_CLASS_PLAN.monthlyFee)} per child for 12 classes. New batches depend on compatible levels and schedules.`, 
   },
   {
     question: 'Are the standard 12, 16 and 24-class 1:1 packages different prices per class?',
@@ -141,7 +143,7 @@ const offerCatalog = {
         provider: { '@id': ORGANIZATION_ID },
       },
     })),
-    ...ULTRA_PREMIUM_PRICING.map((row) => ({
+    ...advertisedUltraPricing.map((row) => ({
       '@type': 'Offer',
       name: `Ultra Premium ${row.format} — 12 classes`,
       price: String(row.package12),
@@ -253,7 +255,7 @@ const PricingPage: FC = () => {
             Online English Classes for Kids: Fees & Pricing
           </h1>
           <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-gray-700 md:text-lg">
-            Standard live 1:1 classes are <strong>{formatINR(PER_CLASS_PRICE)} per class</strong>, with 12, 16 and 24-class options. Small groups range from <strong>{formatINR(smallGroupMin)}–{formatINR(smallGroupMax)} per child per class</strong>. Start with one free {FREE_DEMO_DURATION_MINUTES}-minute 1:1 assessment before choosing the programme and package.
+            Standard live 1:1 classes are <strong>{formatINR(PER_CLASS_PRICE)} per class</strong>, with 12, 16 and 24-class options. The advertised <strong>{NEW_GROUP_CLASS_RATIO} group costs {formatINR(smallGroupPerClassPrice)} per child for {NEW_GROUP_CLASS_PLAN.durationMinutes} minutes</strong>. Start with one free {FREE_DEMO_DURATION_MINUTES}-minute 1:1 assessment before choosing the programme and package.
           </p>
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link to="/book-demo" className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-slate-950 px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-slate-800">
@@ -343,9 +345,9 @@ const PricingPage: FC = () => {
           <section className="mx-auto max-w-6xl px-6 pb-12">
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">Standard small groups</p>
-              <h2 className="mt-2 text-3xl font-bold text-slate-950">Compare group size, fee and live session duration</h2>
+              <h2 className="mt-2 text-3xl font-bold text-slate-950">One small-group format: 1 teacher to 4 students</h2>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-                Group fees are per child. Group placement depends on a suitable learning, level and schedule fit; a lower price alone does not determine the best format for a child.
+                The new group programme is offered only at a 1:4 teacher-to-student ratio. The fee is per child, and new batches are formed only when four compatible learners and suitable timings can be matched.
               </p>
               <div className="mt-6 overflow-x-auto rounded-2xl border border-slate-200">
                 <table className="w-full border-collapse text-sm text-slate-700">
@@ -358,7 +360,7 @@ const PricingPage: FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {GROUP_MONTHLY_FEES.map((row) => (
+                    {standardGroups.map((row) => (
                       <tr key={row.ratio} className="border-t border-slate-100">
                         <td className="px-4 py-4 font-semibold text-slate-950">{row.ratio}</td>
                         <td className="px-4 py-4">{formatINR(row.monthlyFee)}</td>
@@ -370,7 +372,7 @@ const PricingPage: FC = () => {
                 </table>
               </div>
               <p className="mt-4 text-xs leading-5 text-slate-500">
-                Every row above is sourced from the current Tiny Steps public pricing configuration. Small-group availability is subject to suitable matching and slot availability.
+                The 1:4 fee comes from the canonical Tiny Steps pricing configuration. The advertised group class is subject to suitable matching and scheduling. Existing family arrangements are handled separately.
               </p>
             </div>
           </section>
@@ -384,7 +386,7 @@ const PricingPage: FC = () => {
               Ultra Premium uses a separate price table. We show only the currently configured format and fee here; class fit and scheduling are confirmed before enrolment.
             </p>
             <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {ULTRA_PREMIUM_PRICING.map((row) => (
+              {advertisedUltraPricing.map((row) => (
                 <article key={row.ratio} className="rounded-3xl border border-white/10 bg-white/[0.07] p-5">
                   <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200">{row.ratio}</p>
                   <h3 className="mt-2 text-xl font-semibold">{row.format}</h3>
