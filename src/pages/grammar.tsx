@@ -241,8 +241,8 @@ export default function GrammarPage() {
 
   return (
     <div className="bg-[#F0F8FF] pb-12">
-      <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#D9EEFF_0%,#F4FAFF_55%,#EAF6FF_100%)]" />
+      <section className="ts-sunrise-hero relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_8%,_rgba(110,149,210,0.08),_transparent_35%),radial-gradient(circle_at_90%_15%,_rgba(204,137,148,0.10),_transparent_40%)]" />
         <div className="pointer-events-none absolute left-[-8%] top-[-28%] h-[560px] w-[560px] rounded-full bg-sky-200/40 blur-[120px]" />
         <div className="pointer-events-none absolute right-[-6%] top-[-20%] h-[520px] w-[520px] rounded-full bg-sky-100/70 blur-[120px]" />
         <div className="relative mx-auto max-w-7xl">
