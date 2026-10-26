@@ -153,6 +153,14 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
   return (
     <main className="group-commercial-page min-h-screen overflow-x-clip bg-[#F0F8FF] text-[#102A43]">
       <Meta title={seo?.title} description={seo?.description} canonical={url} jsonLd={schemas} />
+      {/* Keep the sticky site navigation from overlapping content in PDF print views. */}
+      <style>{`
+        @media print {
+          body:has(.group-commercial-page) header.fixed,
+          body:has(.group-commercial-page) header.sticky { position: static !important; }
+          .group-commercial-page section { break-inside: auto; }
+        }
+      `}</style>
 
       {/* The hero establishes the offer immediately, without repeating the entire page. */}
       <section className="border-b border-[#D9EAF7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="group-page-title">
