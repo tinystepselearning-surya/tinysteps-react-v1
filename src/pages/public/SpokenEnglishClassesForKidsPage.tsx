@@ -277,7 +277,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             description="These fictional exchanges show how a teacher might model a sentence, prompt for meaning, and then check a different question. The right amount of help depends on the child’s language readiness."
           />
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <article className="rounded-2xl border border-orange-100 bg-white p-5">
+            <article className="rounded-2xl border border-[#E5DDF8] bg-white p-5">
               <h3 className="text-lg font-semibold text-slate-950">Example 1 · Short everyday answer</h3>
               <p className="mt-3 text-sm leading-7 text-slate-700"><strong>Question:</strong> “What did you do after school?” <strong>First answer:</strong> “Play.”</p>
               <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Support:</strong> “What did you play, and who was with you?” The teacher can model one full sentence if needed.</p>
@@ -347,7 +347,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             <div className="rounded-2xl border border-sky-200 bg-white p-5 text-sm leading-7 text-slate-700">
               <strong className="text-slate-900">Choose spoken English</strong> when the main goal is fuller everyday answers, conversational fluency, sentence expansion, and comfortable English speaking.
             </div>
-            <div className="rounded-2xl border border-orange-200 bg-white p-5 text-sm leading-7 text-slate-700">
+            <div className="rounded-2xl border border-[#E5C7D8] bg-white p-5 text-sm leading-7 text-slate-700">
               <strong className="text-slate-900">Choose public speaking & communication</strong> for storytelling, presentations, show-and-tell, audience awareness, and broader communication skills.{' '}
               <Link to="/speaking" className="font-semibold underline underline-offset-4">Explore Public Speaking & Communication</Link>.
             </div>
