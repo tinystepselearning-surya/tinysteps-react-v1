@@ -54,6 +54,24 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'public speaking classes for kids online,public speaking classes for kids,public speaking course for kids,public speaking for kids,online speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
+  '/group-phonics-classes-for-kids': {
+    title: 'Online Group Phonics Classes for Kids | Tiny Steps',
+    description: 'Live small-group phonics classes for kids in India. Develop letter sounds, blending and early reading skills with guided practice. Enquire about suitable batches.',
+    canonicalPath: '/group-phonics-classes-for-kids',
+    ogType: 'website',
+  },
+  '/group-grammar-classes-for-kids': {
+    title: 'Online Group Grammar Classes for Kids | Tiny Steps',
+    description: 'Live small-group grammar classes for kids. Build stronger sentences, grammar accuracy and confident expression with guided practice. Enquire about suitable batches.',
+    canonicalPath: '/group-grammar-classes-for-kids',
+    ogType: 'website',
+  },
+  '/group-public-speaking-classes-for-kids': {
+    title: 'Group Public Speaking Classes for Kids | Tiny Steps',
+    description: 'Live group public speaking classes for kids. Practise storytelling, presentations and confident communication with supportive peers. Register your interest.',
+    canonicalPath: '/group-public-speaking-classes-for-kids',
+    ogType: 'website',
+  },
   '/speaking-progress-framework': {
     title: 'How Tiny Steps Measures Speaking Progress | 10-Skill Framework',
     description:
