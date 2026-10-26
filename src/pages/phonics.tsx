@@ -570,8 +570,8 @@ export default function PhonicsPage({
       <div className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl" />
       <div className="pointer-events-none absolute -right-12 top-10 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-6 md:py-12 lg:px-8 lg:py-14">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(147,197,253,0.20),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.26),_transparent_40%),linear-gradient(180deg,_rgba(225,243,255,0.82),_rgba(245,251,255,0.92))]" />
+      <section className="relative overflow-hidden ts-sunrise-hero bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-6 md:py-12 lg:px-8 lg:py-14">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(110,149,210,0.12),_transparent_36%),radial-gradient(circle_at_85%_0%,_rgba(204,137,148,0.12),_transparent_42%)]" />
         <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
         <div className="pointer-events-none absolute bottom-2 right-1/4 h-40 w-40 rounded-full bg-violet-200/20 blur-3xl" />
