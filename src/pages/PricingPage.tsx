@@ -380,7 +380,7 @@ const PricingPage: FC = () => {
       ) : (
         <section id="ultra-pricing" className="mx-auto max-w-6xl scroll-mt-28 px-6 pb-12">
           <div className="rounded-[2rem] border border-amber-200 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Ultra Premium</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">Ultra Premium</p>
             <h2 className="mt-2 text-3xl font-bold">Classes with native English-speaking teachers</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
               Ultra Premium uses a separate price table. We show only the currently configured format and fee here; class fit and scheduling are confirmed before enrolment.
@@ -388,7 +388,7 @@ const PricingPage: FC = () => {
             <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {advertisedUltraPricing.map((row) => (
                 <article key={row.ratio} className="rounded-3xl border border-white/10 bg-white/[0.07] p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200">{row.ratio === '1:1' ? 'One-to-One Classes' : 'Group Classes'}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#D3B9E1]">{row.ratio === '1:1' ? 'One-to-One Classes' : 'Group Classes'}</p>
                   <h3 className="mt-2 text-xl font-semibold">{row.ratio === '1:1' ? 'Individual instruction' : 'Native-teacher group learning'}</h3>
                   <p className="mt-4 text-3xl font-black">{formatINR(row.perClass)}</p>
                   <p className="mt-1 text-sm text-slate-300">{row.unitLabel}</p>
