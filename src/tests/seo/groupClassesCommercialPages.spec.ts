@@ -38,14 +38,17 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain("premiumPath: '/speaking'");
   });
 
-  it('shows 1:2 through 1:5 at canonical rates and the standard 1:1 class duration', () => {
-    expect(content).toContain("['1:2', '1:3', '1:4', '1:5']");
-    expect(content).toContain('tier.monthlyFee / tier.classes');
-    expect(content).toContain('tier.durationMinutes');
+  it('markets only the canonical 1:4 group and retains ₹400/35-minute premium 1:1', () => {
+    expect(content).toContain('const GROUP_PLAN = NEW_GROUP_CLASS_PLAN');
+    expect(content).toContain('GROUP_PLAN.monthlyFee / GROUP_PLAN.classes');
+    expect(content).toContain('GROUP_PLAN.durationMinutes');
+    expect(content).toContain('Only one group format: 1 teacher to 4 students.');
     expect(content).toContain('formatINR(PER_CLASS_PRICE)');
     expect(content).toContain('ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes');
-    expect(content).toContain('Maximum: 5 children per teacher.');
-    expect(content).toContain('for 12 classes per child');
+    expect(content).not.toContain('1:2 Group');
+    expect(content).not.toContain('Maximum: 5 children per teacher.');
+    expect(read('src/config/pricing.ts')).toContain("NEW_GROUP_CLASS_RATIO = '1:4'");
+    expect(read('src/pages/PricingPage.tsx')).toContain('const standardGroups = [NEW_GROUP_CLASS_PLAN]');
   });
 
   it('keeps the new programme pages light and sky-blue except for the navy pricing band', () => {
