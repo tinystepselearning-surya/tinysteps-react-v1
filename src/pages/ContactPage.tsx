@@ -118,7 +118,7 @@ const ContactPage: FC = () => {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">Admissions</p>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">Admissions</p>
                       <h3 className="mt-2 text-xl font-black text-white sm:text-2xl">Admissions & New Enrolments</h3>
                     </div>
                     <span className="text-xl text-slate-500 transition group-hover:translate-x-1 group-hover:text-white" aria-hidden="true">→</span>
@@ -230,7 +230,7 @@ const ContactPage: FC = () => {
 
               <a
                 href={PHONE_URL}
-                className="group grid gap-3 border-b border-slate-200 px-6 py-6 transition hover:bg-amber-50/60 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:px-7"
+                className="group grid gap-3 border-b border-slate-200 px-6 py-6 transition hover:bg-[#F1EDFC]/60 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:px-7"
               >
                 <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Phone</p>
                 <div>
