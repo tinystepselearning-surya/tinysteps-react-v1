@@ -197,19 +197,19 @@ function CoursesPage() {
       courses: [
         {
           name: 'Online Group Phonics Classes for Kids',
-          description: 'Live phonics learning with sounds, blending and early reading.',
+          description: 'Learn letter sounds, blending and early reading in a group.',
           url: 'https://tinystepslearning.com/group-phonics-classes-for-kids',
           audienceType: 'Children developing early reading foundations',
         },
         {
           name: 'Online Group Grammar Classes for Kids',
-          description: 'Live grammar lessons with sentence building and usage.',
+          description: 'Practise sentences and grammar in a live group.',
           url: 'https://tinystepslearning.com/group-grammar-classes-for-kids',
           audienceType: 'Children practising sentence formation',
         },
         {
           name: 'Online Group Public Speaking Classes for Kids',
-          description: 'Live public speaking through storytelling and presentations.',
+          description: 'Guided storytelling and presentations in a live group.',
           url: 'https://tinystepslearning.com/group-public-speaking-classes-for-kids',
           audienceType: 'Children developing speaking confidence',
         },
