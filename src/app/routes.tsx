@@ -432,6 +432,38 @@ const Layout: FC = () => {
     }
   }, [location.pathname, location.search, navigate]);
 
+  // The shared commercial floating CTA is mounted on document.body, outside
+  // React's click-capture boundary. Give it an explicit, tracked modal action.
+  useEffect(() => {
+    if (hideMarketingChrome || normalizedPath === '/book-demo') return;
+
+    const handleFloatingAssessmentRequest = (event: Event) => {
+      event.preventDefault();
+      const label = 'Book free assessment';
+      trackBookDemoClick(label);
+      if (isHighIntentPath(location.pathname) && isHighIntentCtaLabel(label)) {
+        trackConversionEvent('high_intent_page_cta_click', {
+          ...buildBaseConversionParams(location.pathname),
+          cta_label: label,
+          destination_path: '/book-demo',
+        });
+      }
+      setIsAssessmentModalOpen(true);
+
+      const params = new URLSearchParams(location.search);
+      if (params.get('book') !== '1') {
+        params.set('book', '1');
+        navigate(
+          { pathname: location.pathname, search: `?${params.toString()}` },
+          { replace: true }
+        );
+      }
+    };
+
+    window.addEventListener('tinysteps:open-assessment', handleFloatingAssessmentRequest);
+    return () => window.removeEventListener('tinysteps:open-assessment', handleFloatingAssessmentRequest);
+  }, [hideMarketingChrome, location.pathname, location.search, navigate, normalizedPath]);
+
   const handlePublicBookingIntercept = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
       if (hideMarketingChrome || normalizedPath === '/book-demo') return;
