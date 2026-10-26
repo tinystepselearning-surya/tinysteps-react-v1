@@ -30,7 +30,7 @@ export default function MobileTabBar({
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
+        'ts-app-mobile-tabs fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
         className,
       )}
       aria-label="Mobile navigation"
