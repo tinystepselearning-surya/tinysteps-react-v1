@@ -7,7 +7,7 @@ const read = (file: string) => fs.readFileSync(path.join(process.cwd(), file), '
 const groupPages = [
   ['group-phonics-classes-for-kids', 'GroupPhonicsClassesPage', 'Online Group Phonics Classes for Kids'],
   ['group-grammar-classes-for-kids', 'GroupGrammarClassesPage', 'Online Group Grammar Classes for Kids'],
-  ['group-public-speaking-classes-for-kids', 'GroupPublicSpeakingClassesPage', 'Group Public Speaking Classes for Kids'],
+  ['group-public-speaking-classes-for-kids', 'GroupPublicSpeakingClassesPage', 'Online Group Public Speaking Classes for Kids'],
 ] as const;
 
 describe('Group-class commercial page integration', () => {
@@ -87,6 +87,42 @@ describe('Group-class commercial page integration', () => {
       const source = read(page);
       groupPages.forEach(([slug]) => expect(source).toContain('/' + slug));
     }
+  });
+
+  it('exposes all three commercial group courses through a dedicated Courses ItemList', () => {
+    const courses = read('src/pages/CoursesPage.tsx');
+    expect(courses).toContain('const groupCourseListSchema = createCourseListSchema');
+    expect(courses).toContain('courses: [');
+    expect(courses).toContain('groupCourseListSchema, mainPathItemListSchema');
+    for (const [slug] of groupPages) {
+      expect(courses).toContain(`https://tinystepslearning.com/${slug}`);
+    }
+    expect(courses).toContain('Online Group Phonics Classes for Kids');
+    expect(courses).toContain('Online Group Grammar Classes for Kids');
+    expect(courses).toContain('Online Group Public Speaking Classes for Kids');
+  });
+
+  it('preserves truthful answers and pre-rendered, self-canonical search visibility', () => {
+    const seenTitles = new Set<string>();
+    const seenDescriptions = new Set<string>();
+    groupPages.forEach(([slug]) => {
+      const block = seo.split(`'/${slug}': {`)[1]?.split('\n  },')[0] || '';
+      const title = block.match(/title: '([^']+)'/)?.[1];
+      const description = block.match(/description: '([^']+)'/)?.[1];
+      expect(title).toMatch(/Group/);
+      expect(description).toContain('₹250 per child/class');
+      expect(description).toMatch(/Live online group/);
+      expect(block).toContain(`canonicalPath: '/${slug}'`);
+      expect(block).not.toContain('1:4');
+      expect(title).toBeTruthy();
+      expect(description).toBeTruthy();
+      seenTitles.add(title!);
+      seenDescriptions.add(description!);
+    });
+    expect(seenTitles.size).toBe(3);
+    expect(seenDescriptions.size).toBe(3);
+    expect(content).toContain('createFAQPageSchema(questions)');
+    expect(content).toContain('Children are matched by learning level');
   });
 
   it('keeps group preference in the lead schema and prevents automatic 1:1 demo creation', () => {
