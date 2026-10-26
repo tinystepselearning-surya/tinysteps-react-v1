@@ -1,42 +1,42 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Updated by ChatGPT-native audit after **Slot 8 (rows 71–80)** at **2026-10-26T01:46:21.908Z UTC**. Actual distinct per-URL independent HTTPS GET initiation timestamps: **2026-10-26T01:44:58.576340Z** through **2026-10-26T01:45:18.612366Z**, with URL-specific details in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+Updated by the ChatGPT-native audit after **Slot 9 (rows 81–90)** on 2026-10-26 UTC. Actual per-URL independent HTTPS GET initiation timestamps: **2026-10-26T02:47:52.927134Z** to **2026-10-26T02:48:12.999140Z**, with individual evidence in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
 ## Daily coverage — 26 October IST
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | 202 |
-| Distinct URLs actually attempted today | **80** |
+| Distinct URLs actually attempted today | **90** |
 | Fully live-verified PASS today | **0** |
 | Confirmed FAIL today | **0** |
 | Confirmed WARN today | **0** |
-| UNVERIFIED / partial provider-text reviews today | **80** |
-| Not checked today | **122** |
+| UNVERIFIED / provider-text-only reviews today | **90** |
+| Not checked today | **112** |
 
-Inventory validated before writes: **202 unique URLs**, slots **1–19: 10 URLs each**, slot **20: 12 URLs**. All 70 previously checked rows' UTC timestamps map to **26 October IST**. The 10 Slot 8 URLs were previously dated **25 October IST** and were not rechecked earlier today. No future slots scanned, no yesterday-only PASS carried into today's coverage.
+Inventory revalidated: exactly **202 unique URLs**, slots **1–19 at 10 each**, slot **20 at 12**. All 90 today's records have check timestamps resolving to **26 October IST**. Slot 9 had only prior-day attempts before this batch; no URL was rechecked today, and prior-day statuses were not carried into current-day coverage.
 
-## Current batch — Slot 8 (rows 71–80)
+## Current batch — Slot 9 (rows 81–90)
 
-Ten URLs inspected through web retrieval: letter tracing with sounds, balloon pop phonics, word meaning flashcards, Phonics, Grammar, Speaking, Speaking Progress Framework, For Schools, Book Demo, and Reading Classes. All ten yielded **page-specific extracted text and visible H1 headings**. The Speaking Progress Framework URL initially failed direct provider `web.open`, but following its link from the Book Demo page returned its page-specific text; this is **not** evidence of a production failure or recovery.
+Ten pages inspected: Writing Classes, Phonics Fees India, Grammar Levels/Writing Guide, Spoken English Classes, Online English Classes, Hyderabad English Classes, and age-specific English pages for 4, 5, 6 and 7–10 years.
 
-Provider snapshot labels: **Crawled: today** for Phonics, Grammar, Speaking, Book Demo and Reading; **Crawled: last week** for the other five. The labels do not supply precise crawl timestamps or prove current origin responses.
+All ten returned page-specific H1 and body content from the web retrieval provider (which labeled each **Crawled: today**). Representative headings: “Creative Writing Classes for Kids Online”, “Phonics Class Fees in India”, “Spoken English Classes for Kids Online”, and “Online English Classes for Ages 7-10”. The fees comparison page describes public provider prices as checked **24 September 2026**; this is a dated research disclosure, not proof of a current pricing defect. Provider snapshots do **not** supply raw origin headers, exact crawl times, or current technical readiness.
 
-Ten distinct independent Python `requests.get` HTTPS GET attempts were actually initiated at the per-URL UTC times in the tracker. **All 10 failed before any origin response**, with `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. **No HTTP status, headers or body were obtained from the origin**. This is an **audit-runtime DNS limitation**, not evidence of a production outage.
+Ten separate Python `requests.get` HTTPS GET probes were actually initiated at the individual UTC timestamps in the tracker. **All ten failed before any origin HTTP response**, with `ConnectionError` caused by `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. This is an **audit-runtime DNS limitation**, not a verified website outage.
 
-**Current technical status UNVERIFIED:** HTTP status, final redirect destinations, canonical tags, noindex/X-Robots-Tag, robots.txt and Googlebot/Bingbot/OAI-SearchBot rules, live raw HTML and JSON-LD. No first-party Google/Bing indexing, ranking or AI mention/citation evidence collected.
+**Technical readiness remains UNVERIFIED:** live HTTP status, redirect destination, canonical tags, noindex/X-Robots-Tag, robots.txt and Googlebot/Bingbot/OAI-SearchBot rules, live raw HTML, JSON-LD. No first-party Google/Bing indexing, ranking, or AI mention/citation evidence was collected.
 
 ## Historical comparison and workflow safety
 
-All ten Slot 8 rows had **recorded PASS dated 2026-10-25T01:48:19+00:00**. Those historical results were preserved in `last_verified_status` and `last_verified_at_utc`. Today's **UNVERIFIED** is an evidence limitation, **not a verified regression**. No dated before/after production transition was established; [CHANGES.md](./CHANGES.md) remains unchanged.
+Slot 9 rows had previous-day **UNVERIFIED** attempts dated 25 October. No dated, origin-verified before/after transition was established; [CHANGES.md](./CHANGES.md) is unchanged.
 
-GitHub Actions repository run listing (100 most recent runs) was read during this audit: **no rolling-public-seo-health runs and no active runs appeared in that inspected page**. The direct workflow administrative state endpoint was not available via the connected tool, so enabled/disabled state is independently **unverified**. User-confirmed UI disablement remains the working assumption. Cron YAML presence alone is not evidence of workflow enablement. No GitHub workflow was run or enabled.
+The connected GitHub tools available in this run did **not** expose a repository-wide Actions run list or the administrative workflow state. An attempted external GitHub workflow-page read also failed in the retrieval provider. Consequently **no independent concurrent-run or disabled-state verification was possible this batch**. User-confirmed GitHub UI disablement remains the operating assumption; the presence of cron YAML alone is not evidence of an enabled workflow. No workflow was run or enabled.
 
 ## Coverage and operating limitation
 
-- Slots 1–8: **80 partial reviews, all UNVERIFIED** for full live technical readiness.
-- Slots 9–20: **122 unchecked today**.
-- Next scheduled batch: **Slot 9 (rows 81–90)**, or earliest eligible unchecked earlier-slot URLs.
-- 25 October ended with 130/202 attempted and 72 unchecked; those checks were not backfilled into 26 October.
-- Reliable origin-level HTTP access is still required for full technical verification.
+- Slots 1–9: **90 partial reviews, all UNVERIFIED** for full live technical readiness.
+- Slots 10–20: **112 unchecked today**.
+- Next eligible batch: **Slot 10 (rows 91–100)**, subject to the actual hour and earliest eligible unchecked-slot policy.
+- 25 October's unattempted URLs were not artificially backfilled into 26 October.
+- Reliable origin-level HTTP access is required for full technical verification.
 - No production source, workflow, Firebase or Hosting changes. The separate six-hour outside-in visibility task is unchanged.
