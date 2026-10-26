@@ -38,6 +38,25 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain("premiumPath: '/speaking'");
   });
 
+  it('shows 1:2 through 1:5 at canonical rates and the standard 1:1 class duration', () => {
+    expect(content).toContain("['1:2', '1:3', '1:4', '1:5']");
+    expect(content).toContain('tier.monthlyFee / tier.classes');
+    expect(content).toContain('tier.durationMinutes');
+    expect(content).toContain('formatINR(PER_CLASS_PRICE)');
+    expect(content).toContain('ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes');
+    expect(content).toContain('Maximum: 5 children per teacher.');
+    expect(content).toContain('for 12 classes per child');
+  });
+
+  it('keeps the new programme pages light and sky-blue except for the navy pricing band', () => {
+    expect(content).toContain('bg-[#F0F8FF]');
+    expect(content).toContain('from-[#D9EEFF]');
+    expect(content).toContain('bg-gradient-to-br from-[#0C2846]');
+    expect(content).toContain("Move beyond memorising grammar rules");
+    expect(content).toContain('From hearing letter sounds to blending first words');
+    expect(content).toContain('Help your child express ideas clearly');
+  });
+
   it('preserves existing premium commercial titles and links to groups from discovery pages', () => {
     expect(seo).toContain("title: 'Online Phonics Classes for Kids | Live 1:1 | Tiny Steps'");
     expect(seo).toContain("title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps'");
