@@ -52,7 +52,7 @@ export default function SchoolPortalFoundationPage() {
     : '';
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="ts-auth-surface min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TinyStepsBrand subtitle="School Partnership" />
@@ -97,8 +97,8 @@ export default function SchoolPortalFoundationPage() {
           </section>
         ) : (
           <div className="mt-8 space-y-6">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
+            <section className="rounded-2xl border border-[#D7E5F4] bg-white p-6 shadow-sm">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#C2410C]">
                 Tiny Steps School Partnership
               </p>
               <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -135,7 +135,7 @@ export default function SchoolPortalFoundationPage() {
 
 function Detail({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+    <div className="rounded-xl border border-[#D7E5F4] bg-[#E7F3FF]/40 p-4">
       <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">{label}</dt>
       <dd className="mt-1 text-sm font-medium text-slate-900">{value}</dd>
     </div>
