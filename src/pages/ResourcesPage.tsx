@@ -71,7 +71,7 @@ const RESOURCE_PATHWAYS = [
       'Build fuller answers, organised ideas, storytelling, clear speaking, vocabulary, and age-appropriate public-speaking confidence.',
     to: '/resources/speaking',
     icon: MessagesSquare,
-    iconTone: 'border-amber-200/80 bg-amber-50 text-amber-700',
+    iconTone: 'border-[#D3B9E1]/80 bg-[#F1EDFC] text-[#604577]',
     accentLine: 'from-[#6E95D2] via-[#755E96] to-[#CC8994]',
     orb: 'bg-amber-200/[0.55]',
     hoverBorder: 'group-hover:border-amber-300/90',
