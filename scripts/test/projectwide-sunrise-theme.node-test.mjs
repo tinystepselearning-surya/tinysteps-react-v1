@@ -88,3 +88,12 @@ test('reconciliation preserves curriculum/error colours and removes competing ro
   assert.ok(read('src/pages/admin/AdminDashboard.tsx').includes('text-red-600'), 'preserve access alerts');
   assert.ok(read('src/pages/parent/ParentDashboard.tsx').includes('ts-native-no-x-scroll'), 'preserve native viewport safety');
 });
+
+
+test('whole-source text inventory separates educational game directories from protected operations', () => {
+  const inventory = read('scripts/audit-public-text-palette.mjs');
+  const gameMatch = inventory.indexOf("if (interactiveSpecialDirectory.test(file)) return 'specialised';");
+  const portalMatch = inventory.indexOf("if (protectedPath.test(file)) return 'protected';");
+  assert.ok(gameMatch >= 0 && portalMatch > gameMatch, 'classify child-games before generic kids portal');
+  assert.ok(inventory.includes("if (specialPath.test(file)) return 'specialised';"));
+});
