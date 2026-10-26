@@ -1,41 +1,41 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Updated by the ChatGPT-native audit after **Slot 15 (rows 141–150)** on **26 October 2026**. Independent HTTPS GET attempts started between **2026-10-26T08:51:45.507425Z** and **2026-10-26T08:52:06.894363Z** (14:21–14:22 IST), with distinct actual UTC start and completion timestamps preserved per URL in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+Updated by the ChatGPT-native audit after **Slot 16 (rows 151–160)** on **26 October 2026**. Ten independent HTTPS GET probes started between **2026-10-26T09:44:23.083367Z** and **2026-10-26T09:44:43.213352Z** (15:14 IST) and completed by **2026-10-26T09:44:48.224141Z**. Distinct actual UTC start and completion times are preserved per URL in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
 ## Daily coverage — 26 October IST
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **150** |
+| Distinct URLs actually attempted today | **160** |
 | Fully live-verified PASS today | **0** |
 | Confirmed FAIL today | **0** |
 | Confirmed WARN today | **0** |
-| UNVERIFIED / provider-text-only reviews today | **150** |
-| Not checked today | **52** |
+| UNVERIFIED / provider-text-only reviews today | **160** |
+| Not checked today | **42** |
 
-Validated the latest tracker before this batch: **202 unique URLs**, slots **1–19 contain 10 each**, slot **20 contains 12**. Previous 140 current-day rows had valid UTC check timestamps resolving to 26 October IST. Ten new rows also resolve to 26 October IST; no current-day URL was rechecked and yesterday's statuses were not counted toward today's coverage.
+Validated tracker before audit: **202 unique URLs**, slots **1–19 have 10 URLs each** and slot **20 has 12**. All 150 earlier current-day records have valid UTC timestamps resolving to 26 October IST; ten new checks also resolve to 26 October IST. No URL was rechecked today. Historical 25 October PASS results were preserved as historical evidence, not counted as today's live PASS.
 
-## Current batch — Slot 15 (rows 141–150)
+## Current batch — Slot 16 (rows 151–160)
 
-Reviewed ten educational blog URLs on school-reopening English readiness, long vowels, online English classes in India, school versus online phonics, online phonics games, home phonics activities, blending activities and routines, reading comprehension, and informal parent phonics assessment.
+Reviewed ten phonics articles: parent guide, letter-sound games, long vowels, multisyllabic words, r-controlled vowels, beginner rules, SATPIN, CBSE school scope and sequence, summer practice, and school teacher training.
 
-**Provider-extracted text evidence:** All ten URLs returned substantive, page-specific text through `web.open`. The displayed H1s included “Long Vowel Sounds for Kids: Rules, Patterns & Examples”, “Online English Classes for Kids in India: A Parent Decision Guide (Ages 3–12)”, and “Phonics Assessment Checklist for Parents Before a New School Term”. The provider's crawl labels ranged from **5 days ago to last month**; these labels are not exact crawl timestamps, and the provider did not supply origin HTTP response headers or raw HTML. Some snapshots contain older navigation labels; these are not evidence of a current live-site regression.
+**Provider-extracted text:** All ten URLs returned readable page-specific text through `web.open`, including H1s “Phonics for Parents: What It Is, How It Works, and How to Support Reading at Home”, “SATPIN at Home: A Parent Launch Plan for Early Blending and Reading”, and “Phonics Teacher Training for Schools: Why a Workshop Alone Is Not Implementation”. The retrieval provider labeled crawls between **today** and **last month**, without exact provider crawl timestamps or origin response headers. This establishes only provider-held readable text, not current origin health.
 
-**Independent HTTPS evidence:** Ten separate `requests.get` calls were attempted against the corresponding public URLs, with distinct actual UTC start/end times. **All ten failed before any HTTP response** with `requests.exceptions.ConnectionError` caused by `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. This is an audit-runtime DNS limitation, **not confirmed production downtime**.
+**Independent HTTPS:** Ten distinct `requests.get` attempts were executed. **All ten failed before receiving HTTP responses**, with `requests.exceptions.ConnectionError` caused by `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. This is an audit-runtime DNS limitation, **not confirmed production downtime**. Exact per-URL probe start and completion timestamps and observed provider headings are recorded in the tracker.
 
-**UNVERIFIED technical fields:** HTTP status, final/redirect URL, canonical, meta robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot robots access, live raw HTML, JSON-LD. Provider text establishes only that the retrieval service holds readable page-specific content. No first-party Google/Bing indexing, ranking, or AI citations were checked.
+**UNVERIFIED technical fields:** live HTTP status, redirect/final URL, canonical, meta robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot robots access, raw origin HTML and JSON-LD. No first-party Google/Bing indexing, rankings or AI citation evidence was obtained.
 
 ## Historical comparison and workflow safety
 
-No independently verified before/after production transition was established. [CHANGES.md](./CHANGES.md) remains unchanged. Historical records remain separate from today's UNVERIFIED results.
+All ten URLs had historical **PASS** records from **25 October 2026** with HTTP 200, same-URL canonical and valid JSON-LD recorded in the tracker. These historical observations were preserved in `last_verified_status` and `last_verified_at_utc`. Today's lack of origin verification does **not** establish a regression, and no verified improvement was established. [CHANGES.md](./CHANGES.md) remains unchanged.
 
-The connected GitHub tools available in this run do not expose repository-wide Actions workflow enablement or latest-run listings. An attempt to read the public GitHub Actions workflow-state API through web access was inaccessible. Thus the workflow's administrative state and concurrent-run status **could not be independently verified**. The user's explicit confirmation that the previous GitHub workflow was disabled on 25 October remains the operating assumption. Cron YAML presence is not proof of enablement. **No GitHub Actions workflow was run or enabled.**
+Connected GitHub tools in this run do not expose a repository-wide Actions workflow enablement or recent-run listing. A direct public GitHub API workflow-state request via web access was inaccessible. Therefore the old workflow's administrative disabled state and concurrent-run status **could not be independently verified**. The user's explicit 25 October confirmation of disabling it remains the operating assumption. Cron YAML presence does not prove the workflow is enabled. No GitHub Actions workflow was run or enabled.
 
 ## Coverage and operating limitation
 
-- Slots **1–15**: **150 distinct partial reviews today, all UNVERIFIED** for full live technical readiness.
-- Slots **16–20**: **52 URLs unchecked today**.
-- Next eligible batch: **Slot 16 (rows 151–160)** at its scheduled hour, subject to earlier missed-slot recovery rules.
+- Slots **1–16**: **160 distinct partial reviews today**, all **UNVERIFIED** for full live technical readiness.
+- Slots **17–20**: **42 URLs unchecked today**.
+- Next eligible batch: **Slot 17 (rows 161–170)** at its scheduled hour, subject to missed-slot recovery rules.
 - Reliable independent origin-level HTTPS access is still necessary for full readiness checks.
 - No repository source, workflow, Firebase or Hosting settings were changed. The separate six-hour outside-in visibility task remains unchanged.
