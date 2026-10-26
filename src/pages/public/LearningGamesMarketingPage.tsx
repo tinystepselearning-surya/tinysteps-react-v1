@@ -120,7 +120,7 @@ export default function LearningGamesMarketingPage() {
         <div className="relative mx-auto max-w-7xl px-6 pt-0 pb-14 md:px-10 md:pt-0 md:pb-20">
           <div className="grid items-start gap-10 lg:grid-cols-[1.15fr_0.85fr]">
             <div>
-              <div className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-4 py-1.5 text-sm font-medium text-orange-700">
+              <div className="inline-flex items-center rounded-full border border-[#D3B9E1] bg-[#F1EDFC] px-4 py-1.5 text-sm font-medium text-[#604577]">
                 Tiny Steps Learning Games
               </div>
               <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight text-slate-900 md:text-6xl">
@@ -206,7 +206,7 @@ export default function LearningGamesMarketingPage() {
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
+                  <div className="mt-5 rounded-2xl border border-[#D7E5F4] bg-[#F1EDFC] p-4 text-sm leading-6 text-[#405678]">
                     Built as a smart practice companion for Tiny Steps learners: short, focused, repeatable, and child-friendly.
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function LearningGamesMarketingPage() {
         <div className="mx-auto max-w-7xl px-6 py-14 md:px-10 md:py-20">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div className="max-w-3xl">
-              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-orange-700">Inside the experience</div>
+              <div className="text-sm font-semibold uppercase tracking-[0.18em] text-[#604577]">Inside the experience</div>
               <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-5xl">Games designed around learning outcomes</h2>
               <p className="mt-4 text-lg leading-8 text-slate-600">
                 Tiny Steps games are not random activities. They are built to support phonics foundations, independent practice,
@@ -414,10 +414,10 @@ export default function LearningGamesMarketingPage() {
                 </a>
               </div>
 
-              <div className="rounded-[28px] border border-orange-400 bg-gradient-to-br from-orange-500 to-amber-400 p-6 text-white shadow-lg shadow-orange-500/20">
-                <div className="text-sm font-medium text-orange-50">Lifetime access</div>
+              <div className="rounded-[28px] border border-[#755E96] bg-gradient-to-br from-[#212B5C] via-[#384C80] to-[#604577] p-6 text-white shadow-lg shadow-[#212B5C]/20">
+                <div className="text-sm font-medium text-[#F1EDFC]">Lifetime access</div>
                 <div className="mt-2 text-4xl font-bold">₹999</div>
-                <div className="mt-1 text-sm text-orange-50/90">one-time / per child</div>
+                <div className="mt-1 text-sm text-[#F1EDFC]">one-time / per child</div>
                 <a
                   href={GAMES_WHATSAPP_URL}
                   target="_blank"
