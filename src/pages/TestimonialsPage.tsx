@@ -156,7 +156,7 @@ export default function TestimonialsPage() {
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="rounded-[32px] border border-orange-100/80 bg-white/95 p-6 shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:p-8 md:p-10">
-        <p className="text-xs font-black uppercase tracking-[0.24em] text-orange-700">
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-[#604577]">
           {speakingFocused ? 'Speaking parent feedback' : 'Parent Feedback'}
         </p>
         <h1 className="mt-3 max-w-4xl font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl">
