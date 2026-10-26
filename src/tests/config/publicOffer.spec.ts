@@ -13,10 +13,10 @@ import {
 describe('public offer configuration', () => {
   it('keeps the approved standard pricing facts', () => {
     expect(STANDARD_ONE_TO_ONE_PER_CLASS_PRICE).toBe(400);
-    expect(STANDARD_SMALL_GROUP_MIN_PER_CLASS).toBe(180);
-    expect(STANDARD_SMALL_GROUP_MAX_PER_CLASS).toBe(300);
+    expect(STANDARD_SMALL_GROUP_MIN_PER_CLASS).toBe(250);
+    expect(STANDARD_SMALL_GROUP_MAX_PER_CLASS).toBe(250);
     expect(STANDARD_PRICING_SUMMARY).toBe(
-      'Standard 1:1: ₹400 per class • Small groups: ₹180–₹300 per child per class'
+      'Standard 1:1: ₹400 per class • Group Classes: ₹250 per child per class'
     );
   });
 
