@@ -566,18 +566,18 @@ export default function PhonicsPage({
   }, [title, description, canonicalPath, breadcrumbName, canonicalUrl, extraJsonLd]);
 
   return (
-    <div className="relative overflow-x-clip bg-[linear-gradient(180deg,#fffaf5_0%,#ffffff_24%,#f8fbff_100%)] pb-28">
+    <div className="relative overflow-x-clip bg-[linear-gradient(180deg,#EAF6FF_0%,#FFFFFF_28%,#F0F8FF_100%)] pb-28">
       <div className="pointer-events-none absolute -left-24 top-24 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute -right-12 top-10 h-72 w-72 rounded-full bg-orange-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute -right-12 top-10 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
 
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#FFF8EF] via-[#FFFDF8] to-[#EEF8FF] px-5 py-10 sm:px-6 md:py-12 lg:px-8 lg:py-14">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(251,146,60,0.18),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.24),_transparent_40%),radial-gradient(circle_at_60%_88%,_rgba(196,181,253,0.14),_transparent_26%),linear-gradient(180deg,_rgba(255,247,237,0.96),_rgba(248,250,252,0.94))]" />
-        <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-orange-200/35 blur-3xl" />
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-6 md:py-12 lg:px-8 lg:py-14">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_15%_10%,_rgba(147,197,253,0.20),_transparent_34%),radial-gradient(circle_at_85%_0%,_rgba(125,211,252,0.26),_transparent_40%),linear-gradient(180deg,_rgba(225,243,255,0.82),_rgba(245,251,255,0.92))]" />
+        <div className="pointer-events-none absolute -right-16 top-8 h-64 w-64 rounded-full bg-sky-200/30 blur-3xl" />
         <div className="pointer-events-none absolute -left-20 bottom-0 h-72 w-72 rounded-full bg-sky-200/35 blur-3xl" />
         <div className="pointer-events-none absolute bottom-2 right-1/4 h-40 w-40 rounded-full bg-violet-200/20 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
           <div>
-            <p className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-orange-700 shadow-sm backdrop-blur">Tiny Steps Phonics</p>
+            <p className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#246D9C] shadow-sm backdrop-blur">Tiny Steps Phonics</p>
             <h1 className="mt-4 max-w-[680px] text-[40px] font-black leading-[1.03] tracking-[-0.035em] text-slate-950 md:text-[48px] lg:text-[56px]">{heroTitle}</h1>
             <p className="mt-5 max-w-[660px] text-base leading-7 text-slate-700 md:text-lg md:leading-8">{heroSubtitle}</p>
             <div className="mt-7 flex flex-wrap gap-2.5">
@@ -597,7 +597,7 @@ export default function PhonicsPage({
               </Link>
               <Link
                 to="/phonics#learning-path"
-                className="inline-flex items-center justify-center rounded-full border border-[#E9D7C0] bg-white/88 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
+                className="inline-flex items-center justify-center rounded-full border border-[#C6E2F3] bg-white/88 px-6 py-3 text-sm font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:bg-white"
               >
                 See Learning Path
               </Link>
@@ -626,7 +626,7 @@ export default function PhonicsPage({
             </p>
           </div>
 
-          <PremiumCard className="mx-auto w-full max-w-[560px] rounded-[28px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(248,251,255,0.94),rgba(255,250,244,0.92))] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-6 lg:ml-auto lg:p-7">
+          <PremiumCard className="mx-auto w-full max-w-[560px] rounded-[28px] border border-slate-200/70 bg-[linear-gradient(150deg,rgba(255,255,255,0.98),rgba(245,251,255,0.94),rgba(228,244,255,0.88))] p-5 shadow-[0_18px_45px_rgba(15,23,42,0.08)] md:p-6 lg:ml-auto lg:p-7">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500 md:text-xs">Your child&apos;s reading journey</p>
               <p className="mt-1 text-sm text-slate-700 md:text-base">From first sounds to confident reading</p>
@@ -672,7 +672,7 @@ export default function PhonicsPage({
                 })}
               </div>
 
-              <div className="mt-5 rounded-[20px] border border-white/80 bg-[linear-gradient(145deg,rgba(255,248,239,0.9),rgba(247,251,255,0.9))] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] md:px-5">
+              <div className="mt-5 rounded-[20px] border border-white/80 bg-[linear-gradient(145deg,rgba(238,248,255,0.9),rgba(247,251,255,0.95))] px-4 py-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] md:px-5">
                 <div className="flex flex-col gap-3">
                   <span className="w-fit rounded-full border border-white/80 bg-white/92 px-3 py-1 text-xs font-semibold text-slate-600 shadow-sm">
                     We keep parents updated
@@ -859,7 +859,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell id="choosing-phonics-support">
-        <div className="rounded-[2rem] border border-orange-100 bg-gradient-to-br from-[#FFF9F1] via-white to-[#F2FAFF] p-6 shadow-xl sm:p-8">
+        <div className="rounded-[2rem] border border-sky-100 bg-gradient-to-br from-[#EAF6FF] via-white to-[#F2FAFF] p-6 shadow-xl sm:p-8">
           <SectionHeader
             eyebrow="Choosing the right support"
             title="How to evaluate an online phonics class for your child"
@@ -951,7 +951,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell id="program">
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/60 via-white to-orange-50/50 p-3 shadow-xl">
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/60 via-white to-[#EAF6FF] p-3 shadow-xl">
           <div className="px-4 pt-4 sm:px-5 sm:pt-5">
             <SectionHeader
               eyebrow="Choose the right starting level"
@@ -998,7 +998,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell id="progress">
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/45 via-white to-orange-50/35 p-3 shadow-xl">
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-sky-50/45 via-white to-[#EAF6FF] p-3 shadow-xl">
           <div className="px-6 pt-6">
             <AccentBadge>Measurable progress</AccentBadge>
             <h2 className="mt-3 text-2xl font-bold tracking-[-0.02em] text-slate-900 sm:text-3xl">How parents can see progress</h2>
@@ -1078,7 +1078,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell>
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-orange-50/30 to-sky-50/30 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8">
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-sky-50/50 to-[#EAF6FF] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)] sm:p-8">
           <SectionHeader
             eyebrow="India and worldwide"
             title="Live online phonics classes for families in India and worldwide"
@@ -1264,7 +1264,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell>
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-orange-50/45 via-white to-sky-50/45 p-6 shadow-xl sm:p-8">
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-[#EAF6FF] via-white to-sky-50/45 p-6 shadow-xl sm:p-8">
           <SectionHeader
             eyebrow="No commitment required"
             title="What happens next?"
