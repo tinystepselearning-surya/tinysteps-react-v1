@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import ConversionHero from '../components/Home/ConversionHero';
-import { formatINR, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../config/pricing';
+import { formatINR, NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE } from '../config/pricing';
 import Meta from '../components/common/Meta';
 import { HOMEPAGE_SEO_META } from '../lib/homeSeoMeta.js';
 import { createWebPageSchema, organizationSchema, PUBLIC_FACTS, websiteSchema } from '../lib/schemas';
@@ -344,25 +344,43 @@ function ExploreSection() {
 }
 
 function GroupClassDiscoverySection() {
-  const formats = [
-    { label: 'Phonics', path: '/group-phonics-classes-for-kids', description: 'Letter sounds, blending and early reading.' },
-    { label: 'Grammar', path: '/group-grammar-classes-for-kids', description: 'Sentence formation and grammar in use.' },
-    { label: 'Public Speaking', path: '/group-public-speaking-classes-for-kids', description: 'Storytelling, clear answers and speaking turns.' },
+  const groupCourses = [
+    { name: 'Phonics', url: '/group-phonics-classes-for-kids', detail: 'Sound awareness, blending and early reading' },
+    { name: 'Grammar', url: '/group-grammar-classes-for-kids', detail: 'Sentence building and grammar in use' },
+    { name: 'Public Speaking', url: '/group-public-speaking-classes-for-kids', detail: 'Storytelling, expression and presentations' },
   ];
+
   return (
-    <section aria-labelledby="group-classes-title" className="border-t border-slate-100 bg-[#fbfaf8] px-5 py-12 sm:px-8 sm:py-16">
-      <div className="mx-auto max-w-6xl">
-        <p className="text-xs font-bold uppercase tracking-wider text-[#9B4300]">Choose your learning format</p>
-        <h2 id="group-classes-title" className="mt-3 text-3xl font-bold tracking-tight text-[#102A43]">One-to-one or a small group?</h2>
-        <p className="mt-3 max-w-3xl leading-7 text-slate-700">Premium one-to-one classes remain our personalised learning option. Families interested in learning with a few level-matched peers can also explore small groups. New batches depend on suitable children and timing availability.</p>
-        <div className="mt-6 grid gap-4 sm:grid-cols-3">
-          {formats.map((format) => (
-            <Link to={format.path} key={format.path} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">
-              <span className="block text-lg font-bold text-[#102A43]">Group {format.label}</span>
-              <span className="mt-2 block text-sm leading-6 text-slate-600">{format.description}</span>
-              <span className="mt-3 block text-sm font-semibold text-orange-700">Explore group option →</span>
-            </Link>
-          ))}
+    <section id="choose-class-format" aria-labelledby="group-classes-title" className="relative scroll-mt-24 overflow-hidden border-y border-sky-100 bg-gradient-to-br from-[#DDF0FF] via-[#F3FAFF] to-[#E8F5FF] px-5 py-14 sm:px-8 sm:py-20">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-white/60 blur-3xl" />
+      <div className="relative mx-auto max-w-6xl">
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1F6394]">Choose how your child learns</p>
+        <h2 id="group-classes-title" className="mt-3 max-w-4xl text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl">Two ways to learn at Tiny Steps</h2>
+        <p className="mt-4 max-w-3xl text-base leading-8 text-[#365873]">
+          Explore personalised one-to-one teaching or live group classes. Both follow the Tiny Steps learning pathways, with guidance on the right starting level.
+        </p>
+        <div className="mt-8 grid gap-5 lg:grid-cols-2">
+          <article className="rounded-[28px] border border-[#C5E2F5] bg-white p-6 shadow-[0_16px_44px_rgba(18,75,119,0.09)] sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#1B699E]">Individual learning</p>
+            <h3 className="mt-3 text-2xl font-bold text-[#102A43]">One-to-One Classes</h3>
+            <p className="mt-3 leading-7 text-slate-600">A dedicated teacher, personalised pace and focused correction adapted to your child.</p>
+            <p className="mt-6 text-3xl font-black tabular-nums text-[#102A43]">{formatINR(PER_CLASS_PRICE)} <span className="text-sm font-medium text-slate-600">per class · {ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes} minutes</span></p>
+            <Link to="/courses" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-[#102A43] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#1D456B]">Explore One-to-One Classes</Link>
+          </article>
+          <article className="rounded-[28px] border border-[#C5E2F5] bg-white p-6 shadow-[0_16px_44px_rgba(18,75,119,0.09)] sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#1B699E]">Learn with peers</p>
+            <h3 className="mt-3 text-2xl font-bold text-[#102A43]">Group Classes</h3>
+            <p className="mt-3 leading-7 text-slate-600">Live, level-matched learning with practice, feedback and supportive peer interaction. New batches depend on suitable enrolments.</p>
+            <p className="mt-6 text-3xl font-black tabular-nums text-[#102A43]">{formatINR(NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes)} <span className="text-sm font-medium text-slate-600">per child/class · {NEW_GROUP_CLASS_PLAN.durationMinutes} minutes</span></p>
+            <p className="mt-5 text-sm font-semibold text-[#174A70]">Explore Group Classes by programme</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {groupCourses.map((course) => (
+                <Link key={course.url} to={course.url} title={course.detail} className="inline-flex min-h-11 items-center rounded-full border border-sky-200 bg-[#EAF6FF] px-4 py-2 text-sm font-bold text-[#175C90] transition hover:border-sky-400 hover:bg-[#D9EEFF]">
+                  {course.name}
+                </Link>
+              ))}
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -401,11 +419,11 @@ export default function HomePage() {
       <div className="bg-white">
         <ConversionHero />
         <LearningPathwaysSection />
+        <GroupClassDiscoverySection />
         <DifferenceSection />
         <TechnologySection />
         <BeforeYouBookSection />
         <ExploreSection />
-        <GroupClassDiscoverySection />
         <FinalInvitationSection />
       </div>
     </>
