@@ -37,6 +37,17 @@ describe('automatic lead -> demo workflow guards', () => {
     })).toBe(true);
   });
 
+  it('does not automatically book a 1:1 demo for group or undecided prospects', () => {
+    const canonical = {
+      source: 'website', childName: 'Child', primaryPhone: '9440436379',
+      status: 'new', dedupeCanonicalLeadId: 'lead-group',
+      dedupeIdentityKey: 'canonical-key',
+    };
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'small_group' })).toBe(false);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'unsure' })).toBe(false);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'one_to_one' })).toBe(true);
+  });
+
   it('never auto-creates from synthetic compatibility leads or terminal leads', () => {
     expect(shouldEnsureDemoForLead('demo_demo-1', {
       source: 'manual',
