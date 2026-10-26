@@ -4,6 +4,7 @@ import Meta from '../components/common/Meta';
 import {
   CLASS_SAMPLE_CATEGORIES,
   CLASS_SAMPLE_CATEGORY_LABELS,
+  buildClassSampleVideoObject,
   isValidYouTubeVideoId,
   toClassSampleItem,
   type ClassSampleCategory,
@@ -330,21 +331,14 @@ export default function ClassSamplesPage() {
     [activeVideos],
   );
 
+  // Schema describes the complete gallery, not whichever filter a visitor selects.
+  // Legacy records without a verified YouTube upload date retain their player
+  // and thumbnail, but do not emit incomplete VideoObject rich-result markup.
   const videoObjectSchemas = useMemo(
-    () =>
-      filteredVideos
-        .filter((video) => isValidYouTubeVideoId(video.youtubeVideoId))
-        .map((video) => ({
-          '@context': 'https://schema.org',
-          '@type': 'VideoObject',
-          '@id': `${CANONICAL_URL}#video-${video.id}`,
-          name: video.title,
-          description: video.description,
-          embedUrl: getYoutubeEmbedUrl(video.youtubeVideoId),
-          url: video.youtubeUrl || `${CANONICAL_URL}#${video.id}`,
-          thumbnailUrl: `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`,
-        })),
-    [filteredVideos],
+    () => activeVideos
+      .map((video) => buildClassSampleVideoObject(video, CANONICAL_URL))
+      .filter((schema): schema is NonNullable<typeof schema> => schema !== null),
+    [activeVideos],
   );
 
   return (
