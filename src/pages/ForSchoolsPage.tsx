@@ -1021,7 +1021,7 @@ const ForSchoolsPage: React.FC = () => {
               >
                 <div className="flex w-full flex-col">
                   {plan.featured ? (
-                    <span className="self-start rounded-full bg-[#FFE5EB] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-orange-800">
+                    <span className="self-start rounded-full bg-[#FFE5EB] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#604577]">
                       Best for full rollout
                     </span>
                   ) : null}
@@ -1037,7 +1037,7 @@ const ForSchoolsPage: React.FC = () => {
                   <ul className={`space-y-2.5 text-sm ${plan.featured ? 'text-slate-700' : 'text-slate-200'}`}>
                     {plan.items.map((item) => (
                       <li key={item} className="flex gap-2">
-                        <span className={plan.featured ? 'text-orange-600' : 'text-[#FFE5EB]'} aria-hidden="true">✓</span>
+                        <span className={plan.featured ? 'text-[#315B8A]' : 'text-[#FFE5EB]'} aria-hidden="true">✓</span>
                         <span>{item}</span>
                       </li>
                     ))}
