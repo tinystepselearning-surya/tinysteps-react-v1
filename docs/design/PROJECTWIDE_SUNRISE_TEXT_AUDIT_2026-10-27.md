@@ -70,3 +70,21 @@ Thus **31 original warm-class uses were retired** through the first pass. This c
 - Remaining public classes are concentrated in `HolidayCalendar2026`, Phonics Fees, SATPIN tutorial, teaching sound utilities and testimonial star ratings. A portion are intentional warning, school-holiday, phonics-activity or star-score colours.
 
 The source audit is **complete as an inventory**, but the whole-product **component-by-component visual migration is not yet complete**. These remaining rows are the next bounded review queue; each needs a documented keep/replace decision. Do not claim production deployment or full contrast sign-off from this inventory.
+
+
+## 6. Reconciliation with duplicate draft PR #812 (27 October)
+
+PR #811 is the canonical theme release. Draft PR #812 was created later with an alternate `ts-auth-surface` root and narrower source inventory. Adopting both roots would create competing CSS precedence and different dark-mode assumptions. The resolution is:
+
+| #812 difference | Decision | Reason |
+| --- | --- | --- |
+| Separate `ts-auth-surface` stylesheet and opt-in on five root views | **Do not copy** | #811 already scopes to `data-ts-surface="app"`, retains parent/native shell safeguards and integrates public/role routing. |
+| Recoloured Admin/Teacher/School operations root classes | **Keep #811 version** | #811 already styles the shell and navigation via reusable app classes while leaving domain status colours intact. |
+| Parent header gradient | **Port**, behind scoped `ts-app-parent-hero` selector | Preserve the branded wash without overriding the shared authenticated header or dark-mode contrast. |
+| Header label/title improvements for Parent, Learning Partner and Admin | **Port** with explicit dark variants | #811 original shared header used low-contrast labels and a forced dark title, especially on navy surfaces. |
+| Extra audit script and separate token contract tests | **Consolidate**, do not duplicate | #811's cross-source inventory is broader; extend its existing release-gate tests to cover the useful contrast and native-safety assertions. |
+| #812 browser workflow failure | **Do not inherit branch** | Validate the integrated commit using #811's own CI instead of treating #812's unsuccessful run as releasable. |
+
+**Post-reconciliation release scope:** shared portal visual foundation + selected high-visibility text changes, **not** a component-by-component recolour of the entire repository. Keep original counts (268 warm classes across 122 files on the last completed source audit) as unresolved inventory candidates until the updated artifact proves otherwise.
+
+**Remaining blocking gates:** final integrated CI, authenticated role screenshots/light-dark checks, dashboard workflow smoke tests, and a documented per-component keep/replace classification of residual palette usages. Do not mark the full project-wide text-colour audit or production deployment complete until these are addressed.
