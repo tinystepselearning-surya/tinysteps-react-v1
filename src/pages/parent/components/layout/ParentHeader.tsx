@@ -29,7 +29,7 @@ export const ParentHeader: FC<ParentHeaderProps> = ({ name, totalChildren, onOpe
         typeof totalChildren === 'number'
           ? (
             <>
-              Managing <span className="font-semibold text-slate-900">{totalChildren}</span> child
+              Managing <span className="font-semibold text-[#17284C] dark:text-white">{totalChildren}</span> child
               {totalChildren === 1 ? '' : 'ren'}.
             </>
           )
