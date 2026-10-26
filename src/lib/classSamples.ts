@@ -76,8 +76,8 @@ export function normalizeYouTubeUrl(value: string): string | null {
 }
 
 /**
- * Use only the video's original YouTube date, verified by the publisher.
- * Firestore createdAt/updatedAt are NOT the video's upload date.
+ * Use only the date when the YouTube video first became public, verified by the publisher.
+ * Firestore createdAt/updatedAt are NOT the video's first-publication date.
  * The empty string represents unknown or invalid metadata.
  */
 export function normalizeYouTubeUploadDate(value: unknown): string {
@@ -92,7 +92,7 @@ export function normalizeYouTubeUploadDate(value: unknown): string {
 
 /**
  * Emit eligible VideoObject data only for an active video with independently
- * confirmed YouTube upload date. The title/description remain the approved
+ * confirmed YouTube first-publication date. The title/description remain the approved
  * Tiny Steps gallery text; the thumbnail is the video's standard YouTube image.
  * This does not imply that an unlisted video is approved for public indexing.
  */
