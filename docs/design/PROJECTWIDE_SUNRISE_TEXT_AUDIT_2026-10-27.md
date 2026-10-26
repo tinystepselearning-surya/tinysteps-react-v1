@@ -45,3 +45,28 @@ These counts are deliberately *not* called accessibility failures. `text-amber-`
 5. **Release:** Do not merge this branch until source tests, TypeScript, all relevant role workflow tests and authenticated screenshot/manual review pass. PR #810 must already be merged before integration.
 
 **Definition of done:** every source review candidate is resolved or explicitly accepted with a reason, sampled rendered styles meet WCAG requirements, and the role workflows pass their existing test gates. Until then this is a first implementation wave, **not a claim of 100% project-wide palette completion**.
+
+
+## 5. Latest read-only source inventory on the draft branch
+
+The **Projectwide Sunrise Theme Audit** workflow passed on commit `f774e34c7838` (run `40387001308`, artifact `projectwide-text-colour-inventory`). It scanned the same **1,061 files** and produced the following current review queue:
+
+| Scope | Original warm-text classes | Current uses | Files currently flagged |
+| --- | ---: | ---: | ---: |
+| Public | 63 | **33** | 22 |
+| Protected | 201 | **200** | 84 |
+| Specialised | 30 | **30** | 11 |
+| Other | 5 | **5** | 5 |
+| **Total** | **299** | **268** | **122** |
+
+Thus **31 original warm-class uses were retired** through the first pass. This count is not a measure of WCAG compliance or of all background tokens. It excludes raw hex and generic grey/blue class usages tracked separately in the JSON artifact.
+
+### Contextual review examples
+
+- `src/pages/admin/AttendanceValidationDashboard.tsx`: amber/orange status, validation notices and needs-attention messaging. **Preserve meaning** while reviewing contrast.
+- `src/pages/admin/ParentPaymentsLegacy.tsx` and `src/pages/admin/AnalyticsDashboardV2.tsx`: warnings, balances due and settlement notices. **Do not convert to neutral brand purple**.
+- `src/pages/parent/components/classes/ParentWorksheetLibrary.tsx`: colour-coded curriculum cards; assess whether colour distinguishes a learning track before migrating.
+- `src/components/teacher/StudentTopicProgressEditorCanonicalV2.tsx`: needs-practice and curriculum-error states; preserve clear instructional semantics.
+- Remaining public classes are concentrated in `HolidayCalendar2026`, Phonics Fees, SATPIN tutorial, teaching sound utilities and testimonial star ratings. A portion are intentional warning, school-holiday, phonics-activity or star-score colours.
+
+The source audit is **complete as an inventory**, but the whole-product **component-by-component visual migration is not yet complete**. These remaining rows are the next bounded review queue; each needs a documented keep/replace decision. Do not claim production deployment or full contrast sign-off from this inventory.
