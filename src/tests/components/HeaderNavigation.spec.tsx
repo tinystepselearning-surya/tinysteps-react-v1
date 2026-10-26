@@ -9,7 +9,7 @@ describe('marketing header navigation', () => {
     useAuthStore.setState({ user: null });
   });
 
-  it('keeps the desktop primary navigation focused while preserving the schools-page CTA', () => {
+  it('shows Courses and Pricing on desktop while preserving the schools-page CTA', () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>
         <Header />
@@ -17,8 +17,8 @@ describe('marketing header navigation', () => {
     );
 
     const desktopNavigation = within(screen.getByTestId('desktop-primary-navigation'));
-    expect(desktopNavigation.queryByRole('link', { name: 'Courses' })).not.toBeInTheDocument();
-    expect(desktopNavigation.queryByRole('link', { name: 'Pricing' })).not.toBeInTheDocument();
+    expect(desktopNavigation.getByRole('link', { name: 'Courses' })).toHaveAttribute('href', '/courses');
+    expect(desktopNavigation.getByRole('link', { name: 'Pricing' })).toHaveAttribute('href', '/pricing');
     expect(desktopNavigation.queryByRole('link', { name: 'For Schools' })).not.toBeInTheDocument();
     expect(desktopNavigation.queryByRole('link', { name: 'Class Samples' })).not.toBeInTheDocument();
     expect(desktopNavigation.getByRole('link', { name: 'Curriculum' })).toBeInTheDocument();
@@ -27,7 +27,7 @@ describe('marketing header navigation', () => {
     expect(screen.getByRole('button', { name: 'School Partnership Options' })).toBeInTheDocument();
   });
 
-  it('retains mobile-only Courses and Pricing, omits removed primary links, and closes after navigation', () => {
+  it('retains all primary links on mobile, omits removed links, and closes after navigation', () => {
     render(
       <MemoryRouter initialEntries={['/for-schools']}>
         <Header />
@@ -47,4 +47,33 @@ describe('marketing header navigation', () => {
     fireEvent.click(mobileNavigation.getByRole('link', { name: 'Resources' }));
     expect(menuButton).toHaveAttribute('aria-expanded', 'false');
   });
+
+  it('marks the active pricing link and renders one passive public progress indicator', () => {
+    render(
+      <MemoryRouter initialEntries={['/pricing']}>
+        <Header />
+      </MemoryRouter>,
+    );
+    const desktopNavigation = within(screen.getByTestId('desktop-primary-navigation'));
+    expect(desktopNavigation.getByRole('link', { name: 'Pricing' })).toHaveAttribute('aria-current', 'page');
+    const indicator = screen.getByTestId('public-scroll-progress');
+    expect(indicator).toHaveAttribute('aria-hidden', 'true');
+    expect(indicator.firstElementChild).toHaveStyle({ transform: 'scaleX(0)' });
+    expect(document.querySelectorAll('[data-testid="public-scroll-progress"]')).toHaveLength(1);
+  });
+
+  it('keeps signed-in dashboard and logout available in the revised header', () => {
+    useAuthStore.setState({ user: { role: 'parent' } as any });
+    render(
+      <MemoryRouter initialEntries={['/courses']}>
+        <Header />
+      </MemoryRouter>,
+    );
+    const desktopNavigation = within(screen.getByTestId('desktop-primary-navigation'));
+    expect(desktopNavigation.getByRole('link', { name: 'Dashboard' })).toHaveAttribute('href', '/parent');
+    expect(desktopNavigation.getByRole('button', { name: 'Logout' })).toBeInTheDocument();
+    expect(desktopNavigation.getByRole('link', { name: 'Courses' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('button', { name: 'Book Free 35-Minute Demo' })).toBeInTheDocument();
+  });
+
 });
