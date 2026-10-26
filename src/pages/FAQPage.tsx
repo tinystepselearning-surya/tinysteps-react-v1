@@ -700,7 +700,7 @@ const FAQPage: FC = () => {
         jsonLd={[breadcrumbSchema, faqSchema]}
       />
 
-      <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#111827_0%,#18253d_48%,#22314b_100%)] px-6 pb-14 pt-24 text-white">
+      <section className="relative overflow-hidden border-b border-slate-800 bg-[linear-gradient(135deg,#17284C_0%,#212B5C_48%,#384C80_100%)] px-6 pb-14 pt-24 text-white">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(239,187,106,0.16),transparent_28%),radial-gradient(circle_at_82%_18%,rgba(112,160,230,0.18),transparent_22%),linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0))]" />
         <div className="relative mx-auto max-w-7xl">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_390px] lg:items-end">
@@ -821,7 +821,7 @@ const FAQPage: FC = () => {
             <Link
               to="/parents/choosing-course"
               onClick={() => trackEvent('faq_resource_click', { page_path: PAGE_PATH, destination: '/parents/choosing-course', placement: 'diagnostic' })}
-              className="inline-flex w-fit items-center rounded-full bg-emerald-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+              className="inline-flex w-fit items-center rounded-full bg-[#212B5C] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#384C80]"
             >
               Choose the right course
             </Link>
@@ -841,7 +841,7 @@ const FAQPage: FC = () => {
                     aria-pressed={selected === category.id}
                     onClick={() => selectCategory(category.id)}
                     className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                      selected === category.id ? 'bg-slate-950 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                      selected === category.id ? 'bg-[#212B5C] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                     }`}
                   >
                     {category.label}
