@@ -165,6 +165,11 @@ const faqItems = [
       'Sometimes. If everyday English conversation or fluency is the main need, Spoken English is the clearer programme. If confidence itself is the primary barrier despite adequate language for the task, the specialist Confidence Building programme may fit better. The assessment helps separate these needs.',
   },
   {
+    question: 'Are recordings of every live English class provided to parents?',
+    answer:
+      'Yes. Tiny Steps provides a recording of every completed live class. After processing and upload, the team shares the student-specific OneDrive recording-folder link with the parent or guardian through WhatsApp. Parents can review the recordings privately and contact the admin team if a recording is missing or inaccessible.',
+  },
+  {
     question: 'What is the pricing preview for parents?',
     answer:
       `The current standard 1:1 price is ${formatINR(PER_CLASS_PRICE)} per class and ${formatINR(starterPackageFee)} for 12 classes. Parents can review the full pricing page after the free assessment confirms the right starting path.`,

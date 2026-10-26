@@ -261,7 +261,7 @@ const items: FAQItem[] = [
     question: 'Will parents receive a recording of every class?',
     shortAnswer: 'Yes — every completed live class recording is provided to parents',
     answer:
-      'Yes. Tiny Steps records every live class and provides its recording to the child’s parent or guardian as a mandatory part of our service. Recordings are not optional and are provided for every completed class. Parents can access recordings from the Classes area of the parent dashboard after processing and upload. If a recording is missing or inaccessible, contact the Tiny Steps admin team so we can ensure it is delivered. Recordings are for private family review and must not be shared publicly.',
+      'Yes. Tiny Steps records every live class and provides its recording to the child’s parent or guardian as a mandatory part of our service. Recordings are not optional and are provided for every completed class. After processing and upload, the Tiny Steps team shares each student’s OneDrive recording-folder link with the respective parent or guardian through WhatsApp. A recording-folder link may also be available in the Classes area of the parent dashboard where configured. If a recording is missing or inaccessible, contact the Tiny Steps admin team so we can ensure it is delivered. Recordings are for private family review and must not be shared publicly.',
     searchTerms: ['recording', 'every class', 'guaranteed recording', 'class video', 'replay', 'watch class', 'parent dashboard', 'processed'],
     links: [{ to: '/contact', label: 'Contact the team about a missing recording', emphasis: 'secondary' }],
   },

@@ -28,6 +28,32 @@ describe('FAQ parent decision hub SEO contract', () => {
       expect.arrayContaining(['fees', 'rescheduling', 'progress', 'recordings', 'microsoft teams']),
     );
   });
+  it('describes mandatory recording delivery through parent WhatsApp and student OneDrive across commercial owners', () => {
+    const faq = readFileSync('src/pages/FAQPage.tsx', 'utf8');
+    const terms = readFileSync('src/pages/TermsAndConditionsPage.tsx', 'utf8');
+    const phonics = readFileSync('src/pages/phonics.tsx', 'utf8');
+    const english = readFileSync('src/pages/public/OnlineEnglishClassesForKidsPage.tsx', 'utf8');
+
+    for (const [owner, source] of [
+      ['FAQ', faq],
+      ['Terms', terms],
+      ['Phonics', phonics],
+      ['Online English', english],
+    ] as const) {
+      expect(source, owner).toContain('OneDrive recording-folder link');
+      expect(source, owner).toContain('WhatsApp');
+    }
+
+    expect(faq).toContain('records every live class');
+    expect(terms).toContain('record every completed live class');
+    expect(phonics).toContain('recording of every completed live phonics class');
+    expect(english).toContain('recording of every completed live class');
+    expect(phonics).toContain('student-specific');
+    expect(english).toContain('student-specific');
+    expect(faq).toContain('A recording-folder link may also be available in the Classes area of the parent dashboard where configured.');
+    expect(terms).toContain('parent dashboard may also show a mapped recording folder');
+  });
+
   it('guarantees every completed live class recording in the visible FAQ and terms', () => {
     const faqSource = readFileSync('src/pages/FAQPage.tsx', 'utf8');
     const termsSource = readFileSync('src/pages/TermsAndConditionsPage.tsx', 'utf8');
