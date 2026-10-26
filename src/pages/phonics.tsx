@@ -772,7 +772,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell id="age-guide" className="pt-0">
-        <div className="rounded-[2rem] border border-orange-100 bg-white p-5 shadow-sm sm:p-7">
+        <div className="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
           <div className="max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.15em] text-orange-700">Age-specific parent guidance</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Find Phonics support for your child's starting point</h2>
@@ -786,7 +786,7 @@ export default function PhonicsPage({
               <p className="mt-2 text-sm leading-6 text-slate-700">Child-led listening, stories and playful sound exploration, without pressure to decode words.</p>
               <span className="mt-3 inline-block text-sm font-semibold text-emerald-800 underline underline-offset-2">Explore the age-three guide</span>
             </Link>
-            <Link to="/phonics/age-4" className="rounded-2xl border border-orange-200 bg-orange-50/70 p-5 transition hover:border-orange-400 hover:bg-orange-50">
+            <Link to="/phonics/age-4" className="rounded-2xl border border-sky-200 bg-[#EAF6FF] p-5 transition hover:border-sky-400 hover:bg-[#D9EEFF]">
               <h3 className="text-lg font-bold text-slate-950">Phonics at age 4</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">Playful sound awareness, first letter–sound connections, and blending readiness.</p>
               <span className="mt-3 inline-block text-sm font-semibold text-orange-800 underline underline-offset-2">Explore the age-four guide</span>
@@ -806,7 +806,7 @@ export default function PhonicsPage({
       </SectionShell>
 
       <SectionShell id="problems">
-        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-sky-50/30 to-orange-50/30 p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] sm:p-8">
+        <div className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-white via-sky-50/30 to-[#EAF6FF] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.07)] sm:p-8">
           <SectionHeader
             eyebrow="Start with the child, not the course"
             title="Who this page is for"
@@ -816,11 +816,11 @@ export default function PhonicsPage({
             {parentSearchProblems.map((item, index) => (
               <PremiumCard
                 key={item.title}
-                className={`p-5 transition hover:-translate-y-0.5 hover:shadow-lg ${index % 2 ? 'bg-sky-50/40' : 'bg-orange-50/40'}`}
+                className={`p-5 transition hover:-translate-y-0.5 hover:shadow-lg ${index % 2 ? 'bg-sky-50/40' : 'bg-[#EAF6FF]/60'}`}
               >
                 <div
                   className={`inline-flex h-11 w-11 items-center justify-center rounded-2xl text-lg shadow-sm ${
-                    index % 2 ? 'bg-sky-50' : 'bg-orange-50'
+                    index % 2 ? 'bg-sky-50' : 'bg-[#EAF6FF]'
                   }`}
                 >
                   {item.icon}
@@ -1031,7 +1031,7 @@ export default function PhonicsPage({
                 key={item.title}
                 className={`h-full p-5 transition hover:-translate-y-0.5 hover:shadow-lg ${
                   item.title === 'Tiny Steps live phonics classes'
-                    ? 'border-orange-200 bg-gradient-to-br from-orange-50/85 to-sky-50'
+                    ? 'border-sky-200 bg-gradient-to-br from-[#EAF6FF] to-sky-50'
                     : ''
                 }`}
               >
