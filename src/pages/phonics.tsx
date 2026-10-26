@@ -591,7 +591,7 @@ export default function PhonicsPage({
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/book-demo"
-                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#FF7B66] to-[#FF9B72] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(255,126,99,0.3)] transition hover:-translate-y-0.5 hover:from-[#FF715B] hover:to-[#FF9267]"
+                className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#212B5C] to-[#755E96] px-6 py-3 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(33,43,92,0.22)] transition hover:-translate-y-0.5 hover:from-[#384C80] hover:to-[#594777] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#755E96]"
               >
                 Book Free 35-Minute Demo
               </Link>
