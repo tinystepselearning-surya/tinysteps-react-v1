@@ -22,7 +22,7 @@ export default function AppShellHeader({
   return (
     <header
       className={cn(
-        'rounded-[24px] border border-[#D7E5F4] bg-white/95 px-4 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:rounded-[28px] sm:px-6 sm:py-5',
+        'rounded-[24px] border border-[#D7E5F4] bg-white/95 px-4 py-4 dark:border-[#384C80] dark:bg-[#17284C]/95 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:rounded-[28px] sm:px-6 sm:py-5',
         className,
       )}
     >
@@ -30,14 +30,14 @@ export default function AppShellHeader({
         <div className="min-w-0 space-y-3 sm:space-y-4">
           <TinyStepsBrand subtitle={`${roleLabel} workspace`} />
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#604577]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-[#604577] dark:text-[#D3B9E1]">
               {roleLabel}
             </p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#17284C] sm:text-2xl">
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[#17284C] dark:text-white sm:text-2xl">
               {title}
             </h1>
             {subtitle ? (
-              <p className="mt-1 text-sm text-[#405678]">{subtitle}</p>
+              <p className="mt-1 text-sm text-[#405678] dark:text-[#D3B9E1]">{subtitle}</p>
             ) : null}
           </div>
         </div>
