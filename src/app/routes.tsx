@@ -529,7 +529,7 @@ const Layout: FC = () => {
   return (
     <div
       onClickCapture={handlePublicBookingIntercept}
-      data-ts-surface={!hideMarketingChrome && !isContactPage ? 'public' : undefined}
+      data-ts-surface={hideMarketingChrome ? 'app' : isContactPage ? undefined : 'public'}
       className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[#F4F8FF]'}`}
     >
       {!hideMarketingChrome ? (
