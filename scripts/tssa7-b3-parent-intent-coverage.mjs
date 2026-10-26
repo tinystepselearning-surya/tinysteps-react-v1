@@ -9,6 +9,7 @@ import path from 'node:path';
 import { AI_ANSWER_LAYER_1_PARENT_PROBLEMS } from '../src/lib/aiAnswerLayerRegistry.js';
 import { PUBLIC_REDIRECT_MANIFEST } from '../src/lib/publicRouteManifest.js';
 import { RESOURCE_ECOSYSTEM_REGISTRY } from '../src/lib/resourcesArchitectureRegistry.js';
+import { PHONICS_AGE_PROGRAMME_PATHS } from '../src/lib/phonicsAgeProgrammeRegistry.js';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'artifacts/tssa7-b3');
@@ -17,18 +18,25 @@ const fail = msg => { throw Error('TSSA-7/B3 ' + msg); };
 const index = JSON.parse(read('public/ai-resource-index.json'));
 const families = Object.values(index.corpus).filter(Array.isArray).flat();
 const byPath = new Map(families.map(entry => [new URL(entry.canonical_url).pathname, entry]));
-// Preserve the frozen B1 279-owner historical baseline while allowing
-// three explicitly added commercial group pages to appear in the current index.
+// Keep the historical 279-owner baseline frozen (19 October 2026).
+// Later approved Phonics age programmes AND group commercial pages are
+// separate present-day additions, not retroactively historical owners.
 const groupPagePaths = [
   '/group-phonics-classes-for-kids',
   '/group-grammar-classes-for-kids',
   '/group-public-speaking-classes-for-kids',
 ];
-const currentGroupPaths = new Set(groupPagePaths.filter(route => byPath.has(route)));
-const historicalOwners = new Set([...byPath.keys()].filter(route => !currentGroupPaths.has(route)));
-if (families.length !== 279 + groupPagePaths.length || byPath.size !== 279 + groupPagePaths.length ||
-    historicalOwners.size !== 279 || currentGroupPaths.size !== groupPagePaths.length) {
-  fail('expected 279 historical canonical owners and three additional group commercial owners');
+const approvedNewPaths = [...PHONICS_AGE_PROGRAMME_PATHS, ...groupPagePaths];
+const addedOwners = new Set(approvedNewPaths);
+const currentAddedPaths = new Set(approvedNewPaths.filter(route => byPath.has(route)));
+const historicalOwners = new Set([...byPath.keys()].filter(route => !addedOwners.has(route)));
+const expectedCurrentOwners = 279 + approvedNewPaths.length;
+if (addedOwners.size !== approvedNewPaths.length ||
+    families.length !== expectedCurrentOwners ||
+    byPath.size !== expectedCurrentOwners ||
+    historicalOwners.size !== 279 ||
+    currentAddedPaths.size !== approvedNewPaths.length) {
+  fail('expected 279 historical canonical owners plus four approved Phonics age pages and three group commercial pages');
 }
 const redirects = new Set(PUBLIC_REDIRECT_MANIFEST.map(x => x.source));
 const validPath = p => typeof p === 'string' && p.startsWith('/') && !p.startsWith('//') && !/[?#]/.test(p);
@@ -129,7 +137,7 @@ csv('BENCHMARK_12.csv',[...benchmark.values()],['id','question','primary_owner',
 csv('COMMERCIAL_INTENTS.csv',commercial,['id','query','primary_owner','intent']);
 csv('SEVEN_COURSE_STAGES.csv',stages,['slug','age_min','age_max','age_label','lessons']);
 const summary={brick:'TSSA-7/B3',kind:'source-intent-map',observed_at:new Date().toISOString(),
- corpus_owners:byPath.size,historical_corpus_owners:historicalOwners.size,new_group_corpus_owners:currentGroupPaths.size,parent_intents:rows.length,benchmark_intents:benchmark.size,commercial_intents:commercial.length,
+ corpus_owners:byPath.size,historical_corpus_owners:historicalOwners.size,new_phonics_age_corpus_owners:PHONICS_AGE_PROGRAMME_PATHS.length,new_group_corpus_owners:groupPagePaths.length,parent_intents:rows.length,benchmark_intents:benchmark.size,commercial_intents:commercial.length,
  curriculum_levels:stages.length,structured_lessons:stages.reduce((n,x)=>n+x.lessons,0),
  owner_errors:0,followup_review_count:rows.filter(x=>x.unregistered_handoffs.length).length,
  followup_review_rows:rows.filter(x=>x.unregistered_handoffs.length).map(x=>({id:x.id,paths:x.unregistered_handoffs})),
