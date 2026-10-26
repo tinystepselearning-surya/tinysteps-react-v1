@@ -474,7 +474,7 @@ function CoursesPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
+                <p className="mt-4 rounded-xl bg-[#F1EDFC] px-3 py-2 text-sm font-medium text-[#405678]">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
                 <Link
                   to={card.href}
                   className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
