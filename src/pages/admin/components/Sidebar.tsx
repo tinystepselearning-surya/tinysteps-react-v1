@@ -78,7 +78,7 @@ export default function Sidebar({
   const basePath = portal === 'founder' ? '/founder' : '/surya';
 
   return (
-    <aside className={cn('w-64 border-r border-slate-700 bg-slate-950 text-white px-3 py-4', className)}>
+    <aside className={cn('w-64 border-r border-[#384C80] bg-[#212B5C] text-white px-3 py-4', className)}>
       <h2 className="mb-1 px-2 text-xl font-semibold tracking-tight">
         {portal === 'founder' ? 'Founder' : 'Admin Panel'}
       </h2>
@@ -93,8 +93,8 @@ export default function Sidebar({
             className={cn(
               'flex h-10 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-medium transition',
               selectedTab === tab.id || (tab.id === 'students' && selectedTab === 'enrollments')
-                ? 'bg-blue-600/90 text-white shadow-sm hover:bg-blue-500'
-                : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                ? 'bg-[#604577] text-white shadow-sm hover:bg-[#755E96]'
+                : 'text-[#E7F3FF] hover:bg-[#384C80] hover:text-white'
             )}
             onClick={() => {
               startTransition(() => {
