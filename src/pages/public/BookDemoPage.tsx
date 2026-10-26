@@ -344,7 +344,7 @@ export default function BookDemoPage() {
       <main className="min-h-screen bg-gradient-to-br from-[#E3F3FF] via-[#F6FBFF] to-[#EAF6FF] px-4 py-12 text-[#102A43] sm:px-6 sm:py-20">
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-2 lg:items-start">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-orange-700">Small-group class enquiry</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-[#604577]">Small-group class enquiry</p>
             <h1 className="mt-4 font-heading text-4xl font-black leading-tight sm:text-5xl">Register Interest in Group {groupProgramme} Classes</h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
               Tell us about your child and their current learning stage. Our team will look for suitable group-class options and contact you about next steps when enough compatible families are interested.
@@ -381,12 +381,12 @@ export default function BookDemoPage() {
   return (
     <div className="min-h-screen overflow-x-clip bg-[#fbfaf8] text-slate-900">
       <section className="relative overflow-hidden border-b border-slate-200/70 bg-[radial-gradient(circle_at_8%_16%,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_92%_12%,rgba(125,211,252,0.18),transparent_30%),linear-gradient(180deg,#fffdfa_0%,#f8fbff_100%)]">
-        <div className="pointer-events-none absolute left-1/2 top-[-14rem] h-[30rem] w-[52rem] -translate-x-1/2 rounded-full border border-orange-100/70" />
+        <div className="pointer-events-none absolute left-1/2 top-[-14rem] h-[30rem] w-[52rem] -translate-x-1/2 rounded-full border border-[#E5DDF8]/70" />
 
         <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 md:pt-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)] lg:items-center lg:gap-16 lg:px-8 lg:pb-20 lg:pt-24">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700 shadow-sm backdrop-blur">
-              <span className="h-2 w-2 rounded-full bg-orange-500" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E5C7D8] bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#604577] shadow-sm backdrop-blur">
+              <span className="h-2 w-2 rounded-full bg-[#755E96]" />
               Free live 1:1 assessment
             </div>
 
@@ -404,7 +404,7 @@ export default function BookDemoPage() {
                 `${PUBLIC_SITE_FACTS.audience.label} · India & worldwide`,
               ].map((item) => (
                 <div key={item} className="flex items-start gap-2.5 text-sm font-semibold leading-6 text-slate-700">
-                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-black text-orange-700">✓</span>
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#FFE5EB] text-xs font-black text-[#604577]">✓</span>
                   <span>{item}</span>
                 </div>
               ))}
@@ -446,7 +446,7 @@ export default function BookDemoPage() {
       <section className="bg-white py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">The assessment flow</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#604577]">The assessment flow</p>
             <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
               What Happens in the Demo Assessment?
             </h2>
@@ -462,8 +462,8 @@ export default function BookDemoPage() {
                 className={`relative p-6 sm:p-7 ${index > 0 ? 'border-t border-slate-200 md:border-t-0 md:border-l' : ''} ${index === 2 ? 'md:border-l-0 md:border-t lg:border-l lg:border-t-0' : ''} ${index === 3 ? 'md:border-t lg:border-t-0' : ''}`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-black tracking-[0.16em] text-orange-600">{step.number}</span>
-                  <span className="h-px w-10 bg-orange-200" aria-hidden="true" />
+                  <span className="text-sm font-black tracking-[0.16em] text-[#604577]">{step.number}</span>
+                  <span className="h-px w-10 bg-[#D3B9E1]" aria-hidden="true" />
                 </div>
                 <h3 className="mt-5 text-lg font-black leading-6 text-slate-950">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
@@ -508,10 +508,10 @@ export default function BookDemoPage() {
 
       <section className="py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="overflow-hidden rounded-[36px] border border-orange-100 bg-[linear-gradient(120deg,#fff7ed_0%,#fffdfa_48%,#eef7ff_100%)] shadow-[0_28px_80px_rgba(15,23,42,0.07)]">
+          <div className="overflow-hidden rounded-[36px] border border-[#E5DDF8] bg-[linear-gradient(120deg,#F1EDFC_0%,#FFFFFF_48%,#E7F3FF_100%)] shadow-[0_28px_80px_rgba(15,23,42,0.07)]">
             <div className="grid gap-10 px-6 py-10 sm:px-10 sm:py-12 lg:grid-cols-[0.78fr_1.22fr] lg:items-center lg:px-14 lg:py-14">
               <div>
-                <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">A useful fit check</p>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-[#604577]">A useful fit check</p>
                 <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
                   Who Is This Assessment For?
                 </h2>
@@ -530,7 +530,7 @@ export default function BookDemoPage() {
                   'Your child needs public-speaking, communication or confidence support—or you are simply not sure where to start.',
                 ].map((item, index) => (
                   <div key={item} className={`flex gap-3 border-b border-slate-200/70 pb-4 text-slate-700 ${index >= 4 ? 'sm:border-b-0' : ''}`}>
-                    <span aria-hidden="true" className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-orange-600 shadow-sm">✓</span>
+                    <span aria-hidden="true" className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-sm font-black text-[#604577] shadow-sm">✓</span>
                     <span className="text-sm leading-7 sm:text-base">{item}</span>
                   </div>
                 ))}
@@ -543,7 +543,7 @@ export default function BookDemoPage() {
       <section className="bg-white py-16 sm:py-20" aria-labelledby="programme-routes-heading">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Assessment-led routing</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#604577]">Assessment-led routing</p>
             <h2 id="programme-routes-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
               What Can the Assessment Recommend?
             </h2>
@@ -557,7 +557,7 @@ export default function BookDemoPage() {
               <article key={route.href} className="rounded-[26px] border border-slate-200 bg-[#fcfcfb] p-6">
                 <h3 className="text-lg font-black text-slate-950">{route.name}</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{route.fit}</p>
-                <Link to={route.href} className="mt-5 inline-flex text-sm font-bold text-orange-700 underline decoration-orange-200 underline-offset-4">
+                <Link to={route.href} className="mt-5 inline-flex text-sm font-bold text-[#604577] underline decoration-[#755E96] underline-offset-4">
                   Explore {route.name}
                 </Link>
               </article>
@@ -570,7 +570,7 @@ export default function BookDemoPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Assessment outcomes</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#FFE5EB]">Assessment outcomes</p>
               <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
                 What Will You Understand After the Assessment?
               </h2>
@@ -582,7 +582,7 @@ export default function BookDemoPage() {
             <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2">
               {assessmentOutcomes.map((item, index) => (
                 <article key={item.title} className="border-l border-white/15 pl-5">
-                  <span className="text-xs font-black tracking-[0.18em] text-orange-300">0{index + 1}</span>
+                  <span className="text-xs font-black tracking-[0.18em] text-[#FFE5EB]">0{index + 1}</span>
                   <h3 className="mt-2 text-xl font-black text-white">{item.title}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-300">{item.description}</p>
                 </article>
@@ -616,7 +616,7 @@ export default function BookDemoPage() {
                 <Link to="/curriculum" className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">
                   View Curriculum
                 </Link>
-                <Link to="/class-samples" className="rounded-full border border-orange-300/40 bg-orange-300/10 px-5 py-2.5 text-sm font-bold text-orange-100 transition hover:bg-orange-300/15">
+                <Link to="/class-samples" className="rounded-full border border-[#C9B9DE]/40 bg-[#755E96]/10 px-5 py-2.5 text-sm font-bold text-[#FFF5DF] transition hover:bg-[#755E96]/15">
                   Watch Class Samples
                 </Link>
                 <Link to="/pricing" className="rounded-full border border-white/15 bg-white/[0.06] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">
@@ -636,7 +636,7 @@ export default function BookDemoPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Common questions</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#604577]">Common questions</p>
               <h2 id="demo-faq-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
                 Free Demo Assessment FAQs
               </h2>
@@ -661,9 +661,9 @@ export default function BookDemoPage() {
       </section>
 
       <section className="px-4 pb-20 pt-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-orange-200 bg-[linear-gradient(115deg,#fff1e6_0%,#fff9f3_45%,#edf7ff_100%)] px-6 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 md:flex md:items-center md:justify-between md:gap-10 lg:px-12">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-[#E5C7D8] bg-[linear-gradient(115deg,#E7F3FF_0%,#F1EDFC_45%,#FFE5EB_100%)] px-6 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 md:flex md:items-center md:justify-between md:gap-10 lg:px-12">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Ready when you are</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#604577]">Ready when you are</p>
             <h2 className="mt-2 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
               Ready to Understand Your Child’s Starting Point?
             </h2>

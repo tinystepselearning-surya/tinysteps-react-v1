@@ -71,8 +71,8 @@ const RESOURCE_PATHWAYS = [
       'Build fuller answers, organised ideas, storytelling, clear speaking, vocabulary, and age-appropriate public-speaking confidence.',
     to: '/resources/speaking',
     icon: MessagesSquare,
-    iconTone: 'border-amber-200/80 bg-amber-50 text-amber-700',
-    accentLine: 'from-amber-400 via-orange-400 to-rose-400',
+    iconTone: 'border-[#D3B9E1]/80 bg-[#F1EDFC] text-[#604577]',
+    accentLine: 'from-[#6E95D2] via-[#755E96] to-[#CC8994]',
     orb: 'bg-amber-200/[0.55]',
     hoverBorder: 'group-hover:border-amber-300/90',
     spotlight: 'rgba(245, 158, 11, 0.15)',
@@ -252,7 +252,7 @@ const ResourcesPage: FC = () => {
   };
 
   return (
-    <main className="relative min-h-[calc(100svh-5rem)] overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(14,165,233,0.075),transparent_26%),radial-gradient(circle_at_92%_8%,rgba(249,115,22,0.065),transparent_23%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_50%,#f6f8fb_100%)] text-slate-950">
+    <main className="relative min-h-[calc(100svh-5rem)] overflow-hidden bg-[radial-gradient(circle_at_8%_4%,rgba(110,149,210,0.11),transparent_26%),radial-gradient(circle_at_92%_8%,rgba(204,137,148,0.10),transparent_23%),linear-gradient(180deg,#E7F3FF_0%,#FFFFFF_50%,#F4F8FF_100%)] text-slate-950">
       <Meta
         title={title}
         description={description}

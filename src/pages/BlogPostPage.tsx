@@ -1282,7 +1282,7 @@ function buildMetaDescription(src: any) {
           nodes.push(
             <section
               key={`card-${i}`}
-              className="not-prose my-8 rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/70 sm:p-6"
+              className="not-prose my-8 rounded-[1.4rem] border border-slate-200 bg-[linear-gradient(135deg,#F1EDFC_0%,#E7F3FF_100%)] p-5 shadow-[0_14px_35px_rgba(15,23,42,0.05)] ring-1 ring-slate-200/70 sm:p-6"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary-700">{title}</p>
               <ul className="mt-3 space-y-2.5 text-[0.99rem] leading-7 text-slate-700">
@@ -1323,7 +1323,7 @@ function buildMetaDescription(src: any) {
     : `Published ${formatBlogDate(metaSource.date)}`;
 
   return (
-    <div className={useAuthorityLayout ? 'min-h-screen bg-[#f5f5f7] text-slate-900' : 'min-h-screen bg-[linear-gradient(180deg,#f6eee3_0%,#fbfaf7_22%,#ffffff_48%,#f4f8fc_100%)] text-slate-900'}>
+    <div className={useAuthorityLayout ? 'min-h-screen bg-[#F4F8FF] text-slate-900' : 'min-h-screen bg-[linear-gradient(180deg,#E7F3FF_0%,#F1EDFC_20%,#FFFFFF_48%,#F4F8FF_100%)] text-slate-900'}>
       <ResearchArticleHero
         eyebrowPrimary={eyebrowPrimary}
         eyebrowSecondary={eyebrowSecondary}
@@ -1458,7 +1458,7 @@ function buildMetaDescription(src: any) {
             ) : null}
 
             {!useAuthorityLayout ? (
-            <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f6faff_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
+            <section className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#F1EDFC_0%,#E7F3FF_100%)] p-6 shadow-[0_18px_50px_rgba(15,23,42,0.05)] sm:p-8">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">
                 {isSchoolConversion ? 'Recommended Next for Schools' : 'Recommended Next for Parents'}
               </p>
@@ -1498,7 +1498,7 @@ function buildMetaDescription(src: any) {
 
             <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.06)]">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary-700">Article snapshot</p>
-              <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-5">
+              <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-[linear-gradient(135deg,#FFF5DF,#E7F3FF)] p-5">
                 <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Quick answer</p>
                 <p className="ts-blog-quick-answer mt-3 text-base leading-8 text-slate-700">
                   {metaSource.excerpt || buildMetaDescription(metaSource)}
@@ -1534,7 +1534,7 @@ function buildMetaDescription(src: any) {
               </div>
             ) : null}
 
-            <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#fff5e7,#eef6ff)] p-6">
+            <div className="rounded-[2rem] border border-slate-200 bg-[linear-gradient(135deg,#FFF5DF,#E7F3FF)] p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">{sidebarConfig.sidebarTitle}</p>
               <p className="mt-3 text-sm leading-7 text-slate-600">{sidebarConfig.sidebarDescription}</p>
               <div className="mt-5 space-y-3">

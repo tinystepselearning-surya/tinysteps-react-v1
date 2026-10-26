@@ -79,7 +79,7 @@ const exploreLinks = [
 
 function LearningPathwaysSection() {
   return (
-    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
+    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F2F7FF] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="inline-block max-w-full rounded-lg bg-[#102A43] px-3 py-2 text-sm font-bold uppercase leading-6 tracking-[0.08em] text-[#FF7A00] sm:text-base">The complete English-learning journey</p>
         <h2 id="learning-pathways-title" className="mt-5 max-w-5xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
@@ -116,13 +116,13 @@ function LearningPathwaysSection() {
         <div className="mt-5 flex flex-col gap-x-10 gap-y-2 text-sm leading-6 text-slate-600 sm:mt-7 sm:flex-row sm:flex-wrap sm:leading-7">
           <p>
             Need conversation practice?{' '}
-            <Link to="/spoken-english-classes-for-kids-online" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+            <Link to="/spoken-english-classes-for-kids-online" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
               Explore Spoken English Classes
             </Link>
           </p>
           <p>
             Looking for more courses?{' '}
-            <Link to="/courses" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+            <Link to="/courses" className="rounded-sm font-semibold text-[#102A43] underline decoration-[#FF7A00] underline-offset-4 hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
               Browse all courses
             </Link>
           </p>
@@ -158,7 +158,7 @@ function DifferenceSection() {
 
         <Link
           to="/why-tiny-steps"
-          className="mt-7 inline-block rounded-sm border-b-2 border-[#FF7A00] pb-1 text-sm font-semibold text-[#102A43] transition-colors hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+          className="mt-7 inline-block rounded-sm border-b-2 border-[#FF7A00] pb-1 text-sm font-semibold text-[#102A43] transition-colors hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
         >
           See how Tiny Steps teaches
         </Link>
@@ -169,7 +169,7 @@ function DifferenceSection() {
 
 function TechnologySection() {
   return (
-    <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
+    <section aria-labelledby="technology-title" className="bg-[#F2F7FF] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-7 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Connected learning</p>
@@ -181,16 +181,16 @@ function TechnologySection() {
             class information, learning materials and progress updates through the Tiny Steps platform.
           </p>
           <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3 text-sm font-semibold sm:mt-7 sm:gap-y-4">
-            <Link to="/curriculum" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+            <Link to="/curriculum" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Explore the curriculum
             </Link>
-            <Link to="/class-samples" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+            <Link to="/class-samples" className="rounded-sm border-b-2 border-[#FF7A00] pb-1 text-[#102A43] hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Watch real classes
             </Link>
           </div>
         </div>
         <div className="min-w-0 rounded-[1.75rem] bg-[#102A43] p-5 text-white sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-orange-300">Your learning connection</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#F6CF7E]">Your learning connection</p>
           <div className="mt-4 divide-y divide-white/15 sm:mt-6">
             <div className="py-4 first:pt-0">
               <h3 className="text-lg font-semibold">Live online classrooms</h3>
@@ -231,7 +231,7 @@ function BeforeYouBookSection() {
 
         <div className="mt-6 grid items-stretch gap-4 sm:mt-9 sm:gap-5 lg:grid-cols-3">
           <article className="flex min-w-0 flex-col rounded-[1.5rem] bg-[#102A43] p-5 text-white sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-orange-300">Real class samples</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#F6CF7E]">Real class samples</p>
             <span aria-hidden="true" className="mt-6 inline-flex h-14 w-14 items-center justify-center rounded-full border border-white/25 bg-white/10 text-xl text-white">
               ▶
             </span>
@@ -241,13 +241,13 @@ function BeforeYouBookSection() {
             <p className="mt-3 flex-1 text-sm leading-7 text-slate-200">
               Watch short moments from live teaching in phonics, grammar and communication. See children participate, practise and receive guidance.
             </p>
-            <Link to="/class-samples" className="mt-6 inline-flex w-fit rounded-sm border-b-2 border-[#FF9B45] pb-1 text-sm font-semibold text-white hover:text-orange-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
+            <Link to="/class-samples" className="mt-6 inline-flex w-fit rounded-sm border-b-2 border-[#FF9B45] pb-1 text-sm font-semibold text-white hover:text-[#F6CF7E] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
               Watch real class samples
               <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-5 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#E3DDF3] bg-[#F5F0FF] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Standard live 1:1 pricing</p>
             <h3 className="mt-5 text-3xl font-bold tracking-[-0.045em] text-[#102A43]">
               <span>{formatINR(PER_CLASS_PRICE)}</span>{' '}<span className="text-base font-medium tracking-normal text-slate-600">per class</span>
@@ -266,13 +266,13 @@ function BeforeYouBookSection() {
             <p className="mt-3 text-xs leading-5 text-slate-600">
               Standard plans only. Other teaching and group formats are priced separately.
             </p>
-            <Link to="/pricing#standard-pricing" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+            <Link to="/pricing#standard-pricing" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Compare standard plans
               <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-[#F7F8FA] p-5 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#D7E5F4] bg-[#F2F7FF] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Parent questions</p>
             <h3 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#102A43]">
               A few quick answers.
@@ -309,7 +309,7 @@ function BeforeYouBookSection() {
                 </p>
               </details>
             </div>
-            <Link to="/faq" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
+            <Link to="/faq" className="mt-auto w-fit rounded-sm border-b-2 border-[#FF7A00] pt-5 pb-1 text-sm font-semibold text-[#102A43] hover:text-[#604577] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]">
               Browse all parent questions
               <span aria-hidden="true" className="ml-2">↗</span>
             </Link>
@@ -331,10 +331,10 @@ function ExploreSection() {
         <div className="mt-6 grid gap-x-10 sm:mt-9 sm:grid-cols-2 lg:grid-cols-3">
           {exploreLinks.map((item) => (
             <Link key={item.path} to={item.path} className="group flex items-start justify-between gap-3 border-b border-slate-200 py-5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-600">
-              <span><span className="block text-base font-semibold text-slate-950 group-hover:text-orange-700">{item.title}</span>
+              <span><span className="block text-base font-semibold text-slate-950 group-hover:text-[#604577]">{item.title}</span>
                 <span className="mt-1 block text-sm leading-6 text-slate-600">{item.description}</span>
               </span>
-              <span aria-hidden="true" className="text-slate-400 group-hover:text-orange-700">↗</span>
+              <span aria-hidden="true" className="text-slate-400 group-hover:text-[#604577]">↗</span>
             </Link>
           ))}
         </div>
@@ -351,7 +351,7 @@ function GroupClassDiscoverySection() {
   ];
 
   return (
-    <section id="choose-class-format" aria-labelledby="group-classes-title" className="relative scroll-mt-24 overflow-hidden border-y border-sky-100 bg-gradient-to-br from-[#DDF0FF] via-[#F3FAFF] to-[#E8F5FF] px-5 py-14 sm:px-8 sm:py-20">
+    <section id="choose-class-format" aria-labelledby="group-classes-title" className="relative scroll-mt-24 overflow-hidden border-y border-sky-100 bg-gradient-to-br from-[#E4F2FF] via-[#F0F1FF] to-[#FDECF0] px-5 py-14 sm:px-8 sm:py-20">
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-white/60 blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1F6394]">Choose how your child learns</p>
@@ -389,7 +389,7 @@ function GroupClassDiscoverySection() {
 
 function FinalInvitationSection() {
   return (
-    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-12 sm:px-8 sm:py-20">
+    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-[#E3DDF3] bg-gradient-to-r from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="min-w-0">
           <h2 id="final-invitation-title" className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#102A43] sm:text-4xl">

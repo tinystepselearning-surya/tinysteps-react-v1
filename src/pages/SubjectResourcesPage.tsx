@@ -157,7 +157,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
     allGuidesLabel: 'Browse all speaking guides',
     programmeTo: '/speaking',
     programmeLabel: 'Explore Public Speaking classes',
-    accent: 'from-amber-500/[0.18] via-orange-500/[0.08] to-transparent',
+    accent: 'from-[#755E96]/[0.18] via-[#CC8994]/[0.08] to-transparent',
     sections: [
       {
         eyebrow: 'Learn the pathway',
@@ -265,7 +265,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
     const panelStyles = [
       'from-sky-50 via-white to-blue-50/80 border-sky-100',
       'from-violet-50 via-white to-fuchsia-50/70 border-violet-100',
-      'from-amber-50 via-white to-orange-50/80 border-amber-100',
+      'from-[#F1EDFC] via-white to-[#FFE5EB] border-[#E3DDF3]',
     ] as const;
 
     return (
@@ -461,14 +461,14 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
         {subject === 'speaking' ? (
           <section data-speaking-knowledge-cluster aria-labelledby="speaking-knowledge-cluster">
             <div className="max-w-4xl">
-              <p className="text-xs font-black uppercase tracking-[0.22em] text-amber-700">Connected knowledge cluster</p>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#604577]">Connected knowledge cluster</p>
               <h2 id="speaking-knowledge-cluster" className="mt-3 text-3xl font-black tracking-[-0.025em] text-slate-950 sm:text-4xl">
                 Explore speaking skills by the need you can observe
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-600">
                 These five groups organise the established Tiny Steps Speaking & Communication library. They are not a rigid ladder: start with the communication need you can see, then use the progress framework to track support, independence and transfer.
               </p>
-              <Link to="/speaking-progress-framework" className="mt-5 inline-flex rounded-full border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-black text-amber-900 transition hover:bg-amber-100">
+              <Link to="/speaking-progress-framework" className="mt-5 inline-flex rounded-full border border-[#F6CF7E] bg-[#FFF5DF] px-4 py-2.5 text-sm font-black text-[#54345D] transition hover:bg-[#FFE5B4]">
                 See the 10-dimension progress framework →
               </Link>
             </div>
@@ -481,7 +481,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
                   aria-labelledby={`speaking-cluster-${group.id}`}
                   className="rounded-[1.8rem] border border-slate-200 bg-white p-5 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-6"
                 >
-                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-amber-700">{group.eyebrow}</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#604577]">{group.eyebrow}</p>
                   <h3 id={`speaking-cluster-${group.id}`} className="mt-2 text-2xl font-black tracking-tight text-slate-950">{group.title}</h3>
                   <p className="mt-3 text-sm leading-7 text-slate-600">{group.description}</p>
 
@@ -502,7 +502,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
                       >
                         <span className="block text-base font-black text-slate-950">{link.title}</span>
                         <span className="mt-1.5 block text-xs leading-5 text-slate-600">{link.description}</span>
-                        <span className="mt-3 block text-sm font-black text-amber-800">{link.label} <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span></span>
+                        <span className="mt-3 block text-sm font-black text-[#54345D]">{link.label} <span aria-hidden="true" className="inline-block transition group-hover:translate-x-1">→</span></span>
                       </Link>
                     ))}
                   </div>
@@ -523,7 +523,7 @@ const SubjectResourcesPage: FC<{ subject: ResourceSubject }> = ({ subject }) => 
           <div className="flex flex-wrap gap-3 lg:justify-end">
             <Link to={config.programmeTo} className="rounded-full bg-slate-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-slate-800">{config.programmeLabel}</Link>
             {subject === 'speaking' ? (
-              <Link to="/spoken-english-classes-for-kids-online" className="rounded-full border border-amber-300 bg-amber-50 px-5 py-3 text-sm font-bold text-amber-950 hover:bg-amber-100">Spoken English for conversation</Link>
+              <Link to="/spoken-english-classes-for-kids-online" className="rounded-full border border-[#D8B164] bg-[#FFF5DF] px-5 py-3 text-sm font-bold text-[#54345D] hover:bg-[#FFE5B4]">Spoken English for conversation</Link>
             ) : null}
             <Link to="/book-demo" className="rounded-full border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-900 transition hover:bg-slate-50">Check My Child’s Level</Link>
           </div>

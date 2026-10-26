@@ -101,7 +101,7 @@ const outcomes: Outcome[] = [
       bg: "from-orange-50 to-white",
       glow: "bg-orange-400/20",
       icon: "bg-orange-600",
-      pill: "bg-orange-50 text-orange-800 border-orange-200",
+      pill: "bg-orange-50 text-[#604577] border-orange-200",
       ring: "ring-orange-500/20",
     },
   },
@@ -239,12 +239,12 @@ const phases: Phase[] = [
       { name: "Write the Letter (Tracing)", note: "See–say–trace to strengthen memory." },
     ],
     color: {
-      pill: "bg-amber-50 text-amber-900 border-amber-200",
+      pill: "bg-amber-50 text-[#604577] border-amber-200",
       bg: "from-amber-50 to-white",
       glow: "bg-amber-400/20",
       ring: "ring-amber-500/20",
       icon: "bg-amber-700",
-      chip: "bg-amber-100 text-amber-950",
+      chip: "bg-amber-100 text-[#17284C]",
     },
   },
   {
@@ -259,12 +259,12 @@ const phases: Phase[] = [
       { name: "CVC Word Builder", note: "Build and read 3-letter words." },
     ],
     color: {
-      pill: "bg-orange-50 text-orange-900 border-orange-200",
+      pill: "bg-orange-50 text-[#604577] border-orange-200",
       bg: "from-orange-50 to-white",
       glow: "bg-orange-400/20",
       ring: "ring-orange-500/20",
       icon: "bg-orange-700",
-      chip: "bg-orange-100 text-orange-950",
+      chip: "bg-orange-100 text-[#17284C]",
     },
   },
   {

@@ -152,7 +152,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
   ];
 
   return (
-    <main className="group-commercial-page min-h-screen overflow-x-clip bg-[#F0F8FF] text-[#102A43]">
+    <main className="group-commercial-page min-h-screen overflow-x-clip bg-[#F4F8FF] text-[#17284C]">
       <Meta title={seo?.title} description={seo?.description} canonical={url} jsonLd={schemas} />
       {/* Keep the sticky site navigation from overlapping content in PDF print views. */}
       <style>{`
@@ -164,7 +164,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
       `}</style>
 
       {/* The hero establishes the offer immediately, without repeating the entire page. */}
-      <section className="border-b border-[#D9EAF7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="group-page-title">
+      <section className="ts-sunrise-hero border-b border-[#D9EAF7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="group-page-title">
         <div className="mx-auto max-w-6xl">
           <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-2 text-xs font-medium text-[#516D84] sm:mb-9">
             <Link to="/" className="hover:text-[#144F7B] hover:underline">Home</Link>
@@ -248,7 +248,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
       </section>
 
       {/* Participation is short, specific and paired with the curriculum. */}
-      <section className="border-y border-[#DDECF6] bg-[#EAF6FF] px-5 py-8 sm:px-8 sm:py-10" aria-labelledby="group-participation">
+      <section className="border-y border-[#DDECF6] bg-[#F1EDFC] px-5 py-8 sm:px-8 sm:py-10" aria-labelledby="group-participation">
         <div className="mx-auto max-w-6xl">
           <h2 id="group-participation" className="text-xl font-bold tracking-tight sm:text-2xl">How group learning works</h2>
           <ul className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-3">
@@ -263,7 +263,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
       </section>
 
       {/* A single compact comparison keeps the rates legible, without oversized cards. */}
-      <section className="bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-11 text-white sm:px-8 sm:py-14" aria-labelledby="group-choice">
+      <section className="ts-sunrise-dark-band bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-11 text-white sm:px-8 sm:py-14" aria-labelledby="group-choice">
         <div className="mx-auto max-w-6xl">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>

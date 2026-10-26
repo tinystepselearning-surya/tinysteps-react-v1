@@ -6,7 +6,7 @@ import { getPublishedPhonicsAgeProgramme, PHONICS_AGE_PROGRAMME_PAGES } from '..
 
 type Props = { age: 3 | 4 | 5 | 6 };
 
-const pill = 'inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-900';
+const pill = 'inline-flex rounded-full border border-[#E5DDF8] bg-[#F1EDFC] px-3 py-1 text-xs font-semibold text-[#54345D]';
 const card = 'rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6';
 
 export default function PhonicsByAgePage({ age }: Props) {
@@ -37,15 +37,15 @@ export default function PhonicsByAgePage({ age }: Props) {
   const relatedAges = PHONICS_AGE_PROGRAMME_PAGES.filter((item) => item.age !== age);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-orange-50/70 via-white to-sky-50/40 text-slate-900">
+    <main className="min-h-screen bg-gradient-to-b from-[#E7F3FF]/70 via-white to-sky-50/40 text-slate-900">
       <div className="mx-auto max-w-6xl px-5 py-9 sm:px-7 sm:py-12">
         <nav aria-label="Breadcrumb" className="mb-6 text-sm text-slate-600">
-          <Link className="underline underline-offset-2 hover:text-orange-700" to="/phonics">Phonics classes</Link>
+          <Link className="underline underline-offset-2 hover:text-[#604577]" to="/phonics">Phonics classes</Link>
           <span aria-hidden="true" className="mx-2">/</span>
           <span aria-current="page">Age {age}</span>
         </nav>
 
-        <header className="grid gap-8 rounded-3xl border border-orange-100 bg-white p-6 shadow-sm sm:p-9 lg:grid-cols-[1.45fr_0.9fr]">
+        <header className="grid gap-8 rounded-3xl border border-[#E5DDF8] bg-white p-6 shadow-sm sm:p-9 lg:grid-cols-[1.45fr_0.9fr]">
           <div>
             <span className={pill}>Live 1:1 online Phonics · Age {age}</span>
             <h1 className="mt-5 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">{page.heading}</h1>
@@ -86,7 +86,7 @@ export default function PhonicsByAgePage({ age }: Props) {
               {page.assessmentFocus.map((item: string) => <li key={item}>{item}</li>)}
             </ul>
           </div>
-          <div className="rounded-2xl border border-orange-100 bg-orange-50/80 p-5 sm:p-6">
+          <div className="rounded-2xl border border-[#E5DDF8] bg-[#F1EDFC]/80 p-5 sm:p-6">
             <h2 className="text-2xl font-bold">{page.activityHeading}</h2>
             <p className="mt-4 leading-8 text-slate-700">{page.activityExample}</p>
             <p className="mt-4 text-sm font-medium text-slate-600">This is an illustrative activity, not an age-wide test or guaranteed lesson script.</p>
@@ -98,7 +98,7 @@ export default function PhonicsByAgePage({ age }: Props) {
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {page.classApproach.map((step: { title: string; detail: string }, index: number) => (
               <article key={step.title} className={card}>
-                <p className="text-xs font-bold uppercase tracking-wider text-orange-700">Step {index + 1}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[#604577]">Step {index + 1}</p>
                 <h3 className="mt-2 text-lg font-bold">{step.title}</h3>
                 <p className="mt-3 leading-7 text-slate-700">{step.detail}</p>
               </article>

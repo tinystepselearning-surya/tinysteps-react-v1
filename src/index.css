@@ -44,7 +44,7 @@
   body {
     font-family: 'Inter', 'Poppins', 'SF Pro Display', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
     @apply font-body text-gray-900 scroll-smooth;
-    background: radial-gradient(circle at top, #fff1cc 0%, #ffe5b4 30%, #f2f7ff 85%);
+    background: var(--ts-sunrise-page, #F4F8FF);
   }
 
   h1,
@@ -1933,5 +1933,102 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
   .animated-gradient-text,
   .button-ripple {
     animation: none !important;
+  }
+}
+
+
+/*
+ * Tiny Steps Sunrise / Ocean design system.
+ * Inspired by the supplied ocean-at-sunrise colours and Dawn Blush reference.
+ * Use navy for body copy and buttons; pastel fills are backgrounds, not white-text surfaces.
+ * Keep styling scoped to marketing chrome, never to protected dashboards/classroom apps.
+ */
+:root {
+  --ts-sunrise-navy: #212B5C;
+  --ts-sunrise-ink: #17284C;
+  --ts-sunrise-orange: #FF7A00; /* Decorative/large on dark navy, not small text on white */
+  --ts-sunrise-text-orange: #C2410C; /* Readable sunrise-orange emphasis on white, sky or lavender */
+  --ts-sunrise-text-ocean: #315B8A;
+  --ts-sunrise-text-purple: #604577;
+  --ts-sunrise-text-on-dark: #D3B9E1;
+  --ts-sunrise-body: #405678;
+  --ts-sunrise-ocean: #6E95D2;
+  --ts-sunrise-purple: #755E96;
+  --ts-sunrise-blush: #CC8994;
+  --ts-sunrise-sunset: #F6CF7E;
+  --ts-sunrise-mist: #F4F8FF;
+  --ts-sunrise-page: #F4F8FF;
+  --ts-sunrise-blue: #E7F3FF;
+  --ts-sunrise-lavender: #F1EDFC;
+  --ts-sunrise-rose: #FFE5EB;
+  --ts-sunrise-cream: #FFF5DF;
+  --ts-sunrise-border: #D7E5F4;
+  --ts-sunrise-surface: #FFFFFF;
+  --ts-sunrise-hero: linear-gradient(115deg, #E4F2FF 0%, #F0F1FF 45%, #FDECF0 76%, #FFF4DC 100%);
+  --ts-sunrise-soft: linear-gradient(125deg, #F1F8FF, #F8F5FF 58%, #FFF6EE);
+  --ts-sunrise-shadow: 0 12px 35px rgba(33, 43, 92, 0.08);
+}
+
+/* Public shell owns the defaults; inner pages can still select accent surfaces. */
+[data-ts-surface="public"] {
+  color: var(--ts-sunrise-ink);
+  background: var(--ts-sunrise-page);
+}
+
+[data-ts-surface="public"] .ts-sunrise-hero {
+  background: var(--ts-sunrise-hero);
+  color: var(--ts-sunrise-ink);
+}
+
+[data-ts-surface="public"] .ts-sunrise-surface {
+  background: var(--ts-sunrise-surface);
+  border-color: var(--ts-sunrise-border);
+}
+
+[data-ts-surface="public"] .ts-sunrise-wash {
+  background: var(--ts-sunrise-soft);
+}
+
+[data-ts-surface="public"] .ts-sunrise-card {
+  background: var(--ts-sunrise-surface);
+  color: var(--ts-sunrise-ink);
+  border: 1px solid var(--ts-sunrise-border);
+  box-shadow: var(--ts-sunrise-shadow);
+}
+
+[data-ts-surface="public"] .ts-sunrise-reading-surface {
+  background: white;
+  color: var(--ts-sunrise-body);
+  border: 1px solid var(--ts-sunrise-border);
+}
+
+/*
+ * Neutral-background migration bridge for older standalone public pages.
+ * Only neutral cream/off-white page panels are mapped. Do not recolour
+ * semantic warning badges, status chips, diagrams or brand imagery.
+ */
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfaf7]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfaf8]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfbfd]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fffaf7]"] {
+  background-color: var(--ts-sunrise-page);
+}
+
+/* Universal keyboard cues for new themed components. */
+[data-ts-surface="public"] .ts-sunrise-link:focus-visible,
+[data-ts-surface="public"] .ts-sunrise-button:focus-visible {
+  outline: 3px solid var(--ts-sunrise-purple);
+  outline-offset: 3px;
+}
+
+/* Preserve high-contrast ink on pale backgrounds and readable white on dark bands. */
+[data-ts-surface="public"] .ts-sunrise-dark-band {
+  background: linear-gradient(125deg, #17284C, #212B5C 58%, #384C80);
+  color: #FFFFFF;
+}
+
+@media print {
+  [data-ts-surface="public"] {
+    background: #FFFFFF;
   }
 }

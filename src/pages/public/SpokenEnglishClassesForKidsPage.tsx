@@ -180,7 +180,7 @@ export default function SpokenEnglishClassesForKidsPage() {
           />
         }
         aside={
-          <LeadCard className="bg-[linear-gradient(160deg,#fff8ef_0%,#ffffff_48%,#fff0f3_100%)]">
+          <LeadCard className="bg-[linear-gradient(160deg,#E7F3FF_0%,#ffffff_48%,#FFE5EB_100%)]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">When spoken-English support is a good fit</p>
             <div className="mt-4 flex flex-wrap gap-2">
               {painPoints.map((item) => (
@@ -198,9 +198,10 @@ export default function SpokenEnglishClassesForKidsPage() {
 
       <LeadSection>
         <div className="grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-          <LeadCard className="bg-[linear-gradient(145deg,#0f172a_0%,#1e293b_100%)] text-white">
+          <LeadCard className="bg-[linear-gradient(145deg,#17284C_0%,#212B5C_100%)] text-white">
             <LeadSectionHeading
               eyebrow="Why children struggle to speak"
+              tone="dark"
               title="Understanding is not the same as speaking fluency"
               description="Many children know the words, but they do not yet know how to expand ideas into clear spoken answers."
             />
@@ -244,7 +245,7 @@ export default function SpokenEnglishClassesForKidsPage() {
       </LeadSection>
 
       <LeadSection>
-        <LeadCard className="bg-[linear-gradient(150deg,#f0fdf4_0%,#ffffff_52%,#eff6ff_100%)]">
+        <LeadCard className="bg-[linear-gradient(150deg,#F1EDFC_0%,#ffffff_52%,#E7F3FF_100%)]">
           <LeadSectionHeading
             eyebrow="Everyday conversation pathway"
             title="What children practise in Spoken English"
@@ -269,14 +270,14 @@ export default function SpokenEnglishClassesForKidsPage() {
       </LeadSection>
 
       <LeadSection>
-        <LeadCard className="bg-[linear-gradient(155deg,#fff7ed_0%,#ffffff_55%,#f0f9ff_100%)]">
+        <LeadCard className="bg-[linear-gradient(155deg,#FFF5DF_0%,#ffffff_55%,#E7F3FF_100%)]">
           <LeadSectionHeading
             eyebrow="Illustrative examples · not class transcripts"
             title="How a one-word answer can become a real conversation"
             description="These fictional exchanges show how a teacher might model a sentence, prompt for meaning, and then check a different question. The right amount of help depends on the child’s language readiness."
           />
           <div className="mt-6 grid gap-4 lg:grid-cols-2">
-            <article className="rounded-2xl border border-orange-100 bg-white p-5">
+            <article className="rounded-2xl border border-[#E5DDF8] bg-white p-5">
               <h3 className="text-lg font-semibold text-slate-950">Example 1 · Short everyday answer</h3>
               <p className="mt-3 text-sm leading-7 text-slate-700"><strong>Question:</strong> “What did you do after school?” <strong>First answer:</strong> “Play.”</p>
               <p className="mt-2 text-sm leading-7 text-slate-700"><strong>Support:</strong> “What did you play, and who was with you?” The teacher can model one full sentence if needed.</p>
@@ -313,7 +314,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             </ol>
           </LeadCard>
 
-          <LeadCard className="bg-[linear-gradient(150deg,#fff7ed_0%,#ffffff_50%,#f8fafc_100%)]">
+          <LeadCard className="bg-[linear-gradient(150deg,#F1EDFC_0%,#ffffff_50%,#E7F3FF_100%)]">
             <LeadSectionHeading
               eyebrow="See how live teaching works"
               title="Inspect the teaching style before enrolment"
@@ -336,7 +337,7 @@ export default function SpokenEnglishClassesForKidsPage() {
       </LeadSection>
 
       <LeadSection>
-        <LeadCard className="bg-[linear-gradient(150deg,#eef8ff_0%,#ffffff_50%,#fff8ef_100%)]">
+        <LeadCard className="bg-[linear-gradient(150deg,#E7F3FF_0%,#ffffff_50%,#FFE5EB_100%)]">
           <LeadSectionHeading
             eyebrow="Spoken English vs public speaking"
             title="Choose the page that matches the child’s main goal"
@@ -346,7 +347,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             <div className="rounded-2xl border border-sky-200 bg-white p-5 text-sm leading-7 text-slate-700">
               <strong className="text-slate-900">Choose spoken English</strong> when the main goal is fuller everyday answers, conversational fluency, sentence expansion, and comfortable English speaking.
             </div>
-            <div className="rounded-2xl border border-orange-200 bg-white p-5 text-sm leading-7 text-slate-700">
+            <div className="rounded-2xl border border-[#E5C7D8] bg-white p-5 text-sm leading-7 text-slate-700">
               <strong className="text-slate-900">Choose public speaking & communication</strong> for storytelling, presentations, show-and-tell, audience awareness, and broader communication skills.{' '}
               <Link to="/speaking" className="font-semibold underline underline-offset-4">Explore Public Speaking & Communication</Link>.
             </div>
@@ -366,7 +367,7 @@ export default function SpokenEnglishClassesForKidsPage() {
 
       <LeadSection>
         <div className="grid gap-5 lg:grid-cols-2">
-          <LeadCard className="bg-[linear-gradient(145deg,#eff6ff_0%,#ffffff_55%,#f0fdf4_100%)]">
+          <LeadCard className="bg-[linear-gradient(145deg,#E7F3FF_0%,#ffffff_55%,#F1EDFC_100%)]">
             <LeadSectionHeading
               eyebrow="One Spoken English programme"
               title="Spoken English for Hyderabad, India, and families worldwide"
@@ -428,7 +429,7 @@ export default function SpokenEnglishClassesForKidsPage() {
             </ol>
           </LeadCard>
 
-          <LeadCard className="bg-[linear-gradient(150deg,#ecfdf5_0%,#ffffff_45%,#fff8ef_100%)]">
+          <LeadCard className="bg-[linear-gradient(150deg,#E7F3FF_0%,#ffffff_45%,#FFF5DF_100%)]">
             <LeadSectionHeading
               eyebrow="Pricing and international access"
               title="Clear pricing for live online support"

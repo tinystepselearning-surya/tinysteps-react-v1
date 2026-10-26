@@ -36,8 +36,8 @@ const implementationPathway = [
     step: '01',
     title: 'Hear the sound system',
     detail: 'Build phonological and phonemic awareness through rhyme, syllables, oral blending, segmenting, and sound-position work.',
-    tone: 'from-orange-50 to-amber-50 border-orange-200',
-    badge: 'bg-orange-500 text-white',
+    tone: 'from-[#FFE5EB] to-[#FFF5DF] border-[#E5C7D8]',
+    badge: 'bg-[#FFE5EB]0 text-white',
   },
   {
     step: '02',
@@ -510,12 +510,12 @@ const ForSchoolsPage: React.FC = () => {
         alignDesktopTop
         compactTopSpacing
         eyebrow="For CBSE, ICSE, State Board & International Schools • Ages 3–10"
-        eyebrowClassName="border-orange-300 bg-gradient-to-r from-orange-50 via-amber-50 to-indigo-50 text-orange-900 shadow-[0_8px_24px_rgba(79,70,229,0.10)]"
+        eyebrowClassName="border-[#D3B9E1] bg-gradient-to-r from-[#FFE5EB] via-[#FFF5DF] to-indigo-50 text-[#54345D] shadow-[0_8px_24px_rgba(79,70,229,0.10)]"
         showLeftDecoration={false}
         title={
           <>
             CBSE defines the literacy goal.{' '}
-            <span className="bg-gradient-to-r from-orange-600 via-rose-500 to-indigo-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#755E96] via-[#9A4F77] to-[#212B5C] bg-clip-text text-transparent">
               Tiny Steps builds the implementation pathway.
             </span>
           </>
@@ -571,10 +571,10 @@ const ForSchoolsPage: React.FC = () => {
         }
         aside={
           <LeadCard className="relative overflow-hidden border-white/80 bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 p-6 text-white shadow-[0_28px_70px_rgba(15,23,42,0.22)]">
-            <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-orange-400/20 blur-2xl" />
+            <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full bg-[#F6CF7E]/20 blur-2xl" />
             <div className="pointer-events-none absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-sky-400/20 blur-2xl" />
             <div className="relative">
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">The core difference</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#FFE5EB]">The core difference</p>
               <h2 className="mt-3 text-2xl font-black tracking-tight text-white">
                 From “we taught phonics” to “our children can use phonics to read”
               </h2>
@@ -588,7 +588,7 @@ const ForSchoolsPage: React.FC = () => {
                     key={title}
                     className={`rounded-2xl border p-4 ${
                       index === 0
-                        ? 'border-orange-300/35 bg-orange-300/10'
+                        ? 'border-[#D3B9E1]/35 bg-[#CC8994]/10'
                         : index === 1
                           ? 'border-sky-300/35 bg-sky-300/10'
                           : 'border-emerald-300/35 bg-emerald-300/10'
@@ -611,7 +611,7 @@ const ForSchoolsPage: React.FC = () => {
       </div>
 
       <LeadSection id="cbse-ncf">
-        <LeadCard className="overflow-hidden border-indigo-100 bg-gradient-to-br from-white via-orange-50/50 to-indigo-50/70">
+        <LeadCard className="overflow-hidden border-indigo-100 bg-gradient-to-br from-white via-[#FFE5EB]/50 to-indigo-50/70">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-700">CBSE / NCF clarity</p>
@@ -622,7 +622,7 @@ const ForSchoolsPage: React.FC = () => {
               </h2>
               <div
                 id="cbse-phonics-answer"
-                className="school-answer mt-6 rounded-3xl border border-orange-200 bg-white/90 p-5 shadow-sm"
+                className="school-answer mt-6 rounded-3xl border border-[#E5C7D8] bg-white/90 p-5 shadow-sm"
               >
                 <p className="text-base leading-8 text-slate-800">
                   NCERT’s National Curriculum Framework for the Foundational Stage explicitly includes phonological
@@ -662,10 +662,10 @@ const ForSchoolsPage: React.FC = () => {
 
             <div className="grid gap-4">
               <div className="rounded-[2rem] border border-slate-800 bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.18)]">
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">The important distinction</p>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">The important distinction</p>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-3xl border border-orange-300/25 bg-orange-300/10 p-5">
-                    <p className="text-sm font-black uppercase tracking-[0.12em] text-orange-200">Framework</p>
+                  <div className="rounded-3xl border border-[#D3B9E1]/25 bg-[#CC8994]/10 p-5">
+                    <p className="text-sm font-black uppercase tracking-[0.12em] text-[#FFF5DF]">Framework</p>
                     <p className="mt-2 text-xl font-black text-white">Defines the destination</p>
                     <p className="mt-2 text-sm leading-7 text-slate-300">
                       Competencies, principles, and learning outcomes children should develop.
@@ -711,7 +711,7 @@ const ForSchoolsPage: React.FC = () => {
                 </p>
               </div>
               <div className="mt-6 rounded-2xl bg-slate-950 p-5 text-white">
-                <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-300">Shared teaching principle</p>
+                <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FFE5EB]">Shared teaching principle</p>
                 <p className="mt-2 text-lg font-black">Model → guided practice → observe → correct → retry → reduce support</p>
               </div>
             </div>
@@ -748,7 +748,7 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="implementation-pathway">
-        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-sky-50/35 to-orange-50/50">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-sky-50/35 to-[#FFE5EB]/50">
           <LeadSectionHeading
             eyebrow="The Tiny Steps implementation pathway"
             title="One connected journey from sound awareness to independent reading"
@@ -777,9 +777,9 @@ const ForSchoolsPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-7 grid gap-4 rounded-[2rem] border border-indigo-200 bg-gradient-to-r from-indigo-950 via-slate-950 to-orange-950 p-6 text-white lg:grid-cols-[1fr_auto] lg:items-center">
+          <div className="mt-7 grid gap-4 rounded-[2rem] border border-indigo-200 bg-gradient-to-r from-indigo-950 via-slate-950 to-[#212B5C] p-6 text-white lg:grid-cols-[1fr_auto] lg:items-center">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">The transfer question</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">The transfer question</p>
               <p className="mt-2 text-2xl font-black leading-tight">
                 Can the child decode a word they have never seen before?
               </p>
@@ -790,7 +790,7 @@ const ForSchoolsPage: React.FC = () => {
             </div>
             <Link
               to="/blog/how-schools-can-assess-decoding-not-memorisation"
-              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-black text-slate-950 transition hover:bg-orange-300"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-[#F6CF7E] px-5 text-sm font-black text-slate-950 transition hover:bg-[#CC8994]"
             >
               See the decoding check
             </Link>
@@ -813,21 +813,21 @@ const ForSchoolsPage: React.FC = () => {
                 <tr>
                   <th className="px-4 py-4 font-black">What the framework expects</th>
                   <th className="px-4 py-4 font-black">What schools still have to operationalise</th>
-                  <th className="bg-orange-400 px-4 py-4 font-black text-slate-950">How Tiny Steps supports implementation</th>
+                  <th className="bg-[#F6CF7E] px-4 py-4 font-black text-slate-950">How Tiny Steps supports implementation</th>
                 </tr>
               </thead>
               <tbody>
                 {schoolNeedsVsTinySteps.map((row) => (
                   <tr key={row.need} className="border-t border-white/10 align-top">
                     <td className="px-4 py-4">
-                      <p className="font-black text-orange-200">{row.need}</p>
+                      <p className="font-black text-[#FFF5DF]">{row.need}</p>
                       <p className="mt-2 leading-7 text-slate-300">{row.whatItMeans}</p>
                     </td>
                     <td className="px-4 py-4 leading-7 text-slate-200">
                       Decide the scope, progression, classroom routines, teacher preparation, practice density,
                       correction method, and evidence of mastery.
                     </td>
-                    <td className="bg-orange-300/10 px-4 py-4 leading-7 text-orange-50">{row.tinySteps}</td>
+                    <td className="bg-[#CC8994]/10 px-4 py-4 leading-7 text-[#FFF5DF]">{row.tinySteps}</td>
                   </tr>
                 ))}
               </tbody>
@@ -848,7 +848,7 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="what-schools-receive">
-        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-orange-50/45 to-sky-50/60">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-white via-[#FFE5EB]/45 to-sky-50/60">
           <LeadSectionHeading
             eyebrow="What your school receives"
             title="More than content: a complete implementation system"
@@ -860,7 +860,7 @@ const ForSchoolsPage: React.FC = () => {
                 key={item.number}
                 className={`rounded-3xl border p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)] ${
                   index % 3 === 0
-                    ? 'border-orange-200 bg-orange-50/70'
+                    ? 'border-[#E5C7D8] bg-[#FFE5EB]/70'
                     : index % 3 === 1
                       ? 'border-sky-200 bg-sky-50/70'
                       : 'border-violet-200 bg-violet-50/70'
@@ -876,7 +876,7 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="international-benchmark">
-        <LeadCard className="overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-orange-50">
+        <LeadCard className="overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-[#FFE5EB]">
           <div className="grid gap-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-start">
             <div>
               <p className="text-xs font-black uppercase tracking-[0.2em] text-indigo-700">International benchmark</p>
@@ -910,7 +910,7 @@ const ForSchoolsPage: React.FC = () => {
                   <div
                     key={item}
                     className={`flex gap-3 rounded-2xl border p-4 ${
-                      index % 2 === 0 ? 'border-orange-200 bg-orange-50' : 'border-indigo-200 bg-indigo-50'
+                      index % 2 === 0 ? 'border-[#E5C7D8] bg-[#FFE5EB]' : 'border-indigo-200 bg-indigo-50'
                     }`}
                   >
                     <span className="font-black text-emerald-600" aria-hidden="true">✓</span>
@@ -924,10 +924,10 @@ const ForSchoolsPage: React.FC = () => {
       </LeadSection>
 
       <LeadSection id="business-case">
-        <LeadCard className="relative overflow-hidden border-orange-200/80 bg-gradient-to-br from-white via-orange-50/70 to-violet-50/60 p-0">
+        <LeadCard className="relative overflow-hidden border-[#E5C7D8]/80 bg-gradient-to-br from-white via-[#FFE5EB]/70 to-violet-50/60 p-0">
           <div className="relative grid gap-8 p-6 md:p-8 lg:grid-cols-[0.92fr_1.08fr] lg:gap-10 lg:p-10">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Implementation visibility</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#604577]">Implementation visibility</p>
               <h2 className="mt-3 text-3xl font-black leading-tight tracking-tight text-slate-950 md:text-4xl">
                 Make phonics progress easier for families and leaders to understand
               </h2>
@@ -942,7 +942,7 @@ const ForSchoolsPage: React.FC = () => {
                   schools a clearer way to explain what is secure, what needs reinforcement and what comes next.
                 </p>
               </div>
-              <div className="mt-6 rounded-3xl border border-orange-200 bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
+              <div className="mt-6 rounded-3xl border border-[#E5C7D8] bg-white/85 p-5 text-lg font-bold leading-8 text-slate-950 shadow-[0_16px_36px_rgba(249,115,22,0.12)]">
                 Strong early literacy is an academic priority. Clear evidence and communication help families and
                 school leaders understand the work being done.
               </div>
@@ -987,7 +987,7 @@ const ForSchoolsPage: React.FC = () => {
                 key={article.to}
                 to={article.to}
                 className={`group rounded-3xl border p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(15,23,42,0.10)] ${
-                  index % 2 === 0 ? 'border-orange-200 bg-orange-50/65' : 'border-indigo-200 bg-indigo-50/65'
+                  index % 2 === 0 ? 'border-[#E5C7D8] bg-[#FFE5EB]/65' : 'border-indigo-200 bg-indigo-50/65'
                 }`}
               >
                 <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-500">Research guide</p>
@@ -1015,13 +1015,13 @@ const ForSchoolsPage: React.FC = () => {
                 key={plan.name}
                 className={`flex rounded-3xl border p-5 transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_24px_54px_rgba(0,0,0,0.24)] ${
                   plan.featured
-                    ? 'border-orange-300 bg-gradient-to-br from-white to-orange-50 text-slate-950 shadow-[0_20px_50px_rgba(251,146,60,0.2)]'
+                    ? 'border-[#D3B9E1] bg-gradient-to-br from-white to-[#FFE5EB] text-slate-950 shadow-[0_20px_50px_rgba(251,146,60,0.2)]'
                     : 'border-white/15 bg-white/5 text-white'
                 }`}
               >
                 <div className="flex w-full flex-col">
                   {plan.featured ? (
-                    <span className="self-start rounded-full bg-orange-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-orange-800">
+                    <span className="self-start rounded-full bg-[#FFE5EB] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[#604577]">
                       Best for full rollout
                     </span>
                   ) : null}
@@ -1037,7 +1037,7 @@ const ForSchoolsPage: React.FC = () => {
                   <ul className={`space-y-2.5 text-sm ${plan.featured ? 'text-slate-700' : 'text-slate-200'}`}>
                     {plan.items.map((item) => (
                       <li key={item} className="flex gap-2">
-                        <span className={plan.featured ? 'text-orange-600' : 'text-orange-300'} aria-hidden="true">✓</span>
+                        <span className={plan.featured ? 'text-[#315B8A]' : 'text-[#FFE5EB]'} aria-hidden="true">✓</span>
                         <span>{item}</span>
                       </li>
                     ))}
@@ -1066,9 +1066,9 @@ const ForSchoolsPage: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-6 grid gap-4 rounded-3xl border border-orange-300/30 bg-gradient-to-r from-orange-400/15 to-rose-400/10 p-5 md:grid-cols-[1fr_auto] md:items-center">
+          <div className="mt-6 grid gap-4 rounded-3xl border border-[#D3B9E1]/30 bg-gradient-to-r from-orange-400/15 to-rose-400/10 p-5 md:grid-cols-[1fr_auto] md:items-center">
             <div>
-              <p className="text-sm font-bold text-orange-200">Prefer to validate the model first?</p>
+              <p className="text-sm font-bold text-[#FFF5DF]">Prefer to validate the model first?</p>
               <p className="mt-1 text-sm leading-6 text-slate-200">
                 Eight-week pilot • one selected grade • up to four teachers • up to 60 learners • ₹24,900 + GST.
                 Confirm an annual partnership within 30 days of the review and the pilot fee is credited in full.
@@ -1079,7 +1079,7 @@ const ForSchoolsPage: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => trackSchoolCta('Request pilot proposal', 'pricing', pilotProposalUrl)}
-              className="inline-flex h-11 items-center justify-center rounded-full bg-orange-400 px-5 text-sm font-bold text-slate-950 transition hover:bg-orange-300"
+              className="inline-flex h-11 items-center justify-center rounded-full bg-[#F6CF7E] px-5 text-sm font-bold text-slate-950 transition hover:bg-[#CC8994]"
             >
               Request pilot proposal
             </a>
@@ -1099,9 +1099,9 @@ const ForSchoolsPage: React.FC = () => {
               href={ncfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-3xl border border-orange-200 bg-white p-5 transition hover:-translate-y-1 hover:shadow-md"
+              className="rounded-3xl border border-[#E5C7D8] bg-white p-5 transition hover:-translate-y-1 hover:shadow-md"
             >
-              <p className="text-xs font-black uppercase tracking-[0.15em] text-orange-700">NCERT</p>
+              <p className="text-xs font-black uppercase tracking-[0.15em] text-[#604577]">NCERT</p>
               <h3 className="mt-2 font-black text-slate-950">National Curriculum Framework for Foundational Stage 2022</h3>
               <p className="mt-2 text-sm leading-7 text-slate-600">See language/literacy competencies and decoding instruction, including pages 62, 114, and 115 in the PDF edition.</p>
             </a>
@@ -1143,7 +1143,7 @@ const ForSchoolsPage: React.FC = () => {
                 key={item.question}
                 className={`group rounded-2xl border bg-white/90 p-4 transition duration-300 open:shadow-[0_16px_36px_rgba(15,23,42,0.1)] ${
                   index % 4 === 0
-                    ? 'border-orange-200'
+                    ? 'border-[#E5C7D8]'
                     : index % 4 === 1
                       ? 'border-sky-200'
                       : index % 4 === 2
@@ -1186,7 +1186,7 @@ const ForSchoolsPage: React.FC = () => {
                 Tiny Steps brings the scope, sequence, teacher capability, practice system, assessment, and continued
                 academic support together so schools can build stronger early readers with their own teachers.
               </p>
-              <p className="mt-4 border-t border-white/10 pt-4 text-sm font-semibold text-orange-200">
+              <p className="mt-4 border-t border-white/10 pt-4 text-sm font-semibold text-[#FFF5DF]">
                 CBSE defines foundational-literacy outcomes. Tiny Steps builds the implementation pathway.
               </p>
             </>
@@ -1224,7 +1224,7 @@ const ForSchoolsPage: React.FC = () => {
                     onClick={item.onClick}
                     className={`${className} ${
                       item.variant === 'primary'
-                        ? '!bg-orange-400 !text-slate-950 hover:!bg-orange-300'
+                        ? '!bg-[#F6CF7E] !text-slate-950 hover:!bg-[#CC8994]'
                         : item.variant === 'secondary'
                           ? '!border-emerald-300 !bg-emerald-50 !text-emerald-900 hover:!bg-emerald-100'
                           : ''

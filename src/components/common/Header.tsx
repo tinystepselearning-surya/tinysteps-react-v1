@@ -147,8 +147,8 @@ export default function Header() {
               key={link.href}
               to={link.href}
               aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
-              className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700 underline decoration-orange-400 decoration-2 underline-offset-8' : ''
+              className={`rounded-sm transition-colors hover:text-tiny-blue-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96] ${
+                matchesPrimaryLink(location.pathname, link.href) ? 'text-[#604577] underline decoration-[#755E96] decoration-2 underline-offset-8' : ''
               }`}
             >
               {link.label}
@@ -188,7 +188,7 @@ export default function Header() {
               isCareersPage
                 ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600 shadow-none'
                 : isSchoolsPage
-                ? 'border-orange-400 bg-gradient-to-r from-orange-400 to-amber-300 text-slate-950 hover:from-orange-300 hover:to-amber-200'
+                ? 'border-[#CBB7E0] bg-gradient-to-r from-[#F1EDFC] to-[#F6CF7E] text-[#17284C] hover:from-[#E5DDF8] hover:to-[#FFE5B4]'
                 : 'border-slate-900 bg-slate-900 text-white hover:bg-slate-800'
             }`}
           >
@@ -204,8 +204,8 @@ export default function Header() {
     <nav
       className={`fixed left-0 right-0 top-0 z-50 transition-all duration-300 ${
         isSticky
-          ? 'border-b border-slate-200/90 bg-white/95 shadow-[0_14px_34px_rgba(8,15,40,0.14)] backdrop-blur-xl'
-          : 'border-b border-white/45 bg-white/72 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
+          ? 'border-b border-[#D7E5F4] bg-white/95 shadow-[0_14px_34px_rgba(8,15,40,0.14)] backdrop-blur-xl'
+          : 'border-b border-[#D7E5F4]/65 bg-white/82 shadow-[0_8px_22px_rgba(8,15,40,0.1)] backdrop-blur-lg'
       }`}
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-3 py-3 sm:px-4 sm:py-4">
@@ -224,7 +224,7 @@ export default function Header() {
             className="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11"
           />
           <div className="min-w-0">
-            <div className="whitespace-nowrap text-base font-bold leading-none text-orange-500 sm:text-xl">Tiny Steps</div>
+            <div className="whitespace-nowrap text-base font-bold leading-none text-[#C2410C] sm:text-xl">Tiny Steps</div>
             <div className="hidden text-[11px] uppercase tracking-[0.24em] text-gray-500 sm:block">Foundations Forever</div>
           </div>
         </button>
@@ -242,7 +242,7 @@ export default function Header() {
               isCareersPage
                 ? 'cursor-default border-slate-300 bg-slate-100 text-slate-600'
                 : isSchoolsPage
-                ? 'border-orange-400 bg-orange-400 text-slate-950'
+                ? 'border-[#CBB7E0] bg-[#F1EDFC] text-[#17284C]'
                 : 'border-slate-900 bg-slate-900 text-white'
             }`}
           >
@@ -281,7 +281,7 @@ export default function Header() {
 
       <div
         id="mobile-nav-menu"
-        className={`overflow-hidden border-t border-slate-200/80 bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
+        className={`overflow-hidden border-t border-[#D7E5F4] bg-white/96 transition-[max-height] duration-300 backdrop-blur lg:hidden ${
           isOpen ? "max-h-[520px]" : "max-h-0"
         }`}
       >
@@ -293,8 +293,8 @@ export default function Header() {
                 to={link.href}
                 aria-current={matchesPrimaryLink(location.pathname, link.href) ? 'page' : undefined}
                 onClick={() => setIsOpen(false)}
-                className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-500 ${
-                  matchesPrimaryLink(location.pathname, link.href) ? 'text-orange-700' : ''
+                className={`block rounded-sm py-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96] ${
+                  matchesPrimaryLink(location.pathname, link.href) ? 'text-[#604577]' : ''
                 }`}
               >
                 {link.label}

@@ -243,10 +243,10 @@ function CoursesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-white">
+    <div className="min-h-screen bg-gradient-to-b from-[#E7F3FF] via-[#F7F6FF] to-[#F4F8FF]">
       <section className="px-6 py-14 md:py-16">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-[32px] border border-slate-200/80 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
+          <div className="rounded-[32px] border border-slate-200/80 ts-sunrise-dark-band p-7 text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
             <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/75">English learning pathways</p>
             <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl md:text-5xl">Find the Right English Course for Your Child</h1>
             <p className="mt-4 max-w-3xl text-sm leading-7 text-white/85 sm:text-base">
@@ -331,7 +331,7 @@ function CoursesPage() {
                     {item.ctaLabel} · One-to-One Classes
                   </Link>
                   {({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title] ? (
-                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-orange-700 underline underline-offset-4">
+                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-[#604577] underline underline-offset-4">
                       Explore Group Classes
                     </Link>
                   ) : null}
@@ -352,7 +352,7 @@ function CoursesPage() {
             </p>
           </div>
 
-          <div className="rounded-[28px] border border-emerald-100/90 bg-gradient-to-r from-emerald-50/35 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
+          <div className="rounded-[28px] border border-[#C9E2F5] bg-gradient-to-r from-[#E7F3FF] to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
             <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Phonics Program — From Sounds to Reading Confidence</h2>
             <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
               <AutoLinkedText text="Your child learns to read naturally — not by memorizing, but by understanding sounds." />
@@ -455,7 +455,7 @@ function CoursesPage() {
       </section>
 
       <section id="speaking-program-section" className="px-6 py-7">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-amber-100/80 bg-gradient-to-r from-amber-50/40 to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-[#E6D6ED] bg-gradient-to-r from-[#F1EDFC] to-white p-6 shadow-[0_14px_40px_rgba(15,23,42,0.05)] sm:p-8">
           <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">Speaking Program — From Confidence to Expression</h2>
           <p className="mt-3 max-w-3xl text-sm text-slate-700 sm:text-base">
             <AutoLinkedText text="Your child learns to communicate clearly, confidently, and naturally in real-life situations." />
@@ -463,7 +463,7 @@ function CoursesPage() {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             {speakingCards.map((card) => (
-              <article key={card.title} className="flex h-full flex-col rounded-3xl border border-amber-100/80 bg-gradient-to-b from-amber-50/25 to-white p-6 shadow-sm">
+              <article key={card.title} className="flex h-full flex-col rounded-3xl border border-amber-100/80 bg-gradient-to-b from-[#F1EDFC] to-white p-6 shadow-sm">
                 <h3 className="text-xl font-bold text-slate-900">{card.title}</h3>
                 <p className="mt-1 text-sm font-semibold text-slate-600">{card.age}</p>
                 <ul className="mt-4 space-y-2 text-sm text-slate-700">
@@ -474,7 +474,7 @@ function CoursesPage() {
                     </li>
                   ))}
                 </ul>
-                <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
+                <p className="mt-4 rounded-xl bg-[#F1EDFC] px-3 py-2 text-sm font-medium text-[#405678]">Outcome: <AutoLinkedText text={card.outcome} usedHrefs={speakingUsedHrefs} /></p>
                 <Link
                   to={card.href}
                   className="mt-5 inline-flex w-full items-center justify-center rounded-full bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-offset-2"
@@ -531,7 +531,7 @@ function CoursesPage() {
       </section>
 
       <section className="px-6 pb-16 pt-4">
-        <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 p-7 text-center text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
+        <div className="mx-auto max-w-6xl rounded-[32px] border border-slate-200 ts-sunrise-dark-band p-7 text-center text-white shadow-[0_24px_60px_rgba(15,23,42,0.24)] sm:p-10">
           <h2 className="text-2xl font-bold sm:text-3xl">Not sure which path fits your child?</h2>
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-white/85 sm:text-base">
             Book the free 35-minute 1:1 demo assessment. We’ll check the relevant skills, confirm the most useful starting level, and explain the next learning focus.

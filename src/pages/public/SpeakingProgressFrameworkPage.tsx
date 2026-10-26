@@ -158,11 +158,11 @@ export default function SpeakingProgressFrameworkPage() {
   }, []);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-[#FFF9F1] via-white to-[#EEF8FF] text-slate-950">
+    <main className="min-h-screen bg-gradient-to-b from-[#F1EDFC] via-white to-[#E7F3FF] text-slate-950">
       <section className="px-4 py-10 sm:px-6 md:py-14 lg:px-8">
         <div className="mx-auto max-w-6xl">
-          <div className="rounded-[32px] border border-orange-100 bg-white/95 p-6 shadow-sm sm:p-8 md:p-10">
-            <div className="inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-orange-800">
+          <div className="rounded-[32px] border border-[#D7E5F4] bg-white/95 p-6 shadow-sm sm:p-8 md:p-10">
+            <div className="inline-flex rounded-full border border-[#D3B9E1] bg-[#F1EDFC] px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">
               Tiny Steps educational framework
             </div>
             <h1 className="mt-4 max-w-4xl text-3xl font-black tracking-[-0.03em] text-slate-950 sm:text-4xl md:text-5xl">
@@ -246,7 +246,7 @@ export default function SpeakingProgressFrameworkPage() {
 
       <section className="bg-white px-4 py-12 sm:px-6 md:py-16 lg:px-8" aria-labelledby="dimensions-heading">
         <div className="mx-auto max-w-6xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">The ten dimensions</p>
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">The ten dimensions</p>
           <h2 id="dimensions-heading" className="mt-2 text-3xl font-black tracking-[-0.02em] text-slate-950">
             A speaking profile, not one total score
           </h2>
@@ -278,9 +278,9 @@ export default function SpeakingProgressFrameworkPage() {
                     <dt className="font-bold text-slate-950">Visible progress</dt>
                     <dd className="mt-1 text-slate-600">{dimension.progressEvidence}</dd>
                   </div>
-                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-3">
-                    <dt className="font-bold text-amber-950">Do not judge it by</dt>
-                    <dd className="mt-1 text-amber-900">{dimension.avoidJudgingBy}</dd>
+                  <div className="rounded-2xl border border-[#D7E5F4] bg-[#F1EDFC]/70 p-3">
+                    <dt className="font-bold text-[#17284C]">Do not judge it by</dt>
+                    <dd className="mt-1 text-[#405678]">{dimension.avoidJudgingBy}</dd>
                   </div>
                 </dl>
               </article>
@@ -319,7 +319,7 @@ export default function SpeakingProgressFrameworkPage() {
         <div className="mx-auto max-w-6xl">
           <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">Initial assessment use</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#F6CF7E]">Initial assessment use</p>
               <h2 id="assessment-use-heading" className="mt-2 text-3xl font-black tracking-[-0.02em]">
                 The framework guides observation; it does not turn one session into a diagnosis
               </h2>
@@ -340,7 +340,7 @@ export default function SpeakingProgressFrameworkPage() {
             <ol className="grid gap-4 sm:grid-cols-2">
               {SPEAKING_PROGRESS_REVIEW_LOOP.map((step) => (
                 <li key={step.id} className="rounded-3xl border border-white/10 bg-white/5 p-5">
-                  <div className="text-xs font-black uppercase tracking-[0.16em] text-orange-300">0{step.order}</div>
+                  <div className="text-xs font-black uppercase tracking-[0.16em] text-[#F6CF7E]">0{step.order}</div>
                   <h3 className="mt-2 text-lg font-black">{step.label}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-300">{step.description}</p>
                 </li>
@@ -377,14 +377,14 @@ export default function SpeakingProgressFrameworkPage() {
       </section>
 
       <section className="px-4 py-12 sm:px-6 md:py-16 lg:px-8" aria-labelledby="guardrails-heading">
-        <div className="mx-auto max-w-6xl rounded-[32px] border border-amber-200 bg-amber-50/70 p-6 sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-800">Framework guardrails</p>
+        <div className="mx-auto max-w-6xl rounded-[32px] border border-[#D3B9E1] bg-[#F1EDFC]/70 p-6 sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">Framework guardrails</p>
           <h2 id="guardrails-heading" className="mt-2 text-3xl font-black tracking-[-0.02em] text-slate-950">
             What this framework does not claim
           </h2>
           <ul className="mt-6 grid gap-3 md:grid-cols-2">
             {SPEAKING_PROGRESS_FRAMEWORK_GUARDRAILS.map((item) => (
-              <li key={item} className="rounded-2xl border border-amber-200 bg-white/70 px-4 py-3 text-sm leading-6 text-slate-700">
+              <li key={item} className="rounded-2xl border border-[#D7E5F4] bg-white/70 px-4 py-3 text-sm leading-6 text-slate-700">
                 {item}
               </li>
             ))}

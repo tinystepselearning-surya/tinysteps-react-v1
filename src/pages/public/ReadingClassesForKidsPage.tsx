@@ -331,7 +331,7 @@ export default function ReadingClassesForKidsPage() {
       <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#f4faff_0%,#fff_70%,#fbfbfd_100%)]" />
         <div className="pointer-events-none absolute left-[-10%] top-[-25%] h-[560px] w-[560px] rounded-full bg-sky-200/35 blur-[120px]" />
-        <div className="pointer-events-none absolute right-[-4%] top-[-24%] h-[520px] w-[520px] rounded-full bg-orange-100/70 blur-[120px]" />
+        <div className="pointer-events-none absolute right-[-4%] top-[-24%] h-[520px] w-[520px] rounded-full bg-[#CC8994]/15 blur-[120px]" />
 
         <div className="relative mx-auto max-w-7xl">
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-600 sm:text-sm">
@@ -544,7 +544,7 @@ export default function ReadingClassesForKidsPage() {
           </article>
 
           <div className="rounded-[24px] border border-slate-200 bg-white p-5 md:p-6">
-            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-700">Evidence before enrolment</p>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#604577]">Evidence before enrolment</p>
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.025em] text-slate-950">Check the programme, teaching, parent evidence, and cost</h2>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {proofLinks.filter((item) => !['/phonics', '/reading-fluency-program'].includes(item.href)).map((item) => (
@@ -622,7 +622,7 @@ export default function ReadingClassesForKidsPage() {
       </section>
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#eff6ff_0%,#ffffff_52%,#fff7ed_100%)] p-6 text-center sm:p-8 md:p-9">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#E7F3FF_0%,#FFFFFF_52%,#F1EDFC_100%)] p-6 text-center sm:p-8 md:p-9">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Not sure which reading path fits your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
             Start with one free {demoMinutes}-minute 1:1 assessment. We will separate Phonics, general Reading, and specialist fluency needs before recommending the next step.

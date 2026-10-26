@@ -238,7 +238,7 @@ const PricingPage: FC = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-clip bg-[radial-gradient(circle_at_10%_8%,rgba(251,146,60,0.10),transparent_24%),radial-gradient(circle_at_90%_6%,rgba(56,189,248,0.10),transparent_24%),linear-gradient(180deg,#fbfaf8_0%,#ffffff_56%,#f8fbff_100%)] pb-20 text-slate-950">
+    <div className="min-h-screen overflow-x-clip bg-[linear-gradient(125deg,#E7F3FF_0%,#F1EDFC_38%,#FFFFFF_72%,#F4F8FF_100%)] pb-20 text-slate-950">
       <Meta
         title={pricingSeoTitle}
         description={pricingSeoDescription}
@@ -249,8 +249,8 @@ const PricingPage: FC = () => {
       />
 
       <section className="relative px-4 pb-12 pt-10 sm:px-6 md:pt-14 lg:px-8">
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-orange-100/80 bg-white/95 px-6 py-10 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 md:py-12">
-          <div className="mx-auto inline-flex rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">Fees, packages & value comparison</div>
+        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-[#D7E5F4] bg-white/95 px-6 py-10 text-center shadow-[0_24px_64px_rgba(15,23,42,0.08)] sm:px-10 md:py-12">
+          <div className="mx-auto inline-flex rounded-full border border-[#E3DDF3] bg-[#F1EDFC] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#755E96]">Fees, packages & value comparison</div>
           <h1 className="mt-5 font-heading text-4xl font-black tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.75rem]">
             Online English Classes for Kids: Fees & Pricing
           </h1>
@@ -297,7 +297,7 @@ const PricingPage: FC = () => {
         <div className="grid gap-5 md:grid-cols-2">
           <button
             onClick={() => setProgram('premium')}
-            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'premium' ? 'border-slate-900 bg-slate-900 text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
+            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'premium' ? 'border-[#212B5C] bg-[#212B5C] text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
             aria-pressed={activeProgram === 'premium'}
           >
             <p className="text-lg font-bold">Standard Pricing</p>
@@ -307,7 +307,7 @@ const PricingPage: FC = () => {
           </button>
           <button
             onClick={() => setProgram('ultra')}
-            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'ultra' ? 'border-amber-300 bg-slate-900 text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
+            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'ultra' ? 'border-[#F6CF7E] bg-[#212B5C] text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
             aria-pressed={activeProgram === 'ultra'}
           >
             <p className="text-lg font-bold">Ultra Premium Pricing</p>
@@ -380,7 +380,7 @@ const PricingPage: FC = () => {
       ) : (
         <section id="ultra-pricing" className="mx-auto max-w-6xl scroll-mt-28 px-6 pb-12">
           <div className="rounded-[2rem] border border-amber-200 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 p-6 text-white shadow-xl sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-200">Ultra Premium</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">Ultra Premium</p>
             <h2 className="mt-2 text-3xl font-bold">Classes with native English-speaking teachers</h2>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-300">
               Ultra Premium uses a separate price table. We show only the currently configured format and fee here; class fit and scheduling are confirmed before enrolment.
@@ -388,7 +388,7 @@ const PricingPage: FC = () => {
             <div className="mt-7 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {advertisedUltraPricing.map((row) => (
                 <article key={row.ratio} className="rounded-3xl border border-white/10 bg-white/[0.07] p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-amber-200">{row.ratio === '1:1' ? 'One-to-One Classes' : 'Group Classes'}</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#D3B9E1]">{row.ratio === '1:1' ? 'One-to-One Classes' : 'Group Classes'}</p>
                   <h3 className="mt-2 text-xl font-semibold">{row.ratio === '1:1' ? 'Individual instruction' : 'Native-teacher group learning'}</h3>
                   <p className="mt-4 text-3xl font-black">{formatINR(row.perClass)}</p>
                   <p className="mt-1 text-sm text-slate-300">{row.unitLabel}</p>

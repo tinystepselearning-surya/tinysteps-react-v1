@@ -53,8 +53,8 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
 }) => {
   return (
     <section className={compact ? 'relative isolate overflow-hidden bg-[#0b1220] text-white' : 'relative isolate overflow-hidden bg-slate-950 text-white'}>
-      <div className={compact ? 'absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,_rgba(255,170,112,0.18),_transparent_28%),radial-gradient(circle_at_86%_12%,_rgba(82,153,255,0.18),_transparent_30%),linear-gradient(145deg,_#121927_0%,_#0b1220_58%,_#10233f_100%)]' : 'absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(255,186,119,0.28),_transparent_34%),radial-gradient(circle_at_82%_18%,_rgba(94,170,255,0.28),_transparent_30%),linear-gradient(160deg,_rgba(15,23,42,0.98)_0%,_rgba(15,23,42,0.95)_46%,_rgba(10,37,79,0.96)_100%)]'} />
-      {!compact ? <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#ff8a3d]/20 blur-3xl" /> : null}
+      <div className={compact ? 'absolute inset-0 bg-[radial-gradient(circle_at_12%_10%,_rgba(204,137,148,0.18),_transparent_28%),radial-gradient(circle_at_86%_12%,_rgba(110,149,210,0.24),_transparent_30%),linear-gradient(145deg,_#17284C_0%,_#212B5C_58%,_#384C80_100%)]' : 'absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(204,137,148,0.26),_transparent_34%),radial-gradient(circle_at_82%_18%,_rgba(110,149,210,0.28),_transparent_30%),linear-gradient(160deg,_#17284C_0%,_#212B5C_50%,_#384C80_100%)]'} />
+      {!compact ? <div className="absolute -left-20 top-16 h-72 w-72 rounded-full bg-[#CC8994]/20 blur-3xl" /> : null}
       {!compact ? <div className="absolute right-0 top-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl" /> : null}
 
       <div className={`relative mx-auto max-w-7xl px-4 sm:px-6 ${compact ? 'pb-8 pt-14 sm:pb-9 sm:pt-16' : 'pb-14 pt-24 sm:pb-20 sm:pt-32'}`}>
@@ -72,7 +72,7 @@ const ResearchArticleHero: React.FC<ResearchArticleHeroProps> = ({
               {eyebrowPrimary}
               {eyebrowSecondary ? (
                 <>
-                  <span className="h-1.5 w-1.5 rounded-full bg-[#ff8a3d]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#F6CF7E]" />
                   {eyebrowSecondary}
                 </>
               ) : null}

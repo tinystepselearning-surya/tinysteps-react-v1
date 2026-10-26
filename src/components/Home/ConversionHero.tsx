@@ -8,7 +8,7 @@ const HERO_PROGRAMME_LINK_CLASS =
 
 function ConversionHero() {
   return (
-    <section aria-labelledby="homepage-title" className="relative overflow-hidden bg-white">
+    <section aria-labelledby="homepage-title" className="ts-sunrise-hero relative overflow-hidden">
       <div className="mx-auto grid max-w-7xl items-center gap-7 px-5 pb-10 pt-20 sm:gap-10 sm:px-8 sm:pb-20 sm:pt-28 lg:grid-cols-[minmax(0,1.03fr)_minmax(0,0.97fr)] lg:gap-14 lg:pb-24">
         <div className="min-w-0">
           <h1
@@ -63,7 +63,7 @@ function ConversionHero() {
         </div>
 
         <figure className="relative mx-auto w-full max-w-[560px] min-w-0 lg:max-w-none">
-          <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-[#F7F4F0] shadow-[0_16px_50px_rgba(15,23,42,0.07)]">
+          <div className="overflow-hidden rounded-[2rem] border border-slate-100 bg-white/85 shadow-[0_16px_50px_rgba(33,43,92,0.09)]">
             <img
               src={HERO_IMAGE}
               srcSet={[

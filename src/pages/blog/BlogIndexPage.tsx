@@ -88,23 +88,23 @@ const SOURCE_CATEGORIES: BlogPost['category'][] = [
 const DISCOVERY_STYLES: Record<BlogDiscoveryCategory, { chip: string; wash: string }> = {
   Phonics: {
     chip: 'bg-sky-100 text-sky-800',
-    wash: 'from-sky-50 to-blue-100',
+    wash: 'from-[#E7F3FF] to-[#DDEBFF]',
   },
   Grammar: {
     chip: 'bg-emerald-100 text-emerald-800',
-    wash: 'from-emerald-50 to-teal-100',
+    wash: 'from-[#EAF6F5] to-[#D9EEFF]',
   },
   'Speaking & Communication': {
-    chip: 'bg-amber-100 text-amber-800',
-    wash: 'from-amber-50 to-orange-100',
+    chip: 'bg-[#F1EDFC] text-[#604577]',
+    wash: 'from-[#F1EDFC] to-[#FDECF0]',
   },
   'Parent Guides': {
     chip: 'bg-rose-100 text-rose-800',
-    wash: 'from-rose-50 to-orange-100',
+    wash: 'from-[#FFE5EB] to-[#FFF5DF]',
   },
   'Schools & Research': {
     chip: 'bg-violet-100 text-violet-800',
-    wash: 'from-violet-50 to-indigo-100',
+    wash: 'from-[#F1EDFC] to-[#E7F3FF]',
   },
 };
 
@@ -433,7 +433,7 @@ const BlogIndexPage: FC = () => {
           : `Browse ${TOPIC_LABELS[topic].toLowerCase()}`;
 
   return (
-    <div className="min-h-screen bg-[#fbfaf7] pb-20 text-slate-950 sm:pb-24 lg:pb-8">
+    <div className="min-h-screen bg-[#F4F8FF] pb-20 text-slate-950 sm:pb-24 lg:pb-8">
       <Meta
         title={metaTitle}
         description={metaDescription}
@@ -442,8 +442,8 @@ const BlogIndexPage: FC = () => {
         jsonLd={[breadcrumbSchema, blogSchema, collectionSchema, faqSchema]}
       />
 
-      <section className="relative overflow-hidden border-b border-slate-200 bg-slate-950 text-white">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(56,189,248,0.16),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(251,191,36,0.14),transparent_24%)]" />
+      <section className="relative overflow-hidden border-b border-[#D7E5F4] ts-sunrise-dark-band">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(110,149,210,0.28),transparent_28%),radial-gradient(circle_at_82%_20%,rgba(246,207,126,0.16),transparent_24%)]" />
         <div className="relative mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:py-20">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
             <div className="max-w-4xl">
@@ -649,7 +649,7 @@ const BlogIndexPage: FC = () => {
           </div>
 
           {libraryPosts.length === 0 ? (
-            <div className="mt-5 rounded-[1.6rem] border border-slate-200 bg-white p-8 text-center shadow-sm">
+            <div className="mt-5 rounded-[1.6rem] border border-[#D7E5F4] bg-white p-8 text-center shadow-sm">
               <h3 className="text-xl font-bold">No articles match that combination</h3>
               <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-600">
                 Try fewer search words, choose another topic, or reset the filters to return to the parent library.
@@ -721,7 +721,7 @@ const BlogIndexPage: FC = () => {
             </div>
           </div>
 
-          <aside className="rounded-[1.75rem] border border-slate-200 bg-gradient-to-br from-amber-50 to-sky-50 p-5 sm:p-6">
+          <aside className="rounded-[1.75rem] border border-[#E3DDF3] bg-gradient-to-br from-[#F1EDFC] to-[#E7F3FF] p-5 sm:p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">Useful next routes</p>
             <h2 className="mt-2 text-xl font-black tracking-tight">Go beyond the library</h2>
             <div className="mt-5 grid gap-2">
@@ -739,7 +739,7 @@ const BlogIndexPage: FC = () => {
         </section>
 
         <section
-          className="mt-10 rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#fff8ef_0%,#f8fbff_62%,#ffffff_100%)] p-5 shadow-sm sm:p-6"
+          className="mt-10 rounded-[1.75rem] border border-slate-200 bg-[linear-gradient(135deg,#FFECEF_0%,#E7F3FF_62%,#FFFFFF_100%)] p-5 shadow-sm sm:p-6"
           aria-label="About Tiny Steps Blog and founder"
         >
           <div>
@@ -776,7 +776,7 @@ const BlogIndexPage: FC = () => {
           </div>
         </section>
 
-        <section className="mt-10 overflow-hidden rounded-[1.8rem] bg-slate-950 p-6 text-white shadow-lg sm:p-8">
+        <section className="mt-10 overflow-hidden rounded-[1.8rem] ts-sunrise-dark-band p-6 shadow-lg sm:p-8">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px] lg:items-center">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-sky-200">Inbox guidance</p>

@@ -64,7 +64,7 @@ const contactJsonLd = [
 
 const ContactPage: FC = () => {
   return (
-    <div className="overflow-x-clip bg-[#fbfaf8] text-slate-900">
+    <div className="overflow-x-clip bg-[#F4F8FF] text-[#17284C]">
       <Meta
         title={contactSeoTitle}
         description={contactSeoDescription}
@@ -72,12 +72,12 @@ const ContactPage: FC = () => {
         jsonLd={contactJsonLd}
       />
 
-      <section className="relative overflow-hidden border-b border-slate-200/70 bg-[radial-gradient(circle_at_12%_18%,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(125,211,252,0.18),transparent_30%),linear-gradient(180deg,#fffdfa_0%,#f7fbff_100%)]">
-        <div className="pointer-events-none absolute left-1/2 top-[-16rem] h-[32rem] w-[54rem] -translate-x-1/2 rounded-full border border-orange-100/70" />
+      <section className="relative overflow-hidden border-b border-[#D7E5F4] bg-[linear-gradient(115deg,#E7F3FF_0%,#F1EDFC_55%,#FFE5EB_100%)]">
+        <div className="pointer-events-none absolute left-1/2 top-[-16rem] h-[32rem] w-[54rem] -translate-x-1/2 rounded-full border border-[#D7E5F4]/70" />
 
         <div className="relative mx-auto max-w-6xl px-4 pb-14 pt-28 text-center sm:px-6 sm:pt-32 md:pb-16 lg:px-8 lg:pt-36">
-          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700 shadow-sm backdrop-blur">
-            <span className="h-2 w-2 rounded-full bg-orange-500" />
+          <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#C7DBF2] bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#4B4B83] shadow-sm backdrop-blur">
+            <span className="h-2 w-2 rounded-full bg-[#755E96]" />
             Tiny Steps support
           </div>
           <h1 className="mx-auto mt-6 max-w-4xl font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-slate-950 sm:text-5xl md:text-6xl">
@@ -93,10 +93,10 @@ const ContactPage: FC = () => {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="overflow-hidden rounded-[36px] bg-slate-950 p-6 text-white shadow-[0_32px_90px_rgba(15,23,42,0.16)] sm:p-8 lg:p-10">
+        <div className="overflow-hidden rounded-[36px] bg-[#212B5C] p-6 text-white shadow-[0_32px_90px_rgba(15,23,42,0.16)] sm:p-8 lg:p-10">
           <div className="flex flex-col gap-4 border-b border-white/10 pb-8 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-300">Start here</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#FFE5EB]">Start here</p>
               <h2 className="mt-2 font-heading text-3xl font-black tracking-[-0.03em] text-white md:text-4xl">
                 Choose the right support path
               </h2>
@@ -114,11 +114,11 @@ const ContactPage: FC = () => {
               className="group border-b border-white/10 py-7 transition hover:bg-white/[0.035] md:border-r md:px-7"
             >
               <div className="flex items-start gap-4">
-                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-orange-300/30 bg-orange-300/10 text-xs font-black tracking-[0.12em] text-orange-200">01</span>
+                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#F6CF7E]/40 bg-[#F6CF7E]/10 text-xs font-black tracking-[0.12em] text-[#FFF5DF]">01</span>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">Admissions</p>
+                      <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">Admissions</p>
                       <h3 className="mt-2 text-xl font-black text-white sm:text-2xl">Admissions & New Enrolments</h3>
                     </div>
                     <span className="text-xl text-slate-500 transition group-hover:translate-x-1 group-hover:text-white" aria-hidden="true">→</span>
@@ -206,14 +206,14 @@ const ContactPage: FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-start lg:gap-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Direct contact</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#755E96]">Direct contact</p>
               <h2 className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">Reach Tiny Steps</h2>
               <p className="mt-4 max-w-md leading-7 text-slate-600">
                 Prefer to contact us directly? Choose whichever channel is most convenient.
               </p>
             </div>
 
-            <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-[#fcfcfb]">
+            <div className="overflow-hidden rounded-[28px] border border-[#D7E5F4] bg-white">
               <a
                 href={GENERAL_WHATSAPP_URL}
                 target="_blank"
@@ -230,9 +230,9 @@ const ContactPage: FC = () => {
 
               <a
                 href={PHONE_URL}
-                className="group grid gap-3 border-b border-slate-200 px-6 py-6 transition hover:bg-amber-50/60 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:px-7"
+                className="group grid gap-3 border-b border-slate-200 px-6 py-6 transition hover:bg-[#F1EDFC]/60 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:px-7"
               >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Phone</p>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Phone</p>
                 <div>
                   <h3 className="text-lg font-black text-slate-950">+91 96183 98383</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600">For enquiries that are easier to discuss by phone.</p>
@@ -257,9 +257,9 @@ const ContactPage: FC = () => {
       </section>
 
       <section className="px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-orange-200 bg-[linear-gradient(115deg,#fff1e6_0%,#fff9f3_45%,#edf7ff_100%)] px-6 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 md:flex md:items-center md:justify-between md:gap-10 lg:px-12">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-[#D7E5F4] bg-[linear-gradient(115deg,#E7F3FF_0%,#F1EDFC_48%,#FFE5EB_100%)] px-6 py-10 shadow-[0_24px_70px_rgba(15,23,42,0.08)] sm:px-10 md:flex md:items-center md:justify-between md:gap-10 lg:px-12">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Child assessment</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-[#755E96]">Child assessment</p>
             <h2 className="mt-2 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">Looking for a Class Assessment?</h2>
             <p className="mt-3 max-w-2xl leading-7 text-slate-700">
               If you would like us to understand your child&apos;s current level before recommending a program, book one free 35-minute assessment.
@@ -312,7 +312,7 @@ const ContactPage: FC = () => {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.2em] text-orange-700">Support questions</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-[#755E96]">Support questions</p>
               <h2 id="contact-faq-heading" className="mt-3 font-heading text-3xl font-black tracking-[-0.03em] text-slate-950 md:text-4xl">
                 Contact & Support FAQs
               </h2>

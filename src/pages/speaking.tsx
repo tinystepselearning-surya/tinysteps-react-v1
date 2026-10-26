@@ -661,12 +661,12 @@ export default function SpeakingPage() {
 
   return (
     <div className="bg-[#F0F8FF] pb-12">
-      <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
+      <section className="ts-sunrise-hero relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at 82% 32%, rgba(147, 197, 253, 0.25) 0%, transparent 48%), radial-gradient(circle at 12% 18%, rgba(186, 230, 253, 0.30) 0%, transparent 50%), linear-gradient(180deg, #D9EEFF 0%, #F4FAFF 55%, #EAF6FF 100%)',
+              'radial-gradient(circle at 82% 32%, rgba(110, 149, 210, 0.16) 0%, transparent 48%), radial-gradient(circle at 12% 18%, rgba(204, 137, 148, 0.12) 0%, transparent 50%)',
           }}
         />
         <div className="pointer-events-none absolute left-[-10%] top-[-34%] h-[560px] w-[560px] rounded-full bg-sky-200/30 blur-[128px]" />
@@ -882,8 +882,8 @@ export default function SpeakingPage() {
           </div>
 
           <div className="mt-7 grid gap-3 md:grid-cols-3">
-            <article className="rounded-[20px] border border-amber-100 bg-white p-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-800">{speakingFacts.levels.beginner.ageRange.label}</span>
+            <article className="rounded-[20px] border border-[#D7E5F4] bg-white p-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#604577]">{speakingFacts.levels.beginner.ageRange.label}</span>
               <h3 className="mt-2 font-semibold text-slate-950">Public Speaking Foundations</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">{speakingFacts.levels.beginner.lessonCount} lessons for structured responses, picture talk, show-and-tell, storytelling foundations, and short presentation readiness.</p>
               <Link to={speakingFacts.levels.beginner.canonicalCoursePath} className="mt-2 inline-block text-xs font-semibold underline underline-offset-2">View Foundations details</Link>
@@ -1162,7 +1162,7 @@ export default function SpeakingPage() {
             </div>
           </details>
 
-          <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
+          <div className="mt-4 rounded-[18px] border border-[#D7E5F4] bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
             <strong className="text-slate-950">Programme note:</strong> these three age bands are a developmental guide, not three new Tiny Steps course products. The existing Public Speaking Foundations and Public Speaking Excellence tracks remain the actual course architecture, and assessment determines the appropriate level.
           </div>
         </div>

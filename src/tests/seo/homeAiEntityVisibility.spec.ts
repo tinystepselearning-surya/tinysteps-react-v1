@@ -276,7 +276,7 @@ describe('homepage premium gateway', () => {
   it('distinguishes the final booking CTA from the dark footer and preserves one booking action', () => {
     const final = home.slice(home.indexOf('function FinalInvitationSection()'), home.indexOf('export default function HomePage()'));
     expect(final).toContain('id="homepage-final-invitation"');
-    expect(final).toContain('bg-[#FFF8F1]');
+    expect(final).toContain('from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC]');
     expect(final).toContain('text-[#102A43]');
     expect(final).toContain('Book Free 35-Minute Demo');
     expect(final.match(/to="\/book-demo"/g)).toHaveLength(1);
@@ -395,9 +395,10 @@ describe('homepage premium gateway', () => {
     expect(home).not.toContain('PricingCrispSection');
   });
 
-  it('uses compact homepage-only white chrome without changing other routes', () => {
+  it('uses compact homepage sunrise chrome without changing other routes', () => {
     expect(routes).toContain("normalizedPath === '/'");
-    expect(routes).toContain("'min-h-screen bg-white pb-0 pt-0'");
+    expect(routes).toContain("'min-h-screen bg-[#F4F8FF] pb-0 pt-0'");
+    expect(routes).toContain("data-ts-surface={!hideMarketingChrome && !isContactPage ? 'public' : undefined}");
     expect(routes).toContain('pt-8 md:pt-12 lg:pt-16');
   });
 });
