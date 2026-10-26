@@ -29,7 +29,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     eyebrow: 'Early reading · Phonics · Live small-group learning',
     heading: 'Live Online Group Phonics Classes for Kids',
     description: 'Build early reading skills through letter-sound connections, oral blending, decoding and purposeful practice with other children at a comparable stage. New groups are formed when suitable learners and timings can be matched.',
-    ageNote: 'Especially relevant to children developing early phonics and reading foundations; readiness and attention needs matter more than age alone.',
+    ageNote: 'Designed primarily for children developing early phonics foundations, often ages 3–6. Younger children may need shorter, play-based practice; online group placement depends on readiness, attention and ability to take turns, not age alone.',
     idealFor: [
       'A child starting to connect letters with their sounds who can take turns in a live class.',
       'A child learning to blend and segment short spoken or written words.',
@@ -61,7 +61,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     eyebrow: 'Sentence building · Grammar in use · Live small groups',
     heading: 'Small-Group Online Grammar Classes for Kids',
     description: 'Learn to form clearer sentences, notice patterns and apply grammar when speaking and writing. Each group follows a shared learning goal, with time for individual answers and corrective practice.',
-    ageNote: 'Most relevant to children ready to work with sentences; beginner and more advanced learners are matched separately.',
+    ageNote: 'Relevant to children developing sentence knowledge, often ages 5–12. Placement depends on reading and sentence readiness, with beginner and advanced learners matched separately.',
     idealFor: [
       'A child who speaks or writes understandable ideas but needs clearer sentence structure.',
       'A learner practising parts of speech, tense choices, punctuation and accurate word order.',
@@ -93,7 +93,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     eyebrow: 'Ideas · Storytelling · Presentations · Live small groups',
     heading: 'Live Online Group Public Speaking Classes for Kids',
     description: 'Develop organised speaking, storytelling and presentation skills in a supportive small group. Children practise expressing ideas to an audience, listening to others and responding to questions.',
-    ageNote: 'Designed around speaking readiness and a compatible peer group, not a promise that all children of one age should speak in the same way.',
+    ageNote: 'For children developing structured expression, generally ages 4–12. Placement depends on speaking readiness and a compatible peer group, not a promise that all children of one age should speak in the same way.',
     idealFor: [
       'A child who has ideas but needs practice organising them for listeners.',
       'A learner working on show-and-tell, storytelling, presentations or classroom responses.',
