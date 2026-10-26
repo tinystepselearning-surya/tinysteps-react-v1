@@ -297,7 +297,7 @@ const PricingPage: FC = () => {
         <div className="grid gap-5 md:grid-cols-2">
           <button
             onClick={() => setProgram('premium')}
-            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'premium' ? 'border-slate-900 bg-slate-900 text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
+            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'premium' ? 'border-[#212B5C] bg-[#212B5C] text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
             aria-pressed={activeProgram === 'premium'}
           >
             <p className="text-lg font-bold">Standard Pricing</p>
@@ -307,7 +307,7 @@ const PricingPage: FC = () => {
           </button>
           <button
             onClick={() => setProgram('ultra')}
-            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'ultra' ? 'border-amber-300 bg-slate-900 text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
+            className={`rounded-3xl border p-6 text-left transition ${activeProgram === 'ultra' ? 'border-[#F6CF7E] bg-[#212B5C] text-white shadow-xl' : 'border-slate-200 bg-white text-slate-800'}`}
             aria-pressed={activeProgram === 'ultra'}
           >
             <p className="text-lg font-bold">Ultra Premium Pricing</p>
