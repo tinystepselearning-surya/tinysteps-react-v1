@@ -232,7 +232,7 @@ const ContactPage: FC = () => {
                 href={PHONE_URL}
                 className="group grid gap-3 border-b border-slate-200 px-6 py-6 transition hover:bg-[#F1EDFC]/60 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:px-7"
               >
-                <p className="text-xs font-black uppercase tracking-[0.18em] text-amber-700">Phone</p>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Phone</p>
                 <div>
                   <h3 className="text-lg font-black text-slate-950">+91 96183 98383</h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600">For enquiries that are easier to discuss by phone.</p>
