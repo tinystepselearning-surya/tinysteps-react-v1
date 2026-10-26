@@ -52,7 +52,7 @@ export default function SchoolPortalFoundationPage() {
     : '';
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-6 sm:px-6 lg:px-8">
+    <main className="ts-app-page min-h-screen px-4 py-6 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <TinyStepsBrand subtitle="School Partnership" />
@@ -98,7 +98,7 @@ export default function SchoolPortalFoundationPage() {
         ) : (
           <div className="mt-8 space-y-6">
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
+              <p className="ts-app-eyebrow text-xs font-semibold uppercase tracking-[0.2em]">
                 Tiny Steps School Partnership
               </p>
               <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
