@@ -219,22 +219,81 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         </div>
       </section>
 
-      <section className="bg-[#102A43] px-5 py-12 text-white sm:px-8 sm:py-16" aria-labelledby="group-choice">
-        <div className="mx-auto max-w-6xl">
-          <h2 id="group-choice" className="text-3xl font-bold">Small group or premium one-to-one?</h2>
-          <div className="mt-7 grid gap-4 md:grid-cols-2">
-            <article className="rounded-2xl border border-white/20 bg-white/10 p-6">
-              <h3 className="text-xl font-bold">Small group</h3>
-              <p className="mt-2 leading-7 text-slate-200">A shared learning goal and fixed group rhythm with level-matched peers. Placement depends on sufficient enrolment interest and compatible schedules.</p>
-              {groupPrice && <p className="mt-4 font-semibold">Published 1:3 rate: {groupPrice} per child/class · {groupFee?.durationMinutes} minutes</p>}
+
+      <section className="relative overflow-hidden bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-14 text-white sm:px-8 sm:py-20" aria-labelledby="group-choice">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A7DCFF]">Transparent class pricing</p>
+          <h2 id="group-choice" className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
+            Small group or premium one-to-one?
+          </h2>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-[#D6EAF9]">
+            Both formats offer live teacher-guided learning. Choose a shared, level-matched group or a fully personalised session for your child.
+          </p>
+
+          <div className="mt-9 grid items-stretch gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
+            <article className="rounded-[28px] border border-white/20 bg-white/10 p-5 shadow-[0_20px_45px_rgba(0,12,31,0.18)] sm:p-7">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-2xl font-bold">Small-Group Classes</h3>
+                <span className="rounded-full border border-sky-200/30 bg-sky-100/15 px-3 py-1.5 text-xs font-bold text-[#D9F0FF]">
+                  2–5 children per teacher
+                </span>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-[#D6EAF9]">
+                A shared learning goal, individual participation and a regular timetable with children at a similar stage.
+              </p>
+              <ul className="mt-6 space-y-3" aria-label="Small group fees per child">
+                {GROUP_TIERS.map((tier) => (
+                  <li key={tier.ratio} className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-4 sm:px-5">
+                    <div>
+                      <span className="block text-lg font-bold text-white">{tier.ratio} Group</span>
+                      <span className="text-sm text-[#D6EAF9]">{tier.durationMinutes} minutes per class</span>
+                    </div>
+                    <div className="sm:text-right">
+                      <span className="block text-xl font-black tabular-nums text-white">
+                        {formatINR(tier.monthlyFee / tier.classes)}
+                        <span className="ml-1 text-xs font-medium text-[#C5E5FA]">/child/class</span>
+                      </span>
+                      <span className="block text-xs text-[#D6EAF9]">{formatINR(tier.monthlyFee)} for 12 classes per child</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-5 text-sm leading-6 text-[#E5F3FE]">
+                <strong>Maximum: 5 children per teacher.</strong> A smaller group may be recommended for younger children or learners needing more individual attention. New groups depend on compatible levels and schedules.
+              </p>
+              <Link to={enquiryHref} className="mt-6 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#DDF1FF] px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-white">
+                Register Group Interest
+              </Link>
             </article>
-            <article className="rounded-2xl border border-white/20 bg-white/10 p-6">
-              <h3 className="text-xl font-bold">Premium one-to-one</h3>
-              <p className="mt-2 leading-7 text-slate-200">Individual pacing, dedicated teacher attention and flexible support for a child's particular learning needs.</p>
-              <Link to={page.premiumPath} className="mt-4 inline-block font-semibold text-orange-200 underline underline-offset-4 hover:text-white">Compare the premium programme</Link>
+
+            <article className="flex flex-col rounded-[28px] border border-[#DCEEFE] bg-white p-6 text-[#102A43] shadow-[0_24px_56px_rgba(0,12,31,0.20)] sm:p-8">
+              <span className="w-fit rounded-full bg-[#E7F5FF] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#175C90]">
+                Dedicated individual attention
+              </span>
+              <h3 className="mt-5 text-2xl font-bold">Premium One-to-One</h3>
+              <p className="mt-3 leading-7 text-[#49677F]">
+                Your child receives the teacher's full attention, individual pacing and focused correction tailored to their learning needs.
+              </p>
+              <div className="mt-8 rounded-2xl border border-[#D5E9FA] bg-gradient-to-br from-[#F0F9FF] to-white p-5">
+                <p className="text-xs font-bold uppercase tracking-wider text-[#34729E]">One teacher · One child</p>
+                <p className="mt-2 text-4xl font-black tabular-nums tracking-tight text-[#102A43]">{formatINR(PER_CLASS_PRICE)}</p>
+                <p className="mt-1 text-base font-semibold text-[#49677F]">per class · {PREMIUM_DURATION_MINUTES} minutes</p>
+              </div>
+              <div className="mt-6 space-y-2 text-sm leading-6 text-[#365873]">
+                <p>Individual learning pace and teacher guidance</p>
+                <p>Focused, child-specific practice and feedback</p>
+                <p>Suitable for children needing additional personal support</p>
+              </div>
+              <Link to={page.premiumPath} className="mt-auto inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1A4268] sm:mt-8">
+                Explore Premium One-to-One
+              </Link>
             </article>
           </div>
-          <p className="mt-4 text-sm text-slate-300">Published rates may vary by group size; confirm the current programme, suitable format and schedule before enrolling. <Link to="/pricing" className="underline underline-offset-4">View full pricing</Link>.</p>
+          <p className="mt-5 text-sm leading-6 text-[#CEE6F8]">
+            These are standard published Indian-teacher rates. Group prices are per child; monthly estimates assume 12 classes. Batch timings and availability are confirmed separately.
+            {' '}<Link to="/pricing" className="font-semibold text-white underline underline-offset-4 hover:text-sky-100">View the full pricing details</Link>.
+          </p>
         </div>
       </section>
 
