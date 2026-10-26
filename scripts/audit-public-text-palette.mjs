@@ -94,11 +94,31 @@ for (const f of findings.filter(f => f.scope === 'public' && f.legacy_text.lengt
   remainingByFile.set(f.file, item);
 }
 const guardedFailures = findings.filter(f => guarded.includes(f.file) && f.legacy_text.length);
+
+// Keep the full role-scoped review queue; a count alone hides protected UI
+// hotspots. These are candidates, not instructions to recolour semantic states.
+const remainingByScope = {};
+for (const group of Object.keys(checked)) {
+  const groupedFiles = new Map();
+  for (const finding of findings.filter(f => f.scope === group && f.legacy_text.length)) {
+    const row = groupedFiles.get(finding.file) || { file: finding.file, occurrences: 0, examples: [] };
+    row.occurrences += finding.legacy_text.length;
+    if (row.examples.length < 5) row.examples.push({ line: finding.line, classes: finding.legacy_text });
+    groupedFiles.set(finding.file, row);
+  }
+  remainingByScope[group] = {
+    files: groupedFiles.size,
+    occurrences: [...groupedFiles.values()].reduce((sum, f) => sum + f.occurrences, 0),
+    review_queue: [...groupedFiles.values()].sort((a, b) => b.occurrences - a.occurrences),
+  };
+}
+
 const report = {
   audit: 'Tiny Steps source-wide text palette inventory',
   nature: 'Static source heuristics only; no browser computed styles or gradient contrast assessment',
   source_files_scanned: files.length,
   by_scope: byScope,
+  legacy_text_review_by_scope: remainingByScope,
   protected_and_specialised_policy: 'Inventory only; do not recolour semantics, severity, classroom or learning cues without a separate review',
   public_legacy_warm_text_files: [...remainingByFile.values()].sort((a,b) => b.occurrences-a.occurrences).slice(0, 60),
   public_legacy_warm_text_file_count: remainingByFile.size,
