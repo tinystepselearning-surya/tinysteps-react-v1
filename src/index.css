@@ -171,26 +171,26 @@ html.ts-capacitor-native .ts-parent-mobile-header {
 }
 
 .ts-parent-page {
-  --ts-parent-navy: #0f172a;
-  --ts-parent-indigo: #4f46e5;
-  --ts-parent-soft-indigo: #eef2ff;
-  --ts-parent-violet: #7c3aed;
-  --ts-parent-soft-violet: #f5f3ff;
-  --ts-parent-orange: #f97316;
-  --ts-parent-soft-orange: #fff4ec;
+  --ts-parent-navy: #17284C;
+  --ts-parent-indigo: #604577;
+  --ts-parent-soft-indigo: #F1EDFC;
+  --ts-parent-violet: #755E96;
+  --ts-parent-soft-violet: #F1EDFC;
+  --ts-parent-orange: #C2410C;
+  --ts-parent-soft-orange: #FFF5DF;
   --ts-parent-emerald: #059669;
   --ts-parent-soft-emerald: #ecfdf5;
   --ts-parent-teal: #0f766e;
   --ts-parent-soft-teal: #f0fdfa;
   --ts-parent-amber: #d97706;
   --ts-parent-soft-amber: #fffbeb;
-  --ts-parent-bg: #f5f7fb;
+  --ts-parent-bg: #F4F8FF;
   --ts-parent-card: #ffffff;
-  --ts-parent-border: #dce3ee;
-  --ts-parent-muted: #64748b;
+  --ts-parent-border: #D7E5F4;
+  --ts-parent-muted: #405678;
   --ts-parent-card-radius: 1.375rem;
   --ts-parent-row-radius: 1rem;
-  --ts-parent-shadow: 0 10px 30px rgba(15, 23, 42, 0.055);
+  --ts-parent-shadow: 0 10px 30px rgba(33, 43, 92, 0.07);
   background: var(--ts-parent-bg);
   color: var(--ts-parent-navy);
 }
@@ -2032,3 +2032,40 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
     background: #FFFFFF;
   }
 }
+
+
+/*
+ * Authenticated workspace Sunrise/Ocean semantic shell tokens.
+ * Opt-in only: operations status, attendance, payment, classroom feedback,
+ * destructive actions and accessibility states retain their own colours.
+ * Derived from the public palette; no route or business-logic changes.
+ */
+.ts-auth-surface {
+  --ts-app-page: #F4F8FF;
+  --ts-app-ink: #17284C;
+  --ts-app-muted: #405678;
+  --ts-app-card: #FFFFFF;
+  --ts-app-border: #D7E5F4;
+  --ts-app-ocean: #315B8A;
+  --ts-app-purple: #604577;
+  --ts-app-accent: #C2410C;
+  --ts-app-soft-blue: #E7F3FF;
+  --ts-app-soft-lavender: #F1EDFC;
+  --ts-app-surface-shadow: 0 10px 30px rgba(33, 43, 92, 0.07);
+  background: var(--ts-app-page);
+  color: var(--ts-app-ink);
+}
+.dark .ts-auth-surface {
+  --ts-app-page: #101B3A;
+  --ts-app-ink: #F4F8FF;
+  --ts-app-muted: #D3B9E1;
+  --ts-app-card: #17284C;
+  --ts-app-border: #384C80;
+  --ts-app-ocean: #A5CCEA;
+  --ts-app-purple: #D3B9E1;
+  --ts-app-accent: #F6CF7E;
+  --ts-app-soft-blue: #212B5C;
+  --ts-app-soft-lavender: #212B5C;
+  color: var(--ts-app-ink);
+}
+/* The page shell is themed; data-driven severity and lesson colours remain untouched. */
