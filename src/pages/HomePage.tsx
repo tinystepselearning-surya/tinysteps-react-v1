@@ -79,7 +79,7 @@ const exploreLinks = [
 
 function LearningPathwaysSection() {
   return (
-    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
+    <section id="learning-pathways" aria-labelledby="learning-pathways-title" className="scroll-mt-24 bg-[#F2F7FF] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto max-w-6xl">
         <p className="inline-block max-w-full rounded-lg bg-[#102A43] px-3 py-2 text-sm font-bold uppercase leading-6 tracking-[0.08em] text-[#FF7A00] sm:text-base">The complete English-learning journey</p>
         <h2 id="learning-pathways-title" className="mt-5 max-w-5xl text-3xl font-bold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
@@ -169,7 +169,7 @@ function DifferenceSection() {
 
 function TechnologySection() {
   return (
-    <section aria-labelledby="technology-title" className="bg-[#F7F8FA] px-5 py-12 sm:px-8 sm:py-20">
+    <section aria-labelledby="technology-title" className="bg-[#F2F7FF] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto grid max-w-6xl items-center gap-7 sm:gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)] lg:gap-16">
         <div className="min-w-0">
           <p className="text-sm font-semibold uppercase tracking-[0.12em] text-[#9B4300]">Connected learning</p>
@@ -247,7 +247,7 @@ function BeforeYouBookSection() {
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#F5DEC9] bg-[#FFF8F1] p-5 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#E3DDF3] bg-[#F5F0FF] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Standard live 1:1 pricing</p>
             <h3 className="mt-5 text-3xl font-bold tracking-[-0.045em] text-[#102A43]">
               <span>{formatINR(PER_CLASS_PRICE)}</span>{' '}<span className="text-base font-medium tracking-normal text-slate-600">per class</span>
@@ -272,7 +272,7 @@ function BeforeYouBookSection() {
             </Link>
           </article>
 
-          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-slate-200 bg-[#F7F8FA] p-5 sm:p-7">
+          <article className="flex min-w-0 flex-col rounded-[1.5rem] border border-[#D7E5F4] bg-[#F2F7FF] p-5 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#9B4300]">Parent questions</p>
             <h3 className="mt-5 text-2xl font-semibold tracking-[-0.035em] text-[#102A43]">
               A few quick answers.
@@ -351,7 +351,7 @@ function GroupClassDiscoverySection() {
   ];
 
   return (
-    <section id="choose-class-format" aria-labelledby="group-classes-title" className="relative scroll-mt-24 overflow-hidden border-y border-sky-100 bg-gradient-to-br from-[#DDF0FF] via-[#F3FAFF] to-[#E8F5FF] px-5 py-14 sm:px-8 sm:py-20">
+    <section id="choose-class-format" aria-labelledby="group-classes-title" className="relative scroll-mt-24 overflow-hidden border-y border-sky-100 bg-gradient-to-br from-[#E4F2FF] via-[#F0F1FF] to-[#FDECF0] px-5 py-14 sm:px-8 sm:py-20">
       <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-28 h-80 w-80 rounded-full bg-white/60 blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#1F6394]">Choose how your child learns</p>
@@ -389,7 +389,7 @@ function GroupClassDiscoverySection() {
 
 function FinalInvitationSection() {
   return (
-    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-orange-100 bg-[#FFF8F1] px-5 py-12 sm:px-8 sm:py-20">
+    <section id="homepage-final-invitation" aria-labelledby="final-invitation-title" className="border-t border-[#E3DDF3] bg-gradient-to-r from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC] px-5 py-12 sm:px-8 sm:py-20">
       <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-5 sm:gap-8 lg:flex-row lg:items-center lg:gap-12">
         <div className="min-w-0">
           <h2 id="final-invitation-title" className="max-w-2xl text-3xl font-semibold tracking-[-0.04em] text-[#102A43] sm:text-4xl">
