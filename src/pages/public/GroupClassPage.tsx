@@ -151,169 +151,160 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
   ];
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#F0F8FF] text-[#102A43]">
+    <main className="group-commercial-page min-h-screen overflow-x-clip bg-[#F0F8FF] text-[#102A43]">
       <Meta title={seo?.title} description={seo?.description} canonical={url} jsonLd={schemas} />
-      <section className="relative overflow-hidden border-b border-sky-100 bg-gradient-to-br from-[#D9EEFF] via-[#F1F9FF] to-[#E5F4FF] px-5 py-14 sm:px-8 sm:py-24">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full bg-white/60 blur-3xl" />
-        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 left-1/4 h-72 w-72 rounded-full bg-[#A9DCFF]/40 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl">
-          <nav aria-label="Breadcrumb" className="mb-8 text-sm text-slate-600">
-            <Link to="/" className="underline underline-offset-4 hover:text-orange-700">Home</Link>
-            <span className="mx-2" aria-hidden="true">/</span>
-            <Link to="/courses" className="underline underline-offset-4 hover:text-orange-700">Courses</Link>
-            <span className="mx-2" aria-hidden="true">/</span>
-            <span aria-current="page">{page.name}</span>
-          </nav>
-          <p className="inline-flex max-w-full rounded-full border border-sky-200 bg-white/85 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#175C90] shadow-sm">{page.eyebrow}</p>
-          <h1 className="mt-5 max-w-4xl font-heading text-4xl font-black leading-[1.1] tracking-tight text-[#102A43] sm:text-5xl lg:text-[3.6rem]">{page.heading}</h1>
-          <p className="mt-6 max-w-3xl text-lg leading-8 text-[#3D5B73] sm:text-xl sm:leading-9">{page.description}</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <Link to={enquiryHref} className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#102A43] px-7 py-3 font-bold text-white shadow-[0_12px_30px_rgba(16,42,67,0.18)] transition hover:bg-[#1A4268] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
-              Register Group Interest
-            </Link>
-            <Link to={page.premiumPath} className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-sky-200 bg-white px-7 py-3 font-bold text-[#102A43] shadow-sm transition hover:border-sky-400 hover:bg-sky-50">
-              Explore One-to-One Classes
-            </Link>
-          </div>
-          <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-            We already teach siblings and friends together. New group classes are arranged by matching children at similar learning stages and suitable timings. Group demos are scheduled when enough compatible families are interested; registering does not guarantee an immediate batch.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3 text-sm text-[#1F547A]">
-            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Live teacher-led classes</span>
-            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Level and schedule matching</span>
-            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Individual participation</span>
-          </div>
-        </div>
-      </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-fit">
-        <h2 id="group-fit" className="text-3xl font-bold tracking-tight">Who may benefit from this group?</h2>
-        <p className="mt-3 max-w-3xl text-slate-600">{page.ageNote}</p>
-        <div className="mt-8 grid gap-5 md:grid-cols-3">
-          {page.idealFor.map((item, index) => (
-            <article key={item} className="rounded-3xl border border-[#D2E8FA] bg-white p-6 shadow-[0_12px_35px_rgba(27,85,133,0.08)] transition-shadow hover:shadow-[0_18px_40px_rgba(27,85,133,0.13)]">
-              <span className="text-sm font-bold text-orange-700">0{index + 1}</span>
-              <p className="mt-3 leading-7 text-slate-700">{item}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="border-y border-sky-100 bg-gradient-to-b from-white via-[#FAFDFF] to-[#EAF6FF] px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-learning">
+      {/* The hero establishes the offer immediately, without repeating the entire page. */}
+      <section className="border-b border-[#D9EAF7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="group-page-title">
         <div className="mx-auto max-w-6xl">
-          <h2 id="group-learning" className="text-3xl font-bold tracking-tight">What children practise</h2>
-          <p className="mt-3 max-w-3xl leading-7 text-slate-600">Progression and activities follow children's current skills, rather than an identical lesson for every age.</p>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2">
-            {page.learningSteps.map((step, index) => (
-              <article key={step.title} className="rounded-3xl border border-[#D5EAFE] bg-white/95 p-6 shadow-[0_12px_30px_rgba(27,85,133,0.07)] sm:p-7">
-                <p className="text-xs font-bold uppercase tracking-wider text-orange-700">Learning step {index + 1}</p>
-                <h3 className="mt-2 text-xl font-bold">{step.title}</h3>
-                <p className="mt-2 leading-7 text-slate-700">{step.detail}</p>
-              </article>
+          <nav aria-label="Breadcrumb" className="mb-7 flex flex-wrap items-center gap-2 text-xs font-medium text-[#516D84] sm:mb-9">
+            <Link to="/" className="hover:text-[#144F7B] hover:underline">Home</Link>
+            <span aria-hidden="true">/</span>
+            <Link to="/courses" className="hover:text-[#144F7B] hover:underline">Courses</Link>
+            <span aria-hidden="true">/</span>
+            <span aria-current="page" className="text-[#102A43]">{page.name}</span>
+          </nav>
+
+          <div className="grid items-center gap-7 lg:grid-cols-[minmax(0,1.5fr)_minmax(285px,0.78fr)] lg:gap-12">
+            <div className="min-w-0">
+              <p className="text-xs font-bold uppercase tracking-[0.11em] text-[#246D9C]">{page.eyebrow}</p>
+              <h1 id="group-page-title" className="mt-3 max-w-3xl font-heading text-[clamp(2.1rem,4vw,3.35rem)] font-extrabold leading-[1.12] tracking-tight">
+                {page.heading}
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-[#47657B] sm:text-lg sm:leading-8">{page.description}</p>
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                <Link to={enquiryHref} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1D476D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+                  Register Group Interest
+                </Link>
+                <Link to={page.premiumPath} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#BDD9EC] bg-white px-5 py-3 text-sm font-semibold text-[#154A72] transition hover:bg-[#E9F5FC]">
+                  Explore One-to-One Classes
+                </Link>
+              </div>
+              <p className="mt-4 max-w-2xl text-xs leading-5 text-[#557185]">
+                New groups are formed when children with compatible learning levels and schedules are available. Registering does not guarantee an immediate batch.
+              </p>
+            </div>
+
+            <aside aria-label="Group class at a glance" className="rounded-2xl border border-[#C6E2F3] bg-white p-5 shadow-[0_12px_30px_rgba(28,80,116,0.07)] sm:p-6">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#34749C]">At a glance</p>
+              <p className="mt-3 text-3xl font-extrabold tabular-nums tracking-tight">{formatINR(GROUP_PLAN.monthlyFee / GROUP_PLAN.classes)}
+                <span className="ml-2 text-sm font-medium text-[#57738A]">/ child / class</span>
+              </p>
+              <div className="mt-4 divide-y divide-[#E6F0F7] border-y border-[#E6F0F7] text-sm">
+                <div className="flex justify-between gap-4 py-3"><span className="text-[#5A7387]">Duration</span><strong>{GROUP_PLAN.durationMinutes} minutes</strong></div>
+                <div className="flex justify-between gap-4 py-3"><span className="text-[#5A7387]">Format</span><strong>Live, teacher-led</strong></div>
+                <div className="flex justify-between gap-4 py-3"><span className="text-[#5A7387]">Placement</span><strong>Level-matched</strong></div>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-[#58768C]">Class timings and demos depend on suitable batch formation.</p>
+            </aside>
+          </div>
+        </div>
+      </section>
+
+      {/* Educational substance is consolidated into one balanced section. */}
+      <section className="bg-white px-5 py-10 sm:px-8 sm:py-14" aria-labelledby="group-learning">
+        <div className="mx-auto grid max-w-6xl gap-9 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:gap-14">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#2474A5]">Who it is for</p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-[1.7rem]">A group that fits your child</h2>
+            <p className="mt-3 text-sm leading-6 text-[#536B7F]">{page.ageNote}</p>
+            <ul className="mt-5 space-y-3">
+              {page.idealFor.map((item) => (
+                <li key={item} className="flex items-start gap-3 text-sm leading-6 text-[#334F64]">
+                  <span aria-hidden="true" className="mt-[7px] h-2 w-2 shrink-0 rounded-full bg-[#378FBD]" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 border-l-[3px] border-[#8CCBEF] bg-[#F2F9FF] px-4 py-3 text-sm leading-6 text-[#43647C]">
+              We match children by learning readiness and compatible schedules, rather than age alone.
+            </div>
+          </div>
+
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#2474A5]">Learning journey</p>
+            <h2 id="group-learning" className="mt-2 text-2xl font-bold tracking-tight sm:text-[1.7rem]">What children practise</h2>
+            <p className="mt-3 text-sm leading-6 text-[#536B7F]">A clear progression, adjusted to the children's starting skills.</p>
+            <ol className="mt-5 grid gap-3 sm:grid-cols-2">
+              {page.learningSteps.map((step, index) => (
+                <li key={step.title} className="min-w-0 rounded-xl border border-[#E0EDF6] bg-[#F7FBFF] px-4 py-4">
+                  <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#3281AD]">Step {index + 1}</p>
+                  <h3 className="mt-1 text-base font-bold leading-snug text-[#143C5B]">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-[#4B667B]">{step.detail}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+      </section>
+
+      {/* Participation is short, specific and paired with the curriculum. */}
+      <section className="border-y border-[#DDECF6] bg-[#EAF6FF] px-5 py-8 sm:px-8 sm:py-10" aria-labelledby="group-participation">
+        <div className="mx-auto max-w-6xl">
+          <h2 id="group-participation" className="text-xl font-bold tracking-tight sm:text-2xl">How group learning works</h2>
+          <ul className="mt-4 grid gap-x-8 gap-y-3 md:grid-cols-3">
+            {page.participation.map((item) => (
+              <li key={item} className="flex items-start gap-3 text-sm leading-6 text-[#375770]">
+                <span aria-hidden="true" className="mt-1.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-[#236E9C]">✓</span>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* A single compact comparison keeps the rates legible, without oversized cards. */}
+      <section className="bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-11 text-white sm:px-8 sm:py-14" aria-labelledby="group-choice">
+        <div className="mx-auto max-w-6xl">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-[#A5D9F8]">Simple, transparent pricing</p>
+              <h2 id="group-choice" className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">Group Classes or One-to-One Classes?</h2>
+            </div>
+            <Link to="/pricing" className="text-sm font-semibold text-[#D4EBFC] underline underline-offset-4 hover:text-white">Full pricing details</Link>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <article className="flex flex-col rounded-2xl border border-white/20 bg-white/10 p-5 sm:p-6">
+              <h3 className="text-lg font-bold">Group Classes</h3>
+              <p className="mt-1 min-h-[40px] text-sm leading-6 text-[#D8EAF7]">Learn with peers at a similar stage, with individual participation and guided practice.</p>
+              <p className="mt-4 text-3xl font-extrabold tabular-nums">{formatINR(GROUP_PLAN.monthlyFee / GROUP_PLAN.classes)}
+                <span className="ml-2 text-sm font-medium text-[#D8EAF7]">per child / class</span>
+              </p>
+              <p className="mt-1 text-sm text-[#D8EAF7]">{GROUP_PLAN.durationMinutes} minutes · {formatINR(GROUP_PLAN.monthlyFee)} for 12 classes</p>
+              <Link to={enquiryHref} className="mt-5 inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-[#E2F3FF]">Register Group Interest</Link>
+            </article>
+            <article className="flex flex-col rounded-2xl border border-[#D4E7F7] bg-white p-5 text-[#102A43] sm:p-6">
+              <h3 className="text-lg font-bold">One-to-One Classes</h3>
+              <p className="mt-1 min-h-[40px] text-sm leading-6 text-[#536D82]">A dedicated teacher, individual pacing and focused feedback tailored to your child.</p>
+              <p className="mt-4 text-3xl font-extrabold tabular-nums">{formatINR(PER_CLASS_PRICE)}
+                <span className="ml-2 text-sm font-medium text-[#536D82]">per class</span>
+              </p>
+              <p className="mt-1 text-sm text-[#536D82]">{PREMIUM_DURATION_MINUTES} minutes · Personalised instruction</p>
+              <Link to={page.premiumPath} className="mt-5 inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-[#102A43] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1C456A]">Explore One-to-One Classes</Link>
+            </article>
+          </div>
+          <p className="mt-4 text-xs leading-5 text-[#D0E3F0]">Standard Indian-teacher rates. Group fees are per child. New group demos depend on compatible learners and schedules.</p>
+        </div>
+      </section>
+
+      <section className="bg-[#F5FAFF] px-5 py-10 sm:px-8 sm:py-12" aria-labelledby="group-faq">
+        <div className="mx-auto max-w-5xl">
+          <h2 id="group-faq" className="text-2xl font-bold tracking-tight sm:text-3xl">Questions parents ask</h2>
+          <div className="mt-5 overflow-hidden rounded-xl border border-[#DDEBF5] bg-white px-4 sm:px-6">
+            {questions.map(({ question, answer }) => (
+              <details key={question} className="group border-b border-[#E5EEF6] py-3.5 last:border-0">
+                <summary className="cursor-pointer py-1 text-sm font-semibold leading-6 text-[#173C59] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#378FBD] sm:text-base">{question}</summary>
+                <p className="max-w-3xl pb-2 pt-2 text-sm leading-6 text-[#4B687E]">{answer}</p>
+              </details>
             ))}
           </div>
-        </div>
-      </section>
-
-      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-participation">
-        <h2 id="group-participation" className="text-3xl font-bold tracking-tight">How small-group teaching works</h2>
-        <div className="mt-8 grid gap-5 lg:grid-cols-3">
-          {page.participation.map((item) => (
-            <div key={item} className="rounded-3xl border border-[#CDE7FA] bg-white p-6 leading-7 text-[#244962] shadow-[0_12px_32px_rgba(27,85,133,0.07)]">{item}</div>
-          ))}
-        </div>
-      </section>
-
-
-      <section className="relative overflow-hidden bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-14 text-white sm:px-8 sm:py-20" aria-labelledby="group-choice">
-        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-sky-400/10 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A7DCFF]">Transparent class pricing</p>
-          <h2 id="group-choice" className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
-            Group Classes or One-to-One Classes?
-          </h2>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-[#D6EAF9]">
-            Both formats offer live teacher-guided learning. Choose a shared, level-matched group or a fully personalised session for your child.
-          </p>
-
-          <div className="mt-9 grid items-stretch gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
-            <article className="rounded-[28px] border border-white/20 bg-white/10 p-5 shadow-[0_20px_45px_rgba(0,12,31,0.18)] sm:p-7">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-2xl font-bold">Group Classes</h3>
-                <span className="rounded-full border border-sky-200/30 bg-sky-100/15 px-3 py-1.5 text-xs font-bold text-[#D9F0FF]">
-                  Live teacher-guided learning
-                </span>
-              </div>
-              <p className="mt-3 text-sm leading-6 text-[#D6EAF9]">
-                Children at a comparable learning stage learn together with individual participation, peer interaction and a shared lesson rhythm.
-              </p>
-              {GROUP_PLAN && (
-                <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 sm:p-6">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#D6EAF9]">Group class fees</p>
-                  <p className="mt-3 text-4xl font-black tabular-nums text-white">{formatINR(GROUP_PLAN.monthlyFee / GROUP_PLAN.classes)}</p>
-                  <p className="mt-1 text-sm font-semibold text-[#D6EAF9]">per child per class · {GROUP_PLAN.durationMinutes} minutes</p>
-                  <div className="mt-5 border-t border-white/15 pt-4">
-                    <p className="text-sm text-white">12-class package: <strong>{formatINR(GROUP_PLAN.monthlyFee)} per child</strong></p>
-                  </div>
-                </div>
-              )}
-              <p className="mt-5 text-sm leading-6 text-[#E5F3FE]">
-                Children are matched by learning level and suitable schedules. Group demos are organised when a compatible batch can be formed.
-              </p>
-              <Link to={enquiryHref} className="mt-6 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#DDF1FF] px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-white">
-                Register Group Interest
-              </Link>
-            </article>
-
-            <article className="flex flex-col rounded-[28px] border border-[#DCEEFE] bg-white p-6 text-[#102A43] shadow-[0_24px_56px_rgba(0,12,31,0.20)] sm:p-8">
-              <span className="w-fit rounded-full bg-[#E7F5FF] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#175C90]">
-                Dedicated individual attention
-              </span>
-              <h3 className="mt-5 text-2xl font-bold">One-to-One Classes</h3>
-              <p className="mt-3 leading-7 text-[#49677F]">
-                Your child receives the teacher's full attention, individual pacing and focused correction tailored to their learning needs.
-              </p>
-              <div className="mt-8 rounded-2xl border border-[#D5E9FA] bg-gradient-to-br from-[#F0F9FF] to-white p-5">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#34729E]">One teacher · One child</p>
-                <p className="mt-2 text-4xl font-black tabular-nums tracking-tight text-[#102A43]">{formatINR(PER_CLASS_PRICE)}</p>
-                <p className="mt-1 text-base font-semibold text-[#49677F]">per class · {PREMIUM_DURATION_MINUTES} minutes</p>
-              </div>
-              <div className="mt-6 space-y-2 text-sm leading-6 text-[#365873]">
-                <p>Individual learning pace and teacher guidance</p>
-                <p>Focused, child-specific practice and feedback</p>
-                <p>Suitable for children needing additional personal support</p>
-              </div>
-              <Link to={page.premiumPath} className="mt-auto inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1A4268] sm:mt-8">
-                Explore One-to-One Classes
-              </Link>
-            </article>
+          <div className="mt-7 flex flex-col gap-4 rounded-xl border border-[#BFDDF0] bg-[#E6F4FF] px-5 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div>
+              <h2 className="text-lg font-bold">Interested in Group Classes?</h2>
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-[#48687F]">Tell us about your child. We'll contact you when a suitable group demo can be arranged.</p>
+            </div>
+            <Link to={enquiryHref} className="inline-flex min-h-11 shrink-0 items-center justify-center self-start rounded-lg bg-[#102A43] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1D476D]">Register Group Interest</Link>
           </div>
-          <p className="mt-5 text-sm leading-6 text-[#CEE6F8]">
-            Standard Indian-teacher rates. Group fees are per child; monthly estimates are for 12 classes. Batch timings and availability are confirmed separately.
-            {' '}<Link to="/pricing" className="font-semibold text-white underline underline-offset-4 hover:text-sky-100">View the full pricing details</Link>.
-          </p>
-        </div>
-      </section>
-
-      <section className="bg-gradient-to-b from-[#E7F4FF] via-[#F5FBFF] to-[#ECF8FF] px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-faq">
-        <div className="mx-auto max-w-4xl">
-        <h2 id="group-faq" className="text-3xl font-bold tracking-tight">Questions parents ask</h2>
-        <div className="mt-7 overflow-hidden rounded-3xl border border-[#D2E7F8] bg-white px-5 shadow-[0_12px_36px_rgba(27,85,133,0.08)] sm:px-7">
-          {questions.map(({ question, answer }) => (
-            <details key={question} className="group border-b border-sky-100 py-5 last:border-0">
-              <summary className="cursor-pointer text-lg font-semibold leading-7">{question}</summary>
-              <p className="mt-3 max-w-3xl leading-7 text-slate-700">{answer}</p>
-            </details>
-          ))}
-        </div>
-        </div>
-      </section>
-
-      <section className="border-t border-[#B8DFF7] bg-gradient-to-br from-[#D9EEFF] via-[#EAF7FF] to-[#F8FCFF] px-5 py-14 sm:px-8 sm:py-20">
-        <div className="mx-auto max-w-4xl rounded-[32px] border border-white bg-white/85 px-6 py-10 text-center shadow-[0_24px_65px_rgba(25,90,150,0.10)] sm:px-10 sm:py-14">
-          <h2 className="text-3xl font-bold">Interested in a suitable small group?</h2>
-          <p className="mt-3 leading-7 text-slate-700">Tell us your child's learning needs. We will contact you to discuss level matching, timing and the next possible group demo. There is no obligation to enrol.</p>
-          <Link to={enquiryHref} className="mt-7 inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#102A43] px-7 py-3 font-bold text-white shadow-lg transition hover:bg-[#1A4268]">Register Group Interest</Link>
         </div>
       </section>
     </main>
