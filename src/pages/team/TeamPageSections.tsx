@@ -70,7 +70,7 @@ function TrackedLink({
 
 function Eyebrow({ children, inverse = false }: { children: ReactNode; inverse?: boolean }) {
   return (
-    <p className={`text-xs font-bold uppercase tracking-[0.2em] ${inverse ? 'text-orange-300' : 'text-orange-700'}`}>
+    <p className={`text-xs font-bold uppercase tracking-[0.2em] ${inverse ? 'text-[#D3B9E1]' : 'text-[#C2410C]'}`}>
       {children}
     </p>
   );
@@ -142,7 +142,7 @@ export function TeamHero() {
                   className="absolute inset-0 h-full w-full object-cover object-center"
                 />
                 <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/40 bg-white/90 p-3 shadow-lg backdrop-blur">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-orange-700">Founder-led</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C2410C]">Founder-led</p>
                   <p className="mt-1 font-heading text-lg font-bold text-slate-950">Priya</p>
                   <p className="text-sm text-slate-600">Founder, Tiny Steps Learning</p>
                 </div>
@@ -160,13 +160,13 @@ export function TeamHero() {
                     ['04', 'Parent visibility'],
                   ].map(([number, label]) => (
                     <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-black text-orange-700">{number}</span>
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF5DF] text-xs font-black text-[#C2410C]">{number}</span>
                       <span className="text-sm font-semibold text-slate-800">{label}</span>
                     </div>
                   ))}
                 </div>
                 <div className="mt-6 flex items-center gap-2 border-t border-slate-200 pt-4 text-xs font-semibold text-slate-500">
-                  <Sparkles className="h-4 w-4 text-orange-500" aria-hidden="true" />
+                  <Sparkles className="h-4 w-4 text-[#C2410C]" aria-hidden="true" />
                   Progress-focused by design
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function TrustMetrics() {
           const Icon = iconMap[metric.icon];
           return (
             <div key={metric.label} className="flex min-h-32 flex-col items-center justify-center px-3 py-6 text-center sm:min-h-36">
-              <Icon className="mb-3 h-5 w-5 text-orange-600" aria-hidden="true" />
+              <Icon className="mb-3 h-5 w-5 text-[#C2410C]" aria-hidden="true" />
               <strong className="font-heading text-xl font-bold text-slate-950 sm:text-2xl">{metric.value}</strong>
               <span className="mt-1 text-xs font-medium leading-5 text-slate-600 sm:text-sm">{metric.label}</span>
             </div>
@@ -202,7 +202,7 @@ export function FounderSection() {
     <section id="founder" className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
         <div className="relative mx-auto w-full max-w-[520px]">
-          <div className="absolute -bottom-5 -left-5 h-full w-full rounded-[30px] bg-orange-100" aria-hidden="true" />
+          <div className="absolute -bottom-5 -left-5 h-full w-full rounded-[30px] bg-[#FFF5DF]" aria-hidden="true" />
           <figure className="relative overflow-hidden rounded-[30px] border-8 border-white bg-slate-100 shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
             <img
               src="/priya-founder-tiny-steps-learning.webp"
@@ -218,7 +218,7 @@ export function FounderSection() {
           <SectionHeading eyebrow="Founder & academic leadership" title="Built by an educator. Strengthened by a teaching system." />
           <div className="mt-8 border-l-2 border-orange-400 pl-5 sm:pl-7">
             <h3 className="font-heading text-2xl font-bold text-slate-950">{PUBLIC_FACTS.founder.fullName}</h3>
-            <p className="mt-1 font-semibold text-orange-700">
+            <p className="mt-1 font-semibold text-[#C2410C]">
               Founder, Tiny Steps Learning • known to families as {PUBLIC_FACTS.founder.displayName}
             </p>
           </div>
@@ -232,7 +232,7 @@ export function FounderSection() {
               const Icon = iconMap[item.icon];
               return (
                 <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#fffaf3] p-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-orange-700 shadow-sm">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#C2410C] shadow-sm">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <span className="text-sm font-bold leading-5 text-slate-800">{item.title}</span>
@@ -333,7 +333,7 @@ export function ResearchToClassroomSection() {
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {designInputs.map((item, index) => (
             <article key={item.title} className="rounded-[24px] border border-slate-200 bg-[#fffaf3] p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
-              <span className="text-xs font-black tracking-[0.16em] text-orange-600">0{index + 1}</span>
+              <span className="text-xs font-black tracking-[0.16em] text-[#C2410C]">0{index + 1}</span>
               <h3 className="mt-4 font-heading text-xl font-bold text-slate-950">{item.title}</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">{item.detail}</p>
             </article>
@@ -342,7 +342,7 @@ export function ResearchToClassroomSection() {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
           <div className="rounded-[28px] bg-[#10243e] p-6 text-white shadow-[0_22px_60px_rgba(15,23,42,0.16)] sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">From research to classroom practice</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">From research to classroom practice</p>
             <ol className="mt-6 grid gap-3 sm:grid-cols-2">
               {designProcess.map((step, index) => (
                 <li key={step} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
@@ -384,11 +384,11 @@ export function TeacherDevelopmentSection() {
         <div className="overflow-hidden rounded-[28px] bg-[#10243e] p-5 text-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:p-8">
           <div className="flex items-center justify-between border-b border-white/15 pb-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-300">Live learning studio</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">Live learning studio</p>
               <p className="mt-2 font-heading text-xl font-bold">A prepared lesson, not improvisation</p>
             </div>
             <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-              <GraduationCap className="h-6 w-6 text-orange-300" aria-hidden="true" />
+              <GraduationCap className="h-6 w-6 text-[#D3B9E1]" aria-hidden="true" />
             </span>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -397,7 +397,7 @@ export function TeacherDevelopmentSection() {
               <div className="mt-5 space-y-4">
                 {['Model the skill', 'Practise together', 'Apply independently'].map((label, index) => (
                   <div key={label} className="flex items-center gap-3">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-100 text-xs font-black text-orange-700">{index + 1}</span>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF5DF] text-xs font-black text-[#C2410C]">{index + 1}</span>
                     <span className="text-sm font-semibold">{label}</span>
                   </div>
                 ))}
@@ -426,7 +426,7 @@ export function TeacherDevelopmentSection() {
           <div className="mt-9 space-y-5">
             {teacherDevelopmentSteps.map((step, index) => (
               <article key={step.title} className="grid grid-cols-[48px_1fr] gap-4 rounded-[22px] border border-slate-200 bg-[#fffdf9] p-5 sm:grid-cols-[56px_1fr] sm:p-6">
-                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 font-heading text-sm font-black text-orange-700 sm:h-14 sm:w-14">0{index + 1}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF5DF] font-heading text-sm font-black text-[#C2410C] sm:h-14 sm:w-14">0{index + 1}</span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{step.label}</p>
                   <h3 className="mt-1 font-heading text-xl font-bold text-slate-950">{step.title}</h3>
@@ -553,7 +553,7 @@ export function TeamFaqSection() {
             <details key={item.question} className="group py-1">
               <summary className="faq-question flex min-h-16 cursor-pointer list-none items-center justify-between gap-5 py-4 text-left font-heading text-base font-bold text-slate-950 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600 sm:text-lg [&::-webkit-details-marker]:hidden">
                 {item.question}
-                <span className="relative h-8 w-8 shrink-0 rounded-full bg-orange-100 text-orange-700" aria-hidden="true">
+                <span className="relative h-8 w-8 shrink-0 rounded-full bg-[#FFF5DF] text-[#C2410C]" aria-hidden="true">
                   <span className="absolute left-2 top-[15px] h-0.5 w-4 bg-current" />
                   <span className="absolute left-[15px] top-2 h-4 w-0.5 bg-current transition-transform group-open:rotate-90" />
                 </span>
