@@ -133,7 +133,7 @@ export default function ClassSamplesManagement(): JSX.Element {
     if (!form.youtubeUrl.trim()) nextErrors.youtubeUrl = 'YouTube URL is required.';
     else if (!youtubeVideoId) nextErrors.youtubeUrl = 'Paste a valid YouTube watch or share URL.';
     if (form.youtubeUploadDate.trim() && !normalizeYouTubeUploadDate(form.youtubeUploadDate)) {
-      nextErrors.youtubeUploadDate = 'Use the video's first public date (YYYY-MM-DD), or leave it blank.';
+      nextErrors.youtubeUploadDate = "Use the video’s first public date (YYYY-MM-DD), or leave it blank.";
     }
     if (!form.sortOrder.trim()) nextErrors.sortOrder = 'Sort order is required.';
     else if (!Number.isFinite(sortOrder)) nextErrors.sortOrder = 'Sort order must be numeric.';
