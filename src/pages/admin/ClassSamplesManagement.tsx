@@ -33,6 +33,7 @@ import {
   CLASS_SAMPLE_CATEGORY_LABELS,
   extractYouTubeVideoId,
   normalizeYouTubeUrl,
+  normalizeYouTubeUploadDate,
   toClassSampleItem,
   type ClassSampleCategory,
   type ClassSampleItem,
@@ -46,12 +47,13 @@ type ClassSampleFormState = {
   ageBand: string;
   durationLabel: string;
   youtubeUrl: string;
+  youtubeUploadDate: string;
   featured: boolean;
   active: boolean;
   sortOrder: string;
 };
 
-type FormErrors = Partial<Record<'title' | 'description' | 'category' | 'youtubeUrl' | 'sortOrder', string>>;
+type FormErrors = Partial<Record<'title' | 'description' | 'category' | 'youtubeUrl' | 'youtubeUploadDate' | 'sortOrder', string>>;
 
 const INITIAL_FORM: ClassSampleFormState = {
   title: '',
@@ -60,6 +62,7 @@ const INITIAL_FORM: ClassSampleFormState = {
   ageBand: '',
   durationLabel: '',
   youtubeUrl: '',
+  youtubeUploadDate: '',
   featured: false,
   active: true,
   sortOrder: '0',
@@ -129,6 +132,9 @@ export default function ClassSamplesManagement(): JSX.Element {
     if (!form.category) nextErrors.category = 'Category is required.';
     if (!form.youtubeUrl.trim()) nextErrors.youtubeUrl = 'YouTube URL is required.';
     else if (!youtubeVideoId) nextErrors.youtubeUrl = 'Paste a valid YouTube watch or share URL.';
+    if (form.youtubeUploadDate.trim() && !normalizeYouTubeUploadDate(form.youtubeUploadDate)) {
+      nextErrors.youtubeUploadDate = 'Use a valid YouTube upload date (YYYY-MM-DD), or leave it blank.';
+    }
     if (!form.sortOrder.trim()) nextErrors.sortOrder = 'Sort order is required.';
     else if (!Number.isFinite(sortOrder)) nextErrors.sortOrder = 'Sort order must be numeric.';
 
@@ -154,6 +160,7 @@ export default function ClassSamplesManagement(): JSX.Element {
       durationLabel: form.durationLabel.trim(),
       youtubeUrl,
       youtubeVideoId,
+      youtubeUploadDate: normalizeYouTubeUploadDate(form.youtubeUploadDate),
       featured: form.featured,
       active: form.active,
       sortOrder,
@@ -199,6 +206,7 @@ export default function ClassSamplesManagement(): JSX.Element {
       ageBand: item.ageBand || '',
       durationLabel: item.durationLabel || '',
       youtubeUrl: item.youtubeUrl || '',
+      youtubeUploadDate: item.youtubeUploadDate || '',
       featured: item.featured,
       active: item.active,
       sortOrder: String(item.sortOrder ?? 0),
@@ -357,6 +365,23 @@ export default function ClassSamplesManagement(): JSX.Element {
                 <p className="text-xs text-slate-500">Supports `youtube.com/watch`, `youtu.be`, `shorts`, and `embed` links.</p>
               )}
               {errors.youtubeUrl ? <p className="text-sm text-red-600">{errors.youtubeUrl}</p> : null}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="class-sample-youtube-upload-date">Original YouTube upload date (optional)</Label>
+              <Input
+                id="class-sample-youtube-upload-date"
+                type="date"
+                value={form.youtubeUploadDate}
+                onChange={(event) => updateField('youtubeUploadDate', event.target.value)}
+              />
+              <p className="text-xs text-slate-500">
+                Copy the original date from YouTube Studio after checking the video.
+                This is not the date the clip was added to Tiny Steps. Without a verified date,
+                the clip still plays, but no incomplete VideoObject markup is published.
+                Only activate clips approved for public website sharing.
+              </p>
+              {errors.youtubeUploadDate ? <p className="text-sm text-red-600">{errors.youtubeUploadDate}</p> : null}
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
