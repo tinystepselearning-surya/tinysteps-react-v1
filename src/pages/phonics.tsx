@@ -643,16 +643,18 @@ export default function PhonicsPage({
                           : index === 3
                             ? 'w-[86%]'
                             : 'w-[98%]';
+                  // Progress from warm sunrise to lavender, ocean and deep navy.
+                  // All tiers retain a minimum 4.5:1 normal-text contrast ratio.
                   const background = index === 0
-                    ? '#FFB562'
+                    ? '#F6CF7E'
                     : index === 1
-                      ? '#BFE7F2'
+                      ? '#D3B9E1'
                       : index === 2
-                        ? '#8ED8E8'
+                        ? '#A5CCEA'
                         : index === 3
-                          ? '#58C4DD'
-                          : '#2E8FD0';
-                  const textColor = index >= 3 ? '#FFFFFF' : '#0A192F';
+                          ? '#6E95D2'
+                          : '#212B5C';
+                  const textColor = index === 4 ? '#FFFFFF' : '#17284C';
 
                   return (
                     <div key={level.step} className={`${index === 0 ? '' : '-mt-[1px]'} ${widthClass} mx-auto`}>
