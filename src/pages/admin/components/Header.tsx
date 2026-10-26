@@ -75,7 +75,7 @@ export default function Header({ onOpenMenu, portal = 'admin' }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+    <header className="ts-app-header sticky top-0 z-40 h-14 shrink-0 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="flex h-full w-full items-center justify-between gap-3 px-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <button
