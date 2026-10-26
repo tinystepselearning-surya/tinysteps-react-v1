@@ -9,7 +9,18 @@
  * This is deliberately a ONE-video manifest, not an export of the public Firestore
  * gallery. Changes to this entry require fresh owner review and source validation.
  */
-export const PUBLIC_SPEAKING_VIDEO_EVIDENCE = Object.freeze({
+export type PublicSpeakingVideoEvidence = {
+  title: string;
+  description: string;
+  videoId: string;
+  publicationDate: string;
+  duration: string;
+  durationLabel: string;
+  category: string;
+  ageBand: string;
+};
+
+export const PUBLIC_SPEAKING_VIDEO_EVIDENCE: Readonly<PublicSpeakingVideoEvidence> = Object.freeze({
   title: 'Instant Storytelling Activity',
   description:
     'In this class, the child was given an instant topic and confidently created and presented a story. This activity builds thinking, structure, and speaking confidence.',
