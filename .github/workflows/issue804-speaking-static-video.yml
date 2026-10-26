@@ -1,0 +1,38 @@
+name: Issue 804 - Speaking Video Initial HTML
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/publicSpeakingVideoEvidence.ts'
+      - 'src/pages/speaking.tsx'
+      - 'src/pages/ClassSamplesPage.tsx'
+      - 'src/tests/seo/publicSpeakingStaticVideoEvidence.spec.ts'
+      - 'scripts/verify-speaking-video-prerender.mjs'
+      - '.github/workflows/issue804-speaking-static-video.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  speaking-video-prerender:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - run: npm ci
+      - name: Speaking and public video evidence tests
+        run: npx vitest run src/tests/seo/publicSpeakingStaticVideoEvidence.spec.ts src/tests/seo/speakingGrowthBrick9.spec.ts src/tests/seo/phonicsBrick6ConversionEvidence.spec.ts
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Install Chromium for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Build and existing SEO gates
+        run: npm run build
+      - name: Assert actual no-JS prerendered video evidence
+        run: node scripts/verify-speaking-video-prerender.mjs
