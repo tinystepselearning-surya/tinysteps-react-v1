@@ -240,10 +240,10 @@ export default function GrammarPage() {
   }, [canonicalPath, canonicalUrl]);
 
   return (
-    <div className="bg-[#fbfbfd] pb-12">
+    <div className="bg-[#F0F8FF] pb-12">
       <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#fff8f2_0%,#fff_72%,#fbfbfd_100%)]" />
-        <div className="pointer-events-none absolute left-[-8%] top-[-28%] h-[560px] w-[560px] rounded-full bg-orange-200/35 blur-[120px]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#D9EEFF_0%,#F4FAFF_55%,#EAF6FF_100%)]" />
+        <div className="pointer-events-none absolute left-[-8%] top-[-28%] h-[560px] w-[560px] rounded-full bg-sky-200/40 blur-[120px]" />
         <div className="pointer-events-none absolute right-[-6%] top-[-20%] h-[520px] w-[520px] rounded-full bg-sky-100/70 blur-[120px]" />
         <div className="relative mx-auto max-w-7xl">
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-600 sm:text-sm">
@@ -262,7 +262,7 @@ export default function GrammarPage() {
 
           <div className="grid grid-cols-1 items-center gap-7 lg:grid-cols-[1.06fr_0.94fr] lg:gap-10">
             <div>
-              <p className="inline-flex items-center rounded-full border border-orange-200/80 bg-white/80 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700 shadow-[0_8px_22px_rgba(249,115,22,0.08)] backdrop-blur">
+              <p className="inline-flex items-center rounded-full border border-sky-200/80 bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#246D9C] shadow-[0_8px_22px_rgba(249,115,22,0.08)] backdrop-blur">
                 Grammar clarity for children
               </p>
               <h1 className="mt-5 max-w-[720px] text-[clamp(2.65rem,8vw,4.65rem)] font-black leading-[0.95] tracking-[-0.055em] text-[#172033]">
@@ -338,7 +338,7 @@ export default function GrammarPage() {
       </section>
 
       <section id="tiny-steps-positioning" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[26px] border border-orange-100 bg-white/90 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-sky-100 bg-white/95 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700">Why Tiny Steps stands out</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
             Why families shortlist Tiny Steps for online grammar support
@@ -348,7 +348,7 @@ export default function GrammarPage() {
           </p>
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {grammarPositioningProof.map((item) => (
-              <article key={item.title} className="rounded-[18px] border border-slate-200 bg-[#fffdfa] p-4">
+              <article key={item.title} className="rounded-[18px] border border-sky-100 bg-[#F7FBFF] p-4">
                 <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.detail}</p>
               </article>
@@ -373,22 +373,22 @@ export default function GrammarPage() {
       />
 
       <section className="px-4 py-8 sm:px-5 lg:px-6" aria-labelledby="grammar-worked-example">
-        <div className="mx-auto max-w-6xl rounded-[24px] border border-orange-100 bg-orange-50/50 p-5 md:p-7">
+        <div className="mx-auto max-w-6xl rounded-[24px] border border-sky-100 bg-[#EAF6FF] p-5 md:p-7">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Illustrative teaching example · not a real student record</p>
           <h2 id="grammar-worked-example" className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">What if my child knows the tense rule but still makes mistakes?</h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
             Knowing a grammar rule is different from using it independently. This fictional example shows a possible model → correction → fresh-task sequence; the actual class adapts to each child.
           </p>
           <div className="mt-5 grid gap-3 md:grid-cols-3">
-            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+            <article className="rounded-2xl border border-sky-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-950">1. Notice the meaning</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">Child: “Yesterday, she go to school.” The teacher asks which word signals past time.</p>
             </article>
-            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+            <article className="rounded-2xl border border-sky-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-950">2. Correct and retry</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">After a focused cue about the past tense of “go,” the child says: “Yesterday, she went to school.”</p>
             </article>
-            <article className="rounded-2xl border border-orange-100 bg-white p-4">
+            <article className="rounded-2xl border border-sky-100 bg-white p-4">
               <h3 className="text-sm font-bold text-slate-950">3. Try a new sentence</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">A fresh prompt asks about last weekend. The child attempts: “Last weekend, we went to the library,” without copying the first example.</p>
             </article>
@@ -676,7 +676,7 @@ export default function GrammarPage() {
       </section>
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#fff7ed_0%,#ffffff_52%,#eff6ff_100%)] p-6 text-center text-slate-950 sm:p-8 md:p-9">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,#D9EEFF_0%,#FFFFFF_52%,#EAF6FF_100%)] p-6 text-center text-slate-950 sm:p-8 md:p-9">
           <h2 className="text-2xl font-bold md:text-3xl">Not sure where your child is stuck in grammar?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-base leading-7 text-slate-600">
             Book one free 35-minute 1:1 online demo assessment class to identify whether the main gap is sentence formation, tense control, punctuation, correction, or written sentence accuracy.
