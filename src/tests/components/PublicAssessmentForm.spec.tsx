@@ -125,6 +125,27 @@ describe('PublicAssessmentForm analytics', () => {
     });
   });
 
+  it('preselects group programme and saves a group-interest enquiry without a demo claim', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(
+      <PublicAssessmentForm
+        preferredFormat="small_group"
+        preferredMainConcern="Blending sounds to read words"
+        submitLabel="Register Group Interest on WhatsApp"
+        submitAriaLabel="Register Group Interest on WhatsApp"
+      />,
+    );
+    expect(screen.getByLabelText(/preferred class format/i)).toHaveValue('small_group');
+    expect(screen.getByLabelText(/choose the area where your child needs support/i)).toHaveValue('Blending sounds to read words');
+    fillValidForm();
+    fireEvent.submit(screen.getByRole('button', { name: /register group interest on whatsapp/i }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0][1]).toMatchObject({
+      classFormatPreference: 'small_group',
+      programInterest: 'Phonics',
+    });
+  });
+
   it('fires generate_lead only after a successful save and before WhatsApp opens', async () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
