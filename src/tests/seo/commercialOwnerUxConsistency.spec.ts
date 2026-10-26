@@ -49,6 +49,16 @@ describe('Commercial owner UX consistency layer', () => {
     expect(experience).toContain('will-change: transform');
   });
 
+  it('opens the existing booking flow from a body-mounted floating CTA without a fragile nav click', () => {
+    const routes = fs.readFileSync(path.join(repoRoot, 'src/app/routes.tsx'), 'utf8');
+    expect(experience).toContain("new Event('tinysteps:open-assessment', { cancelable: true })");
+    expect(experience).toContain('window.dispatchEvent(bookingRequest)');
+    expect(experience).toContain("window.location.assign('/book-demo')");
+    expect(experience).not.toContain("document.querySelectorAll('nav button')");
+    expect(routes).toContain("window.addEventListener('tinysteps:open-assessment', handleFloatingAssessmentRequest)");
+    expect(routes).toContain('setIsAssessmentModalOpen(true)');
+  });
+
   it('does not place a competing floating conversion CTA on the booking page', () => {
     expect(experience).toContain("currentPath !== '/book-demo'");
   });

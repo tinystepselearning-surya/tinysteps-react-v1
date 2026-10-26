@@ -271,13 +271,12 @@ html.${ROOT_ACTIVE_CLASS} .ts-commercial-section-enter { animation: tsCommercial
   }
 
   function triggerExistingAssessmentAction() {
-    const buttons = Array.from(document.querySelectorAll('nav button'));
-    const existing = buttons.find((button) => /book free 35-minute demo/i.test(button.textContent || ''));
-    if (existing instanceof HTMLElement) {
-      existing.click();
-      return;
+    // The floating CTA lives outside React; request the app's existing booking modal.
+    // If the app is unavailable, the dedicated booking page remains a safe fallback.
+    const bookingRequest = new Event('tinysteps:open-assessment', { cancelable: true });
+    if (window.dispatchEvent(bookingRequest)) {
+      window.location.assign('/book-demo');
     }
-    window.location.assign('/book-demo');
   }
 
   function ensureCta() {
