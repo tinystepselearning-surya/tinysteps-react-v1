@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
 import Meta from '../components/common/Meta';
 import { FREE_DEMO_FULL_DESCRIPTION, STANDARD_PRICING_SUMMARY } from '../config/publicOffer';
-import { NEW_GROUP_CLASS_PLAN, NEW_GROUP_CLASS_RATIO, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
+import { NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
 import { getRouteConfig } from '../lib/seo';
 import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/useAuthStore';
@@ -114,6 +114,16 @@ const items: FAQItem[] = [
       { to: '/pricing', label: 'Compare 1:1 and group pricing', emphasis: 'primary' },
       { to: '/blog/online-english-classes-for-kids-india', label: 'Read the parent comparison guide', emphasis: 'secondary' },
     ],
+  },
+  {
+    id: 'group-class-size',
+    category: 'classes',
+    question: 'What is the maximum number of children in a group class?',
+    shortAnswer: 'Maximum four children',
+    answer:
+      'Tiny Steps Group Classes have a maximum of four children per teacher. We match learners by level and suitable schedules before inviting families to a group demo.',
+    searchTerms: ['group size', 'maximum four', 'max children', 'students per class', 'batch capacity'],
+    links: [{ to: '/group-phonics-classes-for-kids', label: 'Explore group classes', emphasis: 'primary' }],
   },
   {
     id: 'class-platform',
