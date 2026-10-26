@@ -22,7 +22,7 @@ export default function AppShellHeader({
   return (
     <header
       className={cn(
-        'rounded-[24px] border border-slate-200 bg-white/92 px-4 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:rounded-[28px] sm:px-6 sm:py-5',
+        'ts-app-header rounded-[24px] border border-slate-200 bg-white/92 px-4 py-4 shadow-[0_16px_40px_rgba(15,23,42,0.08)] backdrop-blur sm:rounded-[28px] sm:px-6 sm:py-5',
         className,
       )}
     >
