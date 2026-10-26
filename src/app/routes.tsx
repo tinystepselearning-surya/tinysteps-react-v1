@@ -529,7 +529,8 @@ const Layout: FC = () => {
   return (
     <div
       onClickCapture={handlePublicBookingIntercept}
-      className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[radial-gradient(circle_at_top,_#fdf4ff,_#f4f8ff_45%,_#ffffff_80%)]'}`}
+      data-ts-surface={!hideMarketingChrome && !isContactPage ? 'public' : undefined}
+      className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[#F4F8FF]'}`}
     >
       {!hideMarketingChrome ? (
         <Suspense fallback={null}>
@@ -544,7 +545,7 @@ const Layout: FC = () => {
           isContactPage
             ? `${hideMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
             : normalizedPath === '/'
-              ? 'min-h-screen bg-white pb-0 pt-0'
+              ? 'min-h-screen bg-[#F4F8FF] pb-0 pt-0'
               : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
         }
       >
