@@ -80,6 +80,7 @@ suite('public leads firestore rules', () => {
   });
 
   it('accepts valid group-interest preference and rejects unknown formats', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
     await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ classFormatPreference: 'small_group' })));
     await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ classFormatPreference: 'unsure' })));
     await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ classFormatPreference: 'massive_group' })));
