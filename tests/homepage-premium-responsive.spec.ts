@@ -110,7 +110,12 @@ for (const viewport of viewports) {
     const finalBooking = page.locator('#homepage-final-invitation');
     await expect(finalBooking.getByRole('heading', { name: /Start with a conversation about your child's learning/i })).toBeVisible();
     await expect(finalBooking.getByRole('link', { name: 'Book Free 35-Minute Demo' })).toHaveAttribute('href', '/book-demo');
-    await expect(finalBooking).toHaveCSS('background-color', 'rgb(255, 248, 241)');
+    // The sunrise/ocean redesign uses a pastel gradient, not the former solid peach.
+    await expect(finalBooking).toHaveCSS('background-image', /linear-gradient\(/);
+    const invitationBackground = await finalBooking.evaluate((element) => getComputedStyle(element).backgroundImage);
+    expect(invitationBackground).toContain('rgb(231, 243, 255)');
+    expect(invitationBackground).toContain('rgb(245, 240, 255)');
+    expect(invitationBackground).toContain('rgb(255, 244, 220)');
 
     const measures = await page.evaluate(() => ({
       viewportWidth: window.innerWidth,
