@@ -4,6 +4,15 @@ on:
   pull_request:
     paths:
       - 'src/pages/HomePage.tsx'
+      - 'src/pages/**/*.tsx'
+      - 'src/components/Home/**/*.tsx'
+      - 'src/components/marketing/**/*.tsx'
+      - 'src/components/programs/**/*.tsx'
+      - 'src/index.css'
+      - 'scripts/audit-public-text-palette.mjs'
+      - 'src/tests/seo/publicTextPalette.spec.ts'
+      - 'src/tests/seo/sunriseOceanTheme.spec.ts'
+      - 'docs/design/sunrise-ocean-palette.md'
       - 'src/components/Home/ConversionHero.tsx'
       - 'src/components/common/Header.tsx'
       - 'src/components/common/FloatingAssistant.tsx'
@@ -59,6 +68,20 @@ jobs:
           src/tests/seo/homeAiEntityVisibility.spec.ts
           src/tests/seo/homeRuntimeImportBoundary.spec.ts
           src/tests/seo/homeMachineReadability.spec.ts
+      - name: Validate public text contrast and inventory the whole source tree
+        run: |
+          npx vitest run src/tests/seo/sunriseOceanTheme.spec.ts src/tests/seo/publicTextPalette.spec.ts
+          mkdir -p artifacts
+          node scripts/audit-public-text-palette.mjs --strict > artifacts/public-text-palette-report.json
+          node --input-type=module -e "import fs from 'node:fs'; const r = JSON.parse(fs.readFileSync('artifacts/public-text-palette-report.json', 'utf8')); console.log(JSON.stringify({scanned:r.source_files_scanned,by_scope:r.by_scope,public_candidate_files:r.public_legacy_warm_text_file_count,guarded_failures:r.guarded_high_traffic_unapproved_warm_classes.length},null,2));"
+      - name: Upload source text-colour inventory
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-text-palette-inventory
+          path: artifacts/public-text-palette-report.json
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Test mobile and desktop homepage journeys
