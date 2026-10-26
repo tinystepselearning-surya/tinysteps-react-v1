@@ -877,8 +877,8 @@ export default function SpeakingPage() {
           </div>
 
           <div className="mt-7 grid gap-3 md:grid-cols-3">
-            <article className="rounded-[20px] border border-amber-100 bg-white p-4">
-              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-amber-800">{speakingFacts.levels.beginner.ageRange.label}</span>
+            <article className="rounded-[20px] border border-[#D7E5F4] bg-white p-4">
+              <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#604577]">{speakingFacts.levels.beginner.ageRange.label}</span>
               <h3 className="mt-2 font-semibold text-slate-950">Public Speaking Foundations</h3>
               <p className="mt-1 text-sm leading-6 text-slate-600">{speakingFacts.levels.beginner.lessonCount} lessons for structured responses, picture talk, show-and-tell, storytelling foundations, and short presentation readiness.</p>
               <Link to={speakingFacts.levels.beginner.canonicalCoursePath} className="mt-2 inline-block text-xs font-semibold underline underline-offset-2">View Foundations details</Link>
@@ -1117,7 +1117,7 @@ export default function SpeakingPage() {
             </div>
           </details>
 
-          <div className="mt-4 rounded-[18px] border border-amber-100 bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
+          <div className="mt-4 rounded-[18px] border border-[#D7E5F4] bg-amber-50/55 px-4 py-3 text-sm leading-6 text-slate-700">
             <strong className="text-slate-950">Programme note:</strong> these three age bands are a developmental guide, not three new Tiny Steps course products. The existing Public Speaking Foundations and Public Speaking Excellence tracks remain the actual course architecture, and assessment determines the appropriate level.
           </div>
         </div>
