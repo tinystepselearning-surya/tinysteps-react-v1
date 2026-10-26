@@ -68,6 +68,17 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain('Help your child express ideas clearly');
   });
 
+  it('keeps the shared group page compact and corrects repeated print-header overlays', () => {
+    expect(content).toContain('At a glance');
+    expect(content).toContain('A group that fits your child');
+    expect(content).toContain('How group learning works');
+    expect(content).toContain('Interested in Group Classes?');
+    expect(content).toContain('lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]');
+    expect(content).toContain('body:has(.group-commercial-page) header.fixed');
+    expect(content).not.toContain('sm:py-24');
+    expect(content).not.toContain('rounded-[32px]');
+  });
+
   it('preserves existing premium commercial titles and links to groups from discovery pages', () => {
     expect(seo).toContain("title: 'Online Phonics Classes for Kids | Live 1:1 | Tiny Steps'");
     expect(seo).toContain("title: 'Online Grammar Classes for Kids | Live 1:1 | Tiny Steps'");
