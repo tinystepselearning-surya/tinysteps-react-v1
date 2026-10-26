@@ -131,7 +131,7 @@ describe('PublicAssessmentForm analytics', () => {
     const optionGroup = screen.getByRole('group', { name: /choose a class format/i });
     expect(optionGroup).toHaveClass('grid-cols-3');
     expect(optionGroup.querySelectorAll('button')).toHaveLength(3);
-    const privateButton = screen.getByRole('button', { name: 'One-to-One' });
+    const privateButton = screen.getByRole('button', { name: 'One-to-One Classes' });
     const groupButton = screen.getByRole('button', { name: 'Group Classes' });
     const undecidedButton = screen.getByRole('button', { name: 'Help Me Choose' });
     expect(privateButton).toHaveAttribute('aria-pressed', 'true');
@@ -163,7 +163,7 @@ describe('PublicAssessmentForm analytics', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Group Classes' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'One-to-One' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'One-to-One Classes' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: 'Help Me Choose' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByLabelText(/choose the area where your child needs support/i)).toHaveValue('Blending sounds to read words');
     fillValidForm();
