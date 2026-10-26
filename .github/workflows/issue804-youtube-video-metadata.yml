@@ -1,0 +1,35 @@
+name: Issue 804 - Existing YouTube Video Metadata
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'src/lib/classSamples.ts'
+      - 'src/pages/ClassSamplesPage.tsx'
+      - 'src/pages/admin/ClassSamplesManagement.tsx'
+      - 'src/tests/lib/classSamplesVideoMetadata.spec.ts'
+      - '.github/workflows/issue804-youtube-video-metadata.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  video-metadata:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - run: npm ci
+      - name: Video metadata regression tests
+        run: npx vitest run src/tests/lib/classSamplesVideoMetadata.spec.ts src/tests/seo/phonicsBrick6ConversionEvidence.spec.ts src/tests/seo/speakingGrowthBrick9.spec.ts
+      - name: TypeScript typecheck
+        run: npm run typecheck
+      - name: Install Playwright browser for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Production build and rendered SEO checks
+        run: npm run build
