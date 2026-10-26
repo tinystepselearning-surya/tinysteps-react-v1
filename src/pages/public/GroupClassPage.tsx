@@ -61,7 +61,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     eyebrow: 'Grammar · Sentence building · Live online small groups',
     heading: 'Small-Group Online Grammar Classes for Kids',
     description: 'Move beyond memorising grammar rules. Our live small-group classes help children understand sentence patterns, build accurate sentences and use grammar confidently in real speaking and writing tasks.',
-    ageNote: 'Generally suited to children around ages 5–12 who are ready to work with sentences. Beginner and advanced learners are matched separately after considering their current grammar and reading skills.'
+    ageNote: 'Generally suited to children around ages 5–12 who are ready to work with sentences. Beginner and advanced learners are matched separately after considering their current grammar and reading skills.',
     idealFor: [
       'Children who have ideas but need help building clear, complete sentences.',
       'Learners working on tenses, punctuation, word order and grammar accuracy.',
@@ -93,7 +93,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     eyebrow: 'Public speaking · Storytelling · Confident expression',
     heading: 'Live Online Group Public Speaking Classes for Kids',
     description: 'Help your child express ideas clearly, tell engaging stories and speak to an audience. Our live small-group public speaking classes combine individual speaking turns, thoughtful listening and supportive teacher feedback.',
-    ageNote: 'Generally suited to children around ages 4–12 who can participate in age-appropriate speaking and listening activities. We match children by communication needs and confidence, not by age alone.'
+    ageNote: 'Generally suited to children around ages 4–12 who can participate in age-appropriate speaking and listening activities. We match children by communication needs and confidence, not by age alone.',
     idealFor: [
       'Children who have ideas but need practice organising and sharing them clearly.',
       'Learners building confidence with storytelling, show-and-tell and presentations.',
