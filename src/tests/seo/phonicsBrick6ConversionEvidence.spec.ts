@@ -27,7 +27,7 @@ describe('Phonics Brick 6 conversion-evidence guardrails', () => {
     for (const token of [
       'formatINR(PER_CLASS_PRICE)',
       'ONE_TO_ONE_MONTHLY_PACKAGES',
-      'GROUP_MONTHLY_FEES',
+      'NEW_GROUP_CLASS_PLAN',
       'ULTRA_PREMIUM_PRICING',
       'What is included in the live class fee?',
       'How parents should compare online English class fees',
