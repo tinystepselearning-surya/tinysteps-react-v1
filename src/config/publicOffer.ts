@@ -1,4 +1,4 @@
-import { formatINR, NEW_GROUP_CLASS_RATIO } from './pricing';
+import { formatINR } from './pricing';
 import { SEMANTIC_FACTS } from './semanticFacts';
 
 export const FREE_DEMO_SESSION_COUNT =
@@ -31,7 +31,7 @@ export const STANDARD_SMALL_GROUP_MAX_PER_CLASS =
 
 export const STANDARD_PRICING_SUMMARY =
   `Standard 1:1: ${formatINR(STANDARD_ONE_TO_ONE_PER_CLASS_PRICE)} per class` +
-  ` • Small group (${NEW_GROUP_CLASS_RATIO}): ${formatINR(STANDARD_SMALL_GROUP_MIN_PER_CLASS)} per child per class`;
+  ` • Group Classes: ${formatINR(STANDARD_SMALL_GROUP_MIN_PER_CLASS)} per child per class`;
 
 export const DIGITAL_GAMES_TRIAL_LABEL =
   '3-day digital games trial';
