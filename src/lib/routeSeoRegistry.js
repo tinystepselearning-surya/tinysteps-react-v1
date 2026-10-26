@@ -56,7 +56,7 @@ export const ROUTE_SEO_REGISTRY = {
   },
   '/group-phonics-classes-for-kids': {
     title: 'Online Group Phonics Classes for Kids | Tiny Steps',
-    description: 'Live online group phonics classes for kids ages 3–6 in India. Learn letter sounds, blending and early reading with a teacher. ₹250 per child/class.',
+    description: 'Live online group phonics classes for kids in India, from letter sounds and blending to longer-word decoding. Level-matched learning, ₹250 per child/class.',
     canonicalPath: '/group-phonics-classes-for-kids',
     ogType: 'website',
   },
