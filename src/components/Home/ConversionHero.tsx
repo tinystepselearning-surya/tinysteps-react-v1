@@ -53,6 +53,12 @@ function ConversionHero() {
             >
               Watch a real class
             </Link>
+            <a
+              href="#choose-class-format"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-[#175C90] underline decoration-sky-400 decoration-2 underline-offset-4 transition-colors hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#102A43]"
+            >
+              Compare Group and One-to-One Classes <span aria-hidden="true">↓</span>
+            </a>
           </div>
         </div>
 
