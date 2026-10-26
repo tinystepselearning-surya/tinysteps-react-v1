@@ -578,11 +578,11 @@ export default function PublicAssessmentForm({
             required
           >
             <option value="one_to_one">Premium One-to-One Classes</option>
-            <option value="small_group">Small-Group Classes</option>
+            <option value="small_group">Small-Group Classes (1 teacher : 4 students)</option>
             <option value="unsure">Help Me Choose</option>
           </select>
           {form.classFormatPreference === 'small_group' ? (
-            <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a new group demo is arranged only after suitable children and timings are matched.</p>
+            <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a 1:4 group demo is arranged when four suitable children and timings are matched.</p>
           ) : null}
         </div>
 
