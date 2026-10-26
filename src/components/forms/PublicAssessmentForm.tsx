@@ -353,16 +353,18 @@ export default function PublicAssessmentForm({
         ...trackingPayload,
         page_path: window.location.pathname,
         lead_channel: 'assessment_form',
-        lead_type: 'parent_assessment_request',
+        lead_type: submittedForm.classFormatPreference === 'small_group' ? 'group_interest_request' : 'parent_assessment_request',
         form_id: 'public_assessment_form',
         source: source || 'public_assessment_form',
         submission_id: leadRef.id,
         value: 1,
       });
-      trackDemoBookingComplete({
-        booking_type: 'whatsapp_assessment_request',
-        source_context: source || 'public_assessment_form',
-      });
+      if (submittedForm.classFormatPreference !== 'small_group' && submittedForm.classFormatPreference !== 'unsure') {
+        trackDemoBookingComplete({
+          booking_type: 'whatsapp_assessment_request',
+          source_context: source || 'public_assessment_form',
+        });
+      }
       navigateToWhatsapp(whatsappWindow, whatsappUrl);
       trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
       setLastOpenedWaLink(whatsappUrl);
