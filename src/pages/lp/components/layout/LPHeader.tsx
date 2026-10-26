@@ -24,7 +24,7 @@ export const LPHeader: FC<LPHeaderProps> = ({ name }) => {
     <AppShellHeader
       roleLabel="Learning Partner"
       title="Learning Partner Hub"
-      subtitle={<>Welcome back, <span className="font-semibold text-slate-900">{name}</span></>}
+      subtitle={<>Welcome back, <span className="font-semibold text-[#17284C] dark:text-white">{name}</span></>}
       actions={
         <Button variant="outline" onClick={handleLogout}>
           Logout
