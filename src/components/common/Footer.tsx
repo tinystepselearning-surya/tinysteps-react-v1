@@ -95,7 +95,7 @@ function Footer() {
   };
 
   return (
-    <footer className="bg-[#060a16] text-gray-200">
+    <footer className="bg-[#212B5C] text-gray-100">
       <div className="mx-auto max-w-6xl space-y-8 px-6 py-12">
         <div className="grid gap-8 lg:grid-cols-[1.05fr_0.82fr_0.92fr_1fr] lg:items-start lg:gap-10">
           <div className="space-y-4">
