@@ -56,19 +56,19 @@ export const ROUTE_SEO_REGISTRY = {
   },
   '/group-phonics-classes-for-kids': {
     title: 'Online Group Phonics Classes for Kids | Tiny Steps',
-    description: 'Live 1:4 group phonics classes for kids: 4 children with 1 teacher, 50-minute sessions, blending and early reading practice. Register interest in a suitable batch.',
+    description: 'Live online group phonics classes for kids in India. Letter sounds, blending and early reading with guided practice. ₹250 per child/class. Register interest.',
     canonicalPath: '/group-phonics-classes-for-kids',
     ogType: 'website',
   },
   '/group-grammar-classes-for-kids': {
     title: 'Online Group Grammar Classes for Kids | Tiny Steps',
-    description: 'Live 1:4 group grammar classes for kids: one teacher, four learners, 50-minute sessions. Practise sentence building and grammar in use. Enquire about a suitable batch.',
+    description: 'Online group grammar classes for kids. Practise sentence building, grammar accuracy and confident expression with guided teacher feedback. ₹250 per child/class.',
     canonicalPath: '/group-grammar-classes-for-kids',
     ogType: 'website',
   },
   '/group-public-speaking-classes-for-kids': {
     title: 'Group Public Speaking Classes for Kids | Tiny Steps',
-    description: 'Live 1:4 group public speaking classes for kids: guided storytelling, speaking turns and presentations with four learners per teacher. Register group interest.',
+    description: 'Online group public speaking classes for kids. Practise storytelling, structured speaking and presentations with supportive peers. ₹250 per child/class.',
     canonicalPath: '/group-public-speaking-classes-for-kids',
     ogType: 'website',
   },
@@ -137,7 +137,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/pricing': {
     title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
     description:
-      'Compare Tiny Steps pricing: premium 1:1 at ₹400 per 35-minute class and one 1:4 group format at ₹220 per child for 50 minutes, subject to suitable batches.',
+      'Compare One-to-One Classes at ₹400 per 35-minute class with Group Classes at ₹250 per child for 50 minutes. View fees and programme options.',
     canonicalPath: '/pricing',
     ogType: 'website',
     keywords:
