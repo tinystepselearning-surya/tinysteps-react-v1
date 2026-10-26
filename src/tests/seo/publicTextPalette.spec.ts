@@ -59,6 +59,14 @@ describe('public Sunrise/Ocean readable text system', () => {
     }
   });
 
+  it('keeps legacy Phonics buyer overrides local instead of mutating site-wide sunrise tokens', () => {
+    const css = source('src/components/programs/phonicsBuyerPremium.css');
+    expect(css).toContain('.ts-phonics-buyer-premium {');
+    expect(css).not.toMatch(/^:root\\s*\\{/m);
+    expect(css).toContain('--ts-sunrise-orange: #FF7A00');
+    expect(css).toContain('--ts-sunrise-orange-deep: #C2410C');
+  });
+
   it('keeps brand and dark-surface distinctions instead of painting everything pastel', () => {
     expect(source('src/pages/HomePage.tsx')).toContain('text-[#FF7A00]');
     expect(source('src/components/common/Header.tsx')).toContain('text-[#C2410C]');
