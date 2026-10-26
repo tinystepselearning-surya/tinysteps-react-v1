@@ -1,44 +1,42 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-26 IST)
 
-Updated by ChatGPT-native hourly audit after **Slot 7** (rows 61–70). Summary written **2026-10-26T00:47:09.379Z UTC**. Actual independent per-URL probe start timestamps span **2026-10-26T00:45:52.731398+00:00** to **2026-10-26T00:46:12.857123+00:00**; all 10 distinct timestamps and URL-specific observations are recorded in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+Updated by ChatGPT-native audit after **Slot 8 (rows 71–80)** at **2026-10-26T01:46:21.908Z UTC**. Actual distinct per-URL independent HTTPS GET initiation timestamps: **2026-10-26T01:44:58.576340Z** through **2026-10-26T01:45:18.612366Z**, with URL-specific details in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
 ## Daily coverage — 26 October IST
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | 202 |
-| Distinct URLs actually attempted today | **70** |
-| Fully live-verified PASS | **0** |
-| Confirmed FAIL | **0** |
-| Confirmed WARN | **0** |
-| UNVERIFIED / partial provider-text reviews | **70** |
-| Not checked today | **132** |
+| Distinct URLs actually attempted today | **80** |
+| Fully live-verified PASS today | **0** |
+| Confirmed FAIL today | **0** |
+| Confirmed WARN today | **0** |
+| UNVERIFIED / partial provider-text reviews today | **80** |
+| Not checked today | **122** |
 
-Tracker validated before writes: **202 unique URLs**, slots **1–19 contain 10 each**, slot **20 contains 12**. All 60 earlier checked rows had UTC timestamps mapping to 26 October IST. Slot 7's 10 rows were dated 25 October IST and had not been checked on 26 October. No prior row was rechecked or future slot scanned; yesterday's checks were not carried into today's coverage.
+Inventory validated before writes: **202 unique URLs**, slots **1–19: 10 URLs each**, slot **20: 12 URLs**. All 70 previously checked rows' UTC timestamps map to **26 October IST**. The 10 Slot 8 URLs were previously dated **25 October IST** and were not rechecked earlier today. No future slots scanned, no yesterday-only PASS carried into today's coverage.
 
-## Current batch — Slot 7 (rows 61–70)
+## Current batch — Slot 8 (rows 71–80)
 
-All ten URLs were inspected with the live web retrieval tool: speaking games, letter sounds, sound listening, word building, spelling, sentence making, reading fluency, grammar practice, speaking practice, and letter tracing. Each returned page-specific text and an H1; the provider labeled the snapshots **Crawled: today**, without exact crawl timestamps. The provider's extracted text is **not proof of current origin HTTP status, live raw HTML or technical SEO metadata**.
+Ten URLs inspected through web retrieval: letter tracing with sounds, balloon pop phonics, word meaning flashcards, Phonics, Grammar, Speaking, Speaking Progress Framework, For Schools, Book Demo, and Reading Classes. All ten yielded **page-specific extracted text and visible H1 headings**. The Speaking Progress Framework URL initially failed direct provider `web.open`, but following its link from the Book Demo page returned its page-specific text; this is **not** evidence of a production failure or recovery.
 
-Ten independent `curl -L GET` probes were actually executed, each with a distinct UTC start time. All ten returned **exit 6**, exact error **`Could not resolve host: tinystepslearning.com`**, and zero downloaded bytes. Curl's `HTTP_CODE=000` is **not** an observed production HTTP status. The environment's DNS failure does **not** establish a production outage.
+Provider snapshot labels: **Crawled: today** for Phonics, Grammar, Speaking, Book Demo and Reading; **Crawled: last week** for the other five. The labels do not supply precise crawl timestamps or prove current origin responses.
 
-**Unverified technical properties:** current HTTP status, final redirect destination, canonical, noindex/robots directives, Googlebot/Bingbot/OAI-SearchBot permissions, live HTML and JSON-LD. No first-party evidence for Google/Bing indexing, rankings or AI mentions/citations was collected.
+Ten distinct independent Python `requests.get` HTTPS GET attempts were actually initiated at the per-URL UTC times in the tracker. **All 10 failed before any origin response**, with `NameResolutionError: Failed to resolve 'tinystepslearning.com' ([Errno -3] Temporary failure in name resolution)`. **No HTTP status, headers or body were obtained from the origin**. This is an **audit-runtime DNS limitation**, not evidence of a production outage.
 
-**Content observations from provider snapshots only (not confirmed live defects):** `/free-speaking-games-for-kids` lists four games but zero playable; `/free-speaking-practice-game-for-kids` is labeled **COMING SOON**. `/free-letter-tracing-game-for-kids` advertises A–N free and O–Z as an optional lifetime unlock. These observations do not establish broken features, a regression, or misleading production functionality.
+**Current technical status UNVERIFIED:** HTTP status, final redirect destinations, canonical tags, noindex/X-Robots-Tag, robots.txt and Googlebot/Bingbot/OAI-SearchBot rules, live raw HTML and JSON-LD. No first-party Google/Bing indexing, ranking or AI mention/citation evidence collected.
 
-## Regression / workflow checks
+## Historical comparison and workflow safety
 
-No **verified production regression or improvement** established. Prior-day labels are not carried forward as current live PASS. [CHANGES.md](./CHANGES.md) remains unchanged.
+All ten Slot 8 rows had **recorded PASS dated 2026-10-25T01:48:19+00:00**. Those historical results were preserved in `last_verified_status` and `last_verified_at_utc`. Today's **UNVERIFIED** is an evidence limitation, **not a verified regression**. No dated before/after production transition was established; [CHANGES.md](./CHANGES.md) remains unchanged.
 
-GitHub repository-wide Actions run listing was retrieved (100 most recent runs): **no rolling-public-seo-health workflow run appeared in that inspected set**, and therefore no concurrent audit was positively observed there. The direct workflow-state and workflow-specific runs endpoints were unavailable through the connector; the administrative enabled/disabled state remains **independently unverified**. User-confirmed disablement is the working assumption; cron YAML is not proof of enablement. **No workflow was run, enabled or changed.**
+GitHub Actions repository run listing (100 most recent runs) was read during this audit: **no rolling-public-seo-health runs and no active runs appeared in that inspected page**. The direct workflow administrative state endpoint was not available via the connected tool, so enabled/disabled state is independently **unverified**. User-confirmed UI disablement remains the working assumption. Cron YAML presence alone is not evidence of workflow enablement. No GitHub workflow was run or enabled.
 
-## Remaining coverage / next slot
+## Coverage and operating limitation
 
-- Slots 1–7: **70 partial reviews, all UNVERIFIED** for live technical readiness.
-- Slots 8–20: **132 URLs unchecked today**.
-- Next scheduled hourly batch: **Slot 8 (rows 71–80)**, or earliest eligible missed earlier-slot URLs.
-- 25 October closed with 130/202 attempted and 72 unchecked; no artificial backfill.
-
-## Operating limitation
-
-ChatGPT-native batch selection, provider text retrieval, independent HTTPS attempts, and GitHub evidence writes are operational. **Full live HTTP technical readiness cannot be certified** until reliable origin-level access is available. The separate six-hour global search visibility audit remains unchanged.
+- Slots 1–8: **80 partial reviews, all UNVERIFIED** for full live technical readiness.
+- Slots 9–20: **122 unchecked today**.
+- Next scheduled batch: **Slot 9 (rows 81–90)**, or earliest eligible unchecked earlier-slot URLs.
+- 25 October ended with 130/202 attempted and 72 unchecked; those checks were not backfilled into 26 October.
+- Reliable origin-level HTTP access is still required for full technical verification.
+- No production source, workflow, Firebase or Hosting changes. The separate six-hour outside-in visibility task is unchanged.
