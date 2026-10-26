@@ -120,9 +120,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
   },
 };
 
-const GROUP_TIERS = GROUP_MONTHLY_FEES.filter((row) =>
-  ['1:2', '1:3', '1:4', '1:5'].includes(row.ratio),
-);
+const GROUP_PLAN = GROUP_MONTHLY_FEES.find((row) => row.ratio === '1:4');
 const PREMIUM_DURATION_MINUTES = ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes;
 
 export default function GroupClassPage({ track }: { track: GroupTrack }) {
@@ -171,7 +169,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
             </Link>
           </div>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-            We already teach siblings and friends together. For new groups, we first match children by learning stage and timetable, then invite suitable families to a group demo. Registering interest does not guarantee an immediate batch.
+            We already teach siblings and friends together. New four-student groups are formed by matching children at similar learning stages and suitable timings. Group demos are arranged when enough compatible families are interested; registering does not guarantee an immediate batch.
           </p>
           <div className="mt-9 flex flex-wrap gap-3 text-sm text-[#1F547A]">
             <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Live teacher-led classes</span>
@@ -236,31 +234,24 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-2xl font-bold">Small-Group Classes</h3>
                 <span className="rounded-full border border-sky-200/30 bg-sky-100/15 px-3 py-1.5 text-xs font-bold text-[#D9F0FF]">
-                  2–5 children per teacher
+                  1 teacher · 4 students
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-[#D6EAF9]">
-                A shared learning goal, individual participation and a regular timetable with children at a similar stage.
+                One teacher guides four children at a comparable learning stage, with individual participation, peer interaction and a shared lesson rhythm.
               </p>
-              <ul className="mt-6 space-y-3" aria-label="Small group fees per child">
-                {GROUP_TIERS.map((tier) => (
-                  <li key={tier.ratio} className="flex flex-wrap items-center justify-between gap-x-5 gap-y-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-4 sm:px-5">
-                    <div>
-                      <span className="block text-lg font-bold text-white">{tier.ratio} Group</span>
-                      <span className="text-sm text-[#D6EAF9]">{tier.durationMinutes} minutes per class</span>
-                    </div>
-                    <div className="sm:text-right">
-                      <span className="block text-xl font-black tabular-nums text-white">
-                        {formatINR(tier.monthlyFee / tier.classes)}
-                        <span className="ml-1 text-xs font-medium text-[#C5E5FA]">/child/class</span>
-                      </span>
-                      <span className="block text-xs text-[#D6EAF9]">{formatINR(tier.monthlyFee)} for 12 classes per child</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
+              {GROUP_PLAN && (
+                <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 sm:p-6">
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#D6EAF9]">One teacher · Four students</p>
+                  <p className="mt-3 text-4xl font-black tabular-nums text-white">{formatINR(GROUP_PLAN.monthlyFee / GROUP_PLAN.classes)}</p>
+                  <p className="mt-1 text-sm font-semibold text-[#D6EAF9]">per child per class · {GROUP_PLAN.durationMinutes} minutes</p>
+                  <div className="mt-5 border-t border-white/15 pt-4">
+                    <p className="text-sm text-white">12-class package: <strong>{formatINR(GROUP_PLAN.monthlyFee)} per child</strong></p>
+                  </div>
+                </div>
+              )}
               <p className="mt-5 text-sm leading-6 text-[#E5F3FE]">
-                <strong>Maximum: 5 children per teacher.</strong> A smaller group may be recommended for younger children or learners needing more individual attention. New groups depend on compatible levels and schedules.
+                <strong>Only one group format: 1 teacher to 4 students.</strong> Children are matched by learning level and suitable schedules. Group demos are organised when a compatible batch can be formed.
               </p>
               <Link to={enquiryHref} className="mt-6 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#DDF1FF] px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-white">
                 Register Group Interest
