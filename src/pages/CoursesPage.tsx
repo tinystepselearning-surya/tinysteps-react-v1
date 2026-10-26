@@ -298,9 +298,16 @@ function CoursesPage() {
               >
                 <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.bestFor}</p>
-                <Link to={item.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
-                  {item.ctaLabel}
-                </Link>
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+                  <Link to={item.href} className="text-slate-900 underline underline-offset-4">
+                    {item.ctaLabel} · Premium 1:1
+                  </Link>
+                  {({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title] ? (
+                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-orange-700 underline underline-offset-4">
+                      Explore Small Groups
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>
