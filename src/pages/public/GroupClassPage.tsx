@@ -146,10 +146,12 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
   ];
 
   return (
-    <main className="min-h-screen overflow-x-clip bg-[#fbfaf8] text-slate-950">
+    <main className="min-h-screen overflow-x-clip bg-[#F0F8FF] text-[#102A43]">
       <Meta title={seo?.title} description={seo?.description} canonical={url} jsonLd={schemas} />
-      <section className="border-b border-orange-100 bg-gradient-to-br from-orange-50 via-white to-sky-50 px-5 py-12 sm:px-8 sm:py-20">
-        <div className="mx-auto max-w-6xl">
+      <section className="relative overflow-hidden border-b border-sky-100 bg-gradient-to-br from-[#D9EEFF] via-[#F1F9FF] to-[#E5F4FF] px-5 py-14 sm:px-8 sm:py-24">
+        <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-32 h-80 w-80 rounded-full bg-white/60 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 left-1/4 h-72 w-72 rounded-full bg-[#A9DCFF]/40 blur-3xl" />
+        <div className="relative mx-auto max-w-6xl">
           <nav aria-label="Breadcrumb" className="mb-8 text-sm text-slate-600">
             <Link to="/" className="underline underline-offset-4 hover:text-orange-700">Home</Link>
             <span className="mx-2" aria-hidden="true">/</span>
@@ -157,34 +159,34 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
             <span className="mx-2" aria-hidden="true">/</span>
             <span aria-current="page">{page.name}</span>
           </nav>
-          <p className="text-xs font-bold uppercase tracking-widest text-orange-700">{page.eyebrow}</p>
-          <h1 className="mt-4 max-w-4xl font-heading text-4xl font-black leading-tight tracking-tight sm:text-5xl">{page.heading}</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-700">{page.description}</p>
+          <p className="inline-flex max-w-full rounded-full border border-sky-200 bg-white/85 px-4 py-2 text-xs font-bold uppercase tracking-wider text-[#175C90] shadow-sm">{page.eyebrow}</p>
+          <h1 className="mt-5 max-w-4xl font-heading text-4xl font-black leading-[1.1] tracking-tight text-[#102A43] sm:text-5xl lg:text-[3.6rem]">{page.heading}</h1>
+          <p className="mt-6 max-w-3xl text-lg leading-8 text-[#3D5B73] sm:text-xl sm:leading-9">{page.description}</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link to={enquiryHref} className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-700">
+            <Link to={enquiryHref} className="inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#102A43] px-7 py-3 font-bold text-white shadow-[0_12px_30px_rgba(16,42,67,0.18)] transition hover:bg-[#1A4268] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
               Register Group Interest
             </Link>
-            <Link to={page.premiumPath} className="inline-flex min-h-[48px] items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-3 font-bold text-slate-900 hover:bg-slate-50">
+            <Link to={page.premiumPath} className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-sky-200 bg-white px-7 py-3 font-bold text-[#102A43] shadow-sm transition hover:border-sky-400 hover:bg-sky-50">
               Explore Premium One-to-One
             </Link>
           </div>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-            We currently support groups formed by siblings or friends. New matched groups and demos are arranged only when enough children with compatible levels and schedules express interest. Registering does not guarantee an immediate batch.
+            We already teach siblings and friends together. For new groups, we first match children by learning stage and timetable, then invite suitable families to a group demo. Registering interest does not guarantee an immediate batch.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3 text-sm text-slate-700">
-            <span className="rounded-full border border-orange-200 bg-white px-4 py-2 font-semibold">Live teacher-led classes</span>
-            <span className="rounded-full border border-orange-200 bg-white px-4 py-2 font-semibold">Level and schedule matching</span>
-            <span className="rounded-full border border-orange-200 bg-white px-4 py-2 font-semibold">Individual participation</span>
+          <div className="mt-9 flex flex-wrap gap-3 text-sm text-[#1F547A]">
+            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Live teacher-led classes</span>
+            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Level and schedule matching</span>
+            <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Individual participation</span>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16" aria-labelledby="group-fit">
+      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-fit">
         <h2 id="group-fit" className="text-3xl font-bold tracking-tight">Who may benefit from this group?</h2>
         <p className="mt-3 max-w-3xl text-slate-600">{page.ageNote}</p>
-        <div className="mt-6 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-5 md:grid-cols-3">
           {page.idealFor.map((item, index) => (
-            <article key={item} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <article key={item} className="rounded-3xl border border-[#D2E8FA] bg-white p-6 shadow-[0_12px_35px_rgba(27,85,133,0.08)] transition-shadow hover:shadow-[0_18px_40px_rgba(27,85,133,0.13)]">
               <span className="text-sm font-bold text-orange-700">0{index + 1}</span>
               <p className="mt-3 leading-7 text-slate-700">{item}</p>
             </article>
@@ -192,13 +194,13 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         </div>
       </section>
 
-      <section className="bg-white px-5 py-12 sm:px-8 sm:py-16" aria-labelledby="group-learning">
+      <section className="border-y border-sky-100 bg-gradient-to-b from-white via-[#FAFDFF] to-[#EAF6FF] px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-learning">
         <div className="mx-auto max-w-6xl">
           <h2 id="group-learning" className="text-3xl font-bold tracking-tight">What children practise</h2>
           <p className="mt-3 max-w-3xl leading-7 text-slate-600">Progression and activities follow children's current skills, rather than an identical lesson for every age.</p>
-          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2">
             {page.learningSteps.map((step, index) => (
-              <article key={step.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+              <article key={step.title} className="rounded-3xl border border-[#D5EAFE] bg-white/95 p-6 shadow-[0_12px_30px_rgba(27,85,133,0.07)] sm:p-7">
                 <p className="text-xs font-bold uppercase tracking-wider text-orange-700">Learning step {index + 1}</p>
                 <h3 className="mt-2 text-xl font-bold">{step.title}</h3>
                 <p className="mt-2 leading-7 text-slate-700">{step.detail}</p>
@@ -208,11 +210,11 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-12 sm:px-8 sm:py-16" aria-labelledby="group-participation">
+      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-participation">
         <h2 id="group-participation" className="text-3xl font-bold tracking-tight">How small-group teaching works</h2>
-        <div className="mt-6 grid gap-4 lg:grid-cols-3">
+        <div className="mt-8 grid gap-5 lg:grid-cols-3">
           {page.participation.map((item) => (
-            <div key={item} className="rounded-2xl border border-orange-100 bg-orange-50/70 p-5 leading-7 text-slate-800">{item}</div>
+            <div key={item} className="rounded-3xl border border-[#CDE7FA] bg-white p-6 leading-7 text-[#244962] shadow-[0_12px_32px_rgba(27,85,133,0.07)]">{item}</div>
           ))}
         </div>
       </section>
@@ -236,23 +238,25 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-5 py-12 sm:px-8 sm:py-16" aria-labelledby="group-faq">
+      <section className="bg-gradient-to-b from-[#E7F4FF] via-[#F5FBFF] to-[#ECF8FF] px-5 py-14 sm:px-8 sm:py-20" aria-labelledby="group-faq">
+        <div className="mx-auto max-w-4xl">
         <h2 id="group-faq" className="text-3xl font-bold tracking-tight">Questions parents ask</h2>
-        <div className="mt-6 divide-y divide-slate-200 border-y border-slate-200">
+        <div className="mt-7 overflow-hidden rounded-3xl border border-[#D2E7F8] bg-white px-5 shadow-[0_12px_36px_rgba(27,85,133,0.08)] sm:px-7">
           {page.questions.map(({ question, answer }) => (
-            <details key={question} className="group py-5">
+            <details key={question} className="group border-b border-sky-100 py-5 last:border-0">
               <summary className="cursor-pointer text-lg font-semibold leading-7">{question}</summary>
               <p className="mt-3 max-w-3xl leading-7 text-slate-700">{answer}</p>
             </details>
           ))}
         </div>
+        </div>
       </section>
 
-      <section className="border-t border-orange-100 bg-orange-50 px-5 py-12 sm:px-8 sm:py-16">
-        <div className="mx-auto max-w-4xl text-center">
+      <section className="border-t border-[#B8DFF7] bg-gradient-to-br from-[#D9EEFF] via-[#EAF7FF] to-[#F8FCFF] px-5 py-14 sm:px-8 sm:py-20">
+        <div className="mx-auto max-w-4xl rounded-[32px] border border-white bg-white/85 px-6 py-10 text-center shadow-[0_24px_65px_rgba(25,90,150,0.10)] sm:px-10 sm:py-14">
           <h2 className="text-3xl font-bold">Interested in a suitable small group?</h2>
           <p className="mt-3 leading-7 text-slate-700">Tell us your child's learning needs. We will contact you to discuss level matching, timing and the next possible group demo. There is no obligation to enrol.</p>
-          <Link to={enquiryHref} className="mt-6 inline-flex min-h-[48px] items-center justify-center rounded-xl bg-orange-600 px-6 py-3 font-bold text-white hover:bg-orange-700">Register Group Interest</Link>
+          <Link to={enquiryHref} className="mt-7 inline-flex min-h-[48px] items-center justify-center rounded-full bg-[#102A43] px-7 py-3 font-bold text-white shadow-lg transition hover:bg-[#1A4268]">Register Group Interest</Link>
         </div>
       </section>
     </main>
