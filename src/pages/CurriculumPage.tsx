@@ -536,20 +536,20 @@ const CurriculumPage: FC = () => {
                       className={
                         'group min-h-[126px] rounded-2xl border p-4 text-left transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 ' +
                         (active
-                          ? 'border-orange-300/70 bg-white text-slate-950 shadow-lg'
-                          : 'border-white/10 bg-white/[0.045] text-white hover:-translate-y-0.5 hover:border-orange-300/35 hover:bg-white/[0.08]')
+                          ? 'border-[#CBB7E0] bg-white text-[#17284C] shadow-lg'
+                          : 'border-white/10 bg-white/[0.045] text-white hover:-translate-y-0.5 hover:border-[#D3B9E1]/50 hover:bg-white/[0.08]')
                       }
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span
                           className={
                             'flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ' +
-                            (active ? 'bg-orange-100 text-orange-800' : 'bg-white/10 text-slate-300')
+                            (active ? 'bg-[#F1EDFC] text-[#604577]' : 'bg-white/10 text-slate-300')
                           }
                         >
                           {String(index + 1).padStart(2, '0')}
                         </span>
-                        <span className={'text-lg transition group-hover:translate-x-0.5 ' + (active ? 'text-orange-600' : 'text-slate-500')} aria-hidden="true">
+                        <span className={'text-lg transition group-hover:translate-x-0.5 ' + (active ? 'text-[#755E96]' : 'text-slate-500')} aria-hidden="true">
                           →
                         </span>
                       </div>
@@ -586,7 +586,7 @@ const CurriculumPage: FC = () => {
                 className={
                   'relative whitespace-nowrap py-1 transition hover:text-slate-950 ' +
                   (active
-                    ? 'text-slate-950 after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-orange-500'
+                    ? 'text-slate-950 after:absolute after:-bottom-2 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-[#755E96]'
                     : '')
                 }
               >
@@ -685,7 +685,7 @@ const CurriculumPage: FC = () => {
         </div>
       </section>
 
-      <section id="progression" className="scroll-mt-32 bg-slate-950 text-white" aria-labelledby="progression-heading">
+      <section id="progression" className="scroll-mt-32 bg-[#212B5C] text-white" aria-labelledby="progression-heading">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="max-w-3xl">
             <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">How skills develop</p>
@@ -780,7 +780,7 @@ const CurriculumPage: FC = () => {
                   className={
                     'rounded-full px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 ' +
                     (tab === key
-                      ? 'bg-slate-950 text-white'
+                      ? 'bg-[#212B5C] text-white'
                       : 'border border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:text-slate-950')
                   }
                 >
@@ -993,7 +993,7 @@ const CurriculumPage: FC = () => {
           <ol className="mt-9 grid border-y border-slate-200 md:grid-cols-5 md:divide-x md:divide-slate-200">
             {placementSteps.map((step, index) => (
               <li key={step.title} className="border-b border-slate-200 px-1 py-5 last:border-b-0 md:border-b-0 md:px-5 md:py-6">
-                <span className="text-xs font-black text-orange-600">{String(index + 1).padStart(2, '0')}</span>
+                <span className="text-xs font-black text-[#755E96]">{String(index + 1).padStart(2, '0')}</span>
                 <h3 className="mt-2 text-lg font-bold text-slate-950">{step.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
               </li>
