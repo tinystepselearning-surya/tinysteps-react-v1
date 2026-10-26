@@ -877,7 +877,7 @@ const FAQPage: FC = () => {
                 />
               ) : (
                 <div className="rounded-[1.8rem] border border-slate-200 bg-white p-7 shadow-[0_18px_50px_rgba(15,23,42,0.05)]">
-                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-700">No exact match</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#604577]">No exact match</p>
                   <h3 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Try a shorter search or ask us directly</h3>
                   <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
                     Search for one key idea such as “fees”, “teacher”, “recording”, “reschedule” or “phonics”. If your question is specific to your child or current timetable, the Tiny Steps team can help.
