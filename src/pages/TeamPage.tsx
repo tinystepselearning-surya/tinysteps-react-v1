@@ -96,7 +96,7 @@ export default function TeamPage() {
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Founder profile</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">Founder profile</p>
             <p className="mt-1 text-sm leading-6 text-slate-700">
               Read Priya&apos;s dedicated founder profile, academic leadership scope and learning principles.
             </p>
