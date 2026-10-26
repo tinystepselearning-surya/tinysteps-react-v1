@@ -17,6 +17,7 @@ export type ClassSampleItem = {
   durationLabel: string;
   youtubeUrl: string;
   youtubeVideoId: string;
+  youtubeUploadDate: string;
   featured: boolean;
   active: boolean;
   sortOrder: number;
@@ -74,12 +75,57 @@ export function normalizeYouTubeUrl(value: string): string | null {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }
 
+/**
+ * Use only the video's original YouTube date, verified by the publisher.
+ * Firestore createdAt/updatedAt are NOT the video's upload date.
+ * The empty string represents unknown or invalid metadata.
+ */
+export function normalizeYouTubeUploadDate(value: unknown): string {
+  if (typeof value !== 'string') return '';
+  const trimmed = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return '';
+  const parsed = new Date(`${trimmed}T00:00:00.000Z`);
+  return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === trimmed
+    ? trimmed
+    : '';
+}
+
+/**
+ * Emit eligible VideoObject data only for an active video with independently
+ * confirmed YouTube upload date. The title/description remain the approved
+ * Tiny Steps gallery text; the thumbnail is the video's standard YouTube image.
+ * This does not imply that an unlisted video is approved for public indexing.
+ */
+export function buildClassSampleVideoObject(video: ClassSampleItem, canonicalUrl: string) {
+  const uploadDate = normalizeYouTubeUploadDate(video.youtubeUploadDate);
+  if (!video.active || !isValidYouTubeVideoId(video.youtubeVideoId)
+    || !video.title.trim() || !video.description.trim() || !uploadDate) {
+    return null;
+  }
+  const youtubeUrl = `https://www.youtube.com/watch?v=${video.youtubeVideoId}`;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    '@id': `${canonicalUrl}#video-${video.id}`,
+    name: video.title,
+    description: video.description,
+    uploadDate,
+    embedUrl: `https://www.youtube-nocookie.com/embed/${video.youtubeVideoId}?rel=0&modestbranding=1`,
+    url: youtubeUrl,
+    thumbnailUrl: `https://i.ytimg.com/vi/${video.youtubeVideoId}/hqdefault.jpg`,
+  };
+}
+
 export function toClassSampleItem(id: string, data: any): ClassSampleItem {
-  const fallbackVideoId = extractYouTubeVideoId(String(data?.youtubeUrl || '')) || '';
-  const youtubeVideoId = isValidYouTubeVideoId(String(data?.youtubeVideoId || '').trim())
-    ? String(data.youtubeVideoId).trim()
-    : fallbackVideoId;
-  const youtubeUrl = normalizeYouTubeUrl(String(data?.youtubeUrl || '').trim()) || '';
+  // Prefer the canonical URL's ID if legacy stored fields disagree: the
+  // thumbnail, player and watch URL must all describe the same video.
+  const urlVideoId = extractYouTubeVideoId(String(data?.youtubeUrl || '')) || '';
+  const storedVideoId = String(data?.youtubeVideoId || '').trim();
+  const youtubeVideoId = urlVideoId
+    || (isValidYouTubeVideoId(storedVideoId) ? storedVideoId : '');
+  const youtubeUrl = youtubeVideoId
+    ? `https://www.youtube.com/watch?v=${youtubeVideoId}`
+    : '';
   const rawCategory = String(data?.category || '').trim().toLowerCase();
   const category = CLASS_SAMPLE_CATEGORIES.includes(rawCategory as ClassSampleCategory)
     ? (rawCategory as ClassSampleCategory)
@@ -95,6 +141,7 @@ export function toClassSampleItem(id: string, data: any): ClassSampleItem {
     durationLabel: String(data?.durationLabel || '').trim(),
     youtubeUrl,
     youtubeVideoId,
+    youtubeUploadDate: normalizeYouTubeUploadDate(data?.youtubeUploadDate),
     featured: Boolean(data?.featured),
     active: Boolean(data?.active),
     sortOrder: Number.isFinite(nextSortOrder) ? nextSortOrder : 0,
