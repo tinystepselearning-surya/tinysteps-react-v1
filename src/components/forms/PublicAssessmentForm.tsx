@@ -387,6 +387,19 @@ export default function PublicAssessmentForm({
     }
   };
 
+  const displayedSubmitLabel = form.classFormatPreference === 'small_group'
+    ? 'Register Group Interest on WhatsApp'
+    : form.classFormatPreference === 'unsure'
+      ? 'Request Class-Format Guidance on WhatsApp'
+      : preferredFormat === 'small_group'
+        ? 'Book Free 35-Minute 1:1 Assessment on WhatsApp'
+        : submitLabel;
+  const displayedHelperText = form.classFormatPreference === 'small_group'
+    ? 'Group demos are arranged after suitable learners and schedules are matched.'
+    : form.classFormatPreference === 'unsure'
+      ? 'Our team will discuss the most suitable format with you.'
+      : helperText;
+
   const isHeroCompact = appearance === 'heroCompact';
   const cardClassName = appearance === 'embedded'
     ? 'border-white/90 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:p-7'
@@ -575,19 +588,19 @@ export default function PublicAssessmentForm({
 
         <button
           type="submit"
-          aria-label={submitAriaLabel}
+          aria-label={form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
           disabled={isSubmitting}
           className={submitClassName}
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
         >
-          {isSubmitting ? 'Saving your request...' : submitLabel}
+          {isSubmitting ? 'Saving your request...' : displayedSubmitLabel}
         </button>
 
         <div className="space-y-1 text-center">
-          <p className={`text-xs ${NAVY_TEXT}`}>{helperText}</p>
-          {secondaryHelperText ? (
+          <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
+          {secondaryHelperText && form.classFormatPreference === 'one_to_one' ? (
             <p className="text-xs text-slate-600">{secondaryHelperText}</p>
           ) : null}
         </div>
