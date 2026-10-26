@@ -18,9 +18,8 @@ const fail = msg => { throw Error('TSSA-7/B3 ' + msg); };
 const index = JSON.parse(read('public/ai-resource-index.json'));
 const families = Object.values(index.corpus).filter(Array.isArray).flat();
 const byPath = new Map(families.map(entry => [new URL(entry.canonical_url).pathname, entry]));
-// Keep the historical 279-owner baseline frozen (19 October 2026).
-// Later approved Phonics age programmes AND group commercial pages are
-// separate present-day additions, not retroactively historical owners.
+// Preserve the frozen 279-owner historical baseline and separately enumerate
+// the four age-specific Phonics and three approved group-programme owners.
 const groupPagePaths = [
   '/group-phonics-classes-for-kids',
   '/group-grammar-classes-for-kids',
