@@ -1997,6 +1997,18 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
   border: 1px solid var(--ts-sunrise-border);
 }
 
+/*
+ * Neutral-background migration bridge for older standalone public pages.
+ * Only neutral cream/off-white page panels are mapped. Do not recolour
+ * semantic warning badges, status chips, diagrams or brand imagery.
+ */
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfaf7]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfaf8]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fbfbfd]"],
+[data-ts-surface="public"] :is(main, section, article, div)[class*="bg-[#fffaf7]"] {
+  background-color: var(--ts-sunrise-page);
+}
+
 /* Universal keyboard cues for new themed components. */
 [data-ts-surface="public"] .ts-sunrise-link:focus-visible,
 [data-ts-surface="public"] .ts-sunrise-button:focus-visible {
