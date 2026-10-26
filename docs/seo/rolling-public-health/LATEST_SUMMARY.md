@@ -38,3 +38,13 @@ The connected GitHub tools in this run supported file reads and writes but not r
 - Slots 21–22 are for reconciliation and recovery; slots 23–24 are catch-up. No unchecked current-day URLs remain, so they should not create duplicate URL checks.
 - The 202/202 number measures **attempted coverage**, not origin-certified readiness. Reliable direct origin HTTPS access is needed to establish complete technical PASS/FAIL results.
 - Only the tracker and summary files were updated on `seo-url-health-tracker`; no repository source, workflows, Firebase, Hosting or production settings were changed. The separate six-hour outside-in visibility task was not changed.
+
+## Slot 21 reconciliation — 26 October 2026, approximately 20:16 IST
+
+No additional URL probes were made: **all 202 selected URLs had already been attempted during Slots 1–20**, so reconciliation must not create duplicate checks. Re-read the current tracker and validated **202 rows, 202 distinct URLs, unique sequential row indices 1–202**, with **10 URLs each in Slots 1–19 and 12 in Slot 20**. Every row is dated **2026-10-26 IST** and has a parseable UTC check timestamp corresponding to 26 October IST. Current-day outcomes remain **202 UNVERIFIED, 0 PASS, 0 WARN, 0 FAIL, 0 unchecked**. No new origin-state observation was made; the 202/202 metric remains attempted, not verified, coverage.
+
+**Timestamp precision exception:** Rows **1–10** contain **five pairs of identical second-resolution `checked_at_utc` values** (1/2, 3/4, 5/6, 7/8, 9/10). They are not uniquely timestamped at the recorded precision. The original evidence describes separate URL-specific retrievals/probes, but the stored timestamps cannot independently establish different execution instants. **Do not fabricate subsecond times or rewrite the historical record.** Other rows' full timestamp strings are unique. Future runs should retain distinct actual probe initiation/completion timestamps at sufficient precision.
+
+**Workflow safety:** The connected GitHub toolset still lacks repository-wide Actions workflow administrative-state/recent-run listing. The public GitHub API workflow-state URL was inaccessible through web retrieval during reconciliation. Accordingly, concurrent-run/disabled-state verification remains unavailable; proceed under the user's explicit 25 October disable confirmation. Cron YAML presence is not evidence of an enabled workflow. No GitHub workflow was started, enabled, or modified.
+
+**Change ledger:** No verified new regression or improvement, so [CHANGES.md](./CHANGES.md) was not changed. No source, Hosting, Firebase, workflow, or other production changes. Slots 22–24 should reconcile or recover only genuinely missing checks; none remain today.
