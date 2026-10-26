@@ -24,13 +24,13 @@ const quickRoutes = [
     title: 'Child reads slowly',
     detail: 'Use the slow-reader support guide to diagnose blending, fluency, and confidence gaps.',
     to: '/slow-reader-child-help',
-    accent: 'from-[#eef6ff] to-[#fff8ef]',
+    accent: 'from-[#E7F3FF] to-[#F1EDFC]',
   },
   {
     title: 'Child needs reading classes',
     detail: 'Go to the evergreen reading support page for fluency and comprehension progression.',
     to: '/reading-classes-for-kids',
-    accent: 'from-[#fff5f2] to-[#fffaf5]',
+    accent: 'from-[#FFE5EB] to-[#FFF5DF]',
   },
   {
     title: 'Child makes grammar mistakes',
@@ -42,13 +42,13 @@ const quickRoutes = [
     title: 'Child needs sentence formation or writing support',
     detail: 'Use the writing support page for sentence-building and writing progression.',
     to: '/writing-classes-for-kids',
-    accent: 'from-[#eef6ff] to-[#fff8ef]',
+    accent: 'from-[#E7F3FF] to-[#F1EDFC]',
   },
   {
     title: 'Child gives short answers or lacks confidence',
     detail: 'Use the shy-child communication guide for confidence and expressive speaking support.',
     to: '/shy-child-speaking-confidence',
-    accent: 'from-[#fff5f2] to-[#fffaf5]',
+    accent: 'from-[#FFE5EB] to-[#FFF5DF]',
   },
   {
     title: 'Parent unsure which course to choose',
@@ -284,7 +284,7 @@ const ParentsHubPage: React.FC = () => {
 
       <section className="relative overflow-hidden border-b border-slate-900 bg-slate-950 text-white">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800" />
-        <div className="absolute -left-20 top-0 h-72 w-72 rounded-full bg-amber-300/15 blur-3xl" />
+        <div className="absolute -left-20 top-0 h-72 w-72 rounded-full bg-[#F6CF7E]/15 blur-3xl" />
         <div className="absolute right-0 top-10 h-80 w-80 rounded-full bg-sky-400/10 blur-3xl" />
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950 to-transparent" />
         <div className="relative mx-auto max-w-7xl px-6 pb-16 pt-16 sm:pt-20">
@@ -376,7 +376,7 @@ const ParentsHubPage: React.FC = () => {
             className="relative overflow-hidden rounded-[2rem] border border-slate-900 bg-slate-950 p-6 text-white shadow-[0_28px_70px_rgba(15,23,42,0.16)] transition hover:-translate-y-0.5 hover:shadow-[0_32px_80px_rgba(15,23,42,0.2)] sm:p-8"
           >
             <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-[#102143] to-[#1f3b69]" />
-            <div className="absolute -left-10 top-0 h-40 w-40 rounded-full bg-amber-300/20 blur-3xl" />
+            <div className="absolute -left-10 top-0 h-40 w-40 rounded-full bg-[#F6CF7E]/20 blur-3xl" />
             <div className="absolute right-0 top-6 h-48 w-48 rounded-full bg-sky-400/15 blur-3xl" />
             <div className="relative">
               <p className="text-xs font-semibold uppercase tracking-[0.28em] text-sky-100">{featuredGuides[0].label}</p>
