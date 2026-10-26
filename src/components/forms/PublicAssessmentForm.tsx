@@ -394,6 +394,16 @@ export default function PublicAssessmentForm({
       : preferredFormat === 'small_group'
         ? 'Book Free 35-Minute 1:1 Assessment on WhatsApp'
         : submitLabel;
+  const displayedTitle = title === 'Book Assessment' && form.classFormatPreference === 'small_group'
+    ? 'Group Class Enquiry'
+    : title === 'Book Assessment' && form.classFormatPreference === 'unsure'
+      ? 'Find the Right Class Format'
+      : title;
+  const displayedDescription = form.classFormatPreference === 'small_group'
+    ? 'Share your child’s details. We will contact you when a suitable group and timing can be arranged.'
+    : form.classFormatPreference === 'unsure'
+      ? 'Tell us about your child and we will help you choose a suitable learning format.'
+      : description;
   const displayedHelperText = form.classFormatPreference === 'small_group'
     ? 'Group demos are arranged after suitable learners and schedules are matched.'
     : form.classFormatPreference === 'unsure'
@@ -426,8 +436,8 @@ export default function PublicAssessmentForm({
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
       <div className={headerClassName}>
-        <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{title}</h2>
-        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{description}</p>
+        <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{displayedTitle}</h2>
+        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{displayedDescription}</p>
       </div>
 
       <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
