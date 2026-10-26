@@ -327,7 +327,7 @@ export default function GrammarPage() {
 
       <section className="px-4 py-5 sm:px-5 md:py-7 lg:px-6">
         <div className="mx-auto grid max-w-6xl gap-4 border-y border-slate-200/80 py-5 md:grid-cols-[0.28fr_0.72fr] md:items-start md:gap-8 md:py-6">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700">Parent clarity</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#604577]">Parent clarity</p>
           <div>
             <h2 className="ts-grammar-answer-title text-xl font-semibold tracking-[-0.025em] text-slate-950 md:text-2xl">Quick Answer: What do grammar classes for kids include?</h2>
             <p className="ts-grammar-answer-summary mt-2 max-w-[920px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
@@ -339,7 +339,7 @@ export default function GrammarPage() {
 
       <section id="tiny-steps-positioning" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[26px] border border-sky-100 bg-white/95 p-5 shadow-[0_18px_50px_rgba(15,23,42,0.05)] md:p-7">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-700">Why Tiny Steps stands out</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#604577]">Why Tiny Steps stands out</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-[-0.03em] text-slate-950 sm:text-3xl">
             Why families shortlist Tiny Steps for online grammar support
           </h2>
@@ -374,7 +374,7 @@ export default function GrammarPage() {
 
       <section className="px-4 py-8 sm:px-5 lg:px-6" aria-labelledby="grammar-worked-example">
         <div className="mx-auto max-w-6xl rounded-[24px] border border-sky-100 bg-[#EAF6FF] p-5 md:p-7">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700">Illustrative teaching example · not a real student record</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#604577]">Illustrative teaching example · not a real student record</p>
           <h2 id="grammar-worked-example" className="mt-2 text-2xl font-bold text-slate-950 sm:text-3xl">What if my child knows the tense rule but still makes mistakes?</h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-700">
             Knowing a grammar rule is different from using it independently. This fictional example shows a possible model → correction → fresh-task sequence; the actual class adapts to each child.
@@ -468,7 +468,7 @@ export default function GrammarPage() {
           <div className="mt-5 grid gap-x-6 gap-y-4 md:grid-cols-3">
             {grammarPathwayCards.map((card, index) => (
               <article key={card.name} className="flex h-full flex-col border-l border-slate-200 pl-4">
-                <span className="text-[10px] font-bold tracking-[0.16em] text-orange-600">0{index + 1}</span>
+                <span className="text-[10px] font-bold tracking-[0.16em] text-[#315B8A]">0{index + 1}</span>
                 <h3 className="mt-1.5 text-base font-semibold text-slate-900">{card.name}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{card.description}</p>
               </article>
@@ -546,8 +546,8 @@ export default function GrammarPage() {
         <div className="mx-auto max-w-6xl">
           <h2 className="mb-5 text-2xl font-bold text-slate-900 sm:text-3xl">Grammar levels and age guidance</h2>
           <div className="grid gap-4 md:gap-5 md:grid-cols-3">
-            <article className="flex h-full flex-col rounded-[22px] border border-amber-100 bg-white p-5">
-              <span className="inline-flex w-fit rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-amber-800">{grammarFacts.levels.beginner.label} · {grammarFacts.levels.beginner.ageRange.label}</span>
+            <article className="flex h-full flex-col rounded-[22px] border border-[#D7E5F4] bg-white p-5">
+              <span className="inline-flex w-fit rounded-full bg-[#F1EDFC] px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-[#604577]">{grammarFacts.levels.beginner.label} · {grammarFacts.levels.beginner.ageRange.label}</span>
               <p className="mt-3 text-sm text-slate-700">
                 {grammarFacts.levels.beginner.lessonCount} lessons build core grammar, sentence formation, punctuation, tense foundations, and accurate use in meaningful sentences.
               </p>
@@ -592,7 +592,7 @@ export default function GrammarPage() {
 
       <section className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[26px] bg-slate-950 p-5 text-white shadow-[0_24px_60px_rgba(15,23,42,0.12)] md:p-7">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-orange-300">Free 1:1 starting check</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#F6CF7E]">Free 1:1 starting check</p>
           <h2 className="mb-4 mt-2 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">What happens in the free grammar assessment?</h2>
           <div className="grid gap-6 md:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
             <div>
