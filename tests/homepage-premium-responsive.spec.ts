@@ -309,10 +309,22 @@ test('public pages reuse one lightweight scroll progress bar that tracks scrolli
     await expect(progress).toHaveCount(1);
     await expect(page.locator('#ts-commercial-owner-progress')).toHaveCount(0);
     await expect(progress).toHaveAttribute('aria-hidden', 'true');
+    // The public header mounts before lazy route content. Waiting for the h1
+    // and sufficient document height avoids scrolling an empty route shell.
+    await expect(page.locator('main h1').first()).toBeVisible();
+    await expect.poll(async () => page.evaluate(
+      () => document.documentElement.scrollHeight - window.innerHeight,
+    )).toBeGreaterThan(300);
+
     await page.evaluate(() => {
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (maxScroll > 0) window.scrollTo(0, maxScroll * 0.65);
+      // Bypass global smooth scrolling to make this browser assertion deterministic.
+      window.scrollTo({ top: maxScroll * 0.65, behavior: 'instant' as ScrollBehavior });
     });
+    await expect.poll(async () => page.evaluate(() => {
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      return maxScroll > 0 ? window.scrollY / maxScroll : 0;
+    })).toBeGreaterThan(0.3);
     await expect.poll(async () => progress.locator('span').evaluate((element) => {
       const match = element.getAttribute('style')?.match(/scaleX\(([^)]+)\)/);
       return match ? Number(match[1]) : 0;
