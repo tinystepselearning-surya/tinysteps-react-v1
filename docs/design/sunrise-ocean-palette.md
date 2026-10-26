@@ -81,3 +81,46 @@ The script covers public-facing page and shared component source; it intentional
 - Automated axe/Lighthouse accessibility audit and manual WCAG contrast inspection of text over actual gradients or images.
 - New dark-card heading test plus full TypeScript, Vitest and production prerender gates.
 - Sitewide contrast scan and any remaining legacy warm colour review should precede merge, but do not erase semantic caution/success/error colours.
+
+
+## 26 October follow-up — readable typography, not just pastel backgrounds
+
+The approved sunrise orange **#FF7A00** remains a visual and large-text accent on
+deep navy (**5.14:1** against #212B5C), but **must not be used as small copy on
+white** (**2.61:1**). Likewise, pale lavender, blush, sky and gold are generally
+surfaces or dark-background accents, not standard text on white.
+
+New explicit text tokens in `src/index.css`:
+
+| Token | Swatch | Intended pairing |
+|---|---|---|
+| `--ts-sunrise-orange` | `#FF7A00` | Branded sunrise highlight on dark navy, NOT small copy on white |
+| `--ts-sunrise-text-orange` | `#C2410C` | Selective readable orange on white (5.18:1), sky (4.60:1), lavender (4.50:1); not regular copy on blush |
+| `--ts-sunrise-text-ocean` | `#315B8A` | Labels/secondary emphasis on all approved pale backgrounds (at least 5.9:1) |
+| `--ts-sunrise-text-purple` | `#604577` | Lavender-family link and eyebrow labels on all approved pale backgrounds (at least 6.75:1) |
+| `--ts-sunrise-text-on-dark` | `#D3B9E1` | Pastel-lavender text on navy (7.54:1); NEVER body copy on white |
+| `--ts-sunrise-ink` | `#17284C` | Headings and primary body |
+| `--ts-sunrise-body` | `#405678` | Paragraphs and supporting copy |
+
+The text sweep replaces non-semantic brown/amber labels on the main public
+commercial pages, public header/footer, selected resource and FAQ labels,
+and speaking-progress illustrations. It does **not** change the actual image
+logo, user-generated content, payment statuses, validation/errors, child-game
+feedback, classroom annotation colours or protected dashboards.
+
+### Evidence and remaining review
+
+- `node scripts/audit-public-text-palette.mjs` inventories text-utility
+  and raw CSS colour usage across all source files, separated into public,
+  protected, specialised and other. It emits a review queue; it is **read-only**.
+- `--strict` guards a curated set of high-traffic public pages against
+  reintroducing old orange/amber/yellow text utilities; it does not assert that
+  every additional utility is a contrast violation.
+- `src/tests/seo/publicTextPalette.spec.ts` checks accessible pairings and
+  protects public scoping and authentic branded emphasis.
+- The browser and Lighthouse audits still need computed-style confirmation
+  on photos, transparent overlays, gradient endpoints, hover/focus states,
+  and actual mobile devices. A source token inventory alone is insufficient.
+
+**Deployment:** This documentation does not represent a successful deployment;
+PRs #809 and #810 require all release checks before they can merge.
