@@ -182,7 +182,7 @@ export default function Header() {
           )}
         </div>
 
-        <div className="hidden items-center md:flex">
+        <div className="hidden items-center xl:flex">
           <button
             type="button"
             onClick={handlePrimaryAction}
@@ -287,7 +287,7 @@ export default function Header() {
 
       <div
         id="mobile-nav-menu"
-        className={`overflow-hidden border-t border-[#D7E5F4] bg-white/96 transition-[max-height] duration-300 motion-reduce:transition-none backdrop-blur xl:hidden ${
+        className={`overflow-hidden border-t border-[#D7E5F4] bg-white/96 transition-[max-height,opacity] duration-300 motion-reduce:transition-none backdrop-blur xl:hidden ${
           isOpen ? "max-h-[520px] opacity-100" : "max-h-0 opacity-0"
         }`}
       >
