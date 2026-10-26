@@ -291,12 +291,12 @@ const pageNavItems = [
 
 const premiumTones = [
   {
-    card: 'border-orange-200/80 bg-gradient-to-br from-white via-orange-50/55 to-amber-50/75 hover:border-orange-300 hover:shadow-[0_18px_44px_rgba(249,115,22,0.14)]',
-    badge: 'bg-orange-100 text-orange-800 ring-orange-200',
-    glow: 'bg-orange-200/55',
-    accent: 'from-orange-400 to-amber-400',
-    soft: 'bg-orange-50/80',
-    row: 'bg-gradient-to-r from-orange-50/65 to-white hover:from-orange-100/70',
+    card: 'border-[#E5C7D8]/80 bg-gradient-to-br from-white via-[#FFE5EB]/55 to-[#FFF5DF]/75 hover:border-[#C69ABE] hover:shadow-[0_18px_44px_rgba(249,115,22,0.14)]',
+    badge: 'bg-[#FFD1DC] text-[#54345D] ring-[#E5C7D8]',
+    glow: 'bg-[#E5C7D8]/55',
+    accent: 'from-[#755E96] to-[#D8B164]',
+    soft: 'bg-[#FFE5EB]/80',
+    row: 'bg-gradient-to-r from-[#FFE5EB]/65 to-white hover:from-[#FFD1DC]/70',
   },
   {
     card: 'border-sky-200/80 bg-gradient-to-br from-white via-sky-50/55 to-cyan-50/75 hover:border-sky-300 hover:shadow-[0_18px_44px_rgba(14,165,233,0.13)]',
@@ -331,12 +331,12 @@ const premiumTones = [
     row: 'bg-gradient-to-r from-rose-50/60 to-white hover:from-rose-100/65',
   },
   {
-    card: 'border-amber-200/80 bg-gradient-to-br from-white via-amber-50/55 to-yellow-50/65 hover:border-amber-300 hover:shadow-[0_18px_44px_rgba(245,158,11,0.12)]',
-    badge: 'bg-amber-100 text-amber-800 ring-amber-200',
-    glow: 'bg-amber-200/50',
-    accent: 'from-amber-400 to-yellow-400',
-    soft: 'bg-amber-50/80',
-    row: 'bg-gradient-to-r from-amber-50/60 to-white hover:from-amber-100/65',
+    card: 'border-[#F6CF7E]/80 bg-gradient-to-br from-white via-[#FFF5DF]/55 to-yellow-50/65 hover:border-[#E9C375] hover:shadow-[0_18px_44px_rgba(245,158,11,0.12)]',
+    badge: 'bg-[#FFE5B4] text-[#503A16] ring-[#F6CF7E]',
+    glow: 'bg-[#F6CF7E]/50',
+    accent: 'from-[#D8B164] to-yellow-400',
+    soft: 'bg-[#FFF5DF]/80',
+    row: 'bg-gradient-to-r from-[#FFF5DF]/60 to-white hover:from-[#FFE5B4]/65',
   },
 ];
 
@@ -346,7 +346,7 @@ function Section({ children, tint = 'white', id }: { children: ReactNode; tint?:
   const backgrounds: Record<SectionTint, string> = {
     white: 'bg-white',
     blue: 'bg-[#F3F9FF]',
-    warm: 'bg-[#FFF9F1]',
+    warm: 'bg-[#FFF5DF]',
     lavender: 'bg-[#FBF8FF]',
   };
 
@@ -520,13 +520,13 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
   return (
     <div className="bg-white pb-24 lg:pb-16">
-      <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-[#FFF5EA] via-white to-[#EAF6FF] px-4 py-10 sm:px-5 md:py-14 lg:px-8 lg:py-[72px]">
-        <div className="pointer-events-none absolute -left-16 top-8 h-52 w-52 rounded-full bg-orange-100/90 blur-3xl" aria-hidden="true" />
+      <section className="relative overflow-hidden border-b border-slate-100 bg-gradient-to-br from-[#E7F3FF] via-[#F1EDFC] to-[#FFE5EB] px-4 py-10 sm:px-5 md:py-14 lg:px-8 lg:py-[72px]">
+        <div className="pointer-events-none absolute -left-16 top-8 h-52 w-52 rounded-full bg-[#FFD1DC]/90 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute -right-12 top-0 h-64 w-64 rounded-full bg-sky-100/95 blur-3xl" aria-hidden="true" />
         <div className="pointer-events-none absolute bottom-0 left-[44%] h-40 w-40 rounded-full bg-violet-100/35 blur-3xl" aria-hidden="true" />
         <div className="relative mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:gap-12">
           <div>
-            <p className="inline-flex rounded-full border border-orange-200 bg-white/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 shadow-sm">
+            <p className="inline-flex rounded-full border border-[#E5C7D8] bg-white/90 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#604577] shadow-sm">
               Parent comparison & decision guide
             </p>
             <h1 className="mt-5 max-w-4xl text-4xl font-bold leading-[1.02] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[58px]">
@@ -551,7 +551,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
               </Link>
               <a
                 href="#comparison-framework"
-                className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/60 hover:shadow-md sm:w-auto"
+                className="inline-flex min-h-[50px] w-full items-center justify-center rounded-full border border-slate-300 bg-white/90 px-6 py-3 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-[#E5C7D8] hover:bg-[#FFE5EB]/60 hover:shadow-md sm:w-auto"
               >
                 Compare Phonics Options
               </a>
@@ -695,18 +695,18 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             </div>
           </div>
 
-          <aside className="group relative overflow-hidden rounded-[30px] border border-orange-200 bg-gradient-to-br from-orange-50 via-white to-amber-50/80 p-6 shadow-[0_12px_36px_rgba(249,115,22,0.07)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-orange-300 hover:shadow-[0_18px_44px_rgba(249,115,22,0.12)] sm:p-7">
-            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-orange-100/80 blur-3xl motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-125" aria-hidden="true" />
-            <div className="absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-amber-100/65 blur-3xl" aria-hidden="true" />
+          <aside className="group relative overflow-hidden rounded-[30px] border border-[#E5C7D8] bg-gradient-to-br from-[#FFE5EB] via-white to-[#FFF5DF]/80 p-6 shadow-[0_12px_36px_rgba(249,115,22,0.07)] motion-safe:transition-all motion-safe:duration-300 hover:-translate-y-0.5 hover:border-[#C69ABE] hover:shadow-[0_18px_44px_rgba(249,115,22,0.12)] sm:p-7">
+            <div className="absolute -right-12 -top-12 h-40 w-40 rounded-full bg-[#FFD1DC]/80 blur-3xl motion-safe:transition-transform motion-safe:duration-500 group-hover:scale-125" aria-hidden="true" />
+            <div className="absolute -bottom-12 left-10 h-28 w-28 rounded-full bg-[#FFE5B4]/65 blur-3xl" aria-hidden="true" />
             <div className="relative">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-700">When phonics may not be the main need</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#604577]">When phonics may not be the main need</p>
               <h3 className="mt-3 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Accurate decoding but slow or weak reading?</h3>
               <p className="mt-4 text-sm leading-7 text-slate-700 sm:text-base">
                 If your child already decodes words accurately but reads very slowly, struggles with expression, or does not understand what they read, the main bottleneck may have moved beyond basic phonics.
               </p>
               <Link
                 to="/reading-classes-for-kids"
-                className="mt-6 inline-flex min-h-[44px] items-center rounded-full border border-orange-200 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:border-orange-300 hover:bg-orange-50 hover:shadow-md"
+                className="mt-6 inline-flex min-h-[44px] items-center rounded-full border border-[#E5C7D8] bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 hover:border-[#C69ABE] hover:bg-[#FFE5EB] hover:shadow-md"
               >
                 Compare broader reading support
               </Link>
@@ -910,7 +910,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 to="/phonics-fees-india"
-                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:border-orange-200 hover:bg-orange-50/60 hover:shadow-md sm:w-auto"
+                className="inline-flex min-h-[46px] w-full items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 font-semibold text-slate-900 shadow-sm motion-safe:transition-all hover:-translate-y-0.5 hover:border-[#E5C7D8] hover:bg-[#FFE5EB]/60 hover:shadow-md sm:w-auto"
               >
                 Review Phonics Fees
               </Link>
@@ -924,7 +924,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
           </div>
 
           <div className="relative overflow-hidden rounded-[30px] border border-slate-200 bg-white p-5 shadow-[0_12px_36px_rgba(15,23,42,0.065)] sm:p-6">
-            <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-orange-100/50 blur-3xl" aria-hidden="true" />
+            <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-[#FFD1DC]/50 blur-3xl" aria-hidden="true" />
             <h3 className="relative text-xl font-bold text-slate-950">When comparing phonics class cost, ask:</h3>
             <ul className="relative mt-5 grid gap-3 text-sm leading-7 text-slate-700 sm:grid-cols-2 sm:text-base">
               {pricingQuestions.map((item, index) => {
@@ -1016,7 +1016,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
                 className={`group relative overflow-hidden rounded-2xl border bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)] motion-safe:transition-all motion-safe:duration-200 hover:-translate-y-0.5 open:translate-y-0 open:shadow-[0_12px_30px_rgba(15,23,42,0.075)] ${tone.card}`}
               >
                 <div className={`pointer-events-none absolute -right-8 -top-8 h-20 w-20 rounded-full blur-3xl ${tone.glow}`} aria-hidden="true" />
-                <summary className="relative flex min-h-[62px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-400 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
+                <summary className="relative flex min-h-[62px] cursor-pointer list-none items-center justify-between gap-4 px-5 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#755E96] focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
                   <h3 className="text-base font-bold leading-6 text-slate-900 sm:text-lg">{item.question}</h3>
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xl font-medium leading-none ring-1 motion-safe:transition-transform motion-safe:duration-200 group-open:rotate-45 ${tone.badge}`} aria-hidden="true">
                     +
@@ -1033,7 +1033,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
 
       <section className="scroll-mt-[176px] px-4 py-12 sm:px-5 md:scroll-mt-[184px] md:py-16 lg:px-6">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[34px] border border-slate-800/80 bg-gradient-to-br from-slate-950 via-[#071124] to-indigo-950 p-7 text-center text-white shadow-[0_26px_64px_rgba(15,23,42,0.24)] sm:p-10">
-          <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-orange-500/16 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -left-12 -top-12 h-48 w-48 rounded-full bg-[#FFE5EB]0/16 blur-3xl" aria-hidden="true" />
           <div className="pointer-events-none absolute -bottom-16 -right-10 h-56 w-56 rounded-full bg-sky-400/14 blur-3xl" aria-hidden="true" />
           <div className="pointer-events-none absolute left-1/2 top-0 h-px w-2/3 -translate-x-1/2 bg-gradient-to-r from-transparent via-white/45 to-transparent" aria-hidden="true" />
           <div className="relative">
@@ -1044,7 +1044,7 @@ export default function BestOnlinePhonicsClassesIndiaPage() {
             <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
               <Link
                 to="/book-demo"
-                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.10)] motion-safe:transition-all hover:-translate-y-0.5 hover:bg-orange-50 hover:shadow-[0_14px_30px_rgba(255,255,255,0.16)] sm:w-auto"
+                className="inline-flex min-h-[48px] w-full items-center justify-center rounded-full bg-white px-6 py-3 font-semibold text-slate-950 shadow-[0_10px_24px_rgba(255,255,255,0.10)] motion-safe:transition-all hover:-translate-y-0.5 hover:bg-[#FFE5EB] hover:shadow-[0_14px_30px_rgba(255,255,255,0.16)] sm:w-auto"
               >
                 Book Free Assessment
               </Link>
