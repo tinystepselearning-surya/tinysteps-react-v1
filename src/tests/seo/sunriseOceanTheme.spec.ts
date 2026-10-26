@@ -67,13 +67,13 @@ describe('Tiny Steps public sunrise-ocean design system', () => {
       const code = source(file);
       // Check props on the SAME heading, regardless of their order or description length.
       // A fixed character limit falsely rejects valid multi-line JSX attributes.
-      const headingProps = [...code.matchAll(/<LeadSectionHeading\\b([\\s\\S]*?)\\/>/g)]
+      const headingProps = [...code.matchAll(/<LeadSectionHeading\b([\s\S]*?)\/>/g)]
         .map((match) => match[1])
         .find((props) => props.includes(`eyebrow="${eyebrow}"`));
 
       expect(headingProps, `Missing LeadSectionHeading "${eyebrow}" in ${file}`).toBeDefined();
       expect(headingProps, `Dark card heading "${eyebrow}" must use tone="dark" in ${file}`)
-        .toMatch(/\\btone="dark"/);
+        .toMatch(/\btone="dark"/);
     }
     const shared = source('src/components/marketing/LeadPageSections.tsx');
     expect(shared).toContain("isDark ? 'text-white' : 'text-slate-900'");
