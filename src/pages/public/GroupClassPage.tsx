@@ -44,10 +44,10 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     participation: [
       'Each child has opportunities to say sounds, blend words and read aloud—not just watch others.',
       'The teacher models, listens, corrects and invites a fresh attempt at the group\'s shared level.',
-      'A child who needs more individual attention can be guided towards premium one-to-one phonics.',
+      'A child who needs more individual attention can be guided towards one-to-one phonics classes.',
     ],
     questions: [
-      { question: 'What is the difference between group phonics and premium 1:1 phonics?', answer: 'A small group follows a shared progression with children at a similar level. Premium 1:1 adjusts pace and practice continuously to one child. The right format depends on current decoding ability, attention and correction needs.' },
+      { question: 'What is the difference between group phonics and one-to-one phonics?', answer: 'A small group follows a shared progression with children at a similar level. One-to-one classes adjust pace and practice continuously to one child. The right format depends on current decoding ability, attention and correction needs.' },
       { question: 'Can a 3-year-old join group phonics?', answer: 'Young children need listening, language play and phonological awareness before formal reading tasks. A group is considered only if the child can participate comfortably in an age-appropriate online session; age alone does not determine placement.' },
       { question: 'Are group phonics demos available immediately?', answer: 'New group demos depend on a suitable set of interested children and compatible schedules. Register your interest and our team will explain the next steps.' },
       { question: 'Will my child practise reading during a group class?', answer: 'The intended format includes guided, individual blending and decoding turns. Activities and pace depend on the learners\' assessed starting points.' },
@@ -108,7 +108,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
     participation: [
       'Each child has meaningful opportunities to speak, rather than spending the lesson only listening.',
       'Peers practise listening, asking questions and offering respectful responses.',
-      'Children needing gradual, individualised support can choose premium one-to-one speaking classes.',
+      'Children needing gradual, individualised support can choose one-to-one speaking classes.',
     ],
     questions: [
       { question: 'How is public speaking different from spoken English?', answer: 'Public speaking focuses on communicating organised ideas to listeners through storytelling, explanations, show-and-tell and presentations. Everyday conversational fluency is a separate learning need.' },
@@ -132,7 +132,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
     ...page.questions,
     {
       question: 'How many children are in a Tiny Steps group class?',
-      answer: 'Our new group format is one teacher with four students, with a 50-minute session at ₹220 per child under the standard plan. We invite suitable families to a group demo when enough level-matched children and compatible timings are available.',
+      answer: 'Our group classes have a maximum of four children per teacher. Children are matched by learning level and compatible schedules. A 50-minute group class costs ₹250 per child, and a group demo is arranged when a suitable batch is forming.',
     },
   ];
   const schemas = [
@@ -172,11 +172,11 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
               Register Group Interest
             </Link>
             <Link to={page.premiumPath} className="inline-flex min-h-[48px] items-center justify-center rounded-full border border-sky-200 bg-white px-7 py-3 font-bold text-[#102A43] shadow-sm transition hover:border-sky-400 hover:bg-sky-50">
-              Explore Premium One-to-One
+              Explore One-to-One Classes
             </Link>
           </div>
           <p className="mt-4 max-w-3xl text-sm leading-6 text-slate-600">
-            We already teach siblings and friends together. New four-student groups are formed by matching children at similar learning stages and suitable timings. Group demos are arranged when enough compatible families are interested; registering does not guarantee an immediate batch.
+            We already teach siblings and friends together. New group classes are arranged by matching children at similar learning stages and suitable timings. Group demos are scheduled when enough compatible families are interested; registering does not guarantee an immediate batch.
           </p>
           <div className="mt-9 flex flex-wrap gap-3 text-sm text-[#1F547A]">
             <span className="rounded-full border border-sky-200 bg-white/90 px-4 py-2 font-semibold shadow-[0_4px_16px_rgba(37,99,150,0.06)]">Live teacher-led classes</span>
@@ -230,7 +230,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         <div className="relative mx-auto max-w-6xl">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#A7DCFF]">Transparent class pricing</p>
           <h2 id="group-choice" className="mt-3 max-w-3xl text-3xl font-bold tracking-tight sm:text-4xl">
-            Small group or premium one-to-one?
+            Group Classes or One-to-One Classes?
           </h2>
           <p className="mt-4 max-w-3xl text-base leading-7 text-[#D6EAF9]">
             Both formats offer live teacher-guided learning. Choose a shared, level-matched group or a fully personalised session for your child.
@@ -239,17 +239,17 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
           <div className="mt-9 grid items-stretch gap-5 lg:grid-cols-[1.15fr_0.85fr] lg:gap-6">
             <article className="rounded-[28px] border border-white/20 bg-white/10 p-5 shadow-[0_20px_45px_rgba(0,12,31,0.18)] sm:p-7">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-2xl font-bold">Small-Group Classes</h3>
+                <h3 className="text-2xl font-bold">Group Classes</h3>
                 <span className="rounded-full border border-sky-200/30 bg-sky-100/15 px-3 py-1.5 text-xs font-bold text-[#D9F0FF]">
-                  1 teacher · 4 students
+                  Live teacher-guided learning
                 </span>
               </div>
               <p className="mt-3 text-sm leading-6 text-[#D6EAF9]">
-                One teacher guides four children at a comparable learning stage, with individual participation, peer interaction and a shared lesson rhythm.
+                Children at a comparable learning stage learn together with individual participation, peer interaction and a shared lesson rhythm.
               </p>
               {GROUP_PLAN && (
                 <div className="mt-6 rounded-2xl border border-white/20 bg-white/10 p-5 sm:p-6">
-                  <p className="text-xs font-bold uppercase tracking-wider text-[#D6EAF9]">One teacher · Four students</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-[#D6EAF9]">Group class fees</p>
                   <p className="mt-3 text-4xl font-black tabular-nums text-white">{formatINR(GROUP_PLAN.monthlyFee / GROUP_PLAN.classes)}</p>
                   <p className="mt-1 text-sm font-semibold text-[#D6EAF9]">per child per class · {GROUP_PLAN.durationMinutes} minutes</p>
                   <div className="mt-5 border-t border-white/15 pt-4">
@@ -258,7 +258,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
                 </div>
               )}
               <p className="mt-5 text-sm leading-6 text-[#E5F3FE]">
-                <strong>Only one group format: 1 teacher to 4 students.</strong> Children are matched by learning level and suitable schedules. Group demos are organised when a compatible batch can be formed.
+                Children are matched by learning level and suitable schedules. Group demos are organised when a compatible batch can be formed.
               </p>
               <Link to={enquiryHref} className="mt-6 inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#DDF1FF] px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-white">
                 Register Group Interest
@@ -269,7 +269,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
               <span className="w-fit rounded-full bg-[#E7F5FF] px-3 py-1.5 text-xs font-bold uppercase tracking-wide text-[#175C90]">
                 Dedicated individual attention
               </span>
-              <h3 className="mt-5 text-2xl font-bold">Premium One-to-One</h3>
+              <h3 className="mt-5 text-2xl font-bold">One-to-One Classes</h3>
               <p className="mt-3 leading-7 text-[#49677F]">
                 Your child receives the teacher's full attention, individual pacing and focused correction tailored to their learning needs.
               </p>
@@ -284,12 +284,12 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
                 <p>Suitable for children needing additional personal support</p>
               </div>
               <Link to={page.premiumPath} className="mt-auto inline-flex min-h-[46px] items-center justify-center rounded-full bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1A4268] sm:mt-8">
-                Explore Premium One-to-One
+                Explore One-to-One Classes
               </Link>
             </article>
           </div>
           <p className="mt-5 text-sm leading-6 text-[#CEE6F8]">
-            These are standard published Indian-teacher rates. Group prices are per child; monthly estimates assume 12 classes. Batch timings and availability are confirmed separately.
+            Standard Indian-teacher rates. Group fees are per child; monthly estimates are for 12 classes. Batch timings and availability are confirmed separately.
             {' '}<Link to="/pricing" className="font-semibold text-white underline underline-offset-4 hover:text-sky-100">View the full pricing details</Link>.
           </p>
         </div>
