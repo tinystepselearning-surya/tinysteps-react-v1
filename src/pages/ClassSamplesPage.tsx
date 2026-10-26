@@ -359,7 +359,7 @@ export default function ClassSamplesPage() {
 
       <section className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-24 left-[-7rem] h-72 w-72 rounded-full bg-amber-100/90 blur-3xl" />
+          <div className="absolute -top-24 left-[-7rem] h-72 w-72 rounded-full bg-[#F6CF7E]/25 blur-3xl" />
           <div className="absolute right-[-5rem] top-16 h-80 w-80 rounded-full bg-sky-100/80 blur-3xl" />
           <div className="absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-white/80 to-transparent" />
         </div>
@@ -432,7 +432,7 @@ export default function ClassSamplesPage() {
                     <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">Featured Sample</p>
                     <h2 className="mt-2 text-xl font-semibold text-slate-950">{featuredVideo.title}</h2>
                   </div>
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                  <span className="rounded-full bg-[#FFF5DF] px-3 py-1 text-xs font-semibold text-[#634713]">
                     {CLASS_SAMPLE_CATEGORY_LABELS[featuredVideo.category]}
                   </span>
                 </div>
@@ -535,7 +535,7 @@ export default function ClassSamplesPage() {
         {isLoading ? (
           <GallerySkeleton />
         ) : loadError ? (
-          <div className="mt-8 rounded-[30px] border border-amber-200 bg-amber-50/70 px-6 py-8 text-sm leading-6 text-slate-700">
+          <div className="mt-8 rounded-[30px] border border-[#F6CF7E] bg-[#FFF5DF]/70 px-6 py-8 text-sm leading-6 text-slate-700">
             {loadError}
           </div>
         ) : filteredVideos.length === 0 ? (
@@ -552,7 +552,7 @@ export default function ClassSamplesPage() {
                 id={video.id}
                 className={`rounded-[30px] border p-4 shadow-[0_18px_48px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_22px_60px_rgba(15,23,42,0.12)] ${
                   video.featured
-                    ? 'border-amber-200/90 bg-[linear-gradient(180deg,_rgba(255,251,235,0.95),_rgba(255,255,255,0.98))]'
+                    ? 'border-[#F6CF7E]/90 bg-[linear-gradient(180deg,_rgba(255,245,223,0.95),_rgba(255,255,255,0.98))]'
                     : 'border-white/90 bg-white'
                 }`}
               >
@@ -569,7 +569,7 @@ export default function ClassSamplesPage() {
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">{video.durationLabel}</span>
                   ) : null}
                   {video.featured ? (
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">Featured</span>
+                    <span className="rounded-full bg-[#FFF5DF] px-3 py-1 text-xs font-semibold text-[#634713]">Featured</span>
                   ) : null}
                 </div>
 
