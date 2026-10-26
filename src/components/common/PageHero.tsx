@@ -19,7 +19,7 @@ export default function PageHero({
 }: PageHeroProps) {
   const isCenter = align === 'center';
   const badgeStyles = [
-    'border-[#F5DAB7] bg-[#FFF7EC] text-[#7A4A10]',
+    'border-[#D3B9E1] bg-[#F1EDFC] text-[#604577]',
     'border-[#D6E6F7] bg-[#F6FBFF] text-[#214667]',
     'border-[#E4DCF8] bg-[#FBF8FF] text-[#4F447B]',
     'border-[#D4EFDF] bg-[#F4FFF8] text-[#235F49]',
@@ -37,7 +37,7 @@ export default function PageHero({
       <div className="relative mx-auto max-w-6xl">
         <div className={`max-w-3xl ${isCenter ? 'mx-auto text-center' : ''}`}>
           {eyebrow ? (
-            <p className={`inline-flex rounded-full border border-orange-200/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-orange-700 shadow-sm ${isCenter ? 'justify-center' : ''}`}>
+            <p className={`inline-flex rounded-full border border-[#D3B9E1]/80 bg-white/88 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-[#604577] shadow-sm ${isCenter ? 'justify-center' : ''}`}>
               {eyebrow}
             </p>
           ) : null}
