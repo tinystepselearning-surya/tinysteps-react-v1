@@ -350,6 +350,7 @@ const ChoosingCourse: React.FC = () => {
           <LeadCard className="bg-slate-900 text-white">
             <LeadSectionHeading
               eyebrow="Useful next guides"
+              tone="dark"
               title="Open the right parent guide next"
               description={<span className="text-slate-200">These supporting pages help parents validate the diagnosis before or after the assessment.</span>}
             />
