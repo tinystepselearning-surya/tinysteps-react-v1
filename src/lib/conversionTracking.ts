@@ -297,6 +297,7 @@ type FunnelLeadFormParams = FunnelBaseParams & {
   interest?: string;
   mainConcern?: string;
   urgency?: string;
+  class_format_preference?: string;
 };
 
 type FunnelLeadFormErrorParams = FunnelLeadFormParams & {
@@ -330,6 +331,7 @@ function buildLeadDetailEventParams(params: FunnelLeadFormParams, pagePath: stri
     interest: params.interest,
     mainConcern: params.mainConcern,
     urgency: params.urgency,
+    class_format_preference: params.class_format_preference,
   };
 }
 
