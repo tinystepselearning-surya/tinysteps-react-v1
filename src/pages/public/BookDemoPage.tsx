@@ -463,7 +463,7 @@ export default function BookDemoPage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-black tracking-[0.16em] text-[#604577]">{step.number}</span>
-                  <span className="h-px w-10 bg-orange-200" aria-hidden="true" />
+                  <span className="h-px w-10 bg-[#D3B9E1]" aria-hidden="true" />
                 </div>
                 <h3 className="mt-5 text-lg font-black leading-6 text-slate-950">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
