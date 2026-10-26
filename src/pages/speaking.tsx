@@ -5,6 +5,11 @@ import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS, formatPublicInr } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
+import {
+  PUBLIC_SPEAKING_VIDEO_EVIDENCE,
+  createPublicSpeakingVideoObject,
+  publicSpeakingVideoUrls,
+} from '../lib/publicSpeakingVideoEvidence';
 import { buildSpeakableSpecification } from '../lib/breadcrumbAeoGeoRegistry.js';
 import { createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../lib/schemas';
 import ResponsiveTeachingSection from '../components/programs/ResponsiveTeachingSection';
@@ -650,7 +655,7 @@ export default function SpeakingPage() {
       robots: 'index,follow',
       ogType: 'website',
       keywords: SPEAKING_SEO_KEYWORDS,
-      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingDecisionEvidenceSchema, speakingAiEraCapabilitiesSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema],
+      jsonLd: [breadcrumbSchema, webpageSchema, speakingPositioningSchema, pathwayItemListSchema, speakingDecisionEvidenceSchema, speakingAiEraCapabilitiesSchema, speakingParentFitSchema, speakingDevelopmentalStagesSchema, publicSpeakingLevelsSchema, speakingSpecialistPathwaysSchema, speakingEvidenceSchema, faqSchema, createPublicSpeakingVideoObject(canonicalUrl)].filter(Boolean),
     });
   }, [canonicalPath, canonicalUrl]);
 
@@ -913,6 +918,46 @@ export default function SpeakingPage() {
         ]}
         observation="sentence completeness, idea organisation, clarity, response to feedback and how much prompting the child needs before speaking independently."
       />
+
+      <section id="real-class-sample" data-speaking-static-video-evidence className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
+        <div className="mx-auto max-w-6xl rounded-[26px] border border-violet-100 bg-white p-5 shadow-[0_18px_48px_rgba(15,23,42,0.05)] md:p-7">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Real Public Speaking class example</p>
+          <div className="mt-4 grid gap-6 lg:grid-cols-[0.82fr_1.18fr] lg:items-center">
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{PUBLIC_SPEAKING_VIDEO_EVIDENCE.title}</h2>
+              <p className="mt-2 text-xs font-medium text-slate-600">
+                {PUBLIC_SPEAKING_VIDEO_EVIDENCE.category} · {PUBLIC_SPEAKING_VIDEO_EVIDENCE.ageBand} · {PUBLIC_SPEAKING_VIDEO_EVIDENCE.durationLabel}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-slate-700">{PUBLIC_SPEAKING_VIDEO_EVIDENCE.description}</p>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                This is one published class excerpt showing a storytelling activity, not a guarantee of outcomes for other children.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-4 text-sm">
+                <a href={publicSpeakingVideoUrls().watch} target="_blank" rel="noopener noreferrer" className="font-semibold text-violet-800 underline underline-offset-2">
+                  Watch the original on YouTube
+                </a>
+                <Link to="/class-samples" className="font-semibold text-slate-700 underline underline-offset-2">Explore more class samples</Link>
+              </div>
+              <a href={publicSpeakingVideoUrls().watch} target="_blank" rel="noopener noreferrer" className="mt-4 inline-flex items-center gap-3 text-xs text-slate-600">
+                <img src={publicSpeakingVideoUrls().thumbnail} alt="Thumbnail of the Instant Storytelling Activity class excerpt" loading="lazy" width="112" height="63" className="h-auto w-28 rounded-lg border border-slate-200" />
+                View the public YouTube video
+              </a>
+            </div>
+            <div className="aspect-video overflow-hidden rounded-[20px] bg-slate-950">
+              <iframe
+                src={publicSpeakingVideoUrls().embed}
+                title="Instant Storytelling Activity — Tiny Steps real Public Speaking class example"
+                loading="lazy"
+                allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+                className="h-full w-full border-0"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="mx-auto -mt-2 flex max-w-6xl flex-wrap gap-x-4 gap-y-2 px-4 pb-3 text-sm sm:px-5 lg:px-6">
         <Link to="/class-samples" className="font-semibold text-slate-900 underline underline-offset-2">View real class samples</Link>
         <Link to="/book-demo" className="font-semibold text-slate-700 underline underline-offset-2">Book the free assessment</Link>
