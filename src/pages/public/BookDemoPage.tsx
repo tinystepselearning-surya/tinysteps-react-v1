@@ -347,11 +347,11 @@ export default function BookDemoPage() {
             <p className="text-xs font-bold uppercase tracking-widest text-orange-700">Small-group class enquiry</p>
             <h1 className="mt-4 font-heading text-4xl font-black leading-tight sm:text-5xl">Register Interest in Group {groupProgramme} Classes</h1>
             <p className="mt-5 text-lg leading-8 text-slate-700">
-              Tell us a little about your child. Our team will review their learning stage and contact you about compatible group options.
-              New group demos are organised when enough suitable families are interested and schedules match.
+              Tell us about your child and their current learning stage. Tiny Steps offers one small-group format: one teacher with four students.
+              We arrange a group demo after four suitable learners with compatible schedules express interest.
             </p>
             <p className="mt-5 rounded-2xl border border-orange-200 bg-orange-50 p-4 leading-7 text-slate-700">
-              Registering your interest is not a confirmed booking or a guarantee of an immediately available group demo.
+              Registering interest does not confirm a place or an immediate group demo. Each newly formed batch is planned for four level-matched children.
               If your child needs individual support, you can also explore premium one-to-one classes.
             </p>
             <Link to={groupTrack === 'phonics' ? '/phonics' : groupTrack === 'grammar' ? '/grammar' : '/speaking'}
@@ -366,7 +366,7 @@ export default function BookDemoPage() {
               preferredFormat="small_group"
               preferredMainConcern={groupMainConcern}
               title="Register Group-Class Interest"
-              description="Share your child's details so we can look for an appropriate level and batch."
+              description="Share your child's details to join the interest list for our 1:4 group format."
               submitLabel="Register Group Interest on WhatsApp"
               submitAriaLabel="Register Group Interest on WhatsApp"
               appearance="embedded"
