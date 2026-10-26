@@ -30,19 +30,19 @@ function toneClass(tone: TrustChip['tone']) {
       return 'border-slate-200 bg-white text-slate-800';
     case 'warm':
     default:
-      return 'border-orange-200 bg-orange-50 text-orange-900';
+      return 'border-[#E5C7D8] bg-[#FFE5EB] text-[#603C62]';
   }
 }
 
 function buttonClass(variant: CtaItem['variant']) {
   switch (variant) {
     case 'secondary':
-      return 'border border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100';
+      return 'border border-[#CDBDE8] bg-[#F1EDFC] text-[#4D3972] hover:bg-[#E5DDF8]';
     case 'ghost':
       return 'border border-slate-300 bg-white text-slate-900 hover:bg-slate-50';
     case 'primary':
     default:
-      return 'bg-slate-900 text-white shadow-[0_14px_30px_rgba(15,23,42,0.16)] hover:bg-slate-800';
+      return 'bg-[#212B5C] text-white shadow-[0_12px_28px_rgba(33,43,92,0.16)] hover:bg-[#384C80]';
   }
 }
 
@@ -97,7 +97,7 @@ export function LeadHero({
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(204,137,148,0.15),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(110,149,210,0.20),_transparent_32%),linear-gradient(135deg,_rgba(231,243,255,0.94),_rgba(241,237,252,0.85)_48%,_rgba(255,245,223,0.68))]" />
       {showLeftDecoration ? (
-        <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
+        <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-[#D7E5F4] bg-white/25" />
       ) : null}
       <div className="pointer-events-none absolute right-[7%] top-24 h-16 w-16 rotate-12 rounded-2xl border border-sky-200/70 bg-white/30" />
       <div
@@ -108,7 +108,7 @@ export function LeadHero({
         <div>
           <p
             className={twMerge(
-              'inline-flex rounded-full border border-[#D7E5F4] bg-gradient-to-r from-white via-[#F1EDFC] to-[#FFF5DF] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]',
+              'inline-flex rounded-full border border-[#D7E5F4] bg-gradient-to-r from-white via-[#F1EDFC] to-[#FFF5DF] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-[#604577] shadow-[0_8px_24px_rgba(33,43,92,0.06)]',
               eyebrowClassName,
             )}
           >
@@ -221,7 +221,7 @@ export function LeadSectionHeading({
       {eyebrow ? (
         <p
           className={`text-xs font-semibold uppercase tracking-[0.18em] ${
-            isDark ? 'text-orange-300' : 'text-slate-500'
+            isDark ? 'text-[#FFE5EB]' : 'text-slate-500'
           }`}
         >
           {eyebrow}
