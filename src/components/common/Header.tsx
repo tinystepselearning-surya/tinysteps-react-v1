@@ -224,7 +224,7 @@ export default function Header() {
             className="h-9 w-9 shrink-0 object-contain sm:h-11 sm:w-11"
           />
           <div className="min-w-0">
-            <div className="whitespace-nowrap text-base font-bold leading-none text-orange-500 sm:text-xl">Tiny Steps</div>
+            <div className="whitespace-nowrap text-base font-bold leading-none text-[#C2410C] sm:text-xl">Tiny Steps</div>
             <div className="hidden text-[11px] uppercase tracking-[0.24em] text-gray-500 sm:block">Foundations Forever</div>
           </div>
         </button>
