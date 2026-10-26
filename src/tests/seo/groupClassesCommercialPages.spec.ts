@@ -64,8 +64,27 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain('from-[#D9EEFF]');
     expect(content).toContain('bg-gradient-to-br from-[#0C2846]');
     expect(content).toContain("Move beyond memorising grammar rules");
-    expect(content).toContain('From hearing letter sounds to blending first words');
+    expect(content).toContain('Live group phonics classes help children progress from sound awareness');
+    expect(content).toContain('Phonics · Live Online Small Groups');
+    expect(content).not.toContain('Phonics · Early reading · Live online small groups');
     expect(content).toContain('Help your child express ideas clearly');
+  });
+
+  it('uses a consistent premium light sky-blue palette on the three main commercial pages', () => {
+    for (const page of ['src/pages/phonics.tsx', 'src/pages/grammar.tsx', 'src/pages/speaking.tsx']) {
+      const source = read(page);
+      expect(source).toContain('#D9EEFF');
+      expect(source).toContain('#F4FAFF');
+      expect(source).toContain('#EAF6FF');
+      expect(source).not.toContain('linear-gradient(180deg,#fff8f2_0%');
+      expect(source).toContain("to=\"/book-demo\"");
+    }
+    expect(read('src/pages/phonics.tsx')).toContain('Your child&apos;s reading journey');
+    expect(read('src/pages/grammar.tsx')).toContain('ProgrammeHeroSnapshot');
+    expect(read('src/pages/speaking.tsx')).toContain('/blog/hero-families/Tiny_Steps_Speaking.webp');
+    const groupPhonicsSeo = seo.split("'/group-phonics-classes-for-kids': {")[1]?.split('\\n  },')[0] ?? '';
+    expect(groupPhonicsSeo).toContain('longer-word decoding');
+    expect(groupPhonicsSeo).not.toContain('ages 3–6');
   });
 
   it('keeps the shared group page compact and corrects repeated print-header overlays', () => {
