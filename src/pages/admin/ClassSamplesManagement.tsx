@@ -133,7 +133,7 @@ export default function ClassSamplesManagement(): JSX.Element {
     if (!form.youtubeUrl.trim()) nextErrors.youtubeUrl = 'YouTube URL is required.';
     else if (!youtubeVideoId) nextErrors.youtubeUrl = 'Paste a valid YouTube watch or share URL.';
     if (form.youtubeUploadDate.trim() && !normalizeYouTubeUploadDate(form.youtubeUploadDate)) {
-      nextErrors.youtubeUploadDate = 'Use a valid YouTube upload date (YYYY-MM-DD), or leave it blank.';
+      nextErrors.youtubeUploadDate = 'Use the video's first public date (YYYY-MM-DD), or leave it blank.';
     }
     if (!form.sortOrder.trim()) nextErrors.sortOrder = 'Sort order is required.';
     else if (!Number.isFinite(sortOrder)) nextErrors.sortOrder = 'Sort order must be numeric.';
@@ -368,7 +368,7 @@ export default function ClassSamplesManagement(): JSX.Element {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="class-sample-youtube-upload-date">Original YouTube upload date (optional)</Label>
+              <Label htmlFor="class-sample-youtube-upload-date">First public date on YouTube (optional)</Label>
               <Input
                 id="class-sample-youtube-upload-date"
                 type="date"
@@ -376,8 +376,8 @@ export default function ClassSamplesManagement(): JSX.Element {
                 onChange={(event) => updateField('youtubeUploadDate', event.target.value)}
               />
               <p className="text-xs text-slate-500">
-                Copy the original date from YouTube Studio after checking the video.
-                This is not the date the clip was added to Tiny Steps. Without a verified date,
+                Use the Published or Premiered date from YouTube Studio after verifying the video.
+                This may differ from when the file was uploaded or added to Tiny Steps. Without a verified date,
                 the clip still plays, but no incomplete VideoObject markup is published.
                 Only activate clips approved for public website sharing.
               </p>
