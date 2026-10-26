@@ -577,12 +577,12 @@ export default function PublicAssessmentForm({
             className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
             required
           >
-            <option value="one_to_one">Premium One-to-One Classes</option>
-            <option value="small_group">Small-Group Classes (1 teacher : 4 students)</option>
+            <option value="one_to_one">One-to-One Classes</option>
+            <option value="small_group">Group Classes</option>
             <option value="unsure">Help Me Choose</option>
           </select>
           {form.classFormatPreference === 'small_group' ? (
-            <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a 1:4 group demo is arranged when four suitable children and timings are matched.</p>
+            <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a group demo is arranged when suitable children and timings are matched.</p>
           ) : null}
         </div>
 
