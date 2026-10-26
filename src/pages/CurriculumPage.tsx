@@ -464,8 +464,8 @@ const CurriculumPage: FC = () => {
       <section className="mx-auto max-w-7xl px-4 pb-9 pt-8 sm:px-6 lg:px-8 lg:pb-12 lg:pt-10">
         <div className="grid items-center gap-9 lg:grid-cols-[1.03fr_0.97fr] lg:gap-10">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-orange-700">
-              <span className="h-2 w-2 rounded-full bg-orange-500" aria-hidden="true" />
+            <div className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-[0.18em] text-[#604577]">
+              <span className="h-2 w-2 rounded-full bg-[#755E96]" aria-hidden="true" />
               Ages 3–12 · Assessment-led placement
             </div>
             <p className="mt-5 text-sm font-semibold text-slate-500">The complete Tiny Steps learning roadmap</p>
@@ -493,7 +493,7 @@ const CurriculumPage: FC = () => {
               </Link>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-orange-800">
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-[#54345D]">
               <span className="text-slate-600">Interested in group classes?</span>
               <Link to="/group-phonics-classes-for-kids" className="underline underline-offset-4">Group Phonics</Link>
               <Link to="/group-grammar-classes-for-kids" className="underline underline-offset-4">Group Grammar</Link>
@@ -600,7 +600,7 @@ const CurriculumPage: FC = () => {
       <section id="find-your-path" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="find-path-heading">
         <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-14">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Start with the child you know</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Start with the child you know</p>
             <h2 id="find-path-heading" className="mt-3 max-w-lg text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
               What are you noticing right now?
             </h2>
@@ -630,7 +630,7 @@ const CurriculumPage: FC = () => {
                 </span>
                 <span className="mt-2 block text-lg font-bold leading-6 text-slate-950">{item.signal}</span>
                 <span className="mt-2 block text-sm leading-6 text-slate-600">{item.helper}</span>
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-orange-700">
+                <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-[#604577]">
                   See this pathway <span className="transition group-hover:translate-x-0.5" aria-hidden="true">→</span>
                 </span>
               </button>
@@ -668,13 +668,13 @@ const CurriculumPage: FC = () => {
                   <span className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">
                     Learning area {String(index + 1).padStart(2, '0')}
                   </span>
-                  <span className="h-2.5 w-2.5 rounded-full bg-orange-400" aria-hidden="true" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#F6CF7E]" aria-hidden="true" />
                 </div>
                 <h3 className="mt-4 text-xl font-bold text-slate-950">{program.label}</h3>
                 <p className="mt-3 text-sm leading-6 text-slate-600">{program.summary}</p>
                 <Link
                   to={program.programPath}
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-[#755E96]"
                 >
                   Explore {program.shortLabel}
                   <span aria-hidden="true">→</span>
@@ -688,7 +688,7 @@ const CurriculumPage: FC = () => {
       <section id="progression" className="scroll-mt-32 bg-[#212B5C] text-white" aria-labelledby="progression-heading">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="max-w-3xl">
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">How skills develop</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">How skills develop</p>
             <h2 id="progression-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] sm:text-4xl">
               Progression should feel visible, not mysterious
             </h2>
@@ -708,7 +708,7 @@ const CurriculumPage: FC = () => {
                 <article key={program.key} className="group/progression grid gap-4 rounded-2xl px-3 py-6 transition duration-200 hover:bg-white/[0.035] lg:grid-cols-[220px_1fr] lg:gap-8 lg:px-4">
                   <div>
                     <h3 className="text-lg font-bold text-white">{program.label}</h3>
-                    <Link to={program.programPath} className="mt-2 inline-flex text-xs font-bold text-orange-300 underline underline-offset-4">
+                    <Link to={program.programPath} className="mt-2 inline-flex text-xs font-bold text-[#FFE5EB] underline underline-offset-4">
                       Open pathway
                     </Link>
                   </div>
@@ -718,14 +718,14 @@ const CurriculumPage: FC = () => {
                       {sequenceParts.map((part, index) => (
                         <span key={part} className="contents">
                           <span
-                            className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 motion-reduce:transition-none group-hover/progression:-translate-y-0.5 group-hover/progression:border-orange-300/55 group-hover/progression:bg-orange-300/[0.11] hover:border-orange-300/80 hover:bg-orange-300/15"
+                            className="rounded-full border border-white/15 bg-white/[0.055] px-3 py-1.5 text-xs font-semibold leading-5 text-slate-100 transition duration-200 motion-reduce:transition-none group-hover/progression:-translate-y-0.5 group-hover/progression:border-[#C9B9DE]/55 group-hover/progression:bg-[#CC8994]/[0.11] hover:border-[#C9B9DE]/80 hover:bg-[#CC8994]/15"
                             style={{ transitionDelay: (index * 45) + 'ms' }}
                           >
                             {part}
                           </span>
                           {index < sequenceParts.length - 1 && (
                             <span
-                              className="text-slate-500 transition duration-200 motion-reduce:transition-none group-hover/progression:text-orange-300"
+                              className="text-slate-500 transition duration-200 motion-reduce:transition-none group-hover/progression:text-[#FFE5EB]"
                               style={{ transitionDelay: (index * 45 + 20) + 'ms' }}
                               aria-hidden="true"
                             >
@@ -737,14 +737,14 @@ const CurriculumPage: FC = () => {
                     </div>
 
                     <details className="group mt-4">
-                      <summary className="inline-flex cursor-pointer list-none items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-orange-300/40 hover:bg-orange-300/[0.08] hover:text-white">
+                      <summary className="inline-flex cursor-pointer list-none items-center rounded-full border border-white/10 bg-white/[0.035] px-3 py-2 text-xs font-bold text-slate-400 transition hover:border-[#C9B9DE]/40 hover:bg-[#CC8994]/[0.08] hover:text-white">
                         <span className="group-open:hidden">View progression detail +</span>
                         <span className="hidden group-open:inline">Hide progression detail −</span>
                       </summary>
                       <ol className="mt-4 grid gap-x-6 gap-y-3 rounded-2xl border border-white/10 bg-white/[0.025] p-4 text-xs leading-5 text-slate-300 sm:grid-cols-2 xl:grid-cols-5">
                         {program.steps.map((step, index) => (
                           <li key={step} className="flex gap-2">
-                            <span className="font-black text-orange-300">{index + 1}.</span>
+                            <span className="font-black text-[#FFE5EB]">{index + 1}.</span>
                             <span>{step}</span>
                           </li>
                         ))}
@@ -761,7 +761,7 @@ const CurriculumPage: FC = () => {
       <section id="course-levels" className="scroll-mt-32 mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16" aria-labelledby="levels-heading">
         <div className="grid gap-8 lg:grid-cols-[0.56fr_1fr] lg:gap-12">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Compare levels &amp; routes</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Compare levels &amp; routes</p>
             <h2 id="levels-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
               Explore levels within each pathway
             </h2>
@@ -789,13 +789,13 @@ const CurriculumPage: FC = () => {
               ))}
             </div>
 
-            <div className="mt-7 border-l-2 border-orange-400 pl-4">
+            <div className="mt-7 border-l-2 border-[#755E96] pl-4">
               <p className="text-xs font-black uppercase tracking-[0.16em] text-slate-400">Selected pathway</p>
               <p className="mt-1 text-lg font-bold text-slate-950">{selectedProgram.label}</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">{selectedProgram.summary}</p>
               <Link
                 to={selectedProgram.programPath}
-                className="mt-3 inline-flex text-sm font-bold text-orange-700 underline underline-offset-4"
+                className="mt-3 inline-flex text-sm font-bold text-[#604577] underline underline-offset-4"
               >
                 View the full {selectedProgram.label} program
               </Link>
@@ -818,7 +818,7 @@ const CurriculumPage: FC = () => {
                   <h3 className="mt-3 text-lg font-bold text-slate-950">{course.name}</h3>
                   <Link
                     to={course.path}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-orange-500"
+                    className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-slate-950 underline decoration-slate-300 underline-offset-4 transition hover:decoration-[#755E96]"
                   >
                     View details
                     <span aria-hidden="true">→</span>
@@ -891,7 +891,7 @@ const CurriculumPage: FC = () => {
                 <article key={course.id} className="rounded-[28px] border border-[#D7E5F4] bg-[#F4F8FF] p-5 sm:p-7">
                   <div className="grid gap-5 border-b border-slate-200 pb-6 lg:grid-cols-[1fr_auto] lg:items-end">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.16em] text-orange-700">{eyebrow}</p>
+                      <p className="text-xs font-black uppercase tracking-[0.16em] text-[#604577]">{eyebrow}</p>
                       <h3 className="mt-2 text-2xl font-bold tracking-[-0.025em] text-slate-950 sm:text-3xl">{course.publicLabel}</h3>
                       <p className="mt-2 text-sm font-bold text-slate-500">{course.ageGuide} · 36 lessons · assessment-led placement</p>
                       <p className="mt-4 max-w-4xl text-sm leading-7 text-slate-600">{description}</p>
@@ -924,7 +924,7 @@ const CurriculumPage: FC = () => {
                           <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
                             {stage.learningOutcomes.map((outcome) => (
                               <li key={outcome} className="flex gap-2">
-                                <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-orange-500" />
+                                <span aria-hidden="true" className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-[#755E96]" />
                                 <span>{outcome}</span>
                               </li>
                             ))}
@@ -979,7 +979,7 @@ const CurriculumPage: FC = () => {
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
-              <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Assessment-led placement</p>
+              <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Assessment-led placement</p>
               <h2 id="assessment-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-4xl">
                 We do not place children by age alone
               </h2>
@@ -1049,13 +1049,13 @@ const CurriculumPage: FC = () => {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-x-6 gap-y-3 border-t border-slate-200 pt-6 text-sm font-bold">
-          <Link to="/team" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+          <Link to="/team" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-[#755E96]">
             Meet the Tiny Steps team
           </Link>
-          <Link to="/class-samples" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+          <Link to="/class-samples" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-[#755E96]">
             Watch real class samples
           </Link>
-          <Link to="/phonics" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-orange-500">
+          <Link to="/phonics" className="text-slate-950 underline decoration-slate-300 underline-offset-4 hover:decoration-[#755E96]">
             Explore the Phonics program
           </Link>
         </div>
@@ -1066,7 +1066,7 @@ const CurriculumPage: FC = () => {
       <section id="faq" className="scroll-mt-32 mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:py-16" aria-labelledby="faq-heading">
         <div className="grid gap-7 lg:grid-cols-[0.58fr_1.42fr] lg:gap-12">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-700">Before you decide</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#604577]">Before you decide</p>
             <h2 id="faq-heading" className="mt-3 text-3xl font-bold tracking-[-0.03em] text-slate-950 sm:text-[2.1rem]">
               Curriculum questions parents ask most
             </h2>
@@ -1095,7 +1095,7 @@ const CurriculumPage: FC = () => {
       <section className="mx-auto max-w-7xl px-4 pb-10 sm:px-6 lg:px-8">
         <div className="grid gap-6 rounded-[30px] bg-slate-950 px-6 py-8 text-white shadow-[0_24px_60px_rgba(15,23,42,0.16)] sm:px-8 lg:grid-cols-[1fr_auto] lg:items-center lg:px-10 lg:py-10">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-300">Not sure where to begin?</p>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[#FFE5EB]">Not sure where to begin?</p>
             <h2 className="mt-2 text-2xl font-bold tracking-[-0.025em] sm:text-3xl">
               Start with the child&apos;s current skills, then choose the path.
             </h2>
