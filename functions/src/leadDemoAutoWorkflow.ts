@@ -120,6 +120,8 @@ export const shouldEnsureDemoForLead = (
 ): boolean => {
   if (!leadId || isSyntheticDemoLeadId(leadId)) return false;
   if (lead.archived === true || isTerminalLead(lead)) return false;
+  // Group interest is not a confirmed 1:1 demo booking. Keep it in the lead pool.
+  if (lead.classFormatPreference === 'small_group' || lead.classFormatPreference === 'unsure') return false;
   if (cleanText(lead.demoSessionId, 120)) return false;
   if (!isWebsiteCanonicalReady(leadId, lead)) return false;
   return Boolean(identityKey(leadPhone(lead), lead.childName));
@@ -208,6 +210,7 @@ const LEAD_DEMO_RELEVANT_FIELDS = [
   'demoRepairVersion',
   'demoRepairRequestedAt',
   'demoRepairRequestedBy',
+  'classFormatPreference',
 ] as const;
 
 const comparableValue = (value: unknown): string => {
