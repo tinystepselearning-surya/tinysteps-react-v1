@@ -300,11 +300,11 @@ function CoursesPage() {
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.bestFor}</p>
                 <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
                   <Link to={item.href} className="text-slate-900 underline underline-offset-4">
-                    {item.ctaLabel} · Premium 1:1
+                    {item.ctaLabel} · One-to-One Classes
                   </Link>
                   {({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title] ? (
                     <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-orange-700 underline underline-offset-4">
-                      Explore Small Groups
+                      Explore Group Classes
                     </Link>
                   ) : null}
                 </div>
