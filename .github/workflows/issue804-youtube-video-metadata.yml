@@ -29,5 +29,7 @@ jobs:
         run: npx vitest run src/tests/lib/classSamplesVideoMetadata.spec.ts src/tests/seo/phonicsBrick6ConversionEvidence.spec.ts src/tests/seo/speakingGrowthBrick9.spec.ts
       - name: TypeScript typecheck
         run: npm run typecheck
+      - name: Install Playwright browser for prerender
+        run: npx playwright install --with-deps chromium
       - name: Production build and rendered SEO checks
         run: npm run build
