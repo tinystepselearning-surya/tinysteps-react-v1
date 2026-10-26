@@ -130,7 +130,7 @@ describe('Commercial C3 final canonical-owner reconciliation', () => {
   it('keeps the pricing owner tied to canonical pricing and removes unsupported commercial promises', () => {
     const pricing = read('src/pages/PricingPage.tsx');
     expect(pricing).toContain('ONE_TO_ONE_MONTHLY_PACKAGES');
-    expect(pricing).toContain('GROUP_MONTHLY_FEES');
+    expect(pricing).toContain('NEW_GROUP_CLASS_PLAN');
     expect(pricing).toContain('ULTRA_PREMIUM_PRICING');
     expect(pricing).toContain("'@type': 'OfferCatalog'");
     expect(pricing).toContain('/phonics-fees-india');
