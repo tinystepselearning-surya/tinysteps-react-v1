@@ -4905,14 +4905,14 @@ export default function ParentDashboard() {
                       aria-current={isActive ? "page" : undefined}
                       className={`group flex min-h-11 w-full items-center gap-3 rounded-xl px-2.5 py-1.5 text-left text-sm font-medium transition active:scale-[0.99] ${
                         isActive
-                          ? "bg-indigo-50 text-indigo-950 ring-1 ring-indigo-200 dark:bg-indigo-950/50 dark:text-indigo-100 dark:ring-indigo-800"
+                          ? "bg-[#F1EDFC] text-[#604577] ring-1 ring-[#D3B9E1] dark:bg-indigo-950/50 dark:text-indigo-100 dark:ring-indigo-800"
                           : "text-slate-600 active:bg-slate-100 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white"
                       }`}
                     >
                       <span
                         className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition ${
                           isActive
-                            ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-200"
+                            ? "bg-[#E5DDF8] text-[#604577] dark:bg-indigo-900 dark:text-indigo-200"
                             : "bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-slate-900 dark:bg-slate-800 dark:text-slate-300"
                         }`}
                       >
@@ -5041,7 +5041,7 @@ export default function ParentDashboard() {
                         aria-current={isActive ? "page" : undefined}
                         className={`group flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition flex-shrink-0 min-w-[150px] lg:min-w-0 lg:w-full ${
                           isActive
-                            ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+                            ? "bg-[#212B5C] text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
                             : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
                         }`}
                       >
