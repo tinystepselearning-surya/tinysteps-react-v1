@@ -402,7 +402,7 @@ function PremiumCard({ className = '', children }: PremiumCardProps) {
 
 function AccentBadge({ children, className = '' }: AccentBadgeProps) {
   return (
-    <span className={`inline-flex rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-slate-700 ${className}`}>
+    <span className={`inline-flex rounded-full border border-[#D3B9E1] bg-[#F1EDFC] px-3 py-1 text-xs font-semibold text-slate-700 ${className}`}>
       {children}
     </span>
   );
@@ -426,7 +426,7 @@ function Pill({ children, className = '' }: { children: React.ReactNode; classNa
 
 function NumberBadge({ value }: { value: number }) {
   return (
-    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-sky-500 text-xs font-bold text-white shadow">
+    <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#F6CF7E] to-sky-500 text-xs font-bold text-white shadow">
       {value}
     </span>
   );
@@ -744,7 +744,7 @@ export default function PhonicsPage({
 
       <SectionShell id="overview" className="pt-2">
         <PremiumCard className="relative overflow-hidden border-sky-100 p-7 sm:p-9 lg:p-10">
-          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-400 via-orange-300 to-sky-300" />
+          <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-[#F6CF7E] via-[#D3B9E1] to-sky-300" />
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Quick answer for parents</p>
           <h2 className="mt-2 max-w-4xl text-2xl font-bold leading-tight tracking-[-0.02em] text-slate-900 sm:text-3xl">Quick Answer: What are online phonics classes for kids?</h2>
           <p className="mt-3 max-w-5xl text-base leading-relaxed text-slate-700">
@@ -776,7 +776,7 @@ export default function PhonicsPage({
       <SectionShell id="age-guide" className="pt-0">
         <div className="rounded-[2rem] border border-sky-100 bg-white p-5 shadow-sm sm:p-7">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-orange-700">Age-specific parent guidance</p>
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#604577]">Age-specific parent guidance</p>
             <h2 className="mt-2 text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Find Phonics support for your child's starting point</h2>
             <p className="mt-3 leading-7 text-slate-700">
               Age provides context, but we choose the first skill from the child's actual sound and reading readiness. Explore four differentiated age guides; the main Phonics programme remains the complete learning path for ages 3–12.
@@ -791,7 +791,7 @@ export default function PhonicsPage({
             <Link to="/phonics/age-4" className="rounded-2xl border border-sky-200 bg-[#EAF6FF] p-5 transition hover:border-sky-400 hover:bg-[#D9EEFF]">
               <h3 className="text-lg font-bold text-slate-950">Phonics at age 4</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">Playful sound awareness, first letter–sound connections, and blending readiness.</p>
-              <span className="mt-3 inline-block text-sm font-semibold text-orange-800 underline underline-offset-2">Explore the age-four guide</span>
+              <span className="mt-3 inline-block text-sm font-semibold text-[#54345D] underline underline-offset-2">Explore the age-four guide</span>
             </Link>
             <Link to="/phonics/age-5" className="rounded-2xl border border-sky-200 bg-sky-50/70 p-5 transition hover:border-sky-400 hover:bg-sky-50">
               <h3 className="text-lg font-bold text-slate-950">Phonics at age 5</h3>
@@ -1038,7 +1038,7 @@ export default function PhonicsPage({
                 }`}
               >
                 {item.title === 'Tiny Steps live phonics classes' ? (
-                  <AccentBadge className="mb-3 border-orange-200 bg-white text-[11px] tracking-[0.06em]">
+                  <AccentBadge className="mb-3 border-[#D3B9E1] bg-white text-[11px] tracking-[0.06em]">
                     {item.badge}
                   </AccentBadge>
                 ) : (
@@ -1128,7 +1128,7 @@ export default function PhonicsPage({
       <SectionShell id="resources">
         <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-[#1f2a44] p-6 text-white shadow-2xl sm:p-8">
           <div className="pointer-events-none absolute -left-12 top-8 h-40 w-40 rounded-full bg-sky-400/20 blur-2xl" />
-          <div className="pointer-events-none absolute -right-10 bottom-8 h-44 w-44 rounded-full bg-orange-400/20 blur-2xl" />
+          <div className="pointer-events-none absolute -right-10 bottom-8 h-44 w-44 rounded-full bg-[#CC8994]/20 blur-2xl" />
           <div className="relative">
             <SectionHeader
               eyebrow="Research, practice and next steps"
@@ -1151,7 +1151,7 @@ export default function PhonicsPage({
                   <Link to="/free-letter-tracing-game-for-kids" className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-sky-100">
                     Free ABC Tracing Game
                   </Link>
-                  <Link to="/letter-tracing-with-sounds-game" className="rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-orange-100">
+                  <Link to="/letter-tracing-with-sounds-game" className="rounded-full border border-[#D3B9E1] bg-[#F1EDFC] px-3 py-1 text-xs font-semibold text-slate-900 hover:bg-[#E5DDF8]">
                     Tracing With Sounds
                   </Link>
                 </div>
@@ -1306,7 +1306,7 @@ export default function PhonicsPage({
 
       <SectionShell id="assessment" className="py-14">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-r from-slate-950 via-[#1f2a44] to-[#263e6d] p-8 text-center text-white shadow-2xl sm:p-11 lg:pr-20">
-          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-orange-400/30 blur-2xl" />
+          <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[#CC8994]/30 blur-2xl" />
           <div className="pointer-events-none absolute -left-12 bottom-0 h-36 w-36 rounded-full bg-sky-300/20 blur-2xl" />
           <p className="mb-4 inline-flex rounded-full border border-emerald-300/40 bg-emerald-300/10 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-emerald-100">
             FREE 35-MINUTE DEMO ASSESSMENT
