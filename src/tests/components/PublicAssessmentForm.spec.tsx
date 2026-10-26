@@ -125,6 +125,33 @@ describe('PublicAssessmentForm analytics', () => {
     });
   });
 
+  it('renders three class-format buttons in one row and updates conversion intent', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    const optionGroup = screen.getByRole('group', { name: /choose a class format/i });
+    expect(optionGroup).toHaveClass('grid-cols-3');
+    expect(optionGroup.querySelectorAll('button')).toHaveLength(3);
+    const privateButton = screen.getByRole('button', { name: 'One-to-One' });
+    const groupButton = screen.getByRole('button', { name: 'Group Classes' });
+    const undecidedButton = screen.getByRole('button', { name: 'Help Me Choose' });
+    expect(privateButton).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(groupButton);
+    expect(groupButton).toHaveAttribute('aria-pressed', 'true');
+    expect(privateButton).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: /register group interest on whatsapp/i })).toBeInTheDocument();
+
+    fillValidForm();
+    fireEvent.submit(screen.getByRole('button', { name: /register group interest on whatsapp/i }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0][1]).toMatchObject({ classFormatPreference: 'small_group' });
+    expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
+
+    fireEvent.click(undecidedButton);
+    expect(undecidedButton).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: /request class-format guidance on whatsapp/i })).toBeInTheDocument();
+  });
+
   it('preselects group programme and saves a group-interest enquiry without a demo claim', async () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(
@@ -135,7 +162,9 @@ describe('PublicAssessmentForm analytics', () => {
         submitAriaLabel="Register Group Interest on WhatsApp"
       />,
     );
-    expect(screen.getByLabelText(/preferred class format/i)).toHaveValue('small_group');
+    expect(screen.getByRole('button', { name: 'Group Classes' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'One-to-One' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Help Me Choose' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByLabelText(/choose the area where your child needs support/i)).toHaveValue('Blending sounds to read words');
     fillValidForm();
     fireEvent.submit(screen.getByRole('button', { name: /register group interest on whatsapp/i }));
