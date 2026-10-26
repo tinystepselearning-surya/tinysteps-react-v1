@@ -14,23 +14,23 @@ const visualConfig = {
   reading: {
     label: 'Read → understand → explain',
     icon: BookOpenText,
-    accent: 'from-sky-100/90 via-white to-orange-50/80',
+    accent: 'from-[#E7F3FF] via-white to-[#FFE5EB]',
     orb: 'bg-sky-300/35',
-    secondaryOrb: 'bg-orange-200/45',
+    secondaryOrb: 'bg-[#CC8994]/25',
   },
   grammar: {
     label: 'Notice → correct → apply',
     icon: PenLine,
-    accent: 'from-orange-100/90 via-white to-sky-50/80',
-    orb: 'bg-orange-300/35',
+    accent: 'from-[#FFE5EB] via-white to-[#E7F3FF]',
+    orb: 'bg-[#CC8994]/20',
     secondaryOrb: 'bg-sky-200/45',
   },
   speaking: {
     label: 'Think → organise → speak',
     icon: MessageCircleMore,
-    accent: 'from-violet-100/80 via-white to-orange-50/80',
+    accent: 'from-[#F1EDFC] via-white to-[#FFE5EB]',
     orb: 'bg-violet-300/35',
-    secondaryOrb: 'bg-orange-200/45',
+    secondaryOrb: 'bg-[#CC8994]/25',
   },
 } as const;
 
@@ -56,7 +56,7 @@ export default function ProgrammeHeroSnapshot({
         <div className="absolute inset-0 opacity-[0.035] [background-image:linear-gradient(rgba(15,23,42,.5)_1px,transparent_1px),linear-gradient(90deg,rgba(15,23,42,.5)_1px,transparent_1px)] [background-size:24px_24px]" />
 
         <div className="absolute left-5 top-5 flex items-center gap-2 rounded-full border border-white/80 bg-white/78 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-slate-600 shadow-sm backdrop-blur md:left-6 md:top-6">
-          <Sparkles className="h-3.5 w-3.5 text-orange-500" aria-hidden="true" />
+          <Sparkles className="h-3.5 w-3.5 text-[#755E96]" aria-hidden="true" />
           {visual.label}
         </div>
 
