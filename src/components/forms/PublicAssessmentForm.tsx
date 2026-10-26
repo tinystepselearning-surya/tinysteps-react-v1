@@ -564,27 +564,39 @@ export default function PublicAssessmentForm({
           </div>
         </div>
 
-        <div className="group space-y-1">
-          <label htmlFor="assessment-class-format" className="block text-sm font-semibold text-[#142449]">
-            Preferred class format *
-          </label>
-          <select
-            id="assessment-class-format"
-            name="classFormatPreference"
-            aria-label="Preferred class format"
-            value={form.classFormatPreference || 'one_to_one'}
-            onChange={(e) => setForm((p) => ({ ...p, classFormatPreference: e.target.value as ClassFormatPreference }))}
-            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
-            required
-          >
-            <option value="one_to_one">One-to-One Classes</option>
-            <option value="small_group">Group Classes</option>
-            <option value="unsure">Help Me Choose</option>
-          </select>
+        <fieldset className="space-y-2" aria-label="Preferred class format">
+          <legend className="text-sm font-semibold text-[#142449]">Preferred class format *</legend>
+          <div className="grid grid-cols-3 gap-2" role="group" aria-label="Choose a class format">
+            {([
+              { value: 'one_to_one', label: 'One-to-One' },
+              { value: 'small_group', label: 'Group Classes' },
+              { value: 'unsure', label: 'Help Me Choose' },
+            ] as const).map((option) => {
+              const selected = (form.classFormatPreference || 'one_to_one') === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    trackFormStartOnce();
+                    setForm((previous) => ({ ...previous, classFormatPreference: option.value as ClassFormatPreference }));
+                  }}
+                  className={`min-h-[46px] min-w-0 rounded-xl border px-1.5 py-2.5 text-center text-[11px] font-semibold leading-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:px-3 sm:text-sm ${
+                    selected
+                      ? 'border-[#142449] bg-[#142449] text-white shadow-sm'
+                      : 'border-slate-300 bg-white text-[#142449] hover:border-[#759CC2] hover:bg-sky-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
           {form.classFormatPreference === 'small_group' ? (
             <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a group demo is arranged when suitable children and timings are matched.</p>
           ) : null}
-        </div>
+        </fieldset>
 
         <button
           type="submit"
