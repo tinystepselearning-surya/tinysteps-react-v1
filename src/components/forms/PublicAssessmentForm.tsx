@@ -578,7 +578,7 @@ export default function PublicAssessmentForm({
           <legend className="text-sm font-semibold text-[#142449]">Preferred class format *</legend>
           <div className="grid grid-cols-3 gap-2" role="group" aria-label="Choose a class format">
             {([
-              { value: 'one_to_one', label: 'One-to-One' },
+              { value: 'one_to_one', label: 'One-to-One Classes' },
               { value: 'small_group', label: 'Group Classes' },
               { value: 'unsure', label: 'Help Me Choose' },
             ] as const).map((option) => {
