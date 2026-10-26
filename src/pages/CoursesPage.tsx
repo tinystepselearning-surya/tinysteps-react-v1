@@ -331,7 +331,7 @@ function CoursesPage() {
                     {item.ctaLabel} · One-to-One Classes
                   </Link>
                   {({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title] ? (
-                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-orange-700 underline underline-offset-4">
+                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-[#604577] underline underline-offset-4">
                       Explore Group Classes
                     </Link>
                   ) : null}
