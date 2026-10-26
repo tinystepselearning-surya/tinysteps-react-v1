@@ -1,4 +1,4 @@
-import { GROUP_MONTHLY_FEES, PER_CLASS_PRICE } from './pricing';
+import { NEW_GROUP_CLASS_PLAN, PER_CLASS_PRICE } from './pricing';
 
 export const SEMANTIC_FACTS_VERSION = '2026-09-12-r1';
 
@@ -7,9 +7,9 @@ const FREE_ASSESSMENT_DURATION_MINUTES = 35;
 const FREE_ASSESSMENT_SESSION_COUNT = 1;
 const FREE_ASSESSMENT_PRICE_INR = 0;
 
-const smallGroupPerClassValues = GROUP_MONTHLY_FEES
-  .filter((row) => row.ratio !== '1:1')
-  .map((row) => Math.round(row.monthlyFee / row.classes));
+const smallGroupPerClassValues = [
+  Math.round(NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes),
+];
 
 export const SEMANTIC_FACTS = {
   version: SEMANTIC_FACTS_VERSION,
