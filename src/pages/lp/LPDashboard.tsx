@@ -85,7 +85,7 @@ export default function LPDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-4 pb-28 md:p-8 lg:pb-8">
+    <div className="ts-auth-surface min-h-screen p-4 pb-28 md:p-8 lg:pb-8">
       <LPHeader name={user.displayName || user.email} />
       <div className="flex flex-col gap-6 lg:flex-row">
         <LPSidebar active={tab} onSelect={setTab} messageUnreadCount={messageUnreadCount} />
