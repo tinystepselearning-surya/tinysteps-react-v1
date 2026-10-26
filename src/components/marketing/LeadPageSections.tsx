@@ -48,10 +48,10 @@ function buttonClass(variant: CtaItem['variant']) {
 
 export function LeadPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="lead-page-shell relative overflow-x-clip bg-gradient-to-b from-orange-50/65 via-white to-sky-50/70 pb-20">
-      <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-orange-200/35 blur-3xl" />
+    <div className="lead-page-shell relative overflow-x-clip bg-gradient-to-b from-[#E7F3FF] via-[#F8F6FF] to-[#F4F8FF] pb-20">
+      <div className="pointer-events-none absolute -left-20 top-20 h-72 w-72 rounded-full bg-[#CC8994]/15 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-12 h-80 w-80 rounded-full bg-sky-200/35 blur-3xl" />
-      <div className="pointer-events-none absolute left-1/3 top-[42rem] h-72 w-72 rounded-full bg-fuchsia-100/35 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/3 top-[42rem] h-72 w-72 rounded-full bg-[#755E96]/10 blur-3xl" />
       <div className="pointer-events-none absolute right-1/4 top-[78rem] h-64 w-64 rounded-full bg-emerald-100/35 blur-3xl" />
       {children}
     </div>
@@ -95,7 +95,7 @@ export function LeadHero({
           : 'relative overflow-hidden px-6 py-12 md:py-14 lg:px-8 lg:py-16'
       }
     >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(251,146,60,0.28),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(56,189,248,0.24),_transparent_32%),radial-gradient(circle_at_72%_88%,_rgba(167,139,250,0.18),_transparent_30%),linear-gradient(135deg,_rgba(255,247,237,0.98),_rgba(255,255,255,0.97)_48%,_rgba(240,249,255,0.98))]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_12%,_rgba(204,137,148,0.15),_transparent_28%),radial-gradient(circle_at_88%_4%,_rgba(110,149,210,0.20),_transparent_32%),linear-gradient(135deg,_rgba(231,243,255,0.94),_rgba(241,237,252,0.85)_48%,_rgba(255,245,223,0.68))]" />
       {showLeftDecoration ? (
         <div className="pointer-events-none absolute left-[4%] top-12 h-24 w-24 rounded-full border border-orange-200/70 bg-white/25" />
       ) : null}
@@ -108,7 +108,7 @@ export function LeadHero({
         <div>
           <p
             className={twMerge(
-              'inline-flex rounded-full border border-orange-200/80 bg-gradient-to-r from-white via-orange-50 to-amber-50 px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]',
+              'inline-flex rounded-full border border-[#D7E5F4] bg-gradient-to-r from-white via-[#F1EDFC] to-[#FFF5DF] px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.22em] text-orange-700 shadow-[0_8px_24px_rgba(249,115,22,0.12)]',
               eyebrowClassName,
             )}
           >
@@ -146,12 +146,12 @@ export function LeadHero({
                     key={item.label}
                     className={`rounded-3xl border p-4 shadow-[0_18px_40px_rgba(15,23,42,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_50px_rgba(15,23,42,0.12)] ${
                       index % 4 === 0
-                        ? 'border-orange-200/80 bg-gradient-to-br from-white to-orange-50'
+                        ? 'border-[#E3DDF3] bg-gradient-to-br from-white to-[#F1EDFC]'
                         : index % 4 === 1
-                          ? 'border-sky-200/80 bg-gradient-to-br from-white to-sky-50'
+                          ? 'border-sky-200/80 bg-gradient-to-br from-white to-[#E7F3FF]'
                           : index % 4 === 2
-                            ? 'border-emerald-200/80 bg-gradient-to-br from-white to-emerald-50'
-                            : 'border-violet-200/80 bg-gradient-to-br from-white to-violet-50'
+                            ? 'border-[#D7E5F4] bg-gradient-to-br from-white to-[#EAF6F5]'
+                            : 'border-[#E3DDF3] bg-gradient-to-br from-white to-[#F1EDFC]'
                     }`}
                   >
                     <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
