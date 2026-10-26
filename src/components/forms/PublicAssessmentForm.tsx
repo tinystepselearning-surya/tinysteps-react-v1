@@ -15,6 +15,7 @@ import {
   buildPublicWhatsappMessage,
   getPublicLeadAttribution,
   type MainConcernOption,
+  type ClassFormatPreference,
   type PublicAssessmentFormState,
 } from '../../lib/publicLeadForm';
 
@@ -38,6 +39,8 @@ type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
 
 type PublicAssessmentFormProps = {
   source?: string;
+  preferredFormat?: ClassFormatPreference;
+  preferredMainConcern?: MainConcernOption;
   autoFocusFirstField?: boolean;
   onSuccess?: () => void;
   title?: string;
@@ -59,6 +62,8 @@ const GlassCard = ({ children, className = '' }: { children: React.ReactNode; cl
 
 export default function PublicAssessmentForm({
   source,
+  preferredFormat = 'one_to_one',
+  preferredMainConcern,
   autoFocusFirstField = false,
   onSuccess,
   title = 'Book Assessment',
@@ -76,7 +81,8 @@ export default function PublicAssessmentForm({
     childName: '',
     whatsapp: '',
     childAge: '',
-    mainConcern: '',
+    mainConcern: preferredMainConcern || '',
+    classFormatPreference: preferredFormat,
     urgency: '',
   };
 
@@ -162,6 +168,7 @@ export default function PublicAssessmentForm({
       childAge: form.childAge,
       mainConcern: form.mainConcern,
       urgency: form.urgency,
+      class_format_preference: form.classFormatPreference,
     });
   };
 
@@ -276,6 +283,7 @@ export default function PublicAssessmentForm({
       childAge: submittedForm.childAge,
       mainConcern: submittedForm.mainConcern,
       urgency: submittedForm.urgency,
+      class_format_preference: submittedForm.classFormatPreference,
     };
 
     trackLeadFormSubmit({
@@ -345,16 +353,18 @@ export default function PublicAssessmentForm({
         ...trackingPayload,
         page_path: window.location.pathname,
         lead_channel: 'assessment_form',
-        lead_type: 'parent_assessment_request',
+        lead_type: submittedForm.classFormatPreference === 'small_group' ? 'group_interest_request' : 'parent_assessment_request',
         form_id: 'public_assessment_form',
         source: source || 'public_assessment_form',
         submission_id: leadRef.id,
         value: 1,
       });
-      trackDemoBookingComplete({
-        booking_type: 'whatsapp_assessment_request',
-        source_context: source || 'public_assessment_form',
-      });
+      if (submittedForm.classFormatPreference !== 'small_group' && submittedForm.classFormatPreference !== 'unsure') {
+        trackDemoBookingComplete({
+          booking_type: 'whatsapp_assessment_request',
+          source_context: source || 'public_assessment_form',
+        });
+      }
       navigateToWhatsapp(whatsappWindow, whatsappUrl);
       trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
       setLastOpenedWaLink(whatsappUrl);
@@ -376,6 +386,29 @@ export default function PublicAssessmentForm({
       setIsSubmitting(false);
     }
   };
+
+  const displayedSubmitLabel = form.classFormatPreference === 'small_group'
+    ? 'Register Group Interest on WhatsApp'
+    : form.classFormatPreference === 'unsure'
+      ? 'Request Class-Format Guidance on WhatsApp'
+      : preferredFormat === 'small_group'
+        ? 'Book Free 35-Minute 1:1 Assessment on WhatsApp'
+        : submitLabel;
+  const displayedTitle = title === 'Book Assessment' && form.classFormatPreference === 'small_group'
+    ? 'Group Class Enquiry'
+    : title === 'Book Assessment' && form.classFormatPreference === 'unsure'
+      ? 'Find the Right Class Format'
+      : title;
+  const displayedDescription = form.classFormatPreference === 'small_group'
+    ? 'Share your child’s details. We will contact you when a suitable group and timing can be arranged.'
+    : form.classFormatPreference === 'unsure'
+      ? 'Tell us about your child and we will help you choose a suitable learning format.'
+      : description;
+  const displayedHelperText = form.classFormatPreference === 'small_group'
+    ? 'Group demos are arranged after suitable learners and schedules are matched.'
+    : form.classFormatPreference === 'unsure'
+      ? 'Our team will discuss the most suitable format with you.'
+      : helperText;
 
   const isHeroCompact = appearance === 'heroCompact';
   const cardClassName = appearance === 'embedded'
@@ -403,8 +436,8 @@ export default function PublicAssessmentForm({
       <div className="pointer-events-none absolute inset-0 rounded-[24px] ring-1 ring-slate-100" />
 
       <div className={headerClassName}>
-        <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{title}</h2>
-        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{description}</p>
+        <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{displayedTitle}</h2>
+        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{displayedDescription}</p>
       </div>
 
       <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
@@ -541,21 +574,55 @@ export default function PublicAssessmentForm({
           </div>
         </div>
 
+        <fieldset className="space-y-2" aria-label="Preferred class format">
+          <legend className="text-sm font-semibold text-[#142449]">Preferred class format *</legend>
+          <div className="grid grid-cols-3 gap-2" role="group" aria-label="Choose a class format">
+            {([
+              { value: 'one_to_one', label: 'One-to-One Classes' },
+              { value: 'small_group', label: 'Group Classes' },
+              { value: 'unsure', label: 'Help Me Choose' },
+            ] as const).map((option) => {
+              const selected = (form.classFormatPreference || 'one_to_one') === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => {
+                    trackFormStartOnce();
+                    setForm((previous) => ({ ...previous, classFormatPreference: option.value as ClassFormatPreference }));
+                  }}
+                  className={`min-h-[46px] min-w-0 rounded-xl border px-1.5 py-2.5 text-center text-[11px] font-semibold leading-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:px-3 sm:text-sm ${
+                    selected
+                      ? 'border-[#142449] bg-[#142449] text-white shadow-sm'
+                      : 'border-slate-300 bg-white text-[#142449] hover:border-[#759CC2] hover:bg-sky-50'
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          {form.classFormatPreference === 'small_group' ? (
+            <p className="text-xs leading-5 text-slate-600">Group interest is collected first; a group demo is arranged when suitable children and timings are matched.</p>
+          ) : null}
+        </fieldset>
+
         <button
           type="submit"
-          aria-label={submitAriaLabel}
+          aria-label={form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
           disabled={isSubmitting}
           className={submitClassName}
           style={{
             background: `linear-gradient(90deg, ${SUN_ORANGE} 0%, #ff7a1a 55%, #ff6a00 100%)`,
           }}
         >
-          {isSubmitting ? 'Saving your request...' : submitLabel}
+          {isSubmitting ? 'Saving your request...' : displayedSubmitLabel}
         </button>
 
         <div className="space-y-1 text-center">
-          <p className={`text-xs ${NAVY_TEXT}`}>{helperText}</p>
-          {secondaryHelperText ? (
+          <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
+          {secondaryHelperText && form.classFormatPreference === 'one_to_one' ? (
             <p className="text-xs text-slate-600">{secondaryHelperText}</p>
           ) : null}
         </div>

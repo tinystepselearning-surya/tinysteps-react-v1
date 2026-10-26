@@ -150,6 +150,7 @@ export function buildNewWebsiteLeadToastDescription(
       ? `Programme: ${normalizeText(lead.programInterest) || formatInterestTrack(lead.interestTrack)}`
       : '',
     normalizeText(lead.mainConcern) ? `Support: ${normalizeText(lead.mainConcern)}` : '',
+    normalizeText((lead as RealtimeLeadRecord & { classFormatPreference?: string }).classFormatPreference) === 'small_group' ? 'Class format: Small group' : '',
   ].filter(Boolean);
 
   const safeDetails = details.length > 0 ? details.join(' · ') : 'A new assessment request was added.';

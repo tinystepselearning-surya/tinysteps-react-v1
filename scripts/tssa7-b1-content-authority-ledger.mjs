@@ -69,7 +69,14 @@ const expected = { editorial_blogs:83, programmatic_phonics_guides:31,
 // Keep the 19 Oct source-evidence baseline frozen even when later approved
 // commercial-support pages extend the generated directory. Do not backdate
 // these newly published routes into the 279-owner historical audit ledger.
-const postBaselineApproved = new Set(PHONICS_AGE_PROGRAMME_PATHS);
+const postBaselineApproved = new Set([
+  ...PHONICS_AGE_PROGRAMME_PATHS,
+  // New commercial routes approved after the 19 October historical snapshot.
+  // Exclude them from that snapshot, but require their presence in today's index.
+  '/group-phonics-classes-for-kids',
+  '/group-grammar-classes-for-kids',
+  '/group-public-speaking-classes-for-kids',
+]);
 const postBaselineRoutes = [];
 const corpus = families.flatMap(([family, type]) => {
   const entries = index.corpus?.[family];

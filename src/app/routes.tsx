@@ -65,6 +65,9 @@ const PhonicsPage = lazy(() => import('../pages/phonics'));
 const PhonicsByAgePage = lazy(() => import('../pages/public/PhonicsByAgePage'));
 const GrammarPage = lazy(() => import('../pages/grammar'));
 const SpeakingPage = lazy(() => import('../pages/speaking'));
+const GroupPhonicsClassesPage = lazy(() => import('../pages/public/GroupPhonicsClassesPage'));
+const GroupGrammarClassesPage = lazy(() => import('../pages/public/GroupGrammarClassesPage'));
+const GroupPublicSpeakingClassesPage = lazy(() => import('../pages/public/GroupPublicSpeakingClassesPage'));
 const SpeakingProgressFrameworkPage = lazy(() => import('../pages/public/SpeakingProgressFrameworkPage'));
 const PhonicsClassesForKidsPage = lazy(() => import('../pages/PhonicsClassesForKidsPage'));
 const BestOnlinePhonicsClassesIndiaPage = lazy(() => import('../pages/public/BestOnlinePhonicsClassesIndiaPage'));
@@ -598,6 +601,9 @@ const router = createBrowserRouter(
         { path: 'testimonials', element: <TestimonialsPage /> },
         { path: 'careers', element: <CareersPage /> },
         { path: 'courses', element: <CoursesPage /> },
+        { path: 'group-phonics-classes-for-kids', element: <GroupPhonicsClassesPage /> },
+        { path: 'group-grammar-classes-for-kids', element: <GroupGrammarClassesPage /> },
+        { path: 'group-public-speaking-classes-for-kids', element: <GroupPublicSpeakingClassesPage /> },
         { path: 'courses/phonics-foundations', element: <Navigate to="/courses/phonics-foundation" replace /> },
         { path: 'courses/phonics', element: <Navigate to="/courses/phonics-foundation" replace /> },
         { path: 'courses/phonics/', element: <Navigate to="/courses/phonics-foundation" replace /> },

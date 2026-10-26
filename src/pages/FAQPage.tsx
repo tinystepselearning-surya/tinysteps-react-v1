@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import FAQAccordion, { FAQItem } from '../components/FAQ/FAQAccordion';
 import Meta from '../components/common/Meta';
 import { FREE_DEMO_FULL_DESCRIPTION, STANDARD_PRICING_SUMMARY } from '../config/publicOffer';
-import { GROUP_MONTHLY_FEES, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
+import { NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES } from '../config/pricing';
 import { getRouteConfig } from '../lib/seo';
 import { trackEvent } from '../lib/analytics';
 import { useAuthStore } from '../store/useAuthStore';
@@ -19,11 +19,7 @@ const metaDescription =
   'Answers for parents about Tiny Steps online English classes for kids: fees, class duration, teachers, progress, scheduling, policies and the free assessment.';
 
 const oneToOnePackageCounts = ONE_TO_ONE_MONTHLY_PACKAGES.map((pkg) => pkg.classes).join(', ');
-const groupRows = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
-const groupDurationMin = Math.min(...groupRows.map((row) => row.durationMinutes));
-const groupDurationMax = Math.max(...groupRows.map((row) => row.durationMinutes));
-const groupSizeMin = groupRows[0]?.ratio ?? '1:2';
-const groupSizeMax = groupRows[groupRows.length - 1]?.ratio ?? '1:6';
+const groupPricePerClass = NEW_GROUP_CLASS_PLAN.monthlyFee / NEW_GROUP_CLASS_PLAN.classes;
 
 const categories = [
   { id: 'all', label: 'All questions' },
@@ -103,7 +99,7 @@ const items: FAQItem[] = [
     category: 'classes',
     question: 'How long is each Tiny Steps class?',
     shortAnswer: `1:1 is 35 minutes`,
-    answer: `Standard 1:1 classes are 35 minutes. Standard small-group classes are longer because more children need individual response time: current group formats run from ${groupDurationMin} to ${groupDurationMax} minutes depending on group size.`,
+    answer: `One-to-One Classes last 35 minutes, while Group Classes last ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes.`, 
     searchTerms: ['duration', 'minutes', 'how long', '35', '40', '60', 'session length'],
     links: [{ to: '/pricing', label: 'See class formats and current pricing', emphasis: 'primary' }],
   },
@@ -111,13 +107,23 @@ const items: FAQItem[] = [
     id: 'class-format',
     category: 'classes',
     question: 'Are Tiny Steps classes 1:1 or group classes?',
-    shortAnswer: `Both — 1:1 and ${groupSizeMin} to ${groupSizeMax}`,
-    answer: `Tiny Steps offers standard 1:1 classes as well as small-group formats from ${groupSizeMin} to ${groupSizeMax}. One-to-one classes allow close observation and personalised pacing; groups add peer interaction and turn-taking. The better format depends on the child’s goal, confidence and need for individual correction.`,
+    shortAnswer: 'One-to-One Classes or Group Classes', 
+    answer: `Tiny Steps offers One-to-One Classes and Group Classes. Group Classes cost ₹${groupPricePerClass} per child for ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes. A new group demo is arranged when enough suitable learners and timings match. Existing sibling and friend groups are handled separately.`, 
     searchTerms: ['one to one', '1:1', 'group', 'batch size', 'children', 'ratio', 'private class'],
     links: [
       { to: '/pricing', label: 'Compare 1:1 and group pricing', emphasis: 'primary' },
       { to: '/blog/online-english-classes-for-kids-india', label: 'Read the parent comparison guide', emphasis: 'secondary' },
     ],
+  },
+  {
+    id: 'group-class-size',
+    category: 'classes',
+    question: 'What is the maximum number of children in a group class?',
+    shortAnswer: 'Maximum four children',
+    answer:
+      'Tiny Steps Group Classes have a maximum of four children per teacher. We match learners by level and suitable schedules before inviting families to a group demo.',
+    searchTerms: ['group size', 'maximum four', 'max children', 'students per class', 'batch capacity'],
+    links: [{ to: '/group-phonics-classes-for-kids', label: 'Explore group classes', emphasis: 'primary' }],
   },
   {
     id: 'class-platform',

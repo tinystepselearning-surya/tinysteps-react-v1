@@ -11,7 +11,7 @@ import {
   STANDARD_SMALL_GROUP_MIN_PER_CLASS,
 } from '../config/publicOffer';
 import {
-  GROUP_MONTHLY_FEES,
+  NEW_GROUP_CLASS_PLAN,
   ONE_TO_ONE_MONTHLY_PACKAGES,
   PER_CLASS_PRICE,
   formatINR,
@@ -122,11 +122,8 @@ function assessmentAnswer(): string {
 }
 
 function classModeAnswer(): string {
-  const smallGroupRatios = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1').map(
-    (row) => row.ratio,
-  );
   return withSource(
-    `Yes. Tiny Steps offers live 1:1 online classes. Small-group formats are also available (${smallGroupRatios.join(', ')}), subject to suitable level-matched placement.`,
+    `Yes. Tiny Steps offers One-to-One Classes and Group Classes. Group batches depend on level matching and suitable schedules. You can check the group-size FAQ for class capacity.`, 
     'pricing',
   );
 }
@@ -140,12 +137,8 @@ function durationAnswer(question: string): string {
   }
 
   const oneToOneMinutes = ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes;
-  const smallGroups = GROUP_MONTHLY_FEES.filter((row) => row.ratio !== '1:1');
-  const smallGroupMin = Math.min(...smallGroups.map((row) => row.durationMinutes));
-  const smallGroupMax = Math.max(...smallGroups.map((row) => row.durationMinutes));
-
   return withSource(
-    `Standard 1:1 classes are ${oneToOneMinutes} minutes. Small-group sessions vary by group size, currently ${smallGroupMin}–${smallGroupMax} minutes.`,
+    `One-to-One Classes last ${oneToOneMinutes} minutes and Group Classes last ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes.`, 
     'pricing',
   );
 }

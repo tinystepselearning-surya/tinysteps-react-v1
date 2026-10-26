@@ -14,6 +14,12 @@ import { PUBLIC_REDIRECT_MANIFEST, PUBLIC_ROUTE_MANIFEST } from '../../src/lib/p
 import { ROUTE_SEO_REGISTRY } from '../../src/lib/routeSeoRegistry.js';
 import { PHONICS_AGE_PROGRAMME_PATHS } from '../../src/lib/phonicsAgeProgrammeRegistry.js';
 
+const NEW_GROUP_COMMERCIAL_PATHS = [
+  '/group-phonics-classes-for-kids',
+  '/group-grammar-classes-for-kids',
+  '/group-public-speaking-classes-for-kids',
+];
+
 const root = path.resolve(process.cwd());
 const index = JSON.parse(fs.readFileSync(path.join(root, 'public/ai-resource-index.json'), 'utf8'));
 const routes = index.corpus?.additional_public_routes || [];
@@ -21,9 +27,10 @@ const byPath = new Map(routes.map((item) => [new URL(item.canonical_url).pathnam
 const manifestByPath = new Map(PUBLIC_ROUTE_MANIFEST.map((item) => [item.path, item]));
 
 test('canonical directory size and route ownership stay non-duplicated', () => {
-  assert.equal(routes.length, 111 + PHONICS_AGE_PROGRAMME_PATHS.length, 'historical public-route corpus plus approved pilot');
-  assert.equal(index.corpus_counts?.connected_public_content, 279 + PHONICS_AGE_PROGRAMME_PATHS.length, 'historical entire corpus plus approved pilot');
+  assert.equal(routes.length, 111 + PHONICS_AGE_PROGRAMME_PATHS.length + NEW_GROUP_COMMERCIAL_PATHS.length, 'historical public-route corpus plus approved age and group programmes');
+  assert.equal(index.corpus_counts?.connected_public_content, 279 + PHONICS_AGE_PROGRAMME_PATHS.length + NEW_GROUP_COMMERCIAL_PATHS.length, 'historical entire corpus plus approved new group programmes');
   for (const route of PHONICS_AGE_PROGRAMME_PATHS) assert.ok(byPath.has(route), 'published pilot canonical missing: ' + route);
+  for (const route of NEW_GROUP_COMMERCIAL_PATHS) assert.ok(byPath.has(route), 'group-class canonical missing: ' + route);
   assert.equal(byPath.size, routes.length, 'one directory entry per canonical public URL');
   for (const alias of PUBLIC_REDIRECT_MANIFEST) {
     if (alias.source !== alias.destination) {

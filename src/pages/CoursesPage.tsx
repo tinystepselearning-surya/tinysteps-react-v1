@@ -188,6 +188,34 @@ function CoursesPage() {
       })),
     });
 
+    // A separate course list allows discovery of all three live group programmes
+    // without changing the canonical ownership of our premium 1:1 courses.
+    const groupCourseListSchema = createCourseListSchema({
+      name: 'Tiny Steps live online group classes for kids',
+      url: coursesCanonicalUrl,
+      description: 'Group phonics, grammar and public speaking classes for children with level-matched peer learning.',
+      courses: [
+        {
+          name: 'Online Group Phonics Classes for Kids',
+          description: 'Learn letter sounds, blending and early reading in a group.',
+          url: 'https://tinystepslearning.com/group-phonics-classes-for-kids',
+          audienceType: 'Children developing early reading foundations',
+        },
+        {
+          name: 'Online Group Grammar Classes for Kids',
+          description: 'Practise sentences and grammar in a live group.',
+          url: 'https://tinystepslearning.com/group-grammar-classes-for-kids',
+          audienceType: 'Children practising sentence formation',
+        },
+        {
+          name: 'Online Group Public Speaking Classes for Kids',
+          description: 'Guided storytelling and presentations in a live group.',
+          url: 'https://tinystepslearning.com/group-public-speaking-classes-for-kids',
+          audienceType: 'Children developing speaking confidence',
+        },
+      ],
+    });
+
     const mainPathItemListSchema = {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
@@ -210,7 +238,7 @@ function CoursesPage() {
       description: coursesSeoDescription,
       canonicalPath: coursesCanonicalPath,
       ogType: 'website',
-      jsonLd: [breadcrumb, courseListSchema, mainPathItemListSchema, quickAnswerFaqSchema],
+      jsonLd: [breadcrumb, courseListSchema, groupCourseListSchema, mainPathItemListSchema, quickAnswerFaqSchema],
     });
   }, []);
 
@@ -298,9 +326,16 @@ function CoursesPage() {
               >
                 <h3 className="text-lg font-bold text-slate-900">{item.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate-600">{item.bestFor}</p>
-                <Link to={item.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
-                  {item.ctaLabel}
-                </Link>
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+                  <Link to={item.href} className="text-slate-900 underline underline-offset-4">
+                    {item.ctaLabel} · One-to-One Classes
+                  </Link>
+                  {({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title] ? (
+                    <Link to={({ Phonics: '/group-phonics-classes-for-kids', Grammar: '/group-grammar-classes-for-kids', 'Public Speaking': '/group-public-speaking-classes-for-kids' } as Record<string, string>)[item.title]} className="text-orange-700 underline underline-offset-4">
+                      Explore Group Classes
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             ))}
           </div>

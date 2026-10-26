@@ -655,17 +655,17 @@ export default function SpeakingPage() {
   }, [canonicalPath, canonicalUrl]);
 
   return (
-    <div className="bg-[#fbfbfd] pb-12">
+    <div className="bg-[#F0F8FF] pb-12">
       <section className="relative overflow-hidden px-4 pb-8 pt-7 sm:px-5 md:pb-10 md:pt-9 lg:px-8 lg:pb-12">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background:
-              'radial-gradient(circle at 82% 32%, rgba(244, 226, 212, 0.66) 0%, rgba(244, 226, 212, 0.34) 24%, transparent 46%), radial-gradient(circle at 72% 48%, rgba(218, 231, 215, 0.32) 0%, rgba(218, 231, 215, 0.16) 20%, transparent 42%), radial-gradient(circle at 12% 18%, rgba(229, 220, 255, 0.46) 0%, rgba(229, 220, 255, 0.18) 28%, transparent 52%), linear-gradient(180deg, #faf7ff 0%, #fffaf7 56%, #fbfbfd 100%)',
+              'radial-gradient(circle at 82% 32%, rgba(147, 197, 253, 0.25) 0%, transparent 48%), radial-gradient(circle at 12% 18%, rgba(186, 230, 253, 0.30) 0%, transparent 50%), linear-gradient(180deg, #D9EEFF 0%, #F4FAFF 55%, #EAF6FF 100%)',
           }}
         />
-        <div className="pointer-events-none absolute left-[-10%] top-[-34%] h-[560px] w-[560px] rounded-full bg-violet-200/24 blur-[128px]" />
-        <div className="pointer-events-none absolute right-[-7%] top-[-24%] h-[560px] w-[560px] rounded-full bg-[#f1ddd0]/45 blur-[130px]" />
+        <div className="pointer-events-none absolute left-[-10%] top-[-34%] h-[560px] w-[560px] rounded-full bg-sky-200/30 blur-[128px]" />
+        <div className="pointer-events-none absolute right-[-7%] top-[-24%] h-[560px] w-[560px] rounded-full bg-sky-200/35 blur-[130px]" />
 
         <div className="relative mx-auto max-w-7xl">
           <nav aria-label="Breadcrumb" className="mb-4 text-xs text-slate-600 sm:text-sm">
@@ -680,7 +680,7 @@ export default function SpeakingPage() {
 
           <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(380px,1fr)] lg:items-center lg:gap-10 xl:gap-12">
             <div className="max-w-[820px]">
-              <p className="inline-flex rounded-full border border-violet-200/80 bg-white/78 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-800 shadow-[0_8px_22px_rgba(124,58,237,0.07)] backdrop-blur">
+              <p className="inline-flex rounded-full border border-sky-200/80 bg-white/90 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-[#246D9C] shadow-[0_8px_22px_rgba(124,58,237,0.07)] backdrop-blur">
                 Live 1:1 Public Speaking & Communication
               </p>
 
@@ -714,7 +714,7 @@ export default function SpeakingPage() {
             </div>
 
             <div className="relative lg:-mr-3 xl:-mr-7">
-              <div className="pointer-events-none absolute -inset-14 bg-[radial-gradient(ellipse_at_center,rgba(249,235,224,0.46)_0%,rgba(239,229,255,0.18)_48%,transparent_78%)] blur-[34px]" />
+              <div className="pointer-events-none absolute -inset-14 bg-[radial-gradient(ellipse_at_center,rgba(186,230,253,0.36)_0%,rgba(239,247,255,0.18)_48%,transparent_78%)] blur-[34px]" />
               <div className="relative h-[300px] w-full sm:h-[350px] lg:h-[405px] xl:h-[440px]">
                 <img
                   src="/blog/hero-families/Tiny_Steps_Speaking.webp"
@@ -837,7 +837,7 @@ export default function SpeakingPage() {
           </p>
           <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {speakingPositioningProof.map((item) => (
-              <article key={item.title} className="rounded-[18px] border border-slate-200 bg-[#fcfbff] p-4">
+              <article key={item.title} className="rounded-[18px] border border-sky-100 bg-[#F7FBFF] p-4">
                 <h3 className="text-sm font-semibold text-slate-950">{item.title}</h3>
                 <p className="mt-1.5 text-sm leading-6 text-slate-600">{item.detail}</p>
               </article>
@@ -1124,7 +1124,7 @@ export default function SpeakingPage() {
       </section>
 
       <section id="communication-for-ai-era" className="px-4 py-7 sm:px-5 md:py-9 lg:px-6">
-        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f8f7ff_0%,#ffffff_50%,#f5fbff_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,#EAF6FF_0%,#FFFFFF_50%,#F5FBFF_100%)] p-5 shadow-[0_18px_50px_rgba(15,23,42,0.04)] sm:p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr] lg:gap-10">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-violet-700">Communication for a changing world</p>
@@ -1246,7 +1246,7 @@ export default function SpeakingPage() {
       </section>
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
-        <div className="mx-auto max-w-6xl rounded-[28px] border border-slate-200 bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_52%,#fff7ed_100%)] p-6 text-center sm:p-8 md:p-9">
+        <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,#D9EEFF_0%,#FFFFFF_52%,#EAF6FF_100%)] p-6 text-center sm:p-8 md:p-9">
           <h2 className="text-2xl font-semibold tracking-[-0.03em] text-slate-950 md:text-3xl">Ready to check the right speaking path for your child?</h2>
           <p className="mx-auto mt-3 max-w-3xl text-sm leading-6 text-slate-600 md:text-base">
             Start with the free {demoMinutes}-minute 1:1 assessment. If Speaking is the right fit, standard live 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL} at {speakingClassPriceLabel}; if another pathway fits better, the assessment should identify that before enrolment.

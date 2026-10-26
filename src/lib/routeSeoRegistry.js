@@ -54,6 +54,24 @@ export const ROUTE_SEO_REGISTRY = {
     keywords:
       'public speaking classes for kids online,public speaking classes for kids,public speaking course for kids,public speaking for kids,online speaking classes for kids,communication skills classes for kids online,communication classes for kids,1 to 1 public speaking classes for kids,online public speaking classes for kids India,public speaking classes for kids in India,online communication classes for kids,storytelling classes for kids online,presentation skills classes for kids,show and tell practice for kids,public speaking classes for kids worldwide',
   },
+  '/group-phonics-classes-for-kids': {
+    title: 'Online Group Phonics Classes for Kids | Tiny Steps',
+    description: 'Live online group phonics classes for kids in India, from letter sounds and blending to longer-word decoding. Level-matched learning, ₹250 per child/class.',
+    canonicalPath: '/group-phonics-classes-for-kids',
+    ogType: 'website',
+  },
+  '/group-grammar-classes-for-kids': {
+    title: 'Online Group Grammar Classes for Kids | Tiny Steps',
+    description: 'Live online group grammar classes for kids ages 5–12. Practise sentence building and grammar in speaking and writing. ₹250 per child/class.',
+    canonicalPath: '/group-grammar-classes-for-kids',
+    ogType: 'website',
+  },
+  '/group-public-speaking-classes-for-kids': {
+    title: 'Online Group Public Speaking Classes for Kids | Tiny Steps',
+    description: 'Live online group public speaking classes for kids ages 4–12. Practise storytelling and presentations with teacher guidance. ₹250 per child/class.',
+    canonicalPath: '/group-public-speaking-classes-for-kids',
+    ogType: 'website',
+  },
   '/speaking-progress-framework': {
     title: 'How Tiny Steps Measures Speaking Progress | 10-Skill Framework',
     description:
@@ -119,7 +137,7 @@ export const ROUTE_SEO_REGISTRY = {
   '/pricing': {
     title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
     description:
-      'See Tiny Steps online English class fees: standard live 1:1 ₹400/class, 12 classes ₹4,800, small groups ₹180–₹300 per child/class, plus native-teacher options.',
+      'Compare One-to-One Classes at ₹400 per 35-minute class with Group Classes at ₹250 per child for 50 minutes. View fees and programme options.',
     canonicalPath: '/pricing',
     ogType: 'website',
     keywords:

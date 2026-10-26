@@ -9,9 +9,12 @@ const extract = name => {
   return rows;
 };
 
-test('intent audit contains established parent and benchmark owners, no new SEO URLs', () => {
+test('intent audit preserves 279 historical owners and isolates approved additions', () => {
   const summary = JSON.parse(read(dir + '/SUMMARY.json'));
-  assert.equal(summary.corpus_owners, 279);
+  assert.equal(summary.historical_corpus_owners, 279);
+  assert.equal(summary.new_phonics_age_corpus_owners, 4);
+  assert.equal(summary.new_group_corpus_owners, 3);
+  assert.equal(summary.corpus_owners, 279 + 4 + 3);
   assert.equal(summary.parent_intents, 28);
   assert.equal(summary.benchmark_intents, 12);
   assert.equal(summary.commercial_intents, 9);

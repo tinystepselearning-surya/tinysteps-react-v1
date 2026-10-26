@@ -59,6 +59,19 @@ describe('publicLeadForm helpers', () => {
     });
   });
 
+  it('preserves group preference and does not promise an immediately booked demo', () => {
+    const lead = {
+      parentName: 'Parent', childName: 'Child', whatsapp: '919999999999',
+      childAge: '6', mainConcern: 'Blending sounds to read words' as const,
+      classFormatPreference: 'small_group' as const, urgency: 'Just exploring' as const,
+    };
+    const payload = buildPublicLeadPayload(lead, { source: 'group_phonics_page' });
+    expect(payload.classFormatPreference).toBe('small_group');
+    expect(payload.programInterest).toBe('Phonics');
+    expect(buildPublicWhatsappMessage(lead)).toContain('register interest in a suitable small-group');
+    expect(buildPublicWhatsappMessage(lead)).not.toContain('book one free 35-minute 1:1');
+  });
+
   it('builds the complete server-side enrichment payload separately', () => {
     expect(
       buildLeadAttributionEnrichment({

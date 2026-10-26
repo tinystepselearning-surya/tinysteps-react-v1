@@ -493,6 +493,12 @@ const CurriculumPage: FC = () => {
               </Link>
             </div>
 
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold text-orange-800">
+              <span className="text-slate-600">Interested in group classes?</span>
+              <Link to="/group-phonics-classes-for-kids" className="underline underline-offset-4">Group Phonics</Link>
+              <Link to="/group-grammar-classes-for-kids" className="underline underline-offset-4">Group Grammar</Link>
+              <Link to="/group-public-speaking-classes-for-kids" className="underline underline-offset-4">Group Public Speaking</Link>
+            </div>
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200 pt-5 text-xs font-semibold text-slate-600 sm:text-sm">
               <span>Live teacher-guided learning</span>
               <span>Assessment-led starting point</span>

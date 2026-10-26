@@ -74,6 +74,9 @@ export const PUBLIC_ROUTE_MANIFEST = [
   route('/letter-tracing-with-sounds-game', 'static'),
   route('/free-balloon-pop-phonics-game-for-kids', 'static'),
   route('/free-games/word-meaning-flashcards', 'static'),
+  route('/group-phonics-classes-for-kids', 'static'),
+  route('/group-grammar-classes-for-kids', 'static'),
+  route('/group-public-speaking-classes-for-kids', 'static'),
   route('/phonics', 'static'),
   // Only editorially approved, finite Phonics age routes are indexable (ages 3–6).
   // Unpublished ages 7–9 stay in docs/ and never enter this sitemap/prerender list.

@@ -10,9 +10,16 @@ const root = process.cwd();
 const dist = path.join(root, 'dist');
 const output = path.join(root, 'artifacts', 'tssa-scq-phase1');
 const origin = 'https://tinystepslearning.com';
-// This is the current generated inventory; the frozen 19 Oct 260/279
-// reference remains in tssa7-b1-content-authority-ledger.mjs.
-const additionalApprovedCount = PHONICS_AGE_PROGRAMME_PATHS.length;
+// Preserve the frozen 19 Oct 260/279 reference in the B1 ledger.
+// The four Phonics age pages and three group-commercial pages are explicit
+// approved additions; only these paths may increase the expected inventory.
+const APPROVED_GROUP_ROUTES = Object.freeze([
+  '/group-phonics-classes-for-kids',
+  '/group-grammar-classes-for-kids',
+  '/group-public-speaking-classes-for-kids',
+]);
+const approvedNewRoutes = [...PHONICS_AGE_PROGRAMME_PATHS, ...APPROVED_GROUP_ROUTES];
+const additionalApprovedCount = approvedNewRoutes.length;
 const expectedIndexableCount = 260 + additionalApprovedCount;
 const expectedCorpusCount = 279 + additionalApprovedCount;
 const expectedChildCounts = new Map([
@@ -73,6 +80,16 @@ for (const entry of corpus) {
   if (!url) continue;
   if (corpusByUrl.has(url)) issue('ERROR', url, 'DUPLICATE_CORPUS_OWNER', entry.family);
   else corpusByUrl.set(url, entry);
+}
+// Counts alone are not sufficient: every approved exception must have
+// a canonical, index-intended corpus owner and be listed exactly once.
+for (const approvedPath of approvedNewRoutes) {
+  const url = origin + approvedPath;
+  const owner = corpusByUrl.get(url);
+  if (!owner || owner.indexing_state !== 'indexable')
+    issue('ERROR', approvedPath, 'APPROVED_OWNER_MISSING', 'Approved route must have an indexable corpus owner');
+  if (!membership.has(url))
+    issue('ERROR', approvedPath, 'APPROVED_SITEMAP_MISSING', 'Approved route must appear once in the sitemap');
 }
 const indexIntended = corpus.filter(e => e.indexing_state === 'indexable');
 const noindex = corpus.filter(e => e.indexing_state === 'noindex');
@@ -185,6 +202,7 @@ const summary = {
   evidence: 'generated local build artifact; NOT live HTTP, current Google or Bing indexed state, or AI citation evidence',
   frozen_2026_10_19_baseline: { content: 279, indexable: 260, noindex: 19 },
   additional_approved_age_routes: PHONICS_AGE_PROGRAMME_PATHS,
+  additional_approved_group_routes: APPROVED_GROUP_ROUTES,
   source_content_count: corpus.length,
   source_indexable: indexIntended.length,
   source_noindex: noindex.length,

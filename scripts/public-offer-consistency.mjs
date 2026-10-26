@@ -101,7 +101,7 @@ const REQUIRED_STRINGS = [
   },
   {
     path: 'src/pages/PricingPage.tsx',
-    value: 'GROUP_MONTHLY_FEES.filter',
+    value: 'const standardGroups = [NEW_GROUP_CLASS_PLAN]',
   },
   {
     path: 'src/pages/PricingPage.tsx',
@@ -256,7 +256,7 @@ if (!bookDemoEntry || !/35-minute/i.test(bookDemoEntry.text ?? '')) {
 
 const pricingEntry = kbEntries.find((entry) => entry?.path === '/pricing');
 const pricingText = pricingEntry?.text ?? '';
-for (const requiredPrice of ['₹400', '₹180', '₹300', '₹4,800']) {
+for (const requiredPrice of ['₹400', '₹250', '₹3,000', '₹4,800']) {
   if (!pricingText.includes(requiredPrice)) {
     failures.push(`public/kb.json: /pricing must contain ${requiredPrice}`);
   }

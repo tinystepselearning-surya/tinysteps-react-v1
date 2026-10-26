@@ -147,6 +147,7 @@ const interactionSnapshot = (
   programInterest: cleanText(lead.programInterest, 120) || null,
   interestTrack: cleanText(lead.interestTrack, 120) || null,
   mainConcern: cleanText(lead.mainConcern, 300) || null,
+  classFormatPreference: cleanText(lead.classFormatPreference, 40) || null,
   source: WEBSITE_SOURCE,
   sourceDetail: cleanText(lead.sourceDetail, 160) || null,
   sourcePath: cleanText(lead.sourcePath, 220) || null,
@@ -561,7 +562,7 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
 
       const currentIsLatest = duplicateMs >= canonicalMs;
       if (currentIsLatest) {
-        const latestFields = ['programInterest', 'interestTrack', 'mainConcern', 'urgency'];
+        const latestFields = ['programInterest', 'interestTrack', 'mainConcern', 'urgency', 'classFormatPreference'];
         latestFields.forEach((field) => {
           if (current[field] !== undefined && current[field] !== null && current[field] !== '') {
             mergedPatch[field] = current[field];
