@@ -111,7 +111,7 @@ function Footer() {
               />
               <div>
                 <div className="text-lg font-semibold text-white">
-                  <span className="text-orange-500">Tiny Steps</span>{" "}
+                  <span className="text-[#C2410C]">Tiny Steps</span>{" "}
                   <span className="text-white">Learning</span>
                 </div>
                 <p className="text-sm text-gray-400">Live online English classes for children ages 3–12.</p>
