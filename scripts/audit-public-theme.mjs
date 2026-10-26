@@ -34,8 +34,7 @@ function list(dir) {
   return fs.readdirSync(folder, { withFileTypes: true }).flatMap(entry => {
     const rel = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      const parts = rel.split(path.sep);
-      if (parts.some(p => EXCLUDE_PARTS.has(p))) return [];
+      if (EXCLUDE_PARTS.has(entry.name)) return [];
       return list(rel);
     }
     if (!entry.isFile() || !/\.(?:tsx|jsx|css)$/.test(entry.name)) return [];
