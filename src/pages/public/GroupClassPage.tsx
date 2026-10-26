@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
-import { GROUP_MONTHLY_FEES, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
+import { NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { getRouteConfig } from '../../lib/seo';
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 
@@ -120,7 +120,7 @@ const GROUP_CONTENT: Record<GroupTrack, GroupPageContent> = {
   },
 };
 
-const GROUP_PLAN = GROUP_MONTHLY_FEES.find((row) => row.ratio === '1:4');
+const GROUP_PLAN = NEW_GROUP_CLASS_PLAN;
 const PREMIUM_DURATION_MINUTES = ONE_TO_ONE_MONTHLY_PACKAGES[0].durationMinutes;
 
 export default function GroupClassPage({ track }: { track: GroupTrack }) {
@@ -128,6 +128,13 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
   const seo = getRouteConfig(page.path);
   const url = PUBLIC_FACTS.primaryWebsite + page.path;
   const enquiryHref = `/book-demo?format=small_group&program=${track}`;
+  const questions = [
+    ...page.questions,
+    {
+      question: 'How many children are in a Tiny Steps group class?',
+      answer: 'Our new group format is one teacher with four students, with a 50-minute session at ₹220 per child under the standard plan. We invite suitable families to a group demo when enough level-matched children and compatible timings are available.',
+    },
+  ];
   const schemas = [
     createWebPageSchema({ name: seo?.title || page.heading, description: seo?.description || page.description, url }),
     createCourseSchema({ name: page.name + ' Online Classes for Kids', description: page.description, url, teaches: page.themes, areaServed: 'India' }),
@@ -140,7 +147,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         { '@type': 'ListItem', position: 3, name: page.name, item: url },
       ],
     },
-    createFAQPageSchema(page.questions),
+    createFAQPageSchema(questions),
   ];
 
   return (
@@ -292,7 +299,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         <div className="mx-auto max-w-4xl">
         <h2 id="group-faq" className="text-3xl font-bold tracking-tight">Questions parents ask</h2>
         <div className="mt-7 overflow-hidden rounded-3xl border border-[#D2E7F8] bg-white px-5 shadow-[0_12px_36px_rgba(27,85,133,0.08)] sm:px-7">
-          {page.questions.map(({ question, answer }) => (
+          {questions.map(({ question, answer }) => (
             <details key={question} className="group border-b border-sky-100 py-5 last:border-0">
               <summary className="cursor-pointer text-lg font-semibold leading-7">{question}</summary>
               <p className="mt-3 max-w-3xl leading-7 text-slate-700">{answer}</p>
