@@ -17,7 +17,10 @@ export const SEMANTIC_FACTS = {
   brand: {
     name: 'Tiny Steps Learning',
     shortName: 'Tiny Steps',
-    organizationName: 'Tiny Steps Early Education',
+    // Public educational organisation identity; any separate legal entity should be disclosed in legal documents.
+    organizationName: 'Tiny Steps Learning',
+    // Existing publicly stated start year. Exact first operating date still requires owner verification.
+    operatingSinceYear: '2020',
     websiteOrigin: 'https://tinystepslearning.com',
     positioning: 'premium online English learning school for children aged 3–12',
   },
@@ -70,6 +73,9 @@ export const SEMANTIC_FACTS = {
     standardOneToOnePerClassInr: PER_CLASS_PRICE,
     standardSmallGroupMinPerClassInr: Math.min(...smallGroupPerClassValues),
     standardSmallGroupMaxPerClassInr: Math.max(...smallGroupPerClassValues),
+    standardSmallGroupPackageInr: NEW_GROUP_CLASS_PLAN.monthlyFee,
+    standardSmallGroupPackageClasses: NEW_GROUP_CLASS_PLAN.classes,
+    standardSmallGroupClassMinutes: NEW_GROUP_CLASS_PLAN.durationMinutes,
     pricingPath: '/pricing',
   },
 
