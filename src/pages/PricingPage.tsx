@@ -371,9 +371,6 @@ const PricingPage: FC = () => {
                   </tbody>
                 </table>
               </div>
-              <p className="mt-4 text-xs leading-5 text-slate-500">
-                The current group fee comes from the canonical Tiny Steps pricing configuration. Group batches depend on suitable matching and scheduling. Existing family arrangements are handled separately.
-              </p>
             </div>
           </section>
         </>
