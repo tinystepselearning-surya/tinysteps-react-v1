@@ -311,9 +311,9 @@ const faqItems = [
       'No. Tiny Steps sits alongside the existing English curriculum as a structured phonics and foundational-reading implementation system. The school keeps its board, textbooks, timetable, and teachers; Tiny Steps strengthens the methodology behind early reading and spelling instruction.',
   },
   {
-    question: 'Is Tiny Steps an officially CBSE-endorsed or government-approved phonics programme?',
+    question: 'How does the Tiny Steps programme support CBSE and other school curricula?',
     answer:
-      'No. Tiny Steps is an independent education provider. We reference official curriculum expectations and design our programme to complement school curricula, but compatibility does not mean CBSE, NCERT, government, Cambridge, IB, or publisher endorsement.',
+      'Tiny Steps helps schools turn foundational-literacy expectations into practical phonics progression, teacher preparation, teaching routines and progress checks. Schools keep their own curriculum and board requirements. Tiny Steps is an independent provider, and references to CBSE, NCERT and other frameworks do not claim official approval or endorsement.',
   },
   {
     question: 'What does internationally benchmarked mean on this page?',
@@ -654,9 +654,9 @@ const ForSchoolsPage: React.FC = () => {
                 </a>
               </div>
               <p className="mt-4 max-w-2xl text-xs leading-5 text-slate-600">
-                Tiny Steps Learning is an independent education provider. Referencing NCF, CBSE, or international
-                phonics criteria explains the evidence and implementation context; it does not imply endorsement,
-                approval, certification or affiliation.
+                Our implementation draws on published NCF/CBSE foundational-literacy expectations and systematic
+                phonics criteria: sequenced teaching, cumulative practice, assessment and teacher support. These
+                sources guide the work; Tiny Steps does not claim approval or certification by the organisations cited.
               </p>
             </div>
 
