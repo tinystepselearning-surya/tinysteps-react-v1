@@ -90,6 +90,23 @@ test('reconciliation preserves curriculum/error colours and removes competing ro
 });
 
 
+test('teacher and shared mobile tab navigation preserve readable dark-mode contrast', () => {
+  const teacher = read('src/pages/teacher/components/layout/TeacherSidebar.tsx');
+  const mobile = read('src/components/common/MobileTabBar.tsx');
+  assert.ok(teacher.includes('text-[#604577] dark:text-[#D3B9E1]'), 'teacher greeting needs a light dark-mode foreground');
+  assert.ok(teacher.includes('text-[#405678] hover:bg-[#F1EDFC] hover:text-[#17284C] dark:text-[#D3B9E1]'), 'inactive teacher tabs need a light dark-mode foreground');
+  assert.ok(teacher.includes('dark:hover:bg-[#384C80] dark:hover:text-white'), 'teacher tabs must remain legible on hover');
+  assert.ok(mobile.includes('font-semibold text-slate-950 dark:text-white'), 'active mobile tab label must remain legible');
+  assert.ok(mobile.includes('dark:bg-[#384C80] dark:text-white'), 'active mobile tab icon needs readable foreground');
+  assert.ok(mobile.includes('dark:text-[#D3B9E1] dark:active:bg-[#384C80]'), 'inactive mobile labels need dark-mode foreground');
+  assert.ok(mobile.includes('dark:group-hover:bg-[#384C80] dark:group-hover:text-white'), 'mobile icons need legible dark-mode hover');
+  for (const [fg, bg] of [
+    ['#D3B9E1', '#17284C'],
+    ['#D3B9E1', '#0F172A'],
+    ['#FFFFFF', '#384C80'],
+  ]) assert.ok(contrast(fg, bg) >= 4.5, `dark mode contrast: ${fg} on ${bg}`);
+});
+
 test('whole-source text inventory separates educational game directories from protected operations', () => {
   const inventory = read('scripts/audit-public-text-palette.mjs');
   const gameMatch = inventory.indexOf("if (interactiveSpecialDirectory.test(file)) return 'specialised';");
