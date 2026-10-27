@@ -19,6 +19,8 @@ on:
       - 'scripts/diagnose-gsc735-phase1-live.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
+      - 'scripts/test/gsc-group-class-chunk-mobile.node-test.mjs'
+      - 'scripts/test/gsc-group-classes-html-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-blog-cache.node-test.mjs'
       - 'scripts/test/gsc735-three-clean-html-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs'
@@ -96,6 +98,8 @@ jobs:
         run: npx vitest run src/tests/seo/gsc735PhonicsComparisonIntent.spec.ts
       - name: Verify public prerender chunk recovery guards
         run: node --test scripts/test/gsc735-public-resource-fallback.node-test.mjs
+      - name: Guard three group-class HTML revalidation policies
+        run: node --test scripts/test/gsc-group-classes-html-cache.node-test.mjs
       - name: Guard approved Phonics age routes and editorial differentiation
         run: npx vitest run src/tests/seo/phonicsAgeProgrammePilot.spec.ts
       - name: Verify mandatory parent class-recordings policy on FAQ and Terms
@@ -110,6 +114,8 @@ jobs:
         run: node --test scripts/test/gsc735-resource-chunk-mobile.node-test.mjs
       - name: Simulate failed blog chunks in mobile Chromium
         run: node --test scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs
+      - name: Simulate failed group-class chunks in mobile Chromium
+        run: node --test scripts/test/gsc-group-class-chunk-mobile.node-test.mjs
       - name: Protect clean blog article cache policy
         run: node --test scripts/test/gsc735-public-blog-cache.node-test.mjs
       - name: Protect three remaining clean public HTML cache policies
