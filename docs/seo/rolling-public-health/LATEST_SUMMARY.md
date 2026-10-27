@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 4)
+## Daily coverage — 28 October IST (after Slot 5)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **40 (19.8%)** |
+| Distinct URLs actually attempted today | **50 (24.8%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **40** |
-| Not yet checked today | **162** |
+| UNVERIFIED / partial provider-only evidence today | **50** |
+| Not yet checked today | **152** |
 
-**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 40 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–30 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 50 current-day UTC probe timestamps are distinct and map to 28 October IST. Rows 1–40 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 40 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
+**Verification boundary:** All 50 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
 
-**Comparison:** 27 October's 202 attempted URLs were also UNVERIFIED for full origin readiness. No dated, independently verified production before/after transition was established. No new CHANGES.md entry is warranted.
+**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 5 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
 
-**Workflow safety:** This Slot 4 run attempted GitHub Actions workflow-state, queued-run and in-progress-run API endpoints, but they were inaccessible to the audit runtime. Concurrent audit execution and administrative disablement could not be independently verified during Slot 4; the user's confirmed 25 October disablement remains the operating assumption. The earlier Slot 3 checks found no concurrent audit. No workflow was executed or enabled, and no source or production settings were modified.
+**Workflow safety:** The connected GitHub tool exposes repository file reads/writes but no workflow-state or active-run listing. Attempts to open the GitHub Actions workflow page and GitHub REST workflow-state endpoint through web retrieval failed; neither concurrent execution nor administrative disablement was independently verified this run. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 5, rows 41–50, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+**Next:** Slot 6, rows 51–60, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+
+## Slot 5 — team, trust, courses and commercial comparison (04:16 IST)
+
+At **2026-10-27T22:46:52.979300Z–22:47:18.294862Z UTC** (28 October IST), ChatGPT attempted **10 previously unchecked Slot 5 URLs** (rows 41–50). All ten exact URLs returned substantive, page-specific provider-extracted text with visible H1s. Nine provider snapshots were labelled **Crawled: yesterday**, and the founder profile was labelled **Crawled: today**; these are provider cache labels, not precise origin check times.
+
+- 41 `/why-tiny-steps` — H1: “Why Parents Choose Tiny Steps Learning”
+- 42 `/team` — H1: “The academic team behind confident young readers, writers and speakers”
+- 43 `/team/vannala-ravali-priya` — H1: “Vannala Ravali Priya”
+- 44 `/class-samples` — H1: “See How Tiny Steps Online Classes Work”
+- 45 `/testimonials` — H1: “Parent Feedback and Tiny Steps Learning Reviews”
+- 46 `/careers` — H1: “Teacher Recruitment Closed — All Positions Filled”
+- 47 `/courses` — H1: “Find the Right English Course for Your Child”
+- 48 `/curriculum` — H1: “English Curriculum for Kids Ages 3–12”
+- 49 `/faq` — H1: “Tiny Steps parent FAQ: classes, fees and English learning”
+- 50 `/best-online-phonics-classes-for-kids-in-india` — H1: “Best Online Phonics Classes for Kids in India”
+
+Ten independent read-only `curl -L` HTTPS requests were executed at distinct actual UTC start times recorded in the tracker. **All ten failed before HTTP with exit code 6**, exact diagnostic `curl: (6) Could not resolve host: tinystepslearning.com`. Every request yielded zero origin response-header bytes and zero body bytes. `HTTP_CODE:000` is a curl placeholder, not a site response; the effective URL shown by curl is not a verified redirect destination. This is an **audit-environment DNS limitation**, not evidence that production is down.
+
+**Result:** 10 UNVERIFIED; zero confirmed production PASS, WARN or FAIL. Origin HTTP, redirect, canonical, noindex, robots, bot access, raw HTML and structured data remain unverified. No verified meaningful transition was detected, so CHANGES.md is unchanged.
 
 ## Slot 4 — phonics, resource hubs, pricing and contact (03:14 IST)
 
