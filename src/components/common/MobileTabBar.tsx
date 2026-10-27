@@ -76,16 +76,16 @@ export default function MobileTabBar({
                     'group relative flex min-h-11 flex-col items-center justify-center rounded-xl px-1 text-[11px] font-medium transition duration-150 ease-out active:scale-[0.97]',
                     useFixedGrid ? 'min-w-0 w-full' : 'min-w-[74px] snap-center',
                     isActive
-                      ? 'font-semibold text-slate-950'
-                      : 'text-slate-600 active:bg-slate-100 hover:text-slate-950',
+                      ? 'font-semibold text-slate-950 dark:text-white'
+                      : 'text-slate-600 active:bg-slate-100 hover:text-slate-950 dark:text-[#D3B9E1] dark:active:bg-[#384C80] dark:hover:text-white',
                   )}
                 >
                   <span
                     className={cn(
                       'mb-0.5 flex h-7 w-9 items-center justify-center rounded-full transition-colors',
                       isActive
-                        ? 'bg-slate-200 text-slate-950'
-                        : 'text-slate-600 group-hover:bg-slate-100 group-hover:text-slate-950',
+                        ? 'bg-slate-200 text-slate-950 dark:bg-[#384C80] dark:text-white'
+                        : 'text-slate-600 group-hover:bg-slate-100 group-hover:text-slate-950 dark:text-[#D3B9E1] dark:group-hover:bg-[#384C80] dark:group-hover:text-white',
                     )}
                   >
                     <Icon className="h-[18px] w-[18px]" />
