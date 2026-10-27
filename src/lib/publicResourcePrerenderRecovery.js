@@ -27,7 +27,11 @@ export function captureOriginalPublicResource(document, location) {
   if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path) && !Object.hasOwn(groupPageHeadings, path)) return null;
 
   const root = document.getElementById('root');
-  const main = root?.querySelector('main');
+  // Public Layout wraps each route in an outer <main>. For group-class
+  // owners, validate the programme's inner <main>, not that shared shell.
+  const main = Object.hasOwn(groupPageHeadings, path)
+    ? root?.querySelector('main.group-commercial-page')
+    : root?.querySelector('main');
   const h1 = main?.querySelector('h1');
   const content = (main?.textContent || '').replace(/\s+/g, ' ').trim();
   const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
