@@ -5,14 +5,26 @@ const allowedResourcePath = /^\/resources\/(?:phonics|grammar|vocabulary)(?:\/[a
 // Phase 1: Google confirmed intermittent BlogPostPage import failures on a
 // real /blog/:slug article. Snapshot only substantive self-canonical HTML.
 const allowedBlogArticlePath = /^\/blog\/[a-z0-9-]+$/;
+// GSC 27 October: protect only the three published group-class owners.
+// Require the matching prerendered programme H1 in addition to the self-canonical.
+const groupPageHeadings = Object.freeze({
+  '/group-phonics-classes-for-kids': 'Live Online Group Phonics Classes for Kids',
+  '/group-grammar-classes-for-kids': 'Small-Group Online Grammar Classes for Kids',
+  '/group-public-speaking-classes-for-kids': 'Live Online Group Public Speaking Classes for Kids',
+});
 const lazyModuleError = /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|failed to load module script|loading chunk .+ failed/i;
 let originalResource = null;
 
 const normalizedPath = (pathname) => pathname.replace(/\/+$/, '') || '/';
 
+export function isLazyModuleLoadError(error) {
+  const message = String(error?.message || error || '');
+  return lazyModuleError.test(message);
+}
+
 export function captureOriginalPublicResource(document, location) {
   const path = normalizedPath(location.pathname);
-  if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path)) return null;
+  if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path) && !Object.hasOwn(groupPageHeadings, path)) return null;
 
   const root = document.getElementById('root');
   const main = root?.querySelector('main');
@@ -21,6 +33,9 @@ export function captureOriginalPublicResource(document, location) {
   const canonical = document.querySelector('link[rel="canonical"]')?.getAttribute('href');
   const robots = document.querySelector('meta[name="robots"]')?.getAttribute('content') || '';
   if (!main || !h1?.textContent?.trim() || content.length < 600) return null;
+  if (Object.hasOwn(groupPageHeadings, path)
+      && (!main.classList.contains('group-commercial-page')
+        || h1.textContent.replace(/\\s+/g, ' ').trim() !== groupPageHeadings[path])) return null;
   // Preview channels and local Vite preview intentionally keep the production
   // canonical, so validate the canonical owner independently of the host.
   if (canonical !== 'https://tinystepslearning.com' + path || /\bnoindex\b/i.test(robots)) return null;
@@ -37,8 +52,7 @@ export function saveOriginalPublicResource(document, location) {
 }
 
 export function originalResourceForChunkError(error, location) {
-  const message = String(error?.message || error || '');
-  if (!lazyModuleError.test(message) || !originalResource) return null;
+  if (!isLazyModuleLoadError(error) || !originalResource) return null;
   if (originalResource.origin !== location.origin
       || originalResource.path !== normalizedPath(location.pathname)) return null;
   return originalResource.html;
