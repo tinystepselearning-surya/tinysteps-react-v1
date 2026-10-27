@@ -50,7 +50,7 @@ export default function PublicTeacherProfilesSection() {
             </div>
             <div className="rounded-3xl border border-orange-100 bg-white p-6">
               <ShieldCheck className="h-7 w-7 text-orange-700" aria-hidden="true" />
-              <h3 className="mt-4 font-heading text-lg font-bold text-slate-950">Ask about your child's educator</h3>
+              <h3 className="mt-4 font-heading text-lg font-bold text-slate-950">Ask about your child&apos;s educator</h3>
               <p className="mt-2 text-sm leading-6 text-slate-700">
                 Parents can ask our academic team about the experience, qualifications and
                 subject specialisms relevant to a proposed teacher.
