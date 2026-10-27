@@ -1,26 +1,47 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 3)
+## Daily coverage — 28 October IST (after Slot 4)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **30 (14.9%)** |
+| Distinct URLs actually attempted today | **40 (19.8%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **30** |
-| Not yet checked today | **172** |
+| UNVERIFIED / partial provider-only evidence today | **40** |
+| Not yet checked today | **162** |
 
-**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 30 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–10 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 40 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–30 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 30 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
+**Verification boundary:** All 40 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
 
 **Comparison:** 27 October's 202 attempted URLs were also UNVERIFIED for full origin readiness. No dated, independently verified production before/after transition was established. No new CHANGES.md entry is warranted.
 
-**Workflow safety:** Connected GitHub Actions queries found zero in-progress and zero queued runs, and the latest 100 runs contained no rolling-public-seo-health workflow. The administrative workflow-state endpoint was not accessible through the connector; the user's confirmed 25 October disablement remains the operating assumption. No workflow was executed or enabled, and no source or production settings were modified.
+**Workflow safety:** This Slot 4 run attempted GitHub Actions workflow-state, queued-run and in-progress-run API endpoints, but they were inaccessible to the audit runtime. Concurrent audit execution and administrative disablement could not be independently verified during Slot 4; the user's confirmed 25 October disablement remains the operating assumption. The earlier Slot 3 checks found no concurrent audit. No workflow was executed or enabled, and no source or production settings were modified.
 
-**Next:** Slot 4, rows 31–40, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+**Next:** Slot 5, rows 41–50, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+
+## Slot 4 — phonics, resource hubs, pricing and contact (03:14 IST)
+
+At **2026-10-27T21:44:01–21:44:11Z UTC** (28 October IST), the ChatGPT-native auditor attempted **10 previously unchecked Slot 4 URLs** (rows 31–40). Nine exact URLs returned provider-extracted substantive, page-specific text with visible H1s (provider label **Crawled: today**, precise crawl time unknown). **Row 31's direct web.open failed**; a separate web search found only a cached excerpt labelled **Crawled: 3 weeks ago**. This is weaker historical evidence, not a fresh successful page retrieval.
+
+- Row 31: `/resources/phonics/ou-ow-phonics` — cached H1: “Why are ou and ow tricky for children?” (direct retrieval blocked; cached 3 weeks ago)
+- Row 32: `/resources/phonics/j-sound-spellings-phonics` — H1: “Why can the /j/ sound be written in different ways?”
+- Row 33: `/resources/phonics/shun-sound-family-phonics` — H1: “Why can the ending sound /shun/ be spelled in different ways?”
+- Row 34: `/resources/phonics/ui-vowel-sound-phonics` — H1: “Why can fruit and moon share a vowel sound with different spellings?”
+- Row 35: `/resources/phonics/schwa-sound-for-kids-phonics` — H1: “Why does a written vowel sometimes sound weak or unclear in a longer word?”
+- Row 36: `/resources/grammar` — H1: “Grammar & Writing Resources”
+- Row 37: `/resources/speaking` — H1: “Speaking & Communication Resources”
+- Row 38: `/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading` — H1: “What is Jolly Phonics and is it the best way to teach reading?”
+- Row 39: `/pricing` — H1: “Online English Classes for Kids: Fees & Pricing”
+- Row 40: `/contact` — H1: “How Can We Help?”
+
+**Independent HTTPS probes:** Ten actual read-only `curl -L` GETs failed during hostname resolution before any HTTP response. **Six** returned exit code **6** (`curl: (6) Could not resolve host: tinystepslearning.com`); **four** returned exit code **28** (`curl: (28) Resolving timed out after 10000 milliseconds`). Distinct per-URL actual UTC start/end timestamps and exact errors are in `MASTER_URL_TRACKER.csv`. `CURL_HTTP_CODE:000` is a curl placeholder, not a server HTTP status; `CURL_EFFECTIVE_URL` is not evidence of a redirect destination. Audit-runtime DNS failures are **not proof of a production outage**.
+
+**Outcome:** Ten additional UNVERIFIED technical-readiness attempts; zero independently verified production PASS/WARN/FAIL. Origin HTTP status, redirects, canonical, robots/noindex and X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML and JSON-LD remain unverified. No confirmed production regression or improvement; `CHANGES.md` requires no entry.
+
+**Workflow safety limitation:** Public GitHub Actions state/run endpoints were inaccessible during this Slot 4 run. No concurrent audit was positively observed, but absence of a concurrent audit was not independently verified this hour. The user's explicit 25 October disable confirmation remains authoritative; cron YAML alone is not proof of an enabled workflow. No workflow was run, enabled or modified.
 
 ## Slot 3 — phonics guides (02:17 IST)
 
