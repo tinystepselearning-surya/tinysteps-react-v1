@@ -12,6 +12,7 @@ import {
 export const SITE_ORIGIN = SEMANTIC_FACTS.brand.websiteOrigin;
 export const PUBLIC_FACTS = {
   brandName: SEMANTIC_FACTS.brand.name,
+  operatingSinceYear: SEMANTIC_FACTS.brand.operatingSinceYear,
   shortBrandName: SEMANTIC_FACTS.brand.shortName,
   organizationName: SEMANTIC_FACTS.brand.organizationName,
   founder: {
