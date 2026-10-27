@@ -25,7 +25,7 @@ const faqItems = [
   {
     question: 'How does Tiny Steps use this approach?',
     answer:
-      'Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics, with level-based progression, live feedback, and parent-visible milestones.',
+      'Tiny Steps teaches its own sequenced systematic synthetic phonics pathway, including sound–letter mapping, blending, decoding and cumulative practice with live feedback. Jolly Phonics is a separate branded programme; shared teaching principles do not mean the two providers are affiliated.',
   },
 ];
 
@@ -152,7 +152,7 @@ export default function WhatIsJollyPhonicsBestWayPage() {
       <section className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <h2 className="text-xl font-semibold text-slate-900">How Tiny Steps uses this approach</h2>
         <ul className="mt-3 space-y-2 text-slate-700">
-          <li>• Tiny Steps uses a structured synthetic phonics approach inspired by methods such as Jolly Phonics.</li>
+          <li>• Tiny Steps uses its own systematic synthetic phonics sequence with planned sound–letter teaching and cumulative practice.</li>
           <li>• Children learn sound-to-letter mapping, blending sounds into words, and decoding practice in a clear sequence.</li>
           <li>• Parents receive stage-based updates so progress is visible and easy to support at home.</li>
         </ul>
