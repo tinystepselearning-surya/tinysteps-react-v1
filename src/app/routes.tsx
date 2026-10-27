@@ -1,6 +1,6 @@
 // src/app/routes.tsx
 import { lazy, Suspense, useCallback, useEffect, useState, type FC, type MouseEvent } from 'react';
-import { originalResourceForChunkError } from '../lib/publicResourcePrerenderRecovery.js';
+import { isLazyModuleLoadError, originalResourceForChunkError } from '../lib/publicResourcePrerenderRecovery.js';
 import {
   createBrowserRouter,
   Outlet,
@@ -26,6 +26,20 @@ const PublicRouteErrorElement = () => {
     ? originalResourceForChunkError(error, window.location) : null;
   if (staticResourceHtml) {
     return <div data-ts-static-resource-recovery="router" dangerouslySetInnerHTML={{ __html: staticResourceHtml }} />;
+  }
+  // Do not attempt a second lazy NotFoundPage import after a chunk failure:
+  // the fallback chunk can fail too, replacing valid prerendered content with
+  // a generic error and prompting a crawler Soft 404.
+  if (isLazyModuleLoadError(error)) {
+    return (
+      <main role="alert" className="min-h-screen px-6 py-16 text-center">
+        <h1 className="text-2xl font-bold">Page temporarily unavailable</h1>
+        <p className="mt-3">We could not load this page. Please try again.</p>
+        <a className="mt-5 inline-block underline" href={typeof window !== 'undefined' ? window.location.href : '/'}>
+          Retry page
+        </a>
+      </main>
+    );
   }
   return <NotFoundPage />;
 };
