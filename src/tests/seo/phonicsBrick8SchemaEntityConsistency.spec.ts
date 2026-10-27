@@ -62,7 +62,8 @@ describe('Phonics Brick 8 schema, entity graph and technical consistency', () =>
     expect(ORGANIZATION_ID).toBe('https://tinystepslearning.com/#educational-organization');
     expect(WEBSITE_ID).toBe('https://tinystepslearning.com/#website');
     expect(FOUNDER_ID).toBe('https://tinystepslearning.com/team/vannala-ravali-priya#person');
-    expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Early Education');
+    expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Learning');
+    expect(organizationSchema.foundingDate).toBe('2020');
     expect(PUBLIC_FACTS.brandName).toBe('Tiny Steps Learning');
   });
 
