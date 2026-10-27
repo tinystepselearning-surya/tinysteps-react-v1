@@ -637,7 +637,7 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
   if (!canViewPortal) return <AccessMessage>No permission.</AccessMessage>;
 
   return (
-    <div className="mobile-app-scroll h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
+    <div className="mobile-app-scroll ts-app-page h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-gray-900">
       <Header portal={portal} onOpenMenu={() => setMobileMenuOpen(true)} />
 
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

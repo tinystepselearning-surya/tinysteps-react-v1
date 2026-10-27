@@ -398,7 +398,7 @@ describe('homepage premium gateway', () => {
   it('uses compact homepage sunrise chrome without changing other routes', () => {
     expect(routes).toContain("normalizedPath === '/'");
     expect(routes).toContain("'min-h-screen bg-[#F4F8FF] pb-0 pt-0'");
-    expect(routes).toContain("data-ts-surface={!hideMarketingChrome && !isContactPage ? 'public' : undefined}");
+    expect(routes).toContain("data-ts-surface={hideMarketingChrome ? 'app' : isContactPage ? undefined : 'public'}");
     expect(routes).toContain('pt-8 md:pt-12 lg:pt-16');
   });
 });

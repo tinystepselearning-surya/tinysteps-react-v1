@@ -57,7 +57,7 @@ export default function ResponsiveTeachingSection({
                       : 'rounded-2xl border border-slate-200 bg-white/90 p-5'
                   }
                 >
-                  <span className={premium ? 'text-[10px] font-bold tracking-[0.16em] text-orange-600' : 'text-xs font-black tracking-[0.16em] text-orange-600'}>
+                  <span className={premium ? 'text-[10px] font-bold tracking-[0.16em] text-[#C2410C]' : 'text-xs font-black tracking-[0.16em] text-[#C2410C]'}>
                     0{index + 1}
                   </span>
                   <h3 className={premium ? 'mt-2 text-base font-semibold text-slate-950' : 'mt-3 text-lg font-bold text-slate-950'}>{step.title}</h3>

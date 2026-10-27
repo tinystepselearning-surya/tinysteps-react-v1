@@ -171,26 +171,26 @@ html.ts-capacitor-native .ts-parent-mobile-header {
 }
 
 .ts-parent-page {
-  --ts-parent-navy: #0f172a;
-  --ts-parent-indigo: #4f46e5;
-  --ts-parent-soft-indigo: #eef2ff;
-  --ts-parent-violet: #7c3aed;
-  --ts-parent-soft-violet: #f5f3ff;
-  --ts-parent-orange: #f97316;
-  --ts-parent-soft-orange: #fff4ec;
+  --ts-parent-navy: #17284C;
+  --ts-parent-indigo: #604577;
+  --ts-parent-soft-indigo: #F1EDFC;
+  --ts-parent-violet: #755E96;
+  --ts-parent-soft-violet: #F1EDFC;
+  --ts-parent-orange: #C2410C;
+  --ts-parent-soft-orange: #FFF5DF;
   --ts-parent-emerald: #059669;
   --ts-parent-soft-emerald: #ecfdf5;
   --ts-parent-teal: #0f766e;
   --ts-parent-soft-teal: #f0fdfa;
   --ts-parent-amber: #d97706;
   --ts-parent-soft-amber: #fffbeb;
-  --ts-parent-bg: #f5f7fb;
+  --ts-parent-bg: #F4F8FF;
   --ts-parent-card: #ffffff;
-  --ts-parent-border: #dce3ee;
-  --ts-parent-muted: #64748b;
+  --ts-parent-border: #D7E5F4;
+  --ts-parent-muted: #405678;
   --ts-parent-card-radius: 1.375rem;
   --ts-parent-row-radius: 1rem;
-  --ts-parent-shadow: 0 10px 30px rgba(15, 23, 42, 0.055);
+  --ts-parent-shadow: 0 10px 30px rgba(33, 43, 92, 0.06);
   background: var(--ts-parent-bg);
   color: var(--ts-parent-navy);
 }
@@ -2031,4 +2031,120 @@ body.ts-game-fullscreen nav[aria-label="Primary"] {
   [data-ts-surface="public"] {
     background: #FFFFFF;
   }
+}
+/*
+ * Authenticated Sunrise / Ocean foundation — separate from marketing chrome.
+ * Applied only where routes.tsx marks a protected app surface. Status/error,
+ * payment, attendance and child-learning meaning colours are intentionally
+ * not auto-recoloured. Portal dark-mode variants remain opt-in.
+ */
+:root {
+  --ts-app-ink: #17284C;
+  --ts-app-body: #405678;
+  --ts-app-navy: #212B5C;
+  --ts-app-orange-text: #C2410C;
+  --ts-app-purple-text: #604577;
+  --ts-app-ocean-text: #315B8A;
+  --ts-app-lavender: #F1EDFC;
+  --ts-app-blue: #E7F3FF;
+  --ts-app-page: #F4F8FF;
+  --ts-app-border: #D7E5F4;
+  --ts-app-surface: #FFFFFF;
+  --ts-app-focus: #755E96;
+}
+
+[data-ts-surface="app"] {
+  color: var(--ts-app-ink);
+  background-color: var(--ts-app-page);
+}
+
+[data-ts-surface="app"] .ts-app-page {
+  color: var(--ts-app-ink);
+  background: linear-gradient(145deg, #E7F3FF 0%, #F1EDFC 42%, #F4F8FF 80%);
+}
+
+[data-ts-surface="app"] .ts-app-header {
+  background: rgba(255,255,255,.96);
+  border-color: var(--ts-app-border);
+  color: var(--ts-app-ink);
+}
+
+[data-ts-surface="app"] .ts-app-card {
+  background-color: var(--ts-app-surface);
+  border-color: var(--ts-app-border);
+  color: var(--ts-app-ink);
+}
+
+[data-ts-surface="app"] .ts-app-sidebar {
+  background-color: var(--ts-app-navy);
+  border-color: #384C80;
+  color: #FFFFFF;
+}
+
+[data-ts-surface="app"] .ts-app-sidebar [aria-current="page"] {
+  background-color: #604577;
+  color: #FFFFFF;
+}
+
+[data-ts-surface="app"] .ts-app-eyebrow {
+  color: var(--ts-app-purple-text);
+}
+
+[data-ts-surface="app"] .ts-app-mobile-tabs {
+  background-color: rgba(255,255,255,.97);
+  border-color: var(--ts-app-border);
+}
+
+[data-ts-surface="app"] .ts-app-mobile-tabs button[data-active="true"] {
+  color: var(--ts-app-ink);
+}
+
+[data-ts-surface="app"] .ts-app-mobile-tabs button[data-active="true"] > span:first-child {
+  color: var(--ts-app-purple-text);
+  background-color: var(--ts-app-lavender);
+}
+
+[data-ts-surface="app"] :is(.ts-app-header, .ts-app-sidebar, .ts-app-mobile-tabs) :focus-visible {
+  outline: 2px solid var(--ts-app-focus);
+  outline-offset: 2px;
+}
+
+/* Retain dark-mode legibility in authenticated dashboards. */
+html.dark [data-ts-surface="app"] {
+  --ts-app-ink: #F8FAFC;
+  --ts-app-body: #CBD5E1;
+  --ts-app-page: #0F172A;
+  --ts-app-surface: #17284C;
+  --ts-app-border: #384C80;
+  --ts-app-purple-text: #D3B9E1;
+  --ts-app-ocean-text: #A5CCEA;
+  --ts-app-focus: #D3B9E1;
+}
+
+html.dark [data-ts-surface="app"] .ts-app-page {
+  background: linear-gradient(145deg,#0F172A,#17284C);
+}
+
+html.dark [data-ts-surface="app"] .ts-app-header,
+html.dark [data-ts-surface="app"] .ts-app-mobile-tabs {
+  background: rgba(23,40,76,.97);
+}
+
+html.dark [data-ts-surface="app"] .ts-app-mobile-tabs button[data-active="true"] > span:first-child {
+  background-color: #384C80;
+}
+
+
+/*
+ * Parent app header: subtle Sunrise/Ocean wash without changing the public
+ * header or the parent navigation/mobile safe-area implementation.
+ * More specific than the shared app header and the Tailwind utility class.
+ */
+[data-ts-surface="app"] .ts-app-header.ts-app-parent-hero {
+  background: linear-gradient(110deg, #E7F3FF 0%, #F1EDFC 57%, #FFE5EB 100%);
+  color: #17284C;
+}
+html.dark [data-ts-surface="app"] .ts-app-header.ts-app-parent-hero {
+  background: linear-gradient(115deg, #17284C, #212B5C);
+  color: #FFFFFF;
 }

@@ -29,7 +29,7 @@ describe('Tiny Steps public sunrise-ocean design system', () => {
     }
     expect(stylesheet).toContain('--ts-sunrise-hero');
     expect(stylesheet).toContain('[data-ts-surface="public"]');
-    expect(routes).toContain("data-ts-surface={!hideMarketingChrome && !isContactPage ? 'public' : undefined}");
+    expect(routes).toContain("data-ts-surface={hideMarketingChrome ? 'app' : isContactPage ? undefined : 'public'}");
     expect(routes).toContain("isProtectedAppRoute(normalizedPath)");
   });
 

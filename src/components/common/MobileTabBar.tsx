@@ -30,7 +30,7 @@ export default function MobileTabBar({
   return (
     <nav
       className={cn(
-        'fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
+        'ts-app-mobile-tabs fixed inset-x-0 bottom-0 z-50 w-full min-w-0 max-w-[100vw] translate-y-0 transform-gpu overflow-hidden border-t border-slate-200/80 bg-white/95 px-2 pt-1.5 shadow-[0_-6px_20px_rgba(15,23,42,0.07)] backdrop-blur-xl [backface-visibility:hidden] [contain:layout_paint] [padding-bottom:env(safe-area-inset-bottom,0px)] lg:hidden',
         className,
       )}
       aria-label="Mobile navigation"
@@ -76,16 +76,16 @@ export default function MobileTabBar({
                     'group relative flex min-h-11 flex-col items-center justify-center rounded-xl px-1 text-[11px] font-medium transition duration-150 ease-out active:scale-[0.97]',
                     useFixedGrid ? 'min-w-0 w-full' : 'min-w-[74px] snap-center',
                     isActive
-                      ? 'font-semibold text-slate-950'
-                      : 'text-slate-600 active:bg-slate-100 hover:text-slate-950',
+                      ? 'font-semibold text-slate-950 dark:text-white'
+                      : 'text-slate-600 active:bg-slate-100 hover:text-slate-950 dark:text-[#D3B9E1] dark:active:bg-[#384C80] dark:hover:text-white',
                   )}
                 >
                   <span
                     className={cn(
                       'mb-0.5 flex h-7 w-9 items-center justify-center rounded-full transition-colors',
                       isActive
-                        ? 'bg-slate-200 text-slate-950'
-                        : 'text-slate-600 group-hover:bg-slate-100 group-hover:text-slate-950',
+                        ? 'bg-slate-200 text-slate-950 dark:bg-[#384C80] dark:text-white'
+                        : 'text-slate-600 group-hover:bg-slate-100 group-hover:text-slate-950 dark:text-[#D3B9E1] dark:group-hover:bg-[#384C80] dark:group-hover:text-white',
                     )}
                   >
                     <Icon className="h-[18px] w-[18px]" />

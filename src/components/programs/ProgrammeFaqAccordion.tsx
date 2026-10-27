@@ -10,7 +10,7 @@ type ProgrammeFaqAccordionProps = {
 
 const accentClasses = {
   sky: 'group-open:text-sky-700',
-  orange: 'group-open:text-orange-700',
+  orange: 'group-open:text-[#604577]',
   violet: 'group-open:text-violet-700',
 } as const;
 

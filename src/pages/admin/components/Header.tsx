@@ -75,7 +75,7 @@ export default function Header({ onOpenMenu, portal = 'admin' }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-40 h-14 shrink-0 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
+    <header className="ts-app-header sticky top-0 z-40 h-14 shrink-0 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="flex h-full w-full items-center justify-between gap-3 px-3 sm:px-5">
         <div className="flex min-w-0 items-center gap-2.5 sm:gap-3">
           <button
@@ -98,10 +98,10 @@ export default function Header({ onOpenMenu, portal = 'admin' }: HeaderProps) {
           <div className="hidden h-7 w-px bg-slate-200 sm:block" aria-hidden="true" />
 
           <div className="min-w-0 leading-tight">
-            <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 sm:block">
+            <p className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-[#604577] dark:text-[#D3B9E1] sm:block">
               {portal === 'founder' ? 'Founder Workspace' : 'Admin Console'}
             </p>
-            <h1 className="truncate text-sm font-semibold text-slate-900 sm:text-base">
+            <h1 className="truncate text-sm font-semibold text-[#17284C] dark:text-white sm:text-base">
               {sectionTitle}
             </h1>
           </div>
@@ -109,9 +109,9 @@ export default function Header({ onOpenMenu, portal = 'admin' }: HeaderProps) {
 
         <div className="flex shrink-0 items-center gap-2">
           <div className="hidden min-w-0 text-right md:block">
-            <p className="max-w-[180px] truncate text-xs font-semibold text-slate-800">{displayName}</p>
+            <p className="max-w-[180px] truncate text-xs font-semibold text-[#17284C] dark:text-white">{displayName}</p>
             {email ? (
-              <p className="max-w-[210px] truncate text-[11px] text-slate-500">{email}</p>
+              <p className="max-w-[210px] truncate text-[11px] text-[#405678] dark:text-[#D3B9E1]">{email}</p>
             ) : null}
           </div>
 

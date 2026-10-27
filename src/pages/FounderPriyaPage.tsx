@@ -133,7 +133,7 @@ export default function FounderPriyaPage() {
           <div className="grid items-center gap-12 lg:grid-cols-[1.03fr_0.97fr] lg:gap-16 xl:gap-20">
             <div className="max-w-3xl">
               <div className="inline-flex items-center rounded-full border border-orange-200 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-                <span className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">
+                <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#C2410C]">
                   Founder &amp; Academic Leadership
                 </span>
               </div>
@@ -155,7 +155,7 @@ export default function FounderPriyaPage() {
                   href={primaryFounderProfile.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-orange-300 hover:text-orange-700 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-600"
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-[#D3B9E1] hover:text-[#C2410C] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96]"
                   aria-label={`${PUBLIC_FACTS.founder.fullName} on ${primaryFounderProfile.platform} (opens in a new tab)`}
                 >
                   Official founder profile on {primaryFounderProfile.platform}
@@ -200,7 +200,7 @@ export default function FounderPriyaPage() {
                 />
 
                 <figcaption className="absolute inset-x-4 bottom-4 rounded-[22px] border border-white/60 bg-white/92 p-4 shadow-xl backdrop-blur-md sm:inset-x-5 sm:bottom-5 sm:p-5">
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Founder-led academic direction</p>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C2410C]">Founder-led academic direction</p>
                   <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
                     <div>
                       <p className="font-heading text-xl font-bold text-slate-950 sm:text-2xl">Priya</p>
@@ -220,12 +220,12 @@ export default function FounderPriyaPage() {
       <section id="founder-story" className="bg-white px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.78fr_1.22fr] lg:gap-20">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Founder story</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#C2410C]">Founder story</p>
             <h2 className="mt-4 max-w-xl font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-[#10243e] sm:text-4xl">
               Why Tiny Steps Learning was founded
             </h2>
             <div className="mt-7 max-w-sm rounded-[24px] border border-orange-100 bg-[#fff8ef] p-5 sm:p-6">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Founder focus</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C2410C]">Founder focus</p>
               <p className="mt-3 font-heading text-xl font-bold leading-snug text-slate-950">
                 Structured. Personal. Measurable.
               </p>
@@ -243,7 +243,7 @@ export default function FounderPriyaPage() {
       <section id="academic-leadership" className="border-y border-orange-100 bg-[#fffaf3] px-5 py-20 sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-700">Academic leadership</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#C2410C]">Academic leadership</p>
             <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-[#10243e] sm:text-4xl">
               What Priya leads at Tiny Steps Learning
             </h2>
@@ -260,7 +260,7 @@ export default function FounderPriyaPage() {
                   key={area.title}
                   className="rounded-[26px] border border-white bg-white p-6 shadow-[0_16px_42px_rgba(15,23,42,0.07)] sm:p-7"
                 >
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF5DF] text-[#C2410C]">
                     <Icon className="h-6 w-6" aria-hidden="true" />
                   </span>
                   <h3 className="mt-5 font-heading text-xl font-bold text-slate-950">{area.title}</h3>
@@ -275,7 +275,7 @@ export default function FounderPriyaPage() {
       <section id="academic-philosophy" className="bg-[#10243e] px-5 py-20 text-white sm:px-6 sm:py-24 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-3xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-orange-300">Academic philosophy</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D3B9E1]">Academic philosophy</p>
             <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.03em] text-white sm:text-4xl">
               Principles behind the academic work
             </h2>
@@ -290,7 +290,7 @@ export default function FounderPriyaPage() {
                 key={principle.number}
                 className="rounded-[26px] border border-white/10 bg-white/[0.06] p-6 shadow-[0_18px_50px_rgba(2,6,23,0.16)] backdrop-blur sm:p-7"
               >
-                <span className="inline-flex rounded-full bg-orange-400/15 px-3 py-1.5 text-xs font-black tracking-[0.16em] text-orange-200">
+                <span className="inline-flex rounded-full bg-orange-400/15 px-3 py-1.5 text-xs font-black tracking-[0.16em] text-[#D3B9E1]">
                   {principle.number}
                 </span>
                 <h3 className="mt-5 font-heading text-xl font-bold leading-snug text-white">{principle.title}</h3>

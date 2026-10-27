@@ -238,7 +238,7 @@ export default function TeacherDashboard() {
   }
 
   return (
-    <div className="mobile-app-scroll h-screen overflow-hidden bg-gradient-to-b from-slate-100 to-slate-50 px-3 py-4 sm:px-4 sm:py-6 md:px-8 lg:bg-slate-50/60">
+    <div className="mobile-app-scroll ts-app-page h-screen overflow-hidden px-3 py-4 sm:px-4 sm:py-6 md:px-8">
       <Dialog open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
         <DialogContent className="left-0 top-0 h-screen w-[85vw] max-w-[340px] translate-x-0 translate-y-0 rounded-none border-r border-slate-200 p-4 sm:rounded-none">
           <DialogHeader className="sr-only">
