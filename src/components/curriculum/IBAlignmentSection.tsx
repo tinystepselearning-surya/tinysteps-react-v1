@@ -31,10 +31,10 @@ const IBAlignmentSection = () => (
             Transferable English skills across school contexts
           </h2>
           <p className="mt-4 text-sm leading-7 text-slate-600 md:text-base">
-            Tiny Steps teaches transferable English skills that can support children studying in CBSE, ICSE, IB,
-            Cambridge, and other school environments. Tiny Steps Learning is an independent learning provider;
-            these references describe learner backgrounds and skill transfer, not formal affiliation or
-            accreditation.
+            Tiny Steps builds decoding, reading fluency, sentence formation and communication through a clear
+            skill sequence, guided practice, fresh application and progress review. Children studying in CBSE,
+            ICSE, IB, Cambridge and other school environments can use these transferable skills in their own
+            classroom learning. We evaluate progress through what children can demonstrate independently.
           </p>
         </div>
 
