@@ -1,4 +1,46 @@
-# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-27 IST)
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
+
+## Slot 1 — first ten public URL checks (00:10 IST)
+
+At **2026-10-27T18:40:39–18:40:53Z UTC** (28 October 2026, 00:10 IST), the ChatGPT-native auditor attempted the first **10 distinct eligible Slot 1 URLs**. Preflight verified **202 rows, 202 unique selected URLs, sequential indices 1–202**, Slots **1–19 with ten URLs each** and Slot **20 with twelve**. Before this batch **zero** rows carried 28 October IST check dates; no previously checked current-day row was rechecked, and no future-slot row was scanned. The ten new UTC probe-start timestamps are distinct and map to 28 October IST.
+
+**Live retrieval scope:** ChatGPT web retrieval returned provider-extracted page-specific text/html for all ten exact URLs, each labelled **Crawled: today** (provider crawl time unknown). Visible H1s:
+- Row 1: `https://tinystepslearning.com/` — H1: “Online English Classes for Kids.”
+- Row 2: `https://tinystepslearning.com/blog` — H1: “Find the right English-learning answer without searching through a long feed”
+- Row 3: `https://tinystepslearning.com/resources` — H1: “English Learning Resources for Kids, Parents & Educators”
+- Row 4: `https://tinystepslearning.com/resources/phonics` — H1: “Phonics & Reading Resources”
+- Row 5: `https://tinystepslearning.com/resources/phonics/ck-rule-phonics` — H1: “When should a child use ck instead of k at the end of a word?”
+- Row 6: `https://tinystepslearning.com/resources/phonics/floss-rule-phonics` — H1: “Why do words such as puff, hill, miss and buzz end with doubled consonants?”
+- Row 7: `https://tinystepslearning.com/resources/phonics/qu-sound-phonics` — H1: “Why is q usually taught together with u?”
+- Row 8: `https://tinystepslearning.com/resources/phonics/ch-digraph-phonics` — H1: “How should children read ch without sounding c and h separately?”
+- Row 9: `https://tinystepslearning.com/resources/phonics/kn-silent-k-phonics` — H1: “Why do knee and knot begin with a letter we do not say?”
+- Row 10: `https://tinystepslearning.com/resources/phonics/ng-digraph-phonics` — H1: “Why should ng be read as one sound in words such as sing?”
+
+**Independent HTTPS probes:** All ten read-only `curl -L` GET requests failed during hostname resolution, **eight** with exit code **6** (`curl: (6) Could not resolve host: tinystepslearning.com`) and **two** with exit code **28** (`Resolving timed out after 9000/9001 milliseconds`). Each attempt's actual UTC start/end and error are recorded in the tracker. No origin HTTP response was received. `HTTP_CODE:000` is not a server status, and the curl effective URL is not a verified redirect. This is an audit-environment DNS limitation, **not proof of a production outage**.
+
+**Verification boundary:** All ten are **UNVERIFIED** for full origin technical readiness. Origin HTTP status, final redirect, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial raw HTML and JSON-LD could not be independently verified. Provider text alone does not establish a production PASS, FAIL or WARN. No Google/Bing indexing, rankings or AI citations were checked or claimed.
+
+## Daily coverage — 28 October IST
+
+| Metric | Count |
+| --- | ---: |
+| Selected unique URLs | **202** |
+| Distinct URLs actually attempted today | **10 (5.0%)** |
+| Fully origin-verified PASS today | **0** |
+| Confirmed production FAIL today | **0** |
+| Confirmed production WARN today | **0** |
+| UNVERIFIED / partial provider-only evidence today | **10** |
+| Not yet checked today | **192** |
+
+**Comparison:** Yesterday's 202 attempts also remained UNVERIFIED for full live origin readiness. No dated before/after evidence establishes a meaningful production regression or improvement. Historical verified-state fields remain unchanged. No new `CHANGES.md` entry is warranted.
+
+**Workflow safety:** The connected GitHub Actions run queries returned **zero in-progress** and **zero queued** runs, so no concurrent GitHub audit was positively observed in those active-run queries. The workflow administrative-state endpoint was rejected by the connector, so disablement was not independently verified; the user's 25 October confirmation remains the operating assumption. No GitHub workflow was executed, enabled or changed.
+
+**Next:** Slot 2 (rows 11–20) when eligible; do not carry over 27 October coverage or recheck rows 1–10 today. The separate six-hour outside-in search visibility task remains unchanged. Only audit evidence/tracker files were modified.
+
+---
+
+## Previous-day history — 27 October 2026 IST
 
 Updated by the **ChatGPT-native hourly auditor** after **Slot 24 catch-up review (no new URL probes)** on **27 October 2026 IST**. All 202 selected URLs were already attempted today; no URL was rechecked in Slots 21–24. Per-URL UTC probe times and evidence remain in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
 
