@@ -17,7 +17,7 @@ function fixture({ route = path, canonical = route, robots = 'index, follow', bo
     <meta name="robots" content="${robots}" />
     </head><body><div id="root"><main><h1>Vocabulary for Better Writing</h1>
     <article><p>${body}</p><a href="/resources/vocabulary">Related guides</a></article>
-    </main></div></body></html>`, { url: ORIGIN + route });
+    </main></main></div></body></html>`, { url: ORIGIN + route });
 }
 
 const chunkError = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/VocabularyKnowledgePage-abc123.js');
@@ -107,7 +107,7 @@ function groupFixture({ route, canonical = route, robots = 'index, follow', head
   return new JSDOM(`<!DOCTYPE html><html><head>
     <link rel="canonical" href="${ORIGIN}${canonical}">
     <meta name="robots" content="${robots}">
-    </head><body><div id="root"><main class="${mainClass}"><h1>${heading}</h1>
+    </head><body><div id="root"><main class="public-layout-shell"><main class="${mainClass}"><h1>${heading}</h1>
     <section><p>${body}</p><a href="/book-demo?format=small_group">Register Group Interest</a></section>
     </main></div></body></html>`, { url: ORIGIN + route });
 }
