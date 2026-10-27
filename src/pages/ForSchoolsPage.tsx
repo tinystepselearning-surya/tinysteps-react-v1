@@ -656,7 +656,7 @@ const ForSchoolsPage: React.FC = () => {
               <p className="mt-4 max-w-2xl text-xs leading-5 text-slate-600">
                 Our implementation draws on published NCF/CBSE foundational-literacy expectations and systematic
                 phonics criteria: sequenced teaching, cumulative practice, assessment and teacher support. These
-                sources guide the work; Tiny Steps does not claim approval or certification by the organisations cited.
+                sources guide the work. Referencing these bodies does not imply endorsement, approval, certification or affiliation.
               </p>
             </div>
 
