@@ -91,7 +91,7 @@ export default function TeamPage() {
       <TeamHero />
       <TrustMetrics />
       <div className="border-b border-orange-100 bg-white px-4 py-4 text-center text-sm leading-6 text-slate-700 sm:px-6">
-        <strong className="text-slate-950">Tiny Steps Learning</strong> has supported children's English learning since {PUBLIC_FACTS.operatingSinceYear},
+        <strong className="text-slate-950">Tiny Steps Learning</strong> has supported children&apos;s English learning since {PUBLIC_FACTS.operatingSinceYear},
         with live online programmes serving families in India and internationally.
       </div>
       <FounderSection />
