@@ -1,5 +1,46 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
+## Daily coverage — 28 October IST (after Slot 2)
+
+| Metric | Count |
+| --- | ---: |
+| Selected unique URLs | **202** |
+| Distinct URLs actually attempted today | **20 (9.9%)** |
+| Fully origin-verified PASS today | **0** |
+| Confirmed production FAIL today | **0** |
+| Confirmed production WARN today | **0** |
+| UNVERIFIED / partial provider-only evidence today | **20** |
+| Not yet checked today | **182** |
+
+**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 20 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–10 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+
+**Verification boundary:** All 20 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
+
+**Comparison:** 27 October's 202 attempted URLs were also UNVERIFIED for full origin readiness. No dated, independently verified production before/after transition was established. No new CHANGES.md entry is warranted.
+
+**Workflow safety:** Connected GitHub Actions queries found zero in-progress and zero queued runs, and the latest 100 runs contained no rolling-public-seo-health workflow. The administrative workflow-state endpoint was not accessible through the connector; the user's confirmed 25 October disablement remains the operating assumption. No workflow was executed or enabled, and no source or production settings were modified.
+
+**Next:** Slot 3, rows 21–30, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+
+## Slot 2 — phonics guides (01:18 IST)
+
+At **2026-10-27T19:48:44–19:48:54Z UTC** (28 October 2026, approximately 01:18 IST), the ChatGPT-native auditor attempted the **10 previously unchecked Slot 2 URLs** (rows 11–20). Each exact URL returned provider-extracted, substantive, page-specific phonics guidance with a visible H1. The provider labelled each snapshot **Crawled: yesterday**, without an exact crawl timestamp. This does not certify current origin availability.
+
+- Row 11: `https://tinystepslearning.com/resources/phonics/sh-digraph-phonics` — H1: “How do I teach sh as one sound instead of two letters?”
+- Row 12: `https://tinystepslearning.com/resources/phonics/th-digraph-phonics` — H1: “Why does th sound different in thin and this?”
+- Row 13: `https://tinystepslearning.com/resources/phonics/ai-vowel-team-phonics` — H1: “When does ai make the long a sound?”
+- Row 14: `https://tinystepslearning.com/resources/phonics/ch-tch-spelling-phonics` — H1: “Why does match end in tch while much ends in ch?”
+- Row 15: `https://tinystepslearning.com/resources/phonics/ea-vowel-team-phonics` — H1: “Why does ea sound different in team and head?”
+- Row 16: `https://tinystepslearning.com/resources/phonics/ee-vowel-team-phonics` — H1: “How should children recognise ee in words such as green and feet?”
+- Row 17: `https://tinystepslearning.com/resources/phonics/ie-vowel-team-phonics` — H1: “Why does ie not sound the same in every word?”
+- Row 18: `https://tinystepslearning.com/resources/phonics/oa-vowel-team-phonics` — H1: “How should children read oa in words such as boat and road?”
+- Row 19: `https://tinystepslearning.com/resources/phonics/magic-e-phonics` — H1: “What does Magic E do in cape, kite and hope?”
+- Row 20: `https://tinystepslearning.com/resources/phonics/consonant-le-phonics` — H1: “Why does the ending in table, little and purple form its own syllable?”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GET requests failed before receiving an origin HTTP response. Six returned exit code **6** (`curl: (6) Could not resolve host: tinystepslearning.com`); four returned exit code **28** (`Resolving timed out after 10000/10001 milliseconds`). Per-URL actual UTC start/end timestamps and exact errors are recorded in the tracker. `CURL_HTTP_CODE:000` is a curl placeholder, not a production HTTP status; `CURL_EFFECTIVE_URL` is not a verified redirect. DNS failure in the audit environment does **not** prove a production outage.
+
+**Outcome:** 10 UNVERIFIED technical-readiness checks; zero confirmed production PASS, WARN or FAIL, and no evidenced improvement or regression.
+
 ## Slot 1 — first ten public URL checks (00:10 IST)
 
 At **2026-10-27T18:40:39–18:40:53Z UTC** (28 October 2026, 00:10 IST), the ChatGPT-native auditor attempted the first **10 distinct eligible Slot 1 URLs**. Preflight verified **202 rows, 202 unique selected URLs, sequential indices 1–202**, Slots **1–19 with ten URLs each** and Slot **20 with twelve**. Before this batch **zero** rows carried 28 October IST check dates; no previously checked current-day row was rechecked, and no future-slot row was scanned. The ten new UTC probe-start timestamps are distinct and map to 28 October IST.
@@ -19,24 +60,6 @@ At **2026-10-27T18:40:39–18:40:53Z UTC** (28 October 2026, 00:10 IST), the Cha
 **Independent HTTPS probes:** All ten read-only `curl -L` GET requests failed during hostname resolution, **eight** with exit code **6** (`curl: (6) Could not resolve host: tinystepslearning.com`) and **two** with exit code **28** (`Resolving timed out after 9000/9001 milliseconds`). Each attempt's actual UTC start/end and error are recorded in the tracker. No origin HTTP response was received. `HTTP_CODE:000` is not a server status, and the curl effective URL is not a verified redirect. This is an audit-environment DNS limitation, **not proof of a production outage**.
 
 **Verification boundary:** All ten are **UNVERIFIED** for full origin technical readiness. Origin HTTP status, final redirect, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial raw HTML and JSON-LD could not be independently verified. Provider text alone does not establish a production PASS, FAIL or WARN. No Google/Bing indexing, rankings or AI citations were checked or claimed.
-
-## Daily coverage — 28 October IST
-
-| Metric | Count |
-| --- | ---: |
-| Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **10 (5.0%)** |
-| Fully origin-verified PASS today | **0** |
-| Confirmed production FAIL today | **0** |
-| Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **10** |
-| Not yet checked today | **192** |
-
-**Comparison:** Yesterday's 202 attempts also remained UNVERIFIED for full live origin readiness. No dated before/after evidence establishes a meaningful production regression or improvement. Historical verified-state fields remain unchanged. No new `CHANGES.md` entry is warranted.
-
-**Workflow safety:** The connected GitHub Actions run queries returned **zero in-progress** and **zero queued** runs, so no concurrent GitHub audit was positively observed in those active-run queries. The workflow administrative-state endpoint was rejected by the connector, so disablement was not independently verified; the user's 25 October confirmation remains the operating assumption. No GitHub workflow was executed, enabled or changed.
-
-**Next:** Slot 2 (rows 11–20) when eligible; do not carry over 27 October coverage or recheck rows 1–10 today. The separate six-hour outside-in search visibility task remains unchanged. Only audit evidence/tracker files were modified.
 
 ---
 
