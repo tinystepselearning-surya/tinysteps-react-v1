@@ -5,6 +5,7 @@ import {
   captureOriginalPublicResource,
   saveOriginalPublicResource,
   originalResourceForChunkError,
+  isLazyModuleLoadError,
 } from '../../src/lib/publicResourcePrerenderRecovery.js';
 
 const ORIGIN = 'https://tinystepslearning.com';
@@ -16,7 +17,7 @@ function fixture({ route = path, canonical = route, robots = 'index, follow', bo
     <meta name="robots" content="${robots}" />
     </head><body><div id="root"><main><h1>Vocabulary for Better Writing</h1>
     <article><p>${body}</p><a href="/resources/vocabulary">Related guides</a></article>
-    </main></div></body></html>`, { url: ORIGIN + route });
+    </main></main></div></body></html>`, { url: ORIGIN + route });
 }
 
 const chunkError = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/VocabularyKnowledgePage-abc123.js');
@@ -93,4 +94,61 @@ test('GSC #735 P1: never preserve wrong-canonical, noindex, empty, fake or prote
   ]) {
     assert.equal(captureOriginalPublicResource(dom.window.document, dom.window.location), null, dom.window.location.href);
   }
+});
+
+const GROUP_OWNERS = [
+  ['/group-phonics-classes-for-kids', 'Live Online Group Phonics Classes for Kids'],
+  ['/group-grammar-classes-for-kids', 'Small-Group Online Grammar Classes for Kids'],
+  ['/group-public-speaking-classes-for-kids', 'Live Online Group Public Speaking Classes for Kids'],
+];
+const substantialGroupText = 'Our experienced teachers plan individual speaking turns, guided practice, thoughtful feedback and level-matched activities for each small group. '.repeat(9);
+
+function groupFixture({ route, canonical = route, robots = 'index, follow', heading, mainClass = 'group-commercial-page', body = substantialGroupText } = {}) {
+  return new JSDOM(`<!DOCTYPE html><html><head>
+    <link rel="canonical" href="${ORIGIN}${canonical}">
+    <meta name="robots" content="${robots}">
+    </head><body><div id="root"><main class="public-layout-shell"><main class="${mainClass}"><h1>${heading}</h1>
+    <section><p>${body}</p><a href="/book-demo?format=small_group">Register Group Interest</a></section>
+    </main></div></body></html>`, { url: ORIGIN + route });
+}
+
+test('GSC group-class hotfix: each self-canonical programme survives its lazy chunk and NotFoundPage failures', () => {
+  for (const [route, heading] of GROUP_OWNERS) {
+    const dom = groupFixture({ route, heading });
+    const snapshot = captureOriginalPublicResource(dom.window.document, dom.window.location);
+    assert.ok(snapshot, route + ': expected capturable programme HTML');
+    assert.match(snapshot.html, /group-commercial-page/);
+    assert.match(snapshot.html, /Register Group Interest/);
+    saveOriginalPublicResource(dom.window.document, dom.window.location);
+    for (const failedChunk of ['GroupPublicSpeakingClassesPage', 'GroupGrammarClassesPage', 'GroupPhonicsClassesPage', 'NotFoundPage']) {
+      const error = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/' + failedChunk + '-abc123.js');
+      assert.equal(isLazyModuleLoadError(error), true);
+      assert.match(originalResourceForChunkError(error, dom.window.location), /Register Group Interest/, route);
+    }
+    for (const [otherRoute] of GROUP_OWNERS) {
+      if (otherRoute !== route) {
+        assert.equal(originalResourceForChunkError(
+          new Error('Failed to fetch dynamically imported module'), new URL(ORIGIN + otherRoute),
+        ), null, route + ': must not reuse a different programme');
+      }
+    }
+    assert.equal(originalResourceForChunkError(new Error('Permission denied'), dom.window.location), null);
+  }
+});
+
+test('GSC group-class hotfix: fail closed for missing, misleading, noindex and wrong-owner content', () => {
+  const [route, heading] = GROUP_OWNERS[2];
+  for (const [name, dom] of [
+    ['wrong canonical', groupFixture({ route, heading, canonical: GROUP_OWNERS[0][0] })],
+    ['noindex', groupFixture({ route, heading, robots: 'noindex, follow' })],
+    ['wrong heading', groupFixture({ route, heading: 'Page not found' })],
+    ['missing programme class', groupFixture({ route, heading, mainClass: 'generic-page' })],
+    ['thin content', groupFixture({ route, heading, body: 'Too short' })],
+    ['application error', groupFixture({ route, heading, body: 'Something went wrong ' + substantialGroupText })],
+    ['unapproved URL', groupFixture({ route: '/group-reading-classes-for-kids', heading })],
+    ['protected route', groupFixture({ route: '/parent/dashboard', heading })],
+  ]) {
+    assert.equal(captureOriginalPublicResource(dom.window.document, dom.window.location), null, name);
+  }
+  assert.equal(isLazyModuleLoadError(new Error('A business validation error')), false);
 });
