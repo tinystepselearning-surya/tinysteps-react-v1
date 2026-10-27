@@ -26,6 +26,7 @@ import {
   TrustMetrics,
 } from './team/TeamPageSections';
 import { teamFaqItems } from './team/teamPageContent';
+import PublicTeacherProfilesSection from './team/PublicTeacherProfilesSection';
 
 const teamSeo = getRouteConfig('/team');
 const teamSeoTitle = teamSeo?.title ?? 'Meet the Tiny Steps Learning Team | Founder-Led English Learning';
@@ -89,6 +90,10 @@ export default function TeamPage() {
     <div className="overflow-x-clip bg-[#fffdf9] text-slate-950">
       <TeamHero />
       <TrustMetrics />
+      <div className="border-b border-orange-100 bg-white px-4 py-4 text-center text-sm leading-6 text-slate-700 sm:px-6">
+        <strong className="text-slate-950">Tiny Steps Learning</strong> has supported children's English learning since {PUBLIC_FACTS.operatingSinceYear}.
+        The date a third-party profile was claimed is not the school's founding year.
+      </div>
       <FounderSection />
       <section
         aria-label="Founder profile"
@@ -113,6 +118,7 @@ export default function TeamPage() {
       <AcademicSystemSection />
       <ResearchToClassroomSection />
       <TeacherDevelopmentSection />
+      <PublicTeacherProfilesSection />
       <QualitySystemSection />
       <TeachingCommunitySection />
       <SchoolPartnershipSection />
