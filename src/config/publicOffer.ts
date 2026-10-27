@@ -31,7 +31,8 @@ export const STANDARD_SMALL_GROUP_MAX_PER_CLASS =
 
 export const STANDARD_PRICING_SUMMARY =
   `Standard 1:1: ${formatINR(STANDARD_ONE_TO_ONE_PER_CLASS_PRICE)} per class` +
-  ` • Group Classes: ${formatINR(STANDARD_SMALL_GROUP_MIN_PER_CLASS)} per child per class`;
+  ` • Group Classes: ${formatINR(STANDARD_SMALL_GROUP_MIN_PER_CLASS)} per child per ${SEMANTIC_FACTS.pricing.standardSmallGroupClassMinutes}-minute class` +
+  ` (${formatINR(SEMANTIC_FACTS.pricing.standardSmallGroupPackageInr)} for ${SEMANTIC_FACTS.pricing.standardSmallGroupPackageClasses} classes)`;
 
 export const DIGITAL_GAMES_TRIAL_LABEL =
   '3-day digital games trial';
