@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 5)
+## Daily coverage — 28 October IST (after Slot 6)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **50 (24.8%)** |
+| Distinct URLs actually attempted today | **60 (29.7%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **50** |
-| Not yet checked today | **152** |
+| UNVERIFIED / partial provider-only evidence today | **60** |
+| Not yet checked today | **142** |
 
-**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 50 current-day UTC probe timestamps are distinct and map to 28 October IST. Rows 1–40 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 60 current-day UTC probe timestamps are distinct and correspond to 28 October IST. Rows 1–50 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 50 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
+**Verification boundary:** All 60 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
 
-**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 5 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
+**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 6 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
 
-**Workflow safety:** The connected GitHub tool exposes repository file reads/writes but no workflow-state or active-run listing. Attempts to open the GitHub Actions workflow page and GitHub REST workflow-state endpoint through web retrieval failed; neither concurrent execution nor administrative disablement was independently verified this run. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
+**Workflow safety:** The connected GitHub tool supports repository file reads/writes but does not expose workflow-state or active-run listing. Attempts to open the GitHub Actions workflow page and GitHub REST workflow-state endpoint through web retrieval failed; neither concurrent execution nor administrative disablement was independently verified this run. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 6, rows 51–60, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+**Next:** Slot 7, rows 61–70, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+
+## Slot 6 — phonics apps and free English games (05:15 IST)
+
+At **2026-10-27T23:45:52.247827Z–23:46:01.287732Z UTC** (28 October IST), ChatGPT attempted **10 previously unchecked Slot 6 URLs** (rows 51–60). All ten exact URLs returned substantive, page-specific provider-extracted text with visible H1s. Nine provider snapshots were labelled **Crawled: yesterday**, and one was labelled **Crawled: today**; these are provider cache labels, not exact origin check times.
+
+- 51 `/phonics-apps-for-preschoolers-india` — H1: “Phonics Apps for Preschoolers in India”
+- 52 `/phonics-games-for-preschoolers` — H1: “Phonics Games for Preschoolers”
+- 53 `/phonics-learning-games` — H1: “Playful learning games that help children practice phonics with confidence.”
+- 54 `/free-english-games-for-kids` — H1: “English Excellence Games”
+- 55 `/free-phonics-games-for-kids` — H1: “Free Phonics Games for Kids”
+- 56 `/free-letter-sound-games-for-kids` — H1: “Free Letter Sound Games for Kids”
+- 57 `/free-word-building-games-for-kids` — H1: “Free Word Building Games for Kids”
+- 58 `/free-sentence-building-games-for-kids` — H1: “Free Sentence Building Games for Kids”
+- 59 `/free-reading-games-for-kids` — H1: “Free Reading Games for Kids”
+- 60 `/free-grammar-games-for-kids` — H1: “Free Grammar Games for Kids”
+
+Ten independent read-only `curl -L` HTTPS GETs were executed at distinct actual UTC start times recorded in the tracker. **Five failed with exit code 6**, diagnostic `curl: (6) Could not resolve host: tinystepslearning.com`; **five failed with exit code 28**, diagnostic `curl: (28) Resolving timed out after 9001/9002 milliseconds`. Every request failed before any origin HTTP response. `HTTP_CODE:000` is a curl placeholder, not a site response; `url_effective` is not a verified redirect destination. This is an **audit-environment DNS limitation**, not evidence that production is down.
+
+**Result:** 10 UNVERIFIED; zero confirmed production PASS, WARN or FAIL. Origin HTTP, redirects, canonical, noindex, robots, bot access, raw HTML and structured data remain unverified. No verified meaningful transition was detected, so CHANGES.md is unchanged.
 
 ## Slot 5 — team, trust, courses and commercial comparison (04:16 IST)
 
