@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 2)
+## Daily coverage — 28 October IST (after Slot 3)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **20 (9.9%)** |
+| Distinct URLs actually attempted today | **30 (14.9%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **20** |
-| Not yet checked today | **182** |
+| UNVERIFIED / partial provider-only evidence today | **30** |
+| Not yet checked today | **172** |
 
-**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 20 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–10 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** Read back 202 unique selected URLs, sequential indices 1–202, Slots 1–19 with 10 URLs each and Slot 20 with 12. The 30 distinct current-day UTC probe timestamps map to 28 October IST. Rows 1–10 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 20 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
+**Verification boundary:** All 30 current-day attempts are UNVERIFIED for full origin technical readiness. The web retrieval provider's extracted content does not independently verify origin HTTP status, final redirect destination, canonical, robots/noindex directives, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial raw HTML or JSON-LD. No first-party Google/Bing indexing, ranking or AI citation evidence was collected or claimed.
 
 **Comparison:** 27 October's 202 attempted URLs were also UNVERIFIED for full origin readiness. No dated, independently verified production before/after transition was established. No new CHANGES.md entry is warranted.
 
 **Workflow safety:** Connected GitHub Actions queries found zero in-progress and zero queued runs, and the latest 100 runs contained no rolling-public-seo-health workflow. The administrative workflow-state endpoint was not accessible through the connector; the user's confirmed 25 October disablement remains the operating assumption. No workflow was executed or enabled, and no source or production settings were modified.
 
-**Next:** Slot 3, rows 21–30, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+**Next:** Slot 4, rows 31–40, when eligible. The separate six-hour outside-in search visibility task remains unchanged.
+
+## Slot 3 — phonics guides (02:17 IST)
+
+At **2026-10-27T20:47:43–20:47:52Z UTC** (28 October IST), the ChatGPT-native auditor attempted **10 previously unchecked Slot 3 URLs** (rows 21–30). The provider returned page-specific, substantive phonics guidance and a visible H1 for each exact URL (some direct opens initially failed, but following on-site links resolved those pages). The provider's snapshots were labelled **Crawled: yesterday** or **Crawled: 2 days ago**; neither label supplies an exact crawl time or certifies current origin availability.
+
+- Row 21: `https://tinystepslearning.com/resources/phonics/rabbit-rule-phonics` — H1: “What is the Rabbit Rule in phonics?” (provider: yesterday)
+- Row 22: `https://tinystepslearning.com/resources/phonics/soft-c-hard-c-phonics` — H1: “Why does c sound different in cat and city?” (provider: 2 days ago)
+- Row 23: `https://tinystepslearning.com/resources/phonics/soft-g-hard-g-phonics` — H1: “Why does g sound different in game and giant?” (provider: 2 days ago)
+- Row 24: `https://tinystepslearning.com/resources/phonics/er-ir-ur-r-controlled-vowels-phonics` — H1: “How can children spell a sound that may be written er, ir or ur?” (provider: yesterday)
+- Row 25: `https://tinystepslearning.com/resources/phonics/ar-r-controlled-vowels-phonics` — H1: “Why does a not keep its usual short or long sound in car and star?” (provider: 2 days ago)
+- Row 26: `https://tinystepslearning.com/resources/phonics/or-r-controlled-vowels-phonics` — H1: “How should children read or in fork and storm?” (provider: yesterday)
+- Row 27: `https://tinystepslearning.com/resources/phonics/y-as-a-vowel-phonics` — H1: “When does y act like a vowel?” (provider: yesterday)
+- Row 28: `https://tinystepslearning.com/resources/phonics/au-aw-phonics` — H1: “How do children choose between au and aw?” (provider: yesterday)
+- Row 29: `https://tinystepslearning.com/resources/phonics/oi-oy-phonics` — H1: “When should a child use oi or oy?” (provider: 2 days ago)
+- Row 30: `https://tinystepslearning.com/resources/phonics/oo-sounds-phonics` — H1: “Why does oo sound different in moon and book?” (provider: yesterday)
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GET requests failed before any origin HTTP response: **5** with exit code **6** (`Could not resolve host: tinystepslearning.com`) and **5** with exit code **28** (`Resolving timed out after 9001/9002 milliseconds`). Each actual UTC start/end timestamp and exact error is preserved in `MASTER_URL_TRACKER.csv`. `CURL_HTTP_CODE:000` is a curl placeholder, not an HTTP status; the reported effective URL is not a verified redirect. Audit-environment DNS failure is not evidence of a production outage.
+
+**Outcome:** 10 additional UNVERIFIED full-origin technical-readiness attempts; zero verified production PASS, WARN or FAIL. HTTP status, redirect, canonical, indexing directives, bot robots permissions, raw initial HTML and JSON-LD remain unverified. No dated, independently verified production before/after transition was established; `CHANGES.md` is unchanged.
 
 ## Slot 2 — phonics guides (01:18 IST)
 
