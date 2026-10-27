@@ -1,6 +1,16 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-27 IST)
 
-Updated by the **ChatGPT-native hourly auditor** after **Slot 20 (rows 191–202)** on **27 October 2026 IST**. Twelve distinct read-only HTTPS GET probes began between **2026-10-27T13:43:04.074101Z** and **2026-10-27T13:43:09.117623Z**; the final probe ended **2026-10-27T13:43:17.128460Z**. Exact per-URL UTC probe start/end times and errors are in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+Updated by the **ChatGPT-native hourly auditor** after **Slot 20 (rows 191–202)** and **Slot 21 reconciliation (no URL probes)** on **27 October 2026 IST**. Twelve distinct read-only HTTPS GET probes began between **2026-10-27T13:43:04.074101Z** and **2026-10-27T13:43:09.117623Z**; the final probe ended **2026-10-27T13:43:17.128460Z**. Exact per-URL UTC probe start/end times and errors are in [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv).
+
+## Slot 21 — reconciliation (no new URL probes)
+
+At **2026-10-27 20:15:34 IST** (**2026-10-27T14:45:34.328Z UTC**), re-read the tracker, summary and change ledger on `seo-url-health-tracker` and reconciled records without requesting or rechecking any public URL. The tracker contains **202 rows, 202 unique URLs and sequential indices 1–202**; slots 1–19 each contain ten URLs and slot 20 contains twelve. All **202** records are dated **27 October IST**, have **202 distinct valid UTC probe timestamps** that map to 27 October IST, and contain recorded probe evidence. No unchecked earlier-slot URL remains; no future slot was scanned, no historical date was counted toward today, and no new PASS/FAIL/WARN was inferred. Today's full-origin readiness remains **202 UNVERIFIED**.
+
+**Historical context:** 30 rows retain earlier `last_verified_status=PASS` values dated 25 October UTC. These historical fields were not altered and **do not constitute today's verification or a confirmed regression** from those observations. The current-day provider-text/DNS-failure records cannot establish a before/after production transition. The change ledger therefore requires no entry.
+
+**Workflow check limitation:** Attempted to inspect the former GitHub Actions workflow state and run listing through public GitHub endpoints, but those endpoints were inaccessible to this audit runtime. No concurrent GitHub audit was positively observed, but absence of a concurrent run **was not independently verified** in this reconciliation. Continue to rely on the user's 25 October disable confirmation; cron YAML presence alone is not evidence that a workflow is enabled. No workflow was run, enabled or changed.
+
+**Next:** Slot 22 reconciliation; slots 23–24 catch-up only if eligible unchecked URLs appear. Do not recheck today's 202 attempted rows. Reset daily coverage at the next Asia/Kolkata date boundary; maintain separate six-hour visibility monitoring unchanged.
 
 ## Daily coverage — 27 October IST
 
@@ -49,6 +59,6 @@ The user confirmed disabling the previous GitHub Actions rolling audit on **25 O
 
 ## Next work
 
-**Slots 21–22:** Reconciliation and recovery, without rechecking rows already attempted today. **Slots 23–24:** Catch-up only if eligible unchecked rows remain; currently **zero**. On the next IST day, daily coverage must reset to zero until fresh checks actually execute. Independent live origin HTTPS access remains necessary for complete technical verification. The separate six-hour outside-in global search visibility task remains unchanged.
+**Slot 22:** Reconciliation and recovery, without rechecking rows already attempted today. **Slots 23–24:** Catch-up only if eligible unchecked rows remain; currently **zero**. On the next IST day, daily coverage must reset to zero until fresh checks actually execute. Independent live origin HTTPS access remains necessary for complete technical verification. The separate six-hour outside-in global search visibility task remains unchanged.
 
-Only [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv) and this summary were updated on `seo-url-health-tracker`. No repository source, workflows, Firebase, Hosting or production settings were changed.
+During Slots 1–20, [MASTER_URL_TRACKER.csv](./MASTER_URL_TRACKER.csv) and this summary were updated on `seo-url-health-tracker`. Slot 21 changed only this summary; no tracker rows or check timestamps were modified. No repository source, workflows, Firebase, Hosting or production settings were changed.
