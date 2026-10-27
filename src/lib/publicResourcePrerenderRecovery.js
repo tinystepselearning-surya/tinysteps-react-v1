@@ -35,7 +35,7 @@ export function captureOriginalPublicResource(document, location) {
   if (!main || !h1?.textContent?.trim() || content.length < 600) return null;
   if (Object.hasOwn(groupPageHeadings, path)
       && (!main.classList.contains('group-commercial-page')
-        || h1.textContent.replace(/\\s+/g, ' ').trim() !== groupPageHeadings[path])) return null;
+        || h1.textContent.replace(/\s+/g, ' ').trim() !== groupPageHeadings[path])) return null;
   // Preview channels and local Vite preview intentionally keep the production
   // canonical, so validate the canonical owner independently of the host.
   if (canonical !== 'https://tinystepslearning.com' + path || /\bnoindex\b/i.test(robots)) return null;
