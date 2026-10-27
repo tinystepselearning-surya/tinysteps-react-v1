@@ -88,13 +88,13 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({
                 onClick={handleLogout}
                 title="Logout"
                 aria-label="Logout"
-                className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                className="h-8 w-8 rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-[#D3B9E1] dark:hover:bg-[#384C80] dark:hover:text-white"
               >
                 <LogOut className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          <div className="mt-1 truncate text-base font-semibold text-[#604577]">
+          <div className="mt-1 truncate text-base font-semibold text-[#604577] dark:text-[#D3B9E1]">
             Hi, {teacherName || 'Teacher'}
           </div>
         </div>
@@ -113,7 +113,7 @@ const TeacherSidebarComponent: FC<SidebarProps> = ({
                   'group flex items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition',
                   isActive
                     ? 'bg-[#212B5C] text-white shadow-sm'
-                    : 'text-[#405678] hover:bg-[#F1EDFC] hover:text-[#17284C]',
+                    : 'text-[#405678] hover:bg-[#F1EDFC] hover:text-[#17284C] dark:text-[#D3B9E1] dark:hover:bg-[#384C80] dark:hover:text-white',
                 )}
                 data-testid={item.id === 'lessons' ? 'teacher-tab-lessons' : undefined}
               >
