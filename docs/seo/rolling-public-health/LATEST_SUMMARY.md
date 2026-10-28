@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 8)
+## Daily coverage — 28 October IST (after Slot 9)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **80 (39.6%)** |
+| Distinct URLs actually attempted today | **90 (44.6%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **80** |
-| Not yet checked today | **122** |
+| UNVERIFIED / partial provider-only evidence today | **90** |
+| Not yet checked today | **112** |
 
-**Tracker integrity:** Independently read back the updated tracker: 202 unique URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 80 current-day UTC probe timestamps are distinct and map to 28 October IST. Rows 1–70 were not rechecked, and no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** 202 unique URLs with indices 1–202; Slots 1–19 contain 10 each, Slot 20 contains 12. All 90 current-day probe start timestamps are distinct, valid UTC and map to 28 October IST. Rows 1–80 were not rechecked; no future-slot URLs were scanned. Historical verification fields are preserved.
 
-**Verification boundary:** All 80 attempts remain UNVERIFIED for full origin readiness. Provider text is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
+**Verification boundary:** All 90 attempted URLs remain UNVERIFIED for full live origin readiness. Provider-extracted page text does not independently verify HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
 
-**Comparison:** The 27 October cycle attempted 202 URLs without confirmed origin readiness. Slot 8 has no dated before/after production transition. `CHANGES.md` is unchanged.
+**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement was established in Slot 9. `CHANGES.md` remains unchanged.
 
-**Workflow safety:** GitHub REST run listings returned **0 in-progress** and **0 queued** Actions runs during Slot 8. The administrative workflow-state endpoint was rejected by the connected GitHub interface, so disablement could not be independently verified. Continue under the user's 25 October confirmation; cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
+**Workflow safety:** GitHub Actions REST returned **0 queued** and **0 in-progress** runs at Slot 9 inspection. Workflow administrative state endpoint was inaccessible through the connected GitHub interface; disablement is not independently verified. Continue under the user's confirmed 25 October disablement. Cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 9, rows 81–90. The separate six-hour global search visibility task remains unchanged.
+**Next:** Slot 10, rows 91–100. The separate six-hour global search visibility task remains unchanged.
+
+## Slot 9 — writing, pricing, speaking and age-specific English pages (08:18 IST)
+
+At **2026-10-28T02:48:30.917930Z–02:48:39.974092Z UTC** (28 October IST), ChatGPT audited ten previously unchecked Slot 9 URLs, rows 81–90. All ten exact URLs returned substantive, page-specific **provider-extracted** text with visible H1 headings, labelled **Crawled: yesterday** (provider crawl time unknown). This is scoped content visibility evidence, not a live origin HTTP check.
+
+- 81 `/writing-classes-for-kids` — H1: “Creative Writing Classes for Kids Online”; Live 1:1 writing guidance and writing-skills explanation
+- 82 `/phonics-fees-india` — H1: “Phonics Class Fees in India”; September 2026 pricing research, provider comparison and class-fee benchmark
+- 83 `/english-grammar-writing-classes` — H1: “Grammar Levels Guide: Beginner, Advanced, or Writing?”; 36 Beginner plus 36 Advanced Grammar lessons, writing pathway distinctions
+- 84 `/spoken-english-classes-for-kids-online` — H1: “Spoken English Classes for Kids Online”; Live 1:1 speaking guidance and displayed ₹400 per class
+- 85 `/online-english-classes-for-kids` — H1: “Online English Classes for Kids”; Ages 3–12, programme overview and displayed ₹400 standard 1:1 rate
+- 86 `/online-english-classes-hyderabad` — H1: “Online English Classes for Kids in Hyderabad”; Hyderabad-specific live online classes and ₹400 standard 1:1 rate
+- 87 `/english-classes-for-4-year-old` — H1: “English Classes for 4 Year Old”; Listening, letter sounds, early vocabulary and play-based speaking
+- 88 `/english-classes-for-5-year-old` — H1: “Online English Classes for 5-Year-Old Children”; Blending, early reading, vocabulary and sentence formation
+- 89 `/english-classes-for-6-year-old` — H1: “English Classes for 6 Year Old”; Reading fluency, grammar basics and sentence expression
+- 90 `/english-classes-for-7-10-year-old` — H1: “Online English Classes for Ages 7-10”; Reading fluency, grammar, writing and communication
+
+**Independent HTTPS probes:** Ten distinct, read-only `curl -L` GET requests were executed with individual UTC start/end timestamps recorded in the tracker. Six failed with exit **6**, `curl: (6) Could not resolve host: tinystepslearning.com`; four failed with exit **28**, `curl: (28) Resolving timed out after 9000 milliseconds` (some returned 9001 ms). No origin HTTP response was received. `HTTP_CODE:000` is a curl placeholder, not an HTTP response. Effective URL and redirect count do not verify a final destination. The failures occurred in the audit environment and do not prove a production outage.
+
+**Result:** Ten UNVERIFIED for full technical readiness; zero confirmed production PASS/WARN/FAIL. Canonicals, robots/noindex, bot permissions, initial HTML and JSON-LD remain unverified. No verified before/after change warrants a `CHANGES.md` entry.
 
 ## Slot 8 — learning games and core commercial pages (07:16 IST)
 
