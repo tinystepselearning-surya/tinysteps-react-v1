@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 11)
+## Daily coverage — 28 October IST (after Slot 12)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **110 (54.5%)** |
+| Distinct URLs actually attempted today | **120 (59.4%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **110** |
-| Not yet checked today | **92** |
+| UNVERIFIED / partial provider-only evidence today | **120** |
+| Not yet checked today | **82** |
 
-**Tracker integrity:** 202 unique URLs with indices 1–202; slots 1–19 contain 10 each, slot 20 contains 12. All 110 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–100 were not rechecked; no future-slot URLs were scanned. Historical verification fields preserved.
+**Tracker integrity:** 202 unique URLs with indices 1–202; slots 1–19 contain 10 each, slot 20 contains 12. All 120 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–110 were not rechecked; no future-slot URLs were scanned. Historical verification fields preserved.
 
-**Verification boundary:** Provider-extracted text does not independently verify origin HTTP status, redirects, canonical, robots/noindex, bot access, initial HTML or JSON-LD. All 110 remain UNVERIFIED for full origin readiness. No first-party Google/Bing indexing, rankings or AI citations were verified.
+**Verification boundary:** Provider-extracted text does not independently verify origin HTTP status, redirects, canonical, robots/noindex, bot access, initial HTML or JSON-LD. All 120 remain UNVERIFIED for full origin readiness. No first-party Google/Bing indexing, rankings or AI citations were verified.
 
-**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement established in Slot 11. `CHANGES.md` unchanged.
+**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement established in Slot 12. `CHANGES.md` unchanged.
 
 **Workflow safety:** Connected GitHub tools did not expose administrative workflow state or active-run listing; web access to GitHub Actions API endpoints was blocked. No concurrent workflow was positively observed, but absence and administrative disablement could not be independently verified. Proceed under user's confirmed 25 October disablement; cron YAML alone does not establish enablement. No workflow was run, enabled or modified.
 
-**Next:** Slot 12, rows 111–120. Separate six-hour global search visibility task unchanged.
+**Next:** Slot 13, rows 121–130. Separate six-hour global search visibility task unchanged.
+
+## Slot 12 — parent learning challenges, phonics and grammar articles (11:18 IST)
+
+At **2026-10-28T05:48:45.207434Z–05:48:53.262460Z UTC**, ChatGPT attempted ten previously unchecked Slot 12 URLs (rows 111–120). Each exact URL returned page-specific, substantive provider-extracted text with a visible H1. The provider labelled the content **Crawled: yesterday**, without precise crawl timestamps; this is not independent live origin HTML verification.
+
+- 111 `/blog/child-knows-grammar-but-makes-mistakes` — H1: “My Child Knows Grammar Rules but Still Makes Mistakes — Why?”
+- 112 `/blog/child-reads-in-class-but-forgets-at-home` — H1: “Why Can My Child Read in Class but Struggle at Home? What Parents Can Do”
+- 113 `/blog/child-understands-english-but-does-not-speak` — H1: “My Child Understands English but Does Not Speak in Class — Is It Confidence or Language?”
+- 114 `/blog/conversation-skills-for-kids` — H1: “Conversation Skills for Kids: Listening, Turn-Taking and Better Responses”
+- 115 `/blog/cvc-words-explained-for-parents` — H1: “CVC Words Explained for Parents: The First Real Decoding Milestone”
+- 116 `/blog/digraphs-and-tricky-words` — H1: “Digraphs and Tricky Words for Kids: Examples & Reading Tips”
+- 117 `/blog/does-cbse-include-phonics-ncf-foundational-literacy` — H1: “Does CBSE Include Phonics? What the NCF Says About Foundational Literacy and Early Reading”
+- 118 `/blog/grammar-assessment` — H1: “Grammar Assessment for Kids: A Simple Parent Checklist”
+- 119 `/blog/grammar-conjunctions` — H1: “Conjunctions for Kids: And, But, Because & So Examples”
+- 120 `/blog/grammar-creative-writing` — H1: “Creative Writing Scaffolds for Ages 8–10”
+
+**Independent HTTPS probes:** Ten distinct read-only `curl -L` GETs executed with individual actual UTC start/end timestamps recorded in the tracker. Five failed with exit **6** and exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; five failed with exit **28**, `curl: (28) Resolving timed out after 8000 milliseconds` (two reported 8001 milliseconds). No origin HTTP response or headers were received. `HTTP_CODE:000` is a curl placeholder, not an HTTP status, and `url_effective` is not a verified redirect destination. These audit-environment DNS failures do **not** establish a production outage.
+
+**Result:** Ten **UNVERIFIED** for full technical readiness; zero confirmed production PASS/WARN/FAIL. Origin HTTP status, redirects, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain unverified. No verified before/after production transition; `CHANGES.md` unchanged.
 
 ## Slot 11 — summer fast tracks and parent literacy guides (10:11 IST)
 
