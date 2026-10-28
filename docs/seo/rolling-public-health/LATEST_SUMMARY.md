@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-29 IST)
 
+## Slot 3 — 29 October 2026 (02:11 IST)
+
+**Preflight:** Fetched the latest tracker on `seo-url-health-tracker` and verified 202 unique URLs, 22 fields per row, sequential indices, slots 1–19 with 10 each and slot 20 with 12. Exactly **20 distinct** URL checks mapped to 29 October IST before this batch; all ten Slot 3 rows (21–30) retained 28 October IST historical dates and were eligible. No earlier checked row was rechecked.
+
+**Executed:** Ten distinct independent read-only HTTPS `curl -L` probes, one for each Slot 3 URL, between **2026-10-28T20:41:08.772282Z and 2026-10-28T20:41:33.893609Z UTC** (29 October IST). Every probe exited **6**, with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. **No origin HTTP response** was obtained. The reported `HTTP:000` is a curl placeholder, not a production status; effective URL and zero redirect count do not establish final destination. This is an audit-environment DNS limitation, **not evidence of a production outage**.
+
+**Provider content evidence (not live-origin verification):** Direct exact-URL `web.open` returned substantive extracted page text for **3/10**: rows 21 (H1 `What is the Rabbit Rule in phonics?`), 28 (H1 `How do children choose between au and aw?`), and 30 (H1 `Why does oo sound different in moon and book?`); provider labelled these `Crawled today` without exact crawl timestamps. Exact-URL search-cache excerpts were available for **4/10**: rows 22 (soft C), 23 (soft G), 25 (AR), and 29 (OI/OY), labelled `Crawled 3 weeks ago`. For **3/10** (rows 24 ER/IR/UR, 26 OR, 27 Y as vowel), direct exact-URL retrieval was inaccessible and targeted search did not return exact-page content; related-page descriptions are not direct evidence. Provider-extracted text and cached excerpts cannot establish deployed HTTP health, raw initial HTML, canonical, robots, or structured data.
+
+**Daily attempted coverage after Slot 3:** **30/202 distinct URLs (14.85%)**, **172 not yet attempted today**, **0 fully origin-verified PASS**, **0 confirmed production FAIL/WARN**, **30 UNVERIFIED**. New timestamps are distinct and map to 29 October IST. Older dates on the other 172 rows are preserved but excluded from today's count. HTTP status, final redirect, canonical, meta/X-Robots-Tag, bot-specific access and JSON-LD remain UNVERIFIED.
+
+**Workflow safety:** GitHub Actions runs API returned **0 in-progress and 0 queued** at preflight; administrative workflow state endpoint was inaccessible. User-confirmed 25 October disablement remains the operating assumption; cron YAML presence alone does not establish enablement. No workflow was executed or modified.
+
+**Changes:** No dated before/after production regression or improvement was verified; `CHANGES.md` remains unchanged. Next eligible slot: **Slot 4, rows 31–40**. No source code, Firebase, hosting, workflow, production setting or separate six-hour search-visibility audit was changed.
+
+---
+
 ## Slot 1 — 29 October 2026 (00:13–00:14 IST)
 
 **Preflight:** Re-fetched the tracker from `seo-url-health-tracker` and validated 202 records, 202 unique URLs, sequential indices, valid 22-column CSV rows, slots 1–19 with 10 URLs each and slot 20 with 12. At run start, **0 URLs had a verified 29 October IST check timestamp**; all 202 prior attempts belonged to 28 October IST and were excluded from today's coverage. Slot 1 rows 1–10 were eligible and were the only URLs probed.
