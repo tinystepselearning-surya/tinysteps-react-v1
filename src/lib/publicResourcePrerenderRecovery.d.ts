@@ -6,7 +6,7 @@ export type PublicResourceSnapshot = {
 
 /**
  * Captures only substantive, self-canonical prerendered public Phonics,
- * Grammar, Vocabulary or /blog/:slug articles, plus the three published\n * group-class programme pages, before React replaces the HTML.
+ * Grammar, Vocabulary or /blog/:slug articles, plus the three published\n * group-class programme pages and six core commercial owners, before React\n * replaces the HTML.
  * Protected routes, missing pages, noindex and wrong-canonical documents are
  * never eligible for recovery.
  */

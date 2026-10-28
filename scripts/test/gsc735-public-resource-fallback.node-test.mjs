@@ -152,3 +152,33 @@ test('GSC group-class hotfix: fail closed for missing, misleading, noindex and w
   }
   assert.equal(isLazyModuleLoadError(new Error('A business validation error')), false);
 });
+
+const CORE_COMMERCIAL = [
+  ['/courses', 'Find the Right English Course for Your Child'],
+  ['/pricing', 'Online English Classes for Kids: Fees & Pricing'],
+  ['/phonics', 'Online Phonics Classes for Kids'],
+  ['/grammar', 'Online Grammar Classes for Kids'],
+  ['/speaking', 'Online Public Speaking Classes for Kids'],
+  ['/reading-classes-for-kids', 'Online Reading Classes for Kids'],
+];
+test('six commercial owners preserve only their own substantive self-canonical prerendered HTML', () => {
+  for (const [route, heading] of CORE_COMMERCIAL) {
+    const dom = groupFixture({ route, heading, mainClass: 'commercial-programme-content' });
+    assert.ok(captureOriginalPublicResource(dom.window.document, dom.window.location), route);
+    saveOriginalPublicResource(dom.window.document, dom.window.location);
+    const err = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/CoursesPage-test.js');
+    assert.match(originalResourceForChunkError(err, dom.window.location), /Register Group Interest/, route);
+    for (const [otherRoute] of CORE_COMMERCIAL) {
+      if (route === otherRoute) continue;
+      assert.equal(originalResourceForChunkError(err, new URL(ORIGIN + otherRoute)), null, route);
+    }
+    for (const altered of [
+      groupFixture({ route, heading: 'Wrong heading', mainClass: 'commercial-programme-content' }),
+      groupFixture({ route, heading, canonical: route === '/pricing' ? '/phonics' : '/pricing', mainClass: 'commercial-programme-content' }),
+      groupFixture({ route, heading, robots: 'noindex, follow', mainClass: 'commercial-programme-content' }),
+      groupFixture({ route, heading, body: 'Too short', mainClass: 'commercial-programme-content' }),
+    ]) {
+      assert.equal(captureOriginalPublicResource(altered.window.document, altered.window.location), null, route);
+    }
+  }
+});
