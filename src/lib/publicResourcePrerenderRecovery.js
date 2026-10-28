@@ -13,7 +13,7 @@ const groupPageHeadings = Object.freeze({
   '/group-public-speaking-classes-for-kids': 'Live Online Group Public Speaking Classes for Kids',
 });
 // Published core commercial owners need the same protection as group pages.
- // Exact H1 + canonical + substantive HTML checks prevent cross-route rescue.
+// Exact H1 + canonical + substantive HTML checks prevent cross-route rescue.
 const coreCommercialHeadings = Object.freeze({
   '/courses': 'Find the Right English Course for Your Child',
   '/pricing': 'Online English Classes for Kids: Fees & Pricing',
