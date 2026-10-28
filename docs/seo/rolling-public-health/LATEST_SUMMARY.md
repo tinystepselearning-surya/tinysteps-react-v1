@@ -1,26 +1,47 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 19)
+## Daily coverage — 28 October IST (after Slot 20)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **190 (94.1%)** |
+| Distinct URLs actually attempted today | **202 (100%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **190** |
-| Not yet checked today | **12** |
+| UNVERIFIED / provider-only partial evidence today | **202** |
+| Not yet checked today | **0** |
 
-**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 190 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–180 were not rechecked in Slot 19; no future-slot URLs scanned. Historical verification fields preserved.
+**Preflight and completion:** Exactly 202 unique selected URLs, sequential indices 1–202, slots 1–19 with ten URLs each and slot 20 with twelve. Before Slot 20, 190 distinct valid UTC check timestamps mapped to 28 October IST; only rows 191–202 were eligible and attempted. After Slot 20, all 202 UTC check timestamps are distinct and map to 28 October IST. No earlier row was rechecked, no future slot was scanned, and no yesterday timestamp was counted as today's coverage.
 
-**Verification boundary:** Provider-extracted text does not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 190 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
+**Verification boundary:** All 202 URLs remain **UNVERIFIED** for full live-origin technical readiness. Provider-extracted text is not independent proof of origin HTTP status, redirect destination, canonical, robots/noindex, bot permissions, raw initial HTML or JSON-LD. DNS resolution failures in this audit environment are not production outages. No Google/Bing indexing, rankings, AI citations or production transitions were verified.
 
-**Comparison:** Slot 19's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
+**Tracker data-integrity repair (operational, not production):** The tracker read before Slot 20 had 202 rows and valid URL/slot/check-time columns, but its last four columns had been corrupted by prior CSV serialization: fragments of quoted reason/evidence text occupied `last_verified_status` and `last_verified_at_utc`. This run restored a valid 22-column CSV using the last intact 26 October full-cycle snapshot for historical verification fields (including 30 historical PASS records), retained all 190 existing 28 October UTC check timestamps, and preserved available pre-repair evidence fragments with an explicit truncation caveat. The 12 new Slot 20 observations were added separately. This repair does **not** imply fresh verification or a production change for rows 1–190.
 
-**Workflow safety:** GitHub Actions run API returned 0 queued and 0 in-progress runs. Administrative workflow state endpoint was not accessible; user-confirmed disablement from 25 October remains the operating assumption. Cron YAML is not proof of an enabled workflow. No workflow run or production settings changed.
+**Workflow safety:** Live GitHub Actions run queries returned zero queued and zero in-progress runs; no concurrent audit was positively observed. The administrative workflow-state endpoint was rejected, so disablement could not be independently verified. Continue under the user's 25 October confirmation. No GitHub workflow was executed, enabled or changed.
 
-**Next:** Slot 20, rows 191–202 (12 URLs). Separate six-hour global search visibility task unchanged.
+**Next:** Slots 21–22 are reconciliation/recovery, and 23–24 are catch-up only if eligible unchecked URLs emerge. At present zero remain. Do not recheck 28 October's 202 attempted URLs. The separate six-hour global visibility task is unchanged.
+
+## Slot 20 — advanced courses and parent guidance (19:18 IST)
+
+At **2026-10-28T13:48:12.718270Z–13:48:27.897256Z UTC**, the ChatGPT-native auditor attempted the 12 previously unchecked-for-today URLs (rows 191–202). All twelve exact URLs returned substantive page-specific text via direct web.open. The provider labelled snapshots **Crawled: yesterday** (precise crawl times unavailable); these are extracted snapshots, not independently verified origin HTML.
+
+- 191 `/courses/grammar-mastery` — H1: “Advanced Grammar Mastery Classes for Kids”
+- 192 `/courses/public-speaking-foundations` — H1: “Public Speaking Foundations for Kids”
+- 193 `/courses/public-speaking-excellence` — H1: “Public Speaking Excellence for Kids”
+- 194 `/parents` — H1: “Parents Hub: Choose the Right Learning Path for Your Child”
+- 195 `/parents/getting-started` — H1: “Getting Started with Tiny Steps”
+- 196 `/parents/choosing-course` — H1: “How to Choose the Right Tiny Steps Course for Your Child”
+- 197 `/parents/tracking-progress` — H1: “How to Track Your Child’s English Learning Progress”
+- 198 `/parents/helping-with-homework` — H1: “Helping with homework”
+- 199 `/parents/phonics-mission` — H1: “Phonics Mission: A Research-Backed 7-Day Starter Plan for Parents”
+- 200 `/parents/reading-at-home` — H1: “Reading at Home: A Practical 10-Minute Parent Routine”
+- 201 `/parents/speech-confidence` — H1: “How to Build Speaking Confidence in Children Without Adding Pressure”
+- 202 `/parents/common-mistakes` — H1: “Common Parent Mistakes That Can Slow English Learning Progress”
+
+**Independent HTTPS GETs:** Eleven `curl -L` probes failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. One (row 199) failed before HTTP with exit **28**, exact stderr `curl: (28) Resolving timed out after 10000 milliseconds`. Each actual UTC start/end and error is recorded in the tracker. No origin HTTP response or headers were obtained. `STATUS:000` is a curl placeholder, not a production status; `FINAL` and `REDIRECTS:0` are not verified redirect observations.
+
+**Comparison:** The 27 October Slot 20 attempts also lacked origin HTTP verification. There is no dated before/after evidence of a production regression or improvement. The tracker schema repair is an operational evidence-quality change only.
 
 ## Slot 19 — phonics, reading and speaking guides; level-specific course pages (18:14 IST)
 
