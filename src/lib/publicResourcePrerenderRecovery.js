@@ -12,6 +12,16 @@ const groupPageHeadings = Object.freeze({
   '/group-grammar-classes-for-kids': 'Small-Group Online Grammar Classes for Kids',
   '/group-public-speaking-classes-for-kids': 'Live Online Group Public Speaking Classes for Kids',
 });
+// Published core commercial owners need the same protection as group pages.
+ // Exact H1 + canonical + substantive HTML checks prevent cross-route rescue.
+const coreCommercialHeadings = Object.freeze({
+  '/courses': 'Find the Right English Course for Your Child',
+  '/pricing': 'Online English Classes for Kids: Fees & Pricing',
+  '/phonics': 'Online Phonics Classes for Kids',
+  '/grammar': 'Online Grammar Classes for Kids',
+  '/speaking': 'Online Public Speaking Classes for Kids',
+  '/reading-classes-for-kids': 'Online Reading Classes for Kids',
+});
 const lazyModuleError = /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|failed to load module script|loading chunk .+ failed/i;
 let originalResource = null;
 
@@ -24,7 +34,8 @@ export function isLazyModuleLoadError(error) {
 
 export function captureOriginalPublicResource(document, location) {
   const path = normalizedPath(location.pathname);
-  if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path) && !Object.hasOwn(groupPageHeadings, path)) return null;
+  if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path)
+      && !Object.hasOwn(groupPageHeadings, path) && !Object.hasOwn(coreCommercialHeadings, path)) return null;
 
   const root = document.getElementById('root');
   // Public Layout wraps each route in an outer <main>. For group-class
@@ -40,6 +51,8 @@ export function captureOriginalPublicResource(document, location) {
   if (Object.hasOwn(groupPageHeadings, path)
       && (!main.classList.contains('group-commercial-page')
         || h1.textContent.replace(/\s+/g, ' ').trim() !== groupPageHeadings[path])) return null;
+  if (Object.hasOwn(coreCommercialHeadings, path)
+      && h1.textContent.replace(/\s+/g, ' ').trim() !== coreCommercialHeadings[path]) return null;
   // Preview channels and local Vite preview intentionally keep the production
   // canonical, so validate the canonical owner independently of the host.
   if (canonical !== 'https://tinystepslearning.com' + path || /\bnoindex\b/i.test(robots)) return null;
