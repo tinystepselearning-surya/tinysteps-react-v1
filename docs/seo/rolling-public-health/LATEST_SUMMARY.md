@@ -1,4 +1,18 @@
-# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-29 IST)
+
+## Slot 1 — 29 October 2026 (00:13–00:14 IST)
+
+**Preflight:** Re-fetched the tracker from `seo-url-health-tracker` and validated 202 records, 202 unique URLs, sequential indices, valid 22-column CSV rows, slots 1–19 with 10 URLs each and slot 20 with 12. At run start, **0 URLs had a verified 29 October IST check timestamp**; all 202 prior attempts belonged to 28 October IST and were excluded from today's coverage. Slot 1 rows 1–10 were eligible and were the only URLs probed.
+
+**Executed:** Ten distinct read-only HTTPS `curl -L` probes, one per URL, at **2026-10-28T18:43:12.197425Z–2026-10-28T18:43:37.541637Z UTC** (29 October IST). Each returned **exit code 6** with exact error `curl: (6) Could not resolve host: tinystepslearning.com`; **no origin HTTP response** was obtained. Separately, `web.open` returned substantive, page-specific extracted text and H1s for all ten URLs (home, blog, resources hub, phonics hub, CK, Floss, QU, CH, KN, NG guides). Provider crawl labels were 'today' for the homepage and 'yesterday' for the other nine; provider crawl times are not known. These text results are **provider-only partial evidence**, not verified initial origin HTML.
+
+**Today's coverage after Slot 1:** **10/202 distinct URLs attempted (4.95%)**, **192 not yet checked**, **0 fully origin-verified PASS**, **0 confirmed production FAIL/WARN**, **10 UNVERIFIED**. Historical `today_ist` and UTC timestamps on rows 11–202 were preserved but **do not count as today's coverage**. The 10 distinct new probe timestamps map to 29 October IST. HTTP status, final redirect destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot rules, raw initial HTML and JSON-LD remain UNVERIFIED. DNS failure is scoped to the audit environment and does not prove production outage.
+
+**Workflow safety:** Direct public GitHub API requests for the workflow's administrative state and active runs were inaccessible; no concurrent SEO audit was positively observed, but its absence and disablement could not be independently verified. Proceeded under the user's explicit 25 October disable confirmation. Cron YAML presence alone is not evidence of enablement. No GitHub Actions workflow was run or changed.
+
+**Changes:** No dated before/after evidence establishes a production regression or improvement, so `CHANGES.md` is unchanged. Next eligible slot: **Slot 2, rows 11–20**. No production source, hosting, workflow or Firebase settings changed. The separate six-hour global visibility audit is unaffected.
+
+---
 
 ## Slot 22 — 28 October reconciliation (no new URL probes)
 
