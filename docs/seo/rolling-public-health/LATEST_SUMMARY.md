@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 16)
+## Daily coverage — 28 October IST (after Slot 17)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **160 (79.2%)** |
+| Distinct URLs actually attempted today | **170 (84.2%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **160** |
-| Not yet checked today | **42** |
+| UNVERIFIED / partial provider-only evidence today | **170** |
+| Not yet checked today | **32** |
 
-**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 160 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–150 were not rechecked; no future-slot URLs scanned. Historical verification fields preserved.
+**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 170 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–160 were not rechecked; no future-slot URLs scanned. Historical verification fields preserved.
 
-**Verification boundary:** Provider-extracted text and search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 160 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
+**Verification boundary:** Provider-extracted text and cached search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 170 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
 
-**Comparison:** Slot 16's same ten URLs were attempted on 27 October but remained UNVERIFIED for origin readiness; the tracker also retains historical PASS values dated 25 October whose check modality cannot be treated as a confirmed current live origin baseline. No dated before/after production regression or improvement established. `CHANGES.md` unchanged.
+**Comparison:** Slot 17's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
 
-**Workflow safety:** No queued/in-progress runs in the two GitHub Actions run API queries (0 total active runs). Administrative workflow-state endpoint was not accessible; the user's 25 October confirmation remains the operating assumption. Cron YAML presence is not evidence of an enabled workflow. No workflow run or production settings changed.
+**Workflow safety:** GitHub Actions run API returned 0 queued and 0 in-progress runs; administrative workflow state could not be read. User-confirmed disablement from 25 October remains the operating assumption; cron YAML is not proof of an enabled workflow. No workflow run or production settings changed.
 
-**Next:** Slot 17, rows 161–170. Separate six-hour global search visibility task unchanged.
+**Next:** Slot 18, rows 171–180. Separate six-hour global search visibility task unchanged.
+
+## Slot 17 — phonics, reading, grammar and speaking guides (16:14 IST)
+
+At **2026-10-28T10:44:30.518869Z–10:44:40.810493Z UTC**, ChatGPT attempted ten previously unchecked-for-today URLs (rows 161–170). Nine exact URLs returned substantive page-specific provider-extracted text via direct web.open, labelled **Crawled today**. Row 162's direct open was inaccessible, but a provider search result followed by web.open returned substantive page-specific cached text labelled **Crawled last week**. Provider crawl timestamps were not available. Neither modality is independent live origin verification.
+
+- 161 `/blog/phonics-tricky-words` — provider H1: “How to Teach Tricky Words to Kids Without Encouraging Guessing”
+- 162 `/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics` — provider H1: “Phonological Awareness vs Phonemic Awareness vs Phonics: A Parent Guide” (cached snapshot crawled last week; direct web.open initially inaccessible)
+- 163 `/blog/prevent-summer-slide-reading` — provider H1: “How to Prevent the Summer Slide in Reading (10-Minute Daily Plan)”
+- 164 `/blog/public-speaking-delivery-for-kids` — provider H1: “Public Speaking Delivery for Kids: Pace, Volume, Pauses and Audience Connection”
+- 165 `/blog/punctuation-and-capital-letters-for-kids` — provider H1: “Punctuation and Capital Letters for Kids: A Parent Guide to Clear Sentences”
+- 166 `/blog/r-controlled-vowels-explained` — provider H1: “R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order”
+- 167 `/blog/satpin-phonics-guide` — provider H1: “SATPIN Phonics Guide: Sounds, Order, Words & Blending”
+- 168 `/blog/science-of-phonics-learning` — provider H1: “Phonics vs Sight Words: What Helps Children Read Better”
+- 169 `/blog/screen-smart-summer-routine-for-kids` — provider H1: “Screen-Smart Summer Learning Routine for Kids: Balance English Practice and Screen Time”
+- 170 `/blog/sight-words-or-phonics-first` — provider H1: “Should Children Memorize Sight Words or Learn Phonics First?”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs executed, with distinct actual UTC start/end timestamps recorded per URL. All ten failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response or headers were received. `HTTP_CODE:000` is a curl placeholder, not an HTTP status, and `url_effective` is not a verified redirect. Audit-runtime DNS failure is not proof of a production outage.
+
+**Result:** Ten **UNVERIFIED** for full origin readiness; zero confirmed production PASS/WARN/FAIL. Origin HTTP status, final destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML and JSON-LD remain unverified. No dated before/after production transition; `CHANGES.md` unchanged.
 
 ## Slot 16 — phonics parent guides and school implementation (15:18 IST)
 
