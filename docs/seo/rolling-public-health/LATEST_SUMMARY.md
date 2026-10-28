@@ -14,6 +14,20 @@
 
 ---
 
+## Slot 2 — 29 October 2026 (01:13–01:14 IST)
+
+**Preflight:** Re-fetched the live tracker on `seo-url-health-tracker`. Confirmed 202 rows, 202 unique URLs, sequential indices, 22 fields per row, slots 1–19 with 10 URLs each and slot 20 with 12. Before this run, exactly 10 distinct timestamps mapped to 29 October IST (Slot 1). Slot 2 rows 11–20 were eligible; historical 28 October timestamps were excluded from today's coverage.
+
+**Executed:** Ten distinct read-only HTTPS `curl -L` probes, one per Slot 2 URL, at **2026-10-28T19:43:32.967855Z–2026-10-28T19:43:58.085581Z UTC** (29 October IST). All ten returned exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; none received an origin HTTP response. `STATUS:000` is a curl placeholder, not a server HTTP status. Separately, exact-URL ChatGPT `web.open` returned substantive page-specific extracted HTML text with distinct H1s for all ten URLs (SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E, consonant-LE). Each provider snapshot was labelled **Crawled today**, but the actual provider crawl time is unknown. Provider extraction is partial evidence only; it does not independently verify origin HTTP response or initial HTML.
+
+**Today's coverage:** **20/202 distinct URLs attempted (9.90%)**, **182 not yet checked today**, **0 fully origin-verified PASS**, **0 confirmed production FAIL/WARN**, **20 UNVERIFIED**. Every new timestamp is distinct and maps to 29 October IST. All 182 other rows retain their historical dates and are not counted as current-day coverage. HTTP status, final redirect destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot rules, initial HTML and JSON-LD remain UNVERIFIED. DNS failure is scoped to the audit environment and is not evidence of a production outage.
+
+**Workflow safety:** GitHub Actions runs endpoint returned **zero in-progress and zero queued runs** at preflight. Workflow administrative state endpoint was not accessible through the connector, so disabled status is independently unverified; proceed under the user's explicit 25 October disable confirmation. No workflow was executed or modified.
+
+**Changes:** No verified dated production regression or improvement; `CHANGES.md` unchanged. Next eligible scheduled batch: **Slot 3, rows 21–30**. No source code, Firebase, hosting, production settings or separate six-hour global visibility task changed.
+
+---
+
 ## Slot 22 — 28 October reconciliation (no new URL probes)
 
 At **28 October 2026 at 21:17 IST** (**2026-10-28T15:47:28.510Z UTC**), re-fetched and validated the current tracker, summary and changes ledger on `seo-url-health-tracker`. The CSV has **202 rows, 202 unique URLs, sequential indices, 22 columns per row, and correct 10×19 + 12 slot allocation**. All **202** records have unique, parseable UTC timestamps that map to **28 October IST**, with status **UNVERIFIED**. **Zero eligible unchecked URLs** remain; no URL was rechecked and no timestamp was added or modified.
