@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 13)
+## Daily coverage — 28 October IST (after Slot 14)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **130 (64.4%)** |
+| Distinct URLs actually attempted today | **140 (69.3%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **130** |
-| Not yet checked today | **72** |
+| UNVERIFIED / partial provider-only evidence today | **140** |
+| Not yet checked today | **62** |
 
-**Tracker integrity:** 202 unique URLs with indices 1–202; slots 1–19 contain 10 each, slot 20 contains 12. All 130 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–120 were not rechecked; no future-slot URLs scanned. Historical verification fields preserved.
+**Tracker integrity:** 202 unique URLs with indices 1–202; slots 1–19 contain 10 each, slot 20 contains 12. All 140 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–130 were not rechecked; no future-slot URLs scanned. Historical verification fields preserved.
 
-**Verification boundary:** Provider-extracted text and search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 130 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
+**Verification boundary:** Provider-extracted text and search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 140 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
 
-**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement established in Slot 13. `CHANGES.md` unchanged.
+**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement established in Slot 14. `CHANGES.md` unchanged.
 
-**Workflow safety:** GitHub Actions run API returned zero in-progress and zero queued runs when queried during this audit. Administrative disablement of the old workflow could not be independently read; the user's 25 October confirmation remains the operating assumption. Cron YAML presence is not evidence of an enabled workflow. No workflow run or production settings changed.
+**Workflow safety:** GitHub Actions run API returned zero in-progress and zero queued runs during Slot 14. Administrative workflow-state endpoint was not accessible; the user's 25 October confirmation remains the operating assumption. Cron YAML presence is not evidence of an enabled workflow. No workflow run or production settings changed.
 
-**Next:** Slot 14, rows 131–140. Separate six-hour global search visibility task unchanged.
+**Next:** Slot 15, rows 141–150. Separate six-hour global search visibility task unchanged.
+
+## Slot 14 — English learning, writing and school phonics guides (13:14 IST)
+
+At **2026-10-28T07:44:15.619043Z–07:44:30.676726Z UTC**, ChatGPT attempted ten previously unchecked URLs (rows 131–140). All ten exact URLs returned substantive page-specific provider-extracted text and a visible H1, labelled **Crawled: yesterday**; precise provider crawl timestamps were not available. These are not independent live origin responses.
+
+- 131 `/blog/how-phonics-grammar-and-communication-work-together` — provider H1: “How Phonics, Grammar and Communication Work Together in a Child’s English Learning”
+- 132 `/blog/how-phonics-improves-spelling` — provider H1: “How Phonics Improves Spelling: A Parent Encoding Roadmap”
+- 133 `/blog/how-schools-can-assess-decoding-not-memorisation` — provider H1: “How Schools Can Assess Decoding Instead of Word Memorisation”
+- 134 `/blog/how-to-engage-kids-in-english-learning-at-home` — provider H1: “How to Keep Kids Engaged in English Practice at Home: Phonics, Grammar and Speaking”
+- 135 `/blog/how-to-improve-reading-fluency-in-children` — provider H1: “How to Improve Reading Fluency in Children: Accuracy, Phrasing and Meaning”
+- 136 `/blog/how-to-improve-sentence-formation-in-kids` — provider H1: “How to Improve Sentence Formation in Kids”
+- 137 `/blog/how-to-teach-paragraph-writing-to-kids` — provider H1: “How to Teach Paragraph Writing to Kids: From One Main Idea to Clear Details”
+- 138 `/blog/how-to-teach-storytelling-to-kids` — provider H1: “How to Teach Storytelling to Kids: Sequence, Detail and Clear Retelling”
+- 139 `/blog/how-vocabulary-supports-reading-comprehension` — provider H1: “How Vocabulary Supports Reading Comprehension: A Parent Guide”
+- 140 `/blog/international-phonics-benchmarks-for-indian-schools` — provider H1: “International Phonics Benchmarks for Indian Schools: What to Include in a Complete Programme”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs executed with distinct actual UTC start/end timestamps recorded per URL in the tracker. All ten failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response or headers. `HTTP_CODE:000` is a curl placeholder, not a server status; `url_effective` does not prove redirects. Audit-runtime DNS failures do not establish a production outage.
+
+**Result:** Ten **UNVERIFIED** for full origin readiness; zero confirmed production PASS/WARN/FAIL. Origin HTTP status, redirect destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, initial HTML and JSON-LD remain unverified. No dated verified production before/after transition; `CHANGES.md` unchanged.
 
 ## Slot 13 — grammar and phonics reading guides (12:19 IST)
 
