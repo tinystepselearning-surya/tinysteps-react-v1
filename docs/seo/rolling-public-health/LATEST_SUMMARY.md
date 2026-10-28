@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 7)
+## Daily coverage — 28 October IST (after Slot 8)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **70 (34.7%)** |
+| Distinct URLs actually attempted today | **80 (39.6%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **70** |
-| Not yet checked today | **132** |
+| UNVERIFIED / partial provider-only evidence today | **80** |
+| Not yet checked today | **122** |
 
-**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 70 current-day UTC probe timestamps are distinct and correspond to 28 October IST. Rows 1–60 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** Independently read back the updated tracker: 202 unique URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 80 current-day UTC probe timestamps are distinct and map to 28 October IST. Rows 1–70 were not rechecked, and no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 70 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
+**Verification boundary:** All 80 attempts remain UNVERIFIED for full origin readiness. Provider text is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
 
-**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 7 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
+**Comparison:** The 27 October cycle attempted 202 URLs without confirmed origin readiness. Slot 8 has no dated before/after production transition. `CHANGES.md` is unchanged.
 
-**Workflow safety:** GitHub REST run listings returned **0 in-progress** and **0 queued** Actions runs during Slot 7; no concurrent rolling audit was observed at those moments. The administrative workflow-state endpoint was inaccessible, so disabled status remains independently unverified. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
+**Workflow safety:** GitHub REST run listings returned **0 in-progress** and **0 queued** Actions runs during Slot 8. The administrative workflow-state endpoint was rejected by the connected GitHub interface, so disablement could not be independently verified. Continue under the user's 25 October confirmation; cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 8, rows 71–80, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+**Next:** Slot 9, rows 81–90. The separate six-hour global search visibility task remains unchanged.
+
+## Slot 8 — learning games and core commercial pages (07:16 IST)
+
+At **2026-10-28T01:46:19.470572Z–01:46:33.521893Z UTC** (28 October IST), ChatGPT attempted **10 previously unchecked Slot 8 URLs** (rows 71–80). All ten exact URLs yielded substantive page-specific **provider-extracted** text with visible H1s (provider label **Crawled: today**, exact crawl time unspecified). The direct provider open for row 77 initially failed, but following its link from the book-demo page successfully retrieved the framework content. These snapshots do **not** establish live origin status or raw initial HTML.
+
+- 71 `/letter-tracing-with-sounds-game` — H1: “Letter Tracing With Sounds Game”
+- 72 `/free-balloon-pop-phonics-game-for-kids` — H1: “Free Phonics Balloon Pop Game for Kids”
+- 73 `/free-games/word-meaning-flashcards` — H1: “Vocabulary Adventure”
+- 74 `/phonics` — H1: “Online Phonics Classes for Kids”
+- 75 `/grammar` — H1: “Online Grammar Classes for Kids”
+- 76 `/speaking` — H1: “Online Public Speaking Classes for Kids”
+- 77 `/speaking-progress-framework` — H1: “How Tiny Steps Measures Speaking Progress”
+- 78 `/for-schools` — H1: “CBSE defines the literacy goal. Tiny Steps builds the implementation pathway.”
+- 79 `/book-demo` — H1: “Book a Free 35-Minute 1:1 English Assessment”
+- 80 `/reading-classes-for-kids` — H1: “Online Reading Classes for Kids”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs ran with distinct actual UTC start times recorded in the tracker. Nine failed with exit **6**, exact diagnostic `curl: (6) Could not resolve host: tinystepslearning.com`; one (row 77) failed with exit **28**, exact diagnostic `curl: (28) Resolving timed out after 9000 milliseconds`. Every request failed during DNS resolution before any origin HTTP response. `HTTP_CODE:000` is a curl placeholder, not a server response, and `url_effective` is not a verified final redirect destination. These audit-environment failures do **not** prove a production outage.
+
+**Result:** 10 UNVERIFIED for full technical readiness, zero verified production PASS/WARN/FAIL. Origin HTTP status, redirects, canonical, robots/noindex and X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain unverified. Historical 25 October PASS values for these ten rows are preserved but cannot establish today's production health or a regression. No verified meaningful before/after change warrants a `CHANGES.md` entry.
 
 ## Slot 7 — free games and letter tracing (06:14 IST)
 
