@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 6)
+## Daily coverage — 28 October IST (after Slot 7)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **60 (29.7%)** |
+| Distinct URLs actually attempted today | **70 (34.7%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **60** |
-| Not yet checked today | **142** |
+| UNVERIFIED / partial provider-only evidence today | **70** |
+| Not yet checked today | **132** |
 
-**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 60 current-day UTC probe timestamps are distinct and correspond to 28 October IST. Rows 1–50 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
+**Tracker integrity:** The updated tracker was independently read back: 202 unique selected URLs, sequential indices 1–202, Slots 1–19 containing 10 URLs each, Slot 20 containing 12. All 70 current-day UTC probe timestamps are distinct and correspond to 28 October IST. Rows 1–60 were not rechecked; no future-slot URLs were scanned. Historical verification fields were preserved.
 
-**Verification boundary:** All 60 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
+**Verification boundary:** All 70 current-day attempts remain UNVERIFIED for full origin technical readiness. Provider-extracted content is not independent live origin evidence for HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML or JSON-LD. No first-party Google/Bing indexing, rankings or AI citations were measured.
 
-**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 6 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
+**Comparison:** On 27 October, 202 URLs were attempted but also remained UNVERIFIED for origin readiness. Slot 7 established no independently verified production before/after transition. No CHANGES.md entry is warranted.
 
-**Workflow safety:** The connected GitHub tool supports repository file reads/writes but does not expose workflow-state or active-run listing. Attempts to open the GitHub Actions workflow page and GitHub REST workflow-state endpoint through web retrieval failed; neither concurrent execution nor administrative disablement was independently verified this run. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
+**Workflow safety:** GitHub REST run listings returned **0 in-progress** and **0 queued** Actions runs during Slot 7; no concurrent rolling audit was observed at those moments. The administrative workflow-state endpoint was inaccessible, so disabled status remains independently unverified. The user's confirmed 25 October disablement remains the operating assumption; cron YAML presence alone is not proof of enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 7, rows 61–70, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+**Next:** Slot 8, rows 71–80, when eligible. The separate six-hour outside-in search visibility audit remains unchanged.
+
+## Slot 7 — free games and letter tracing (06:14 IST)
+
+At **2026-10-28T00:44:52.741145Z–00:45:01.896278Z UTC** (28 October IST), ChatGPT attempted **10 previously unchecked Slot 7 URLs** (rows 61–70). All ten exact public URLs returned substantive, page-specific provider-extracted content with visible H1s; each was labelled **Crawled: today** (provider crawl time unspecified). This supports content visibility only, not direct origin HTTP verification.
+
+- 61 `/free-speaking-games-for-kids` — H1: “Free Speaking Games for Kids”; provider content lists 4 games, **0 playable now**, all marked coming soon
+- 62 `/free-letter-sounds-game-for-kids` — H1: “Free Letter Sounds Game for Kids”
+- 63 `/free-sound-listening-game-for-kids` — H1: “Free A-Z Phonics Sounds Game for Kids”
+- 64 `/free-word-building-game-for-kids` — H1: “Free Word Building Game for Kids”
+- 65 `/free-spelling-game-for-kids` — H1: “Free Spelling Game for Kids”
+- 66 `/free-sentence-making-game-for-kids` — H1: “Free Sentence Making Game for Kids”
+- 67 `/free-reading-fluency-game-for-kids` — H1: “Free Reading Fluency Game for Kids”
+- 68 `/free-grammar-practice-game-for-kids` — H1: “Free Grammar Practice Game for Kids”
+- 69 `/free-speaking-practice-game-for-kids` — H1: “Free Speaking Practice Game for Kids”; provider content explicitly marks the game **COMING SOON**
+- 70 `/free-letter-tracing-game-for-kids` — H1: “Free ABC Tracing Game for Kids”
+
+**Independent HTTPS probes:** Ten actual read-only `curl -L` GETs were executed with distinct UTC start times recorded in the tracker. **Five failed with exit code 6**, `curl: (6) Could not resolve host: tinystepslearning.com`; **five failed with exit code 28**, `curl: (28) Resolving timed out after 9014/9040/9032/9046/9038 milliseconds`. Every request failed during DNS resolution before receiving an origin HTTP response. All had zero response-header and body bytes. `HTTP_CODE:000` is a curl placeholder, not a server status. `robots.txt` could not be opened independently through the web provider. No production outage is established by these audit-environment errors.
+
+**Result:** 10 UNVERIFIED; zero confirmed production PASS, WARN or FAIL. HTTP status, redirects, canonical, noindex, robots, bot permissions, initial HTML and JSON-LD remain unverified. Speaking game availability is a scoped provider-content observation, **not** a newly verified technical regression. No CHANGES.md entry is warranted.
 
 ## Slot 6 — phonics apps and free English games (05:15 IST)
 
