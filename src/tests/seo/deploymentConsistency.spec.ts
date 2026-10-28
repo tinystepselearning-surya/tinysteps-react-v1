@@ -68,6 +68,11 @@ describe('deployment consistency guardrails', () => {
       '/blog/child-understands-english-but-does-not-speak',
       '/blog/phonics-for-parents-guide',
     ]);
+    const groupHeadings = new Map([
+      ['/group-phonics-classes-for-kids', 'Live Online Group Phonics Classes for Kids'],
+      ['/group-grammar-classes-for-kids', 'Small-Group Online Grammar Classes for Kids'],
+      ['/group-public-speaking-classes-for-kids', 'Live Online Group Public Speaking Classes for Kids'],
+    ]);
     const fetchMock = vi.fn(async (input: string | URL) => {
       const url = new URL(String(input));
       const redirect = PUBLIC_REDIRECT_MANIFEST.find(
@@ -80,6 +85,16 @@ describe('deployment consistency guardrails', () => {
         });
       }
       if (url.pathname === '/terms-and-conditions') return new Response(legalHtml, { status: 200 });
+      if (groupHeadings.has(url.pathname)) {
+        return new Response(
+          '<title>Group Classes | Tiny Steps</title><meta name="robots" content="index, follow">'
+          + '<link rel="canonical" href="' + origin + url.pathname + '">'
+          + '<main class="group-commercial-page"><h1>' + groupHeadings.get(url.pathname) + '</h1>'
+          + '<p>' + 'Relevant level-matched programme content for children and parents. '.repeat(24) + '</p></main>',
+          { status: 200, headers: { 'cache-control': 'no-cache, max-age=0, must-revalidate' } },
+        );
+      }
+
       if (publicGamePaths.has(url.pathname)) {
         return new Response(
           `<title>Public Game</title><meta name="description" content="Useful public game description">`
@@ -103,6 +118,7 @@ describe('deployment consistency guardrails', () => {
       if (url.pathname === '/sitemap-static.xml') {
         const urls = [
           `${origin}/`,
+          ...Array.from(groupHeadings.keys()).map((pathname) => `${origin}${pathname}`),
           ...Array.from(authorityPilotPaths).map((pathname) => `${origin}${pathname}`),
         ];
         return new Response(`<urlset>${urls.map((loc) => `<url><loc>${loc}</loc></url>`).join('')}</urlset>`);
@@ -126,6 +142,8 @@ describe('deployment consistency guardrails', () => {
       fetchImpl: fetchMock as typeof fetch,
     });
     expect(result.passed).toBe(true);
+    expect(result.assertions.filter((assertion: { name: string }) =>
+      assertion.name.startsWith('group class '))).toHaveLength(9);
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'redirect /terms')?.pass).toBe(true);
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'deployed build identity')?.pass).toBe(true);
     expect(result.assertions.find((assertion: { name: string; pass: boolean }) => assertion.name === 'genuine unknown-route 404')?.pass).toBe(true);
