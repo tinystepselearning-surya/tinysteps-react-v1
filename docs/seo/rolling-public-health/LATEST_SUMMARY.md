@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 9)
+## Daily coverage — 28 October IST (after Slot 10)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **90 (44.6%)** |
+| Distinct URLs actually attempted today | **100 (49.5%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **90** |
-| Not yet checked today | **112** |
+| UNVERIFIED / partial provider-only evidence today | **100** |
+| Not yet checked today | **102** |
 
-**Tracker integrity:** 202 unique URLs with indices 1–202; Slots 1–19 contain 10 each, Slot 20 contains 12. All 90 current-day probe start timestamps are distinct, valid UTC and map to 28 October IST. Rows 1–80 were not rechecked; no future-slot URLs were scanned. Historical verification fields are preserved.
+**Tracker integrity:** 202 unique URLs with indices 1–202; Slots 1–19 contain 10 each, Slot 20 contains 12. All 100 current-day probe start timestamps are distinct, valid UTC and map to 28 October IST. Rows 1–90 were not rechecked; no future-slot URLs were scanned. Historical verification fields are preserved.
 
-**Verification boundary:** All 90 attempted URLs remain UNVERIFIED for full live origin readiness. Provider-extracted page text does not independently verify HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
+**Verification boundary:** All 100 attempted URLs remain UNVERIFIED for full live origin readiness. Provider-extracted page text does not independently verify HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
 
-**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement was established in Slot 9. `CHANGES.md` remains unchanged.
+**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement was established in Slot 10. `CHANGES.md` remains unchanged.
 
-**Workflow safety:** GitHub Actions REST returned **0 queued** and **0 in-progress** runs at Slot 9 inspection. Workflow administrative state endpoint was inaccessible through the connected GitHub interface; disablement is not independently verified. Continue under the user's confirmed 25 October disablement. Cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
+**Workflow safety:** GitHub Actions REST returned **0 queued** and **0 in-progress** runs at Slot 10 inspection. Workflow administrative state endpoint was inaccessible through the connected GitHub interface; disablement is not independently verified. Continue under the user's confirmed 25 October disablement. Cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
 
-**Next:** Slot 10, rows 91–100. The separate six-hour global search visibility task remains unchanged.
+**Next:** Slot 11, rows 101–110. The separate six-hour global search visibility task remains unchanged.
+
+## Slot 10 — reading support, confidence and seasonal archives (09:17 IST)
+
+At **2026-10-28T03:47:50.172130Z–03:48:04.225213Z UTC** (28 October IST), ChatGPT audited ten previously unchecked Slot 10 URLs, rows 91–100. All ten exact URLs returned substantive page-specific **provider-extracted** text and visible H1s; provider labels were **Crawled: yesterday**, with no exact provider crawl timestamps. These are content-retrieval observations, **not** independently verified live origin HTTP responses.
+
+- 91 `/child-not-reading-properly` — H1: “Child Not Reading Properly? Start by Finding the Real Gap”; phonics, blending, fluency and comprehension diagnosis
+- 92 `/slow-reader-child-help` — H1: “Slow Reader Child Help: Find the Right Reading Support”; fluency and blending guidance
+- 93 `/shy-child-speaking-confidence` — H1: “Shy Child Speaking Confidence Help for Parents”; distinguishes quiet behaviour from language needs
+- 94 `/reading-fluency-program` — H1: “Online Reading Fluency Classes for Kids”; accuracy, pace, expression and comprehension
+- 95 `/confidence-building-program-kids` — H1: “Confidence Building Classes for Kids”; specialist live 1:1 confidence pathway
+- 96 `/english-foundation-program` — H1: “English Foundation Program for Kids: Reading, Grammar, and Confidence”; cross-skill foundation
+- 97 `/summer-camps` — H1: “Summer Camp 2026: learning design, parent guidance, and year-round next steps”; historical archive, season concluded 13 June
+- 98 `/summer-camp-for-kids-india` — H1: “How to choose a useful summer learning programme for your child”; parent planning guide and archive
+- 99 `/summer-reading-program-kids` — H1: “Summer Reading Plan for Kids: Decode, Read, Understand”; school-break reading guidance
+- 100 `/summer-speaking-camp-kids` — H1: “School-Break Speaking Practice: From Short Answers to Clear Expression”; speaking practice guide
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs executed with individual real UTC start/end timestamps recorded in the tracker. Nine failed with exit **6**, `curl: (6) Could not resolve host: tinystepslearning.com`; one (row 96) failed with exit **28**, `curl: (28) Resolving timed out after 9000 milliseconds`. No origin HTTP response was received. `HTTP_CODE:000` is a curl placeholder, not an HTTP status; `url_effective` does not prove a final redirect destination. These audit-environment failures do **not** establish a production outage.
+
+**Result:** Ten UNVERIFIED for full technical readiness; zero verified production PASS/WARN/FAIL. Origin HTTP status, redirects, canonical, meta/X-Robots-Tag, robots/bot permissions, raw initial HTML and JSON-LD remain unverified. The 2026 summer pages explicitly describe historical/archive content, not current enrollment; no regression is inferred. No verified meaningful before/after production transition warrants a `CHANGES.md` entry.
 
 ## Slot 9 — writing, pricing, speaking and age-specific English pages (08:18 IST)
 
