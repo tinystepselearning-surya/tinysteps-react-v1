@@ -174,7 +174,7 @@ test('six commercial owners preserve only their own substantive self-canonical p
     }
     for (const altered of [
       groupFixture({ route, heading: 'Wrong heading', mainClass: 'commercial-programme-content' }),
-      groupFixture({ route, heading, canonical: '/pricing', mainClass: 'commercial-programme-content' }),
+      groupFixture({ route, heading, canonical: route === '/pricing' ? '/phonics' : '/pricing', mainClass: 'commercial-programme-content' }),
       groupFixture({ route, heading, robots: 'noindex, follow', mainClass: 'commercial-programme-content' }),
       groupFixture({ route, heading, body: 'Too short', mainClass: 'commercial-programme-content' }),
     ]) {
