@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 18)
+## Daily coverage — 28 October IST (after Slot 19)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **180 (89.1%)** |
+| Distinct URLs actually attempted today | **190 (94.1%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **180** |
-| Not yet checked today | **22** |
+| UNVERIFIED / partial provider-only evidence today | **190** |
+| Not yet checked today | **12** |
 
-**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 180 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–170 were not rechecked today by Slot 18; no future-slot URLs scanned. Historical verification fields preserved.
+**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 190 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–180 were not rechecked in Slot 19; no future-slot URLs scanned. Historical verification fields preserved.
 
-**Verification boundary:** Provider-extracted text and cached search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 180 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
+**Verification boundary:** Provider-extracted text does not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 190 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
 
-**Comparison:** Slot 18's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
+**Comparison:** Slot 19's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
 
 **Workflow safety:** GitHub Actions run API returned 0 queued and 0 in-progress runs. Administrative workflow state endpoint was not accessible; user-confirmed disablement from 25 October remains the operating assumption. Cron YAML is not proof of an enabled workflow. No workflow run or production settings changed.
 
-**Next:** Slot 19, rows 181–190. Separate six-hour global search visibility task unchanged.
+**Next:** Slot 20, rows 191–202 (12 URLs). Separate six-hour global search visibility task unchanged.
+
+## Slot 19 — phonics, reading and speaking guides; level-specific course pages (18:14 IST)
+
+At **2026-10-28T12:44:22.568212Z–12:44:37.640723Z UTC**, ChatGPT attempted ten previously unchecked-for-today URLs (rows 181–190). All ten exact URLs returned substantive page-specific provider-extracted text through direct web.open, labelled **Crawled today** (precise provider crawl times unknown). This is evidence of provider retrieval, not independent live origin verification.
+
+- 181 `/blog/what-is-phonics-for-kids` — provider H1: “What Is Phonics for Kids? A Parent Start-Here Guide”
+- 182 `/blog/why-child-knows-letter-sounds-but-cannot-read-words` — provider H1: “Why Does My Child Know Letter Sounds But Cannot Read Words?”
+- 183 `/blog/why-child-reads-words-but-does-not-understand-story` — provider H1: “Why Does My Child Read Words But Not Understand Stories?”
+- 184 `/blog/why-letter-sounds-are-not-enough-to-read` — provider H1: “Why Letter Sounds Alone Are Not Enough for Reading: What Schools Should Teach Next”
+- 185 `/blog/why-parents-choose-online-phonics` — provider H1: “Why Parents Choose Online Phonics Classes for Kids”
+- 186 `/blog/why-public-speaking-is-important-for-kids` — provider H1: “Why Public Speaking Is Important for Kids”
+- 187 `/courses/phonics-foundation` — provider H1: “Phonics Foundation Course for Kids | Beginner Phonics Classes”
+- 188 `/courses/phonics-brush-up` — provider H1: “Early Phonics Course for Kids | Digraphs, Long Vowels & Decoding”
+- 189 `/courses/phonics-advanced` — provider H1: “Advanced Phonics Course for Kids | Longer Words, Spelling & Fluency”
+- 190 `/courses/grammar` — provider H1: “Beginner Grammar Foundations: Sentence Building & Punctuation”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs executed with distinct actual UTC start/end timestamps recorded per URL in the tracker. All ten failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response or headers were received. `HTTP_CODE:000` is a curl placeholder, not an HTTP status; the effective URL is not a verified redirect destination. Audit-runtime DNS failure does not establish a production outage.
+
+**Result:** Ten **UNVERIFIED** for full origin readiness; zero confirmed production PASS/WARN/FAIL. Origin HTTP status, final destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML and JSON-LD remain unverified. No dated before/after production transition; `CHANGES.md` unchanged.
 
 ## Slot 18 — speaking, phonics methodology and reading readiness guides (17:15 IST)
 
