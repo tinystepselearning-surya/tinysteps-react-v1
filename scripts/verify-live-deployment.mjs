@@ -18,6 +18,12 @@ const AUTHORITY_BLOG_PILOT_ROUTES = [
   '/blog/child-understands-english-but-does-not-speak',
   '/blog/phonics-for-parents-guide',
 ];
+// Explicit release contract for the three published group-class owners.
+export const GROUP_CLASS_CRAWL_OWNERS = Object.freeze({
+  '/group-phonics-classes-for-kids': 'Live Online Group Phonics Classes for Kids',
+  '/group-grammar-classes-for-kids': 'Small-Group Online Grammar Classes for Kids',
+  '/group-public-speaking-classes-for-kids': 'Live Online Group Public Speaking Classes for Kids',
+});
 const GOOGLEBOT_SMARTPHONE_USER_AGENT =
   'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
 
@@ -103,6 +109,36 @@ export async function verifyLiveDeployment({ origin, expectedSha, fetchImpl = fe
     sitemapUrls.push(...xmlLocations(await response.text()));
   }
   record('canonical sitemap index', sitemapIndexResponse.status === 200 && sitemapRefs.length > 0, `${sitemapRefs.length} child sitemap(s)`);
+
+  for (const [pathname, expectedHeading] of Object.entries(GROUP_CLASS_CRAWL_OWNERS)) {
+    const canonical = origin + pathname;
+    const count = sitemapUrls.filter((url) => url === canonical).length;
+    record('group class sitemap inclusion ' + pathname, count === 1,
+      'expected exactly once in the sitemap index children; found ' + count);
+    for (const [label, headers] of [
+      ['ordinary client', { 'user-agent': 'TinyStepsDeploymentVerifier/1.0' }],
+      ['Googlebot smartphone', { 'user-agent': GOOGLEBOT_SMARTPHONE_USER_AGENT }],
+    ]) {
+      const response = await request(pathname, { headers });
+      const html = await response.text();
+      const robots = robotsFrom(html) + ',' + (response.headers.get('x-robots-tag') || '');
+      const cache = response.headers.get('cache-control') || '';
+      const heading = h1From(html);
+      const contentLength = meaningfulTextFrom(html).length;
+      record('group class ' + label + ' ' + pathname,
+        response.status === 200
+          && canonicalValues(html).length === 1
+          && canonicalFrom(html) === canonical
+          && !/noindex|nofollow/i.test(robots)
+          && Boolean(titleFrom(html))
+          && heading === expectedHeading
+          && contentLength >= 900
+          && html.includes('group-commercial-page')
+          && /no-cache/i.test(cache) && /max-age=0/i.test(cache) && /must-revalidate/i.test(cache),
+        'HTTP ' + response.status + '; canonical ' + canonicalFrom(html) + '; H1 ' + heading
+          + '; cache ' + cache + '; content ' + contentLength + ' characters');
+    }
+  }
 
   const forbidden = [
     ...PUBLIC_REDIRECT_MANIFEST.map((entry) => entry.source),
