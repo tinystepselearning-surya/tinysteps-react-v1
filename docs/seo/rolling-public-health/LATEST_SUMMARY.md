@@ -1,5 +1,15 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
+## Slot 22 — 28 October reconciliation (no new URL probes)
+
+At **28 October 2026 at 21:17 IST** (**2026-10-28T15:47:28.510Z UTC**), re-fetched and validated the current tracker, summary and changes ledger on `seo-url-health-tracker`. The CSV has **202 rows, 202 unique URLs, sequential indices, 22 columns per row, and correct 10×19 + 12 slot allocation**. All **202** records have unique, parseable UTC timestamps that map to **28 October IST**, with status **UNVERIFIED**. **Zero eligible unchecked URLs** remain; no URL was rechecked and no timestamp was added or modified.
+
+**Verification limitation:** Daily attempted coverage is **202/202**, but **0/202 fully origin-verified**. Earlier probe evidence documents audit-environment DNS failures before origin HTTP response. Consequently, live HTTP status, redirects, canonical, robots/noindex, bot access, raw HTML and structured data remain unverified; this does not establish a production outage. The **30 historical PASS** records remain historical only, and **190 older evidence fragments** retain the documented truncation caveat.
+
+**Workflow safety:** The public GitHub API requests for administrative workflow state and active runs were inaccessible during this reconciliation; no independent conclusion about enablement or concurrent runs can be drawn. Proceeding under the user's 25 October confirmation that the old workflow was disabled. Cron YAML is not evidence of enablement. No workflow was executed, enabled or changed.
+
+**Changes:** No new verified production FAIL/WARN, improvement, or coverage gap. `MASTER_URL_TRACKER.csv` and `CHANGES.md` remain unchanged. Slots 23–24 are catch-up only if previously unchecked eligible URLs appear; none currently do. The separate six-hour global visibility audit remains unchanged.
+
 ## Slot 21 — 28 October reconciliation (no new URL probes)
 
 At **28 October 2026 at 20:11:29 IST** (**2026-10-28T14:41:29.559Z UTC**), re-read all three tracker files from `seo-url-health-tracker` and reconciled existing evidence **without requesting or rechecking any public URL**. The CSV has **202 records, 202 unique URLs, sequential indices 1–202 and 22 fields per row**; slots 1–19 have ten URLs each and slot 20 has twelve. All **202** records have **distinct valid UTC probe timestamps mapping to 28 October IST** and status **UNVERIFIED**. There are **zero eligible unchecked URLs**. No future slot was scanned, and no timestamp or technical-readiness result was backfilled.
