@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 17)
+## Daily coverage — 28 October IST (after Slot 18)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **170 (84.2%)** |
+| Distinct URLs actually attempted today | **180 (89.1%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **170** |
-| Not yet checked today | **32** |
+| UNVERIFIED / partial provider-only evidence today | **180** |
+| Not yet checked today | **22** |
 
-**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 170 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–160 were not rechecked; no future-slot URLs scanned. Historical verification fields preserved.
+**Tracker integrity:** Exactly 202 unique selected URLs and indices 1–202; slots 1–19 contain 10 each and slot 20 contains 12. All 180 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–170 were not rechecked today by Slot 18; no future-slot URLs scanned. Historical verification fields preserved.
 
-**Verification boundary:** Provider-extracted text and cached search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 170 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
+**Verification boundary:** Provider-extracted text and cached search snippets do not independently establish live origin HTTP status, redirects, canonical, robots/noindex, bot access, raw initial HTML or JSON-LD. All 180 remain UNVERIFIED for full technical readiness. No first-party Google/Bing indexing, rankings or AI citations verified.
 
-**Comparison:** Slot 17's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
+**Comparison:** Slot 18's ten URLs were also attempted on 27 October but remained UNVERIFIED for origin readiness. No dated before/after verified production regression or improvement established. `CHANGES.md` unchanged.
 
-**Workflow safety:** GitHub Actions run API returned 0 queued and 0 in-progress runs; administrative workflow state could not be read. User-confirmed disablement from 25 October remains the operating assumption; cron YAML is not proof of an enabled workflow. No workflow run or production settings changed.
+**Workflow safety:** GitHub Actions run API returned 0 queued and 0 in-progress runs. Administrative workflow state endpoint was not accessible; user-confirmed disablement from 25 October remains the operating assumption. Cron YAML is not proof of an enabled workflow. No workflow run or production settings changed.
 
-**Next:** Slot 18, rows 171–180. Separate six-hour global search visibility task unchanged.
+**Next:** Slot 19, rows 181–190. Separate six-hour global search visibility task unchanged.
+
+## Slot 18 — speaking, phonics methodology and reading readiness guides (17:15 IST)
+
+At **2026-10-28T11:45:51.177849Z–11:46:01.223111Z UTC**, ChatGPT attempted ten previously unchecked-for-today URLs (rows 171–180). All ten exact URLs returned substantive page-specific provider-extracted text via direct web.open, labelled **Crawled today** (exact provider crawl time unknown). This is evidence of provider retrieval, not independent live origin verification.
+
+- 171 `/blog/speaking-competition-prep` — provider H1: “Public Speaking Competition Checklist for Kids: How to Prepare Step by Step”
+- 172 `/blog/speaking-confidence-seeds` — provider H1: “How to Build Speaking Confidence in Kids: A 7-Day Calm Practice Plan”
+- 173 `/blog/speaking-debate-starters` — provider H1: “Debate Topics and Starters for Kids and Tweens to Build Speaking Confidence”
+- 174 `/blog/speaking-family-showcase` — provider H1: “Public Speaking Activities for Kids at Home: Host a Family Showcase”
+- 175 `/blog/speaking-structure` — provider H1: “How to Structure a Speech for Kids: Hook, Body and Conclusion”
+- 176 `/blog/speaking-video-feedback` — provider H1: “How Video Feedback Helps Kids Improve Public Speaking”
+- 177 `/blog/speaking-visual-aids` — provider H1: “How Kids Can Use Visual Aids in Public Speaking”
+- 178 `/blog/synthetic-phonics-vs-traditional-reading` — provider H1: “Synthetic Phonics vs Traditional Reading: How Parents Decide What to Use”
+- 179 `/blog/systematic-cumulative-phonics-explained-for-schools` — provider H1: “Systematic and Cumulative Phonics: A School Leader’s Guide to Implementation”
+- 180 `/blog/what-age-to-start-phonics` — provider H1: “What Is the Right Age to Start Phonics? A Parent Readiness Guide”
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs executed with distinct actual UTC start/end timestamps recorded per URL in the tracker. All ten failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response or headers were received. `HTTP_CODE:000` is a curl placeholder, not an HTTP status, and the reported effective URL is not a verified redirect destination. Audit-runtime DNS failure does not establish a production outage.
+
+**Result:** Ten **UNVERIFIED** for full origin readiness; zero confirmed production PASS/WARN/FAIL. Origin HTTP status, final destination, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML and JSON-LD remain unverified. No dated before/after production transition; `CHANGES.md` unchanged.
 
 ## Slot 17 — phonics, reading, grammar and speaking guides (16:14 IST)
 
