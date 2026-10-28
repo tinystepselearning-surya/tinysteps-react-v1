@@ -1,26 +1,45 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-28 IST)
 
-## Daily coverage — 28 October IST (after Slot 10)
+## Daily coverage — 28 October IST (after Slot 11)
 
 | Metric | Count |
 | --- | ---: |
 | Selected unique URLs | **202** |
-| Distinct URLs actually attempted today | **100 (49.5%)** |
+| Distinct URLs actually attempted today | **110 (54.5%)** |
 | Fully origin-verified PASS today | **0** |
 | Confirmed production FAIL today | **0** |
 | Confirmed production WARN today | **0** |
-| UNVERIFIED / partial provider-only evidence today | **100** |
-| Not yet checked today | **102** |
+| UNVERIFIED / partial provider-only evidence today | **110** |
+| Not yet checked today | **92** |
 
-**Tracker integrity:** 202 unique URLs with indices 1–202; Slots 1–19 contain 10 each, Slot 20 contains 12. All 100 current-day probe start timestamps are distinct, valid UTC and map to 28 October IST. Rows 1–90 were not rechecked; no future-slot URLs were scanned. Historical verification fields are preserved.
+**Tracker integrity:** 202 unique URLs with indices 1–202; slots 1–19 contain 10 each, slot 20 contains 12. All 110 current-day UTC probe start timestamps are distinct and map to 28 October IST. Rows 1–100 were not rechecked; no future-slot URLs were scanned. Historical verification fields preserved.
 
-**Verification boundary:** All 100 attempted URLs remain UNVERIFIED for full live origin readiness. Provider-extracted page text does not independently verify HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, initial HTML or JSON-LD. No Google/Bing indexing, rankings or AI citations were verified.
+**Verification boundary:** Provider-extracted text does not independently verify origin HTTP status, redirects, canonical, robots/noindex, bot access, initial HTML or JSON-LD. All 110 remain UNVERIFIED for full origin readiness. No first-party Google/Bing indexing, rankings or AI citations were verified.
 
-**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement was established in Slot 10. `CHANGES.md` remains unchanged.
+**Comparison:** 27 October attempted 202 URLs without verified live origin readiness. No dated before/after production regression or improvement established in Slot 11. `CHANGES.md` unchanged.
 
-**Workflow safety:** GitHub Actions REST returned **0 queued** and **0 in-progress** runs at Slot 10 inspection. Workflow administrative state endpoint was inaccessible through the connected GitHub interface; disablement is not independently verified. Continue under the user's confirmed 25 October disablement. Cron YAML alone does not establish enablement. No workflow was run, enabled or changed.
+**Workflow safety:** Connected GitHub tools did not expose administrative workflow state or active-run listing; web access to GitHub Actions API endpoints was blocked. No concurrent workflow was positively observed, but absence and administrative disablement could not be independently verified. Proceed under user's confirmed 25 October disablement; cron YAML alone does not establish enablement. No workflow was run, enabled or modified.
 
-**Next:** Slot 11, rows 101–110. The separate six-hour global search visibility task remains unchanged.
+**Next:** Slot 12, rows 111–120. Separate six-hour global search visibility task unchanged.
+
+## Slot 11 — summer fast tracks and parent literacy guides (10:11 IST)
+
+At **2026-10-28T04:41:41.324308Z–04:41:50.378466Z UTC**, ChatGPT audited ten previously unchecked URLs (rows 101–110). Each exact URL returned substantive page-specific provider-extracted text with a visible H1 (provider label: **Crawled today**; exact provider crawl time unknown). This is **not** independently verified live origin HTML.
+
+- 101 `/summer-camps/phonics-fast-track` — H1: “Phonics Fast Track”; Historical 2026 programme
+- 102 `/summer-camps/grammar-fast-track` — H1: “Grammar Fast Track”; Historical 2026 programme
+- 103 `/summer-camps/speaking-fast-track` — H1: “Speaking Fast Track”; Historical 2026 programme
+- 104 `/blog/are-phonics-apps-enough-for-kids` — H1: “Are Phonics Apps Enough, or Does a Child Still Need a Teacher?”; Apps and teacher feedback
+- 105 `/blog/back-to-school-english-confidence-plan` — H1: “Back-to-School English Confidence Plan for Kids: Speaking, Participation and Classroom Routines”; Classroom participation
+- 106 `/blog/benefits-of-phonics-for-kids` — H1: “Benefits of Phonics for Kids: What Parents Usually Notice First”; Decoding and fluency
+- 107 `/blog/can-child-improve-english-in-10-days` — H1: “Can a Child Really Improve English in 10 Days? What Parents Should Expect”; Realistic short-course outcomes
+- 108 `/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme` — H1: “CBSE Phonics Curriculum vs a Systematic Phonics Programme: What Schools Need to Know”; Framework and programme comparison
+- 109 `/blog/child-gives-one-word-answers` — H1: “My Child Gives Only One-Word Answers — How Can I Help Them Speak in Full Sentences?”; Speaking response expansion
+- 110 `/blog/child-knows-abc-but-cannot-read` — H1: “Child Knows ABC but Cannot Read: What Parents Should Check First”; ABC-to-reading bottlenecks
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GETs with distinct actual UTC start/end times in the tracker. Six returned exit 6 (`curl: (6) Could not resolve host: tinystepslearning.com`), four returned exit 28 (`curl: (28) Resolving timed out after 9000 milliseconds`). No origin HTTP response was received. `HTTP_CODE:000` is not an HTTP status, and `url_effective` does not prove redirect destination. Audit-runtime DNS failures do not establish a production outage.
+
+**Result:** Ten UNVERIFIED for full technical readiness. HTTP status, redirects, canonical, robots/noindex, X-Robots-Tag, bot permissions, raw initial HTML and JSON-LD remain unverified. The three summer pages explicitly identify concluded 2026 programmes. No verified production before/after transition; `CHANGES.md` unchanged.
 
 ## Slot 10 — reading support, confidence and seasonal archives (09:17 IST)
 
