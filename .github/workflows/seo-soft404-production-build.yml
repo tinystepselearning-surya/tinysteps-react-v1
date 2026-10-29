@@ -52,6 +52,12 @@ on:
       - 'src/pages/TermsAndConditionsPage.tsx'
       - 'src/tests/seo/faqPageDecisionHub.spec.ts'
       - 'src/pages/grammar.tsx'
+      - 'src/pages/phonics.tsx'
+      - 'src/pages/PricingPage.tsx'
+      - 'src/pages/public/GroupClassPage.tsx'
+      - 'public/llms.txt'
+      - 'public/llms-full.txt'
+      - 'src/tests/seo/groupFormatDiscoverySafeguards.spec.ts'
       - 'src/pages/speaking.tsx'
       - 'src/pages/public/SpokenEnglishClassesForKidsPage.tsx'
       - 'src/pages/public/WritingClassesForKidsPage.tsx'
@@ -110,6 +116,8 @@ jobs:
         run: npx vitest run src/tests/seo/faqPageDecisionHub.spec.ts
       - name: Verify production deployment contract fixtures
         run: npx vitest run src/tests/seo/deploymentConsistency.spec.ts
+      - name: Protect existing SEO owners and verify group discovery links
+        run: npx vitest run src/tests/seo/groupFormatDiscoverySafeguards.spec.ts src/tests/seo/groupClassesCommercialPages.spec.ts
       - name: Check TypeScript source
         run: npm run typecheck
       - name: Build production Hosting artifact and validate prerendered SEO
