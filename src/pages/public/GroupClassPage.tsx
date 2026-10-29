@@ -182,7 +182,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
               </h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-[#47657B] sm:text-lg sm:leading-8">{page.description}</p>
               <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Link to={enquiryHref} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1D476D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
+                <Link to={enquiryHref} data-no-booking-intercept="1" className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#102A43] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#1D476D] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
                   Register Group Interest
                 </Link>
                 <Link to={page.premiumPath} className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#BDD9EC] bg-white px-5 py-3 text-sm font-semibold text-[#154A72] transition hover:bg-[#E9F5FC]">
@@ -289,7 +289,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
                 <span className="ml-2 text-sm font-medium text-[#D8EAF7]">per child / class</span>
               </p>
               <p className="mt-1 text-sm text-[#D8EAF7]">{GROUP_PLAN.durationMinutes} minutes · {formatINR(GROUP_PLAN.monthlyFee)} for 12 classes</p>
-              <Link to={enquiryHref} className="mt-5 inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-[#E2F3FF]">Register Group Interest</Link>
+              <Link to={enquiryHref} data-no-booking-intercept="1" className="mt-5 inline-flex min-h-11 items-center justify-center self-start rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-[#102A43] transition hover:bg-[#E2F3FF]">Register Group Interest</Link>
             </article>
             <article className="flex flex-col rounded-2xl border border-[#D4E7F7] bg-white p-5 text-[#102A43] sm:p-6">
               <h3 className="text-lg font-bold">One-to-One Classes</h3>
@@ -321,7 +321,7 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
               <h2 className="text-lg font-bold">Interested in Group Classes?</h2>
               <p className="mt-1 max-w-2xl text-sm leading-6 text-[#48687F]">Tell us about your child. We'll contact you when a suitable group demo can be arranged.</p>
             </div>
-            <Link to={enquiryHref} className="inline-flex min-h-11 shrink-0 items-center justify-center self-start rounded-lg bg-[#102A43] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1D476D]">Register Group Interest</Link>
+            <Link to={enquiryHref} data-no-booking-intercept="1" className="inline-flex min-h-11 shrink-0 items-center justify-center self-start rounded-lg bg-[#102A43] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#1D476D]">Register Group Interest</Link>
           </div>
         </div>
       </section>
