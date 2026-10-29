@@ -31,6 +31,8 @@ describe('FounderPriyaPage', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Vannala Ravali Priya' })).toBeInTheDocument();
     expect(screen.getAllByText('Founder, Tiny Steps Learning').length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText('Known to families and learners as Priya')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Vannala Ravali Priya on Instagram/ }))
+      .toHaveAttribute('href', 'https://www.instagram.com/vannala_ravalipriya/');
     expect(
       screen.getByText(/Vannala Ravali Priya is the Founder of Tiny Steps Learning/),
     ).toBeInTheDocument();
@@ -116,6 +118,12 @@ describe('FounderPriyaPage', () => {
       expect(person?.sameAs).toEqual([...FOUNDER_PUBLIC_PROFILE_URLS]);
 
       expect(schemaTypes(profilePage || {})).toContain('ProfilePage');
+      expect(profilePage?.mainEntity).toMatchObject({
+        '@type': 'Person',
+        '@id': FOUNDER_ID,
+        name: PUBLIC_FACTS.founder.fullName,
+        url: FOUNDER_PROFILE_URL,
+      });
       expect(schemaTypes(profilePage || {})).toContain('WebPage');
       expect(profilePage).toMatchObject({
         url: FOUNDER_PROFILE_URL,
