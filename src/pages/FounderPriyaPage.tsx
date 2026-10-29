@@ -156,7 +156,7 @@ export default function FounderPriyaPage() {
                 Known to families and learners as Priya
               </p>
 
-              <div className="mt-5">
+              <div className="mt-5 flex flex-wrap items-center gap-3">
                 <a
                   href={primaryFounderProfile.url}
                   target="_blank"
@@ -167,6 +167,19 @@ export default function FounderPriyaPage() {
                   Official founder profile on {primaryFounderProfile.platform}
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 </a>
+                {FOUNDER_PUBLIC_PROFILES.slice(1).map((profile) => (
+                  <a
+                    key={profile.platform}
+                    href={profile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-800 shadow-sm transition hover:border-[#D3B9E1] hover:text-[#C2410C] hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#755E96]"
+                    aria-label={`${PUBLIC_FACTS.founder.fullName} on ${profile.platform} (opens in a new tab)`}
+                  >
+                    Founder profile on {profile.platform}
+                    <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  </a>
+                ))}
               </div>
 
               <p className="mt-7 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl sm:leading-9">
