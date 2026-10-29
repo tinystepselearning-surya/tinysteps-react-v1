@@ -39,7 +39,7 @@ export const SEMANTIC_FACTS = {
       {
         platform: 'Instagram',
         url: 'https://www.instagram.com/vannala_ravalipriya/',
-        purpose: 'Vannala Ravali Priya — personal founder profile',
+        purpose: 'Vannala Ravali Priya — Founder of Tiny Steps Learning',
       },
     ],
   },
