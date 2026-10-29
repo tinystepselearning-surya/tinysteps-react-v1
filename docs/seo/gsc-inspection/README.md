@@ -32,11 +32,11 @@ Outputs: `docs/seo/gsc-inspection/URL_REGISTRY.csv` and `URL_REGISTRY.json`. Aft
 npm run seo:gsc-inspect -- --dry-run --limit=10
 # After private OAuth setup in your shell:
 GSC_ACCESS_TOKEN="$(gcloud auth application-default print-access-token)" npm run seo:gsc-inspect -- --limit=40
-# Resume the same local output with:
-GSC_ACCESS_TOKEN="$(gcloud auth application-default print-access-token)" npm run seo:gsc-inspect -- --offset=40 --limit=40
+# Resume the same local output, skipping previously successful URLs and retrying errors:
+GSC_ACCESS_TOKEN="$(gcloud auth application-default print-access-token)" npm run seo:gsc-inspect -- --limit=40
 ```
 
-The inspection client defaults to 40 new URLs per run and spaces requests by 1100 ms. Use `--all` only when Google quota allows; daily URL Inspection quotas are shared per property. The tool stops upon 401/403/429; no retry storm. Results and errors are saved to the ignored local file `artifacts/gsc-url-inspection-results.json` after each URL and are never automatically pushed or published.
+The inspection client defaults to 40 new URLs per run and spaces requests by 1100 ms. Prefer short batches with a fresh OAuth token each time: a single `--all` batch may exceed its token lifetime. Use `--all` only when Google quota and token lifetime permit; daily URL Inspection quotas are shared per property. The tool stops upon 401/403/429; no retry storm. Results and errors are saved to the ignored local file `artifacts/gsc-url-inspection-results.json` after each URL and are never automatically pushed or published.
 
 ## Interpretation, verification and next work
 
