@@ -14,6 +14,8 @@ export type PublicSpeakingVideoEvidence = {
   description: string;
   videoId: string;
   publicationDate: string;
+  /** Exact first-public timestamp, copied from verified YouTube metadata (for example snippet.publishedAt). Never infer from a date-only value. */
+  publicationDateTime?: string;
   duration: string;
   durationLabel: string;
   category: string;
@@ -26,6 +28,7 @@ export const PUBLIC_SPEAKING_VIDEO_EVIDENCE: Readonly<PublicSpeakingVideoEvidenc
     'In this class, the child was given an instant topic and confidently created and presented a story. This activity builds thinking, structure, and speaking confidence.',
   videoId: 'H-xTpL6tKWU',
   publicationDate: '2026-04-09',
+  publicationDateTime: '2026-04-09T06:58:46Z',
   duration: 'PT1M45S',
   durationLabel: '1 min 45 sec',
   category: 'Communication',
@@ -40,6 +43,23 @@ export function publicSpeakingVideoUrls(videoId = PUBLIC_SPEAKING_VIDEO_EVIDENCE
   };
 }
 
+/**
+ * Accept only a real, timezone-qualified ISO 8601 instant from a reviewed source.
+ * A date-only premiere label does not supply the hour, minute or timezone.
+ */
+export function normalizeVerifiedVideoPublicationDateTime(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const timestamp = value.trim();
+  const match = timestamp.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:(?:0\d|1[0-3]):[0-5]\d|14:00))$/,
+  );
+  if (!match) return null;
+  const [, year, month, day] = match;
+  const calendarDate = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (calendarDate.toISOString().slice(0, 10) !== `${year}-${month}-${day}`) return null;
+  return Number.isFinite(Date.parse(timestamp)) ? timestamp : null;
+}
+
 export function createPublicSpeakingVideoObject(
   canonicalUrl: string,
   video = PUBLIC_SPEAKING_VIDEO_EVIDENCE,
@@ -50,6 +70,10 @@ export function createPublicSpeakingVideoObject(
   if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== video.publicationDate) return null;
   if (!video.title.trim() || !video.description.trim()) return null;
   const urls = publicSpeakingVideoUrls(video.videoId);
+  // Preserve the known true publication day until the exact first-public
+  // timestamp can be verified. Never invent 00:00:00 or a timezone.
+  const uploadDate = normalizeVerifiedVideoPublicationDateTime(video.publicationDateTime)
+    ?? video.publicationDate;
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoObject',
@@ -57,7 +81,7 @@ export function createPublicSpeakingVideoObject(
     name: video.title,
     description: video.description,
     thumbnailUrl: urls.thumbnail,
-    uploadDate: video.publicationDate,
+    uploadDate,
     duration: video.duration,
     embedUrl: urls.embed,
     url: urls.watch,

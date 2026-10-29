@@ -10,7 +10,7 @@ const read = (path) => new JSDOM(fs.readFileSync(path, 'utf8')).window.document;
 const speaking = read('dist/speaking/index.html');
 const samples = read('dist/class-samples/index.html');
 const expectedVideoId = 'H-xTpL6tKWU';
-const expectedDate = '2026-04-09';
+const expectedDate = '2026-04-09T06:58:46Z';
 const expectedTitle = 'Instant Storytelling Activity';
 const requireTrue = (value, reason) => { if (!value) throw new Error(`Issue #804 prerender verification: ${reason}`); };
 
@@ -38,7 +38,7 @@ const searchNodes = (value, results = []) => {
 const videos = searchNodes(trees);
 const matched = videos.filter((node) => node.embedUrl?.includes(expectedVideoId));
 requireTrue(matched.length === 1, `Expected exactly one VideoObject for real video, got ${matched.length}`);
-requireTrue(matched[0].uploadDate === expectedDate, 'First-publication date missing from JSON-LD');
+requireTrue(matched[0].uploadDate === expectedDate, 'Verified YouTube first-publication UTC timestamp missing from prerendered JSON-LD');
 requireTrue(matched[0].name === expectedTitle, 'Approved title mismatch in JSON-LD');
 requireTrue(matched[0].thumbnailUrl.includes(`/vi/${expectedVideoId}/`), 'thumbnail mismatch in JSON-LD');
 const canonical = speaking.querySelector('link[rel="canonical"]')?.getAttribute('href');
