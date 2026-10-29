@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-29 IST)
 
+## Slot 18 — 29 October 2026 (17:10 IST)
+
+**Preflight:** Read all three tracker resources on `seo-url-health-tracker`. Verified exactly 202 unique selected URLs, sequential indices, 22-column CSV integrity, slots 1–19 with 10 URLs and slot 20 with 12. All stored UTC timestamps matched their stated IST dates; 170 distinct 29 October URLs and timestamps existed before this batch. Rows 171–180 had only 28 October checks and were eligible; no future-slot or already-checked URL was rechecked.
+
+**Executed:** Ten independent read-only `curl -L` HTTPS GET attempts for rows 171–180, started at distinct actual UTC timestamps **2026-10-29T11:40:57.344366Z** through **2026-10-29T11:40:57.352854Z**, last completed **2026-10-29T11:41:07.401274Z**. All 10 failed before HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP responses, headers or raw HTML were obtained. `HTTP_CODE:000` is a curl placeholder, not an origin status; echoed effective URL and `REDIRECTS:0` do not verify redirect behavior. These are audit-environment DNS failures, **not confirmed production outages**.
+
+**Provider evidence (partial):** Direct exact-URL ChatGPT `web.open` returned substantive, page-specific extracted text and H1 for **10/10** URLs: speaking competition preparation, confidence, debate, family showcase, speech structure, video feedback, visual aids, synthetic phonics comparison, systematic cumulative phonics for schools, and phonics starting age. Provider snapshots were labelled `Crawled today` without exact provider crawl timestamps. Per-URL H1, retrieval references, UTC probe start/end and exact errors are in the CSV. Provider-extracted text cannot independently verify live-origin HTTP status, final/redirect destination, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML or JSON-LD.
+
+**Daily attempted coverage after Slot 18:** **180/202 distinct URLs (89.11%)**, **22 not attempted today**, **0 fully live-origin-verified PASS**, **0 confirmed production FAIL/WARN**, **180 UNVERIFIED**. All 180 current-day UTC timestamps are distinct and map to 29 October IST; historical verified fields preserved. No first-party indexing, ranking or AI citation claims.
+
+**Workflow safety:** GitHub Actions repository runs API returned **0 in-progress** and **0 queued** runs. Specific workflow administrative enable/disable state could not be independently retrieved (connector rejected endpoint). The user's explicit 25 October UI disablement remains the operating assumption; cron YAML alone is not evidence of an enabled workflow. No workflow was run, enabled or changed.
+
+**Changes:** No independently verified dated production regression or improvement; `CHANGES.md` unchanged. **Next:** Slot 19, rows 181–190. No repo source, Firebase, Hosting, production settings or separate six-hour visibility task changed.
+
+---
+
 ## Slot 17 — 29 October 2026 (16:18 IST)
 
 **Preflight:** Read all three tracker resources on `seo-url-health-tracker` and validated exactly 202 unique selected URLs, sequential indices, 22-column CSV records, slots 1–19 with 10 URLs and slot 20 with 12. All recorded UTC timestamps mapped to their stated IST dates. Before this batch, exactly 160 distinct 29 October URLs and distinct timestamps were present; rows 161–170 had only 28 October attempts and were eligible.
