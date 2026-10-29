@@ -42,7 +42,7 @@ export function classifyMismatch(row, inspection) {
   return inspection.actual_state;
 }
 export function selectTargets(registry, prior = [], { offset = 0, limit = 40 } = {}) {
-  const priorByUrl = new Set(prior.map((v) => v.url));
+  const priorByUrl = new Set(prior.filter((v) => v.actual_state !== 'api_error').map((v) => v.url));
   const eligible = registry.filter((r) => r.intended_state === 'index'
     && !r.problems.includes('nonindex_url_in_sitemap'));
   return eligible.slice(offset).filter((r) => !priorByUrl.has(r.url)).slice(0, limit);
