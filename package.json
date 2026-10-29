@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run seo:recovery-brick11 && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:rendered-check && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexation-check && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
+    "build": "npm run gen:sitemaps && npm run seo:blog-consolidation && npm run seo:recovery-brick11 && npm run content:public-facts && vite build && node scripts/write-build-info.mjs && node scripts/prerender.mjs && npm run seo:rendered-check && npm run seo:blog-rendered-consolidation && npm run content:public-facts-rendered && npm run seo:route-integrity && npm run seo:indexation-check && npm run seo:indexability-report && npm run seo:gsc-crawled-audit && npm run seo:gsc-archive-rendering && npm run seo:gsc-index-targets && npm run test:gsc-inspection && npm run bundle:public-check && npm run content:offer-consistency && node scripts/write-indexnow-key.mjs",
     "prebuild": "npm run check:shadowing && node scripts/generate-rss.mjs",
     "postbuild": "node scripts/audit-ai-answer-layers.mjs --generated",
     "seo:ai-answer-layers": "node scripts/audit-ai-answer-layers.mjs --generated",
@@ -66,7 +66,11 @@
     "test:shared-experience-inventory": "node --test scripts/test/shared-experience-inventory.node-test.mjs",
     "test:wave1-identity-foundation": "npm --prefix functions run build && node --test scripts/test/wave1-identity-foundation.node-test.mjs && npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts",
     "audit:wave1-identity-foundation": "npm --prefix functions run build && node scripts/wave1-identity-foundation-dry-run.mjs",
-    "test:wave1-identity-rules": "npx firebase-tools@latest emulators:exec --project tinysteps-react-v1 --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/*.rules.spec.ts\""
+    "test:wave1-identity-rules": "npx firebase-tools@latest emulators:exec --project tinysteps-react-v1 --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/*.rules.spec.ts\"",
+    "seo:gsc-registry": "node scripts/gsc-url-registry.mjs",
+    "seo:gsc-inspect": "node scripts/gsc-inspect-registry.mjs",
+    "test:gsc-inspection": "node --test scripts/test/gsc-inspection.node-test.mjs",
+    "seo:gsc-reconcile": "node scripts/gsc-reconcile-results.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
