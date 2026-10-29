@@ -22,6 +22,16 @@ const coreCommercialHeadings = Object.freeze({
   '/speaking': 'Online Public Speaking Classes for Kids',
   '/reading-classes-for-kids': 'Online Reading Classes for Kids',
 });
+// GSC live test 2026-10-29: Googlebot got a 200 status but React Router
+// replaced the prerendered Reading Fluency page with "Page temporarily
+// unavailable" after a lazy module failed. Safeguard only confirmed public
+// canonical owners with their own exact H1; no client portals or unknown paths.
+const gscSoft404PublicHeadings = Object.freeze({
+  '/free-reading-fluency-game-for-kids': 'Free Reading Fluency Game for Kids',
+  '/free-phonics-games-for-kids': 'Free Phonics Games for Kids',
+  '/why-tiny-steps': 'Why Parents Choose Tiny Steps Learning',
+  '/resources': 'English Learning Resources for Kids, Parents & Educators',
+});
 const lazyModuleError = /failed to fetch dynamically imported module|error loading dynamically imported module|importing a module script failed|failed to load module script|loading chunk .+ failed/i;
 let originalResource = null;
 
@@ -35,7 +45,8 @@ export function isLazyModuleLoadError(error) {
 export function captureOriginalPublicResource(document, location) {
   const path = normalizedPath(location.pathname);
   if (!allowedResourcePath.test(path) && !allowedBlogArticlePath.test(path)
-      && !Object.hasOwn(groupPageHeadings, path) && !Object.hasOwn(coreCommercialHeadings, path)) return null;
+      && !Object.hasOwn(groupPageHeadings, path) && !Object.hasOwn(coreCommercialHeadings, path)
+      && !Object.hasOwn(gscSoft404PublicHeadings, path)) return null;
 
   const root = document.getElementById('root');
   // Public Layout wraps each route in an outer <main>. For group-class
@@ -53,6 +64,8 @@ export function captureOriginalPublicResource(document, location) {
         || h1.textContent.replace(/\s+/g, ' ').trim() !== groupPageHeadings[path])) return null;
   if (Object.hasOwn(coreCommercialHeadings, path)
       && h1.textContent.replace(/\s+/g, ' ').trim() !== coreCommercialHeadings[path]) return null;
+  if (Object.hasOwn(gscSoft404PublicHeadings, path)
+      && h1.textContent.replace(/\s+/g, ' ').trim() !== gscSoft404PublicHeadings[path]) return null;
   // Preview channels and local Vite preview intentionally keep the production
   // canonical, so validate the canonical owner independently of the host.
   if (canonical !== 'https://tinystepslearning.com' + path || /\bnoindex\b/i.test(robots)) return null;
