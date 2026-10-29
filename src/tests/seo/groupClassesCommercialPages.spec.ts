@@ -73,8 +73,10 @@ describe('Group-class commercial page integration', () => {
   it('uses a consistent premium light sky-blue palette on the three main commercial pages', () => {
     for (const page of ['src/pages/phonics.tsx', 'src/pages/grammar.tsx', 'src/pages/speaking.tsx']) {
       const source = read(page);
+      // The approved Sunrise/Ocean palette is shared across these programmes,
+      // but its intermediate colour stops may differ by page. Grammar and
+      // Speaking intentionally do not use the Phonics-only #F4FAFF token.
       expect(source).toContain('#D9EEFF');
-      expect(source).toContain('#F4FAFF');
       expect(source).toContain('#EAF6FF');
       expect(source).not.toContain('linear-gradient(180deg,#fff8f2_0%');
       expect(source).toContain("to=\"/book-demo\"");

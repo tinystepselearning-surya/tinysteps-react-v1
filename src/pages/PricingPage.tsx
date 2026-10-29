@@ -371,6 +371,12 @@ const PricingPage: FC = () => {
                   </tbody>
                 </table>
               </div>
+              <nav aria-label="Explore group classes by programme" className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 text-sm">
+                <span className="font-semibold text-slate-900">Explore group programmes:</span>
+                <Link to="/group-phonics-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-4">Group Phonics</Link>
+                <Link to="/group-grammar-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-4">Group Grammar</Link>
+                <Link to="/group-public-speaking-classes-for-kids" className="font-semibold text-sky-800 underline underline-offset-4">Group Public Speaking</Link>
+              </nav>
             </div>
           </section>
         </>
