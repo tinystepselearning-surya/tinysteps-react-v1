@@ -96,6 +96,7 @@ const summary = {
   blockedAliasFailures: 0,
   courseDirectoryFailures: 0,
   soft404Failures: 0,
+  founderProfileFailures: 0,
 };
 
 let hasError = false;
@@ -283,6 +284,52 @@ function h1TextList(document) {
     .filter(Boolean);
 }
 
+function checkFounderProfileInitialHtml(document, url) {
+  const scripts = [...document.querySelectorAll('script[type="application/ld+json"]')];
+  const nodes = [];
+  for (const script of scripts) {
+    try {
+      const data = JSON.parse(script.textContent || 'null');
+      nodes.push(...(Array.isArray(data) ? data : [data]));
+    } catch {
+      fail('founderProfileFailures', `Invalid founder JSON-LD in prerendered HTML for ${url}`);
+      return;
+    }
+  }
+
+  const types = (node) => Array.isArray(node?.['@type'])
+    ? node['@type']
+    : typeof node?.['@type'] === 'string' ? [node['@type']] : [];
+  const profileNodes = nodes.filter((node) => types(node).includes('ProfilePage'));
+  const canonicalPersonId = `${url}#person`;
+  if (profileNodes.length !== 1) {
+    fail('founderProfileFailures', `Expected exactly one ProfilePage in the initial founder HTML, got ${profileNodes.length}`);
+    return;
+  }
+
+  const profile = profileNodes[0];
+  const person = nodes.find((node) => node?.['@id'] === canonicalPersonId && types(node).includes('Person'));
+  if (profile['@id'] !== `${url}#webpage` ||
+      profile.url !== url ||
+      profile.mainEntity?.['@type'] !== 'Person' ||
+      profile.mainEntity?.['@id'] !== canonicalPersonId ||
+      profile.mainEntity?.name !== 'Vannala Ravali Priya' ||
+      person?.name !== 'Vannala Ravali Priya') {
+    fail('founderProfileFailures', `ProfilePage mainEntity or canonical Person identity missing from initial HTML for ${url}`);
+  }
+
+  const socialUrls = [
+    'https://www.linkedin.com/in/ravali-priya-vannala/',
+    'https://www.instagram.com/vannala_ravalipriya/',
+  ];
+  for (const socialUrl of socialUrls) {
+    if (!person?.sameAs?.includes(socialUrl) ||
+        !document.querySelector(`a[href="${socialUrl}"]`)) {
+      fail('founderProfileFailures', `Founder social identity missing from schema or crawlable HTML for ${url}: ${socialUrl}`);
+    }
+  }
+}
+
 async function checkRenderedHtml(url) {
   summary.sitemapUrlsChecked += 1;
 
@@ -334,6 +381,10 @@ async function checkRenderedHtml(url) {
     fail('metadataFailures', `Missing or empty meta description for ${url}`);
   }
 
+  if (pathname === '/team/vannala-ravali-priya') {
+    checkFounderProfileInitialHtml(document, expectedCanonicalUrl);
+  }
+
   const h1s = h1TextList(document);
   if (h1s.length !== 1) {
     fail('metadataFailures', `Expected exactly one non-empty H1 for ${url}, found ${h1s.length}`);
@@ -381,6 +432,7 @@ async function main() {
   console.log(`- Blocked alias failures: ${summary.blockedAliasFailures}`);
   console.log(`- Course directory failures: ${summary.courseDirectoryFailures}`);
   console.log(`- Potential soft 404 failures: ${summary.soft404Failures}`);
+  console.log(`- Founder ProfilePage structured-data failures: ${summary.founderProfileFailures}`);
 
   if (hasError) process.exit(1);
   console.log('SEO rendered HTML check passed.');
