@@ -21,7 +21,7 @@ export function reconcile(registry, observed) {
       if (mismatch === 'unexpected_noindex' || mismatch === 'unexpected_robots_block') action = 'verify_live_directives';
       else if (mismatch === 'crawl_error') action = 'verify_live_render_and_http';
       else if (mismatch === 'google_canonical_differs') action = 'inspect_selected_canonical';
-      else if (mismatch === 'discovered_not_indexed') action = 'review_discovery_and_crawl_history';
+      else if (mismatch === 'discovered_not_indexed' || mismatch === 'unknown_to_google') action = 'review_discovery_and_crawl_history';
       else if (mismatch === 'crawled_not_indexed') action = 'review_google_index_selection';
       else if (mismatch === 'excluded_other') action = 'inspect_google_exclusion_reason';
       else if (mismatch === 'unknown' || mismatch === 'unverified') action = 'retry_or_inspect_manually';
