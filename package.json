@@ -22,6 +22,8 @@
     "seo:smoke": "node scripts/seo-smoke.mjs",
     "seo:indexation-check": "node scripts/seo-indexation-guard.mjs",
     "seo:rendered-check": "node scripts/seo-rendered-html-check.mjs",
+    "seo:gsc-live-spotcheck": "node scripts/gsc-live-spotcheck.mjs",
+    "test:gsc-live-spotcheck": "node --test scripts/test/gsc-live-spotcheck.node-test.mjs",
     "seo:public-games-navigation": "node scripts/check-public-game-seo-navigation.mjs",
     "seo:route-integrity": "node scripts/seo-route-integrity.mjs",
     "seo:indexability-report": "node scripts/generate-route-indexability-report.mjs",
