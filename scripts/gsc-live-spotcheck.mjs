@@ -21,10 +21,10 @@ export const TARGETS = [
 export const CONTROLS = ['/phonics', '/grammar', '/free-reading-games-for-kids'];
 
 const getAttr = (tag, attr) => {
-  const match = tag.match(new RegExp(`\b${attr}\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))`, 'i'));
+  const match = tag.match(new RegExp(`\\b${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'i'));
   return match?.[1] ?? match?.[2] ?? match?.[3] ?? '';
 };
-const matches = (html, tag) => [...html.matchAll(new RegExp(`<${tag}\b[^>]*>`, 'gi'))].map((m) => m[0]);
+const matches = (html, tag) => [...html.matchAll(new RegExp(`<${tag}\\b[^>]*>`, 'gi'))].map((m) => m[0]);
 const stripHtml = (html) => html
   .replace(/<!--[\s\S]*?-->/g, ' ')
   .replace(/<(script|style|svg|noscript)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
