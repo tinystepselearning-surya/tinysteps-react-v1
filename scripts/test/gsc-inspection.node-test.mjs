@@ -81,3 +81,17 @@ test('reconciliation distinguishes missing observations and actual Google exclus
   assert.equal(result[1].google_status, 'not_inspected');
   assert.match(reportCsv(result), /crawled_not_indexed/);
 });
+
+test('reconciliation counts transient API errors as explicit retries and latest verdict wins', () => {
+  const row = { url:'https://tinystepslearning.com/phonics', category:'site', intended_state:'index',
+    in_sitemap:true, problems:[], canonical_url:'https://tinystepslearning.com/phonics' };
+  const first = reconcile([row], [{ url:row.url, inspected_at:'2026-10-29T10:00:00Z', actual_state:'api_error' }]);
+  assert.equal(first[0].google_status, 'api_error');
+  assert.equal(first[0].action, 'retry_api_inspection');
+  const latest = reconcile([row], [
+    { url:row.url, inspected_at:'2026-10-29T10:00:00Z', actual_state:'api_error' },
+    { url:row.url, inspected_at:'2026-10-29T10:05:00Z', actual_state:'indexed' },
+  ]);
+  assert.equal(latest[0].google_status, 'indexed');
+  assert.equal(latest[0].action, 'none');
+});
