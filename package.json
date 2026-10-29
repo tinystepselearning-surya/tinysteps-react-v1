@@ -69,7 +69,8 @@
     "test:wave1-identity-rules": "npx firebase-tools@latest emulators:exec --project tinysteps-react-v1 --only firestore \"FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/*.rules.spec.ts\"",
     "seo:gsc-registry": "node scripts/gsc-url-registry.mjs",
     "seo:gsc-inspect": "node scripts/gsc-inspect-registry.mjs",
-    "test:gsc-inspection": "node --test scripts/test/gsc-inspection.node-test.mjs"
+    "test:gsc-inspection": "node --test scripts/test/gsc-inspection.node-test.mjs",
+    "seo:gsc-reconcile": "node scripts/gsc-reconcile-results.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.1",
