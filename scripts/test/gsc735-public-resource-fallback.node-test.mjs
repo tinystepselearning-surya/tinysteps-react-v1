@@ -208,7 +208,8 @@ test('GSC 2026-10-29 live Soft 404: retain four exact public prerendered owners 
     saveOriginalPublicResource(dom.window.document, dom.window.location);
     const error = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/FreeEnglishGameLandingPage-test.js');
     assert.match(originalResourceForChunkError(error, dom.window.location), /Book a demo/);
-    assert.match(originalResourceForChunkError(error, dom.window.location), new RegExp(heading));
+    const recovered = originalResourceForChunkError(error, dom.window.location);
+    assert.equal(new JSDOM(recovered).window.document.querySelector('h1')?.textContent, heading);
     assert.equal(originalResourceForChunkError(new Error('Permission denied'), dom.window.location), null);
     assert.equal(originalResourceForChunkError(error, new URL(ORIGIN + '/pricing')), null);
   }
