@@ -1,0 +1,44 @@
+name: Founder ProfilePage prerender integrity
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/FounderPriyaPage.tsx'
+      - 'src/config/semanticFacts.ts'
+      - 'src/lib/founderProfiles.ts'
+      - 'src/tests/pages/FounderPriyaPage.spec.tsx'
+      - 'src/tests/seo/p11FounderEntityCorroboration.spec.ts'
+      - 'src/tests/seo/p12FounderPersonSameAs.spec.ts'
+      - 'src/tests/seo/founderBrick5Discovery.spec.ts'
+      - 'scripts/seo-rendered-html-check.mjs'
+      - '.github/workflows/founder-profile-prerender.yml'
+  workflow_dispatch:
+
+jobs:
+  founder-profile-seo:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci
+      - name: Founder profile and identity regression tests
+        run: npx vitest run src/tests/pages/FounderPriyaPage.spec.tsx src/tests/seo/p11FounderEntityCorroboration.spec.ts src/tests/seo/p12FounderPersonSameAs.spec.ts src/tests/seo/founderBrick5Discovery.spec.ts src/tests/seo/resourcesR1SemanticFacts.spec.ts
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Install browser for prerender
+        run: npx playwright install --with-deps chromium
+      - name: Full production build and rendered ProfilePage guard
+        run: npm run build
+      - name: Recheck founder static HTML directly
+        run: |
+          test -f dist/team/vannala-ravali-priya/index.html
+          node scripts/seo-rendered-html-check.mjs

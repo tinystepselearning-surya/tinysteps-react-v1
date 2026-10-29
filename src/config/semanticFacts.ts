@@ -36,6 +36,11 @@ export const SEMANTIC_FACTS = {
         url: 'https://www.linkedin.com/in/ravali-priya-vannala/',
         purpose: 'Vannala Ravali Priya — Founder of Tiny Steps Learning',
       },
+      {
+        platform: 'Instagram',
+        url: 'https://www.instagram.com/vannala_ravalipriya/',
+        purpose: 'Vannala Ravali Priya — Founder of Tiny Steps Learning',
+      },
     ],
   },
 

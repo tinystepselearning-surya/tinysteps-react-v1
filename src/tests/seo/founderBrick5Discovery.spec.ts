@@ -82,6 +82,7 @@ describe('Founder Brick 5 discovery, indexing and internal authority', () => {
   it('keeps first-party discovery while publishing only verified personal sameAs profiles', () => {
     expect(FOUNDER_PUBLIC_PROFILE_URLS).toEqual([
       'https://www.linkedin.com/in/ravali-priya-vannala/',
+      'https://www.instagram.com/vannala_ravalipriya/',
     ]);
 
     const founderPage = read('src/pages/FounderPriyaPage.tsx');

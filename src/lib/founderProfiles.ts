@@ -1,7 +1,7 @@
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 
 export type FounderPublicProfile = {
-  platform: 'LinkedIn';
+  platform: 'LinkedIn' | 'Instagram';
   url: string;
   purpose: string;
 };
