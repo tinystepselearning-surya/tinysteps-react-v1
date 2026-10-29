@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { reconcile, reportCsv } from '../gsc-reconcile-results.mjs';
 import assert from 'node:assert/strict';
 import { assembleRegistry, sitemapLocs, toCsv } from '../gsc-url-registry.mjs';
 import { normalizeInspection, classifyMismatch, selectTargets, inspectOne, ENDPOINT } from '../gsc-inspect-registry.mjs';
@@ -67,4 +68,16 @@ test('inspection endpoint is read-only and sends the correct domain property', a
     inspectionUrl: 'https://tinystepslearning.com/phonics', siteUrl: 'sc-domain:tinystepslearning.com', languageCode: 'en-US',
   });
   assert.equal(result.inspectionResult.indexStatusResult.verdict, 'PASS');
+});
+
+test('reconciliation distinguishes missing observations and actual Google exclusions', () => {
+  const rows = [{ url: 'https://tinystepslearning.com/one', category:'site', intended_state:'index',
+    in_sitemap:true, problems: [] }, { url:'https://tinystepslearning.com/two', category:'site',
+    intended_state:'index', in_sitemap:true, problems: [] }];
+  const seen = [{ url:rows[0].url, actual_state:'crawled_not_indexed', inspected_at:'2026-10-29T10:00:00Z',
+    coverage_state:'Crawled - currently not indexed' }];
+  const result = reconcile(rows, seen);
+  assert.equal(result[0].action, 'review_google_index_selection');
+  assert.equal(result[1].google_status, 'not_inspected');
+  assert.match(reportCsv(result), /crawled_not_indexed/);
 });
