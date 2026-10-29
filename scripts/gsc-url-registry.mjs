@@ -38,7 +38,7 @@ const category = (p) => p.startsWith('/resources/phonics/') ? 'phonics-guide'
   : p.startsWith('/resources/') ? 'resource-hub'
   : 'site';
 const priority = { unclassified: 0, index: 1, noindex: 2, redirect: 3, 'genuine-404': 4 };
-const isConcrete = (s) => typeof s === 'string' && !/[\\*?{}]/.test(s) && !/(^|\\/):[a-z]/i.test(s);
+const isConcrete = (s) => typeof s === 'string' && !['*', '?', '{', '}', '/:'].some((token) => s.includes(token));
 
 export function assembleRegistry({ sitemaps = [], published = [], blogs = [], redirects = [], noindex = [] }) {
   const map = new Map();
