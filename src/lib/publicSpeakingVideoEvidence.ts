@@ -28,6 +28,7 @@ export const PUBLIC_SPEAKING_VIDEO_EVIDENCE: Readonly<PublicSpeakingVideoEvidenc
     'In this class, the child was given an instant topic and confidently created and presented a story. This activity builds thinking, structure, and speaking confidence.',
   videoId: 'H-xTpL6tKWU',
   publicationDate: '2026-04-09',
+  publicationDateTime: '2026-04-09T06:58:46Z',
   duration: 'PT1M45S',
   durationLabel: '1 min 45 sec',
   category: 'Communication',
