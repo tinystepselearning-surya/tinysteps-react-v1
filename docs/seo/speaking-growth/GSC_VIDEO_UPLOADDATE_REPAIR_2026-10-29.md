@@ -1,55 +1,43 @@
-# Search Console VideoObject uploadDate warnings — 29 October 2026
+# GSC VideoObject uploadDate repair — 29 October 2026
 
-## Reproduced from owner screenshots
-
+## Owner-observed Google Search Console warning
 - URL: https://tinystepslearning.com/speaking
-- Video: **Instant Storytelling Activity** (YouTube `H-xTpL6tKWU`)
-- GSC: **Invalid datetime value for "uploadDate"** and **Datetime property "uploadDate" is missing a timezone**.
-- Both observations refer to the **same video**; GSC shows one valid video item, zero invalid video items, and two non-critical warnings.
-- Last reported crawl: 28 October 2026.
+- Video: **Instant Storytelling Activity**, public YouTube ID `H-xTpL6tKWU`
+- Two non-critical warnings about the **same** `uploadDate` value: invalid datetime and missing timezone.
+- Report showed one valid video item and zero invalid video items; last observed crawl: 28 October 2026.
 
-## Root cause and source integrity
+## Root cause
+The previously published JSON-LD used `"uploadDate": "2026-04-09"` because the initial editorial record contained the video **premiere day** but not its precise instant. Google documents `uploadDate` as an ISO 8601 DateTime; a timezone-qualified full timestamp is recommended.
 
-`src/lib/publicSpeakingVideoEvidence.ts` stores the verified **publication day** `2026-04-09`, based on the owner's 26 October YouTube Studio screenshot showing "Premiered 9 April 2026".
+Official guide: https://developers.google.com/search/docs/appearance/structured-data/video
 
-The day does **not** disclose the actual hour, minute, second or UTC offset. Google's VideoObject guidance requires an ISO 8601 **DateTime** for `uploadDate` and recommends a timezone. Adding `T00:00:00Z` (or an arbitrary local time) would invent an unsupported first-publication instant and is prohibited.
+## Confirmed first-publication timestamp
+On 29 October 2026, the owner supplied a public YouTube metadata report:
+- Published / went public: **9 April 2026 at 06:58:46 UTC**.
+- Live/premiere scheduled 06:58:31 UTC, started 06:58:46 UTC and ended 07:02:03 UTC.
+- Video is public, 1:45 in length, and permits embedding.
 
-Official requirements: https://developers.google.com/search/docs/appearance/structured-data/video
+The first-public timestamp matches the recorded premiere start. Correct schema value:
+```json
+"uploadDate": "2026-04-09T06:58:46Z"
+```
+This is a verified source value; it is not an arbitrary conversion of midnight or a Firestore creation date.
 
-## Prepared code change
+## Code and regression protections
+- `src/lib/publicSpeakingVideoEvidence.ts` preserves the existing ID/title/description/thumbnail/embed/watch links and now includes the source-verified `publicationDateTime`.
+- `normalizeVerifiedVideoPublicationDateTime` rejects invalid calendar dates, impossible times, and date-times without timezone.
+- `src/tests/seo/publicSpeakingStaticVideoEvidence.spec.ts` requires the correct exact timestamp and rejects malformed dates.
+- `scripts/verify-speaking-video-prerender.mjs` verifies actual static HTML contains exactly one relevant `VideoObject` with the required exact timestamp. The original Speaking canonical and class-sample discovery remain unchanged.
+- For videos that lack trustworthy exact times, do not invent `00:00:00Z`; preserve the known day and record the remaining issue pending independent metadata.
 
-- `PUBLIC_SPEAKING_VIDEO_EVIDENCE` accepts optional `publicationDateTime` **only when separately source-verified**.
-- `normalizeVerifiedVideoPublicationDateTime` rejects date-only, missing timezone, bad calendar date, invalid time or invalid offset.
-- `createPublicSpeakingVideoObject` uses the verified DateTime if supplied and otherwise retains the established date-only source. This preserves the **currently valid** VideoObject and avoids degrading site discoverability.
-- Tests cover success, invalid inputs, and no fabricated fallback. The prerender verifier prints a warning while date-only metadata remains.
+## Validation / release
+1. Run targeted unit tests, TypeScript and production build with the existing Issue #804 initial HTML workflow.
+2. Merge after CI passes. Verify that the production `/speaking` HTML contains exactly one matching VideoObject with `uploadDate: "2026-04-09T06:58:46Z"`.
+3. Validate the published URL in Google Rich Results Test.
+4. In GSC, click **Validate Fix** for each warning and allow a Google recrawl. The chart may lag; an improvement in video ranking is not guaranteed.
 
-**Current state: CODE FIX APPLIED ON THIS BRANCH; NOT YET DEPLOYED.** The owner supplied the public YouTube metadata view confirming first public publication on **2026-04-09 at 06:58:46 UTC** (the recorded livestream/premiere also started at that instant). The original day-only schema is now replaced by `2026-04-09T06:58:46Z`. The Search Console warnings remain pending until deployment, a fresh Rich Results Test and Google recrawl.
+## Separate class-samples follow-up
+The dynamic class-samples gallery also accepts date-only verified upload dates for eligible clips. Only the single Speaking page was reported in the owner’s screenshots. Future gallery warnings should be resolved per-video using genuine first-public timestamps, never approximations or disabled playback.
 
-## Required evidence to complete this issue
-
-1. Look up the **exact publishedAt timestamp** for `https://www.youtube.com/watch?v=H-xTpL6tKWU`, preferably from YouTube Data API `videos.list(part=snippet,id=H-xTpL6tKWU)` for a public video. Record the returned `snippet.publishedAt` (UTC ISO 8601) and confirm it belongs to the correct video. A reputable viewer of the YouTube Data API may also display this public field. If a premiere, reconcile against any actual public premiere time.
-2. Check it against the known Studio premiere date; if it seems inconsistent, investigate timezone and visibility history before publishing metadata.
-3. Record the authoritative source and exact observed timestamp in this document.
-4. Add `publicationDateTime: 'VERIFIED_TIMESTAMP'` immediately after `publicationDate` in the single-video manifest. Replace the placeholder with the real evidence-based value.
-5. Update the expected `uploadDate` values in `src/tests/seo/publicSpeakingStaticVideoEvidence.spec.ts` and the expected timestamp in `scripts/verify-speaking-video-prerender.mjs` (which must then require the exact value). No other metadata, video ID, thumbnail, canonical URL or gallery logic should change.
-6. Run targeted unit tests, TypeScript, a production build, and prerender validation. Check the built `dist/speaking/index.html` contains exactly one correct `VideoObject`.
-7. After merging and deployment, test the live page in Google's Rich Results Test, then click **Validate Fix** for each GSC warning. Allow time for recrawl.
-
-## Separate gallery consideration
-
-`src/lib/classSamples.ts` also currently emits date-only `VideoObject.uploadDate` for eligible gallery entries. These warnings currently identify only the Speaking URL. If Google later flags `/class-samples`, apply the same source-verified timestamp principle to the corresponding video(s), without guessing timestamps, suppressing playable videos, or changing Firestore access rules.
-
-## Release guardrails
-
-- No new route, new video, fabricated date/time, change to `/speaking` canonical, video title or text.
-- No destructive update to class-sample admin data.
-- Do not merge an incomplete “warning resolved” claim. Preserve the existing indexable markup until the exact time is verifiable.
-
-## Verified owner-supplied publication evidence (29 October 2026)
-
-- Video ID: `H-xTpL6tKWU`, public, embeddable.
-- Published / went public: **2026-04-09 06:58:46 UTC**.
-- Livestream/premiere scheduled for 06:58:31 UTC and started at 06:58:46 UTC.
-- Duration 1:45; verified public-video metadata supplied by the owner in chat.
-- All schema, unit and prerender assertions now require **`2026-04-09T06:58:46Z`**.
-- GSC Validate Fix remains a post-deployment user action; Google report updates are not instantaneous.
+## Status at code authoring
+**Committed to fix branch; not proof of live deploy or GSC validation.** No change to the child's video, to the title or to the existing permission scope.
