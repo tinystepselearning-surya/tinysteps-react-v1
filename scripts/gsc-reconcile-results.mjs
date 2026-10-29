@@ -24,6 +24,7 @@ export function reconcile(registry, observed) {
       else if (mismatch === 'discovered_not_indexed' || mismatch === 'unknown_to_google') action = 'review_discovery_and_crawl_history';
       else if (mismatch === 'crawled_not_indexed') action = 'review_google_index_selection';
       else if (mismatch === 'excluded_other') action = 'inspect_google_exclusion_reason';
+      else if (mismatch === 'api_error') action = 'retry_api_inspection';
       else if (mismatch === 'unknown' || mismatch === 'unverified') action = 'retry_or_inspect_manually';
     }
     return {
@@ -58,7 +59,9 @@ function main() {
   const rows = reconcile(source.rows,data.results || []);
   fs.writeFileSync(path.join(outputDir,'gsc-indexing-reconciliation.csv'),reportCsv(rows));
   const indexRows = rows.filter((r) => r.intended_state === 'index');
-  const inspected = indexRows.filter((r) => r.google_status !== 'not_inspected');
+  const inspected = indexRows.filter((r) => r.google_status !== 'not_inspected' && r.google_status !== 'api_error');
+  const apiErrors = indexRows.filter((r) => r.google_status === 'api_error');
+  const notInspected = indexRows.filter((r) => r.google_status === 'not_inspected');
   const indexed = inspected.filter((r) => r.google_status === 'indexed');
   const unresolved = indexRows.filter((r) => r.action !== 'none');
   const summary = [
@@ -68,11 +71,13 @@ function main() {
     '',
     '- Repository-known unique routes: **' + rows.length + '**',
     '- Intended index routes: **' + indexRows.length + '**',
-    '- Observed index-intended routes: **' + inspected.length + '**',
+    '- Intended-index routes with valid Google verdicts: **' + inspected.length + '**',
+    '- URL inspections requiring API retry: **' + apiErrors.length + '**',
+    '- URL inspections not yet attempted: **' + notInspected.length + '**',
     '- Google indexed among actually observed routes: **' + indexed.length + '**',
     '- Routes with a source mismatch or inspection follow-up: **' + unresolved.length + '**',
     '',
-    '**Unobserved routes are NOT classified as indexed or unindexed.** Google results are stored index data, not live URL tests.',
+    '**API errors and unobserved routes are NOT classified as indexed or unindexed.** Google results are stored index data, not live URL tests.',
     '',
     '| Follow-up | Count |',
     '|---|---:|',
