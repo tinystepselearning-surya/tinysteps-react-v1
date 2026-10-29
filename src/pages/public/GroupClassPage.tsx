@@ -262,6 +262,15 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
         </div>
       </section>
 
+      {/* General teaching evidence only: never describe 1:1 samples as group recordings. */}
+      <aside aria-label="Explore our teaching approach" className="border-b border-[#DDECF6] bg-white px-5 py-5 sm:px-8">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 text-sm leading-6 text-[#43647C]">
+          <span>Before choosing a format, explore how Tiny Steps teaches. Published class samples illustrate our approach, not an available group session.</span>
+          <Link to="/class-samples" className="font-semibold text-[#154A72] underline underline-offset-4">See class samples</Link>
+          <Link to="/team" className="font-semibold text-[#154A72] underline underline-offset-4">Meet the academic team</Link>
+        </div>
+      </aside>
+
       {/* A single compact comparison keeps the rates legible, without oversized cards. */}
       <section className="ts-sunrise-dark-band bg-gradient-to-br from-[#0C2846] via-[#123B61] to-[#0B2A4B] px-5 py-11 text-white sm:px-8 sm:py-14" aria-labelledby="group-choice">
         <div className="mx-auto max-w-6xl">
