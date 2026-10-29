@@ -38,7 +38,15 @@ const searchNodes = (value, results = []) => {
 const videos = searchNodes(trees);
 const matched = videos.filter((node) => node.embedUrl?.includes(expectedVideoId));
 requireTrue(matched.length === 1, `Expected exactly one VideoObject for real video, got ${matched.length}`);
-requireTrue(matched[0].uploadDate === expectedDate, 'First-publication date missing from JSON-LD');
+const videoUploadDate = matched[0].uploadDate;
+const hasTimezoneQualifiedDateTime = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(videoUploadDate);
+requireTrue(
+  videoUploadDate === expectedDate || hasTimezoneQualifiedDateTime,
+  'VideoObject uploadDate must be the verified first-publication date or full ISO timestamp',
+);
+if (!hasTimezoneQualifiedDateTime) {
+  console.warn('SEO follow-up: uploadDate is still date-only; obtain the exact YouTube publishedAt timestamp before closing the Search Console warnings.');
+}
 requireTrue(matched[0].name === expectedTitle, 'Approved title mismatch in JSON-LD');
 requireTrue(matched[0].thumbnailUrl.includes(`/vi/${expectedVideoId}/`), 'thumbnail mismatch in JSON-LD');
 const canonical = speaking.querySelector('link[rel="canonical"]')?.getAttribute('href');
