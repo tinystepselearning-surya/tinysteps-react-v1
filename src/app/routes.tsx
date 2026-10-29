@@ -498,6 +498,18 @@ const Layout: FC = () => {
       const href = node instanceof HTMLAnchorElement ? (node.getAttribute('href') || '') : '';
       const normalizedHref = href.toLowerCase();
 
+      // Group-class registration has its own preselected form and must navigate
+      // to /book-demo?format=small_group&program=..., not open the generic
+      // one-to-one booking modal. Honour this even if a CTA loses its opt-out.
+      if (node instanceof HTMLAnchorElement && href) {
+        const destination = new URL(href, window.location.origin);
+        if (
+          destination.origin === window.location.origin
+          && destination.pathname.replace(/\/+$/, '') === '/book-demo'
+          && destination.searchParams.get('format') === 'small_group'
+        ) return;
+      }
+
       const bookingByHref =
         normalizedHref.includes('/book-demo') ||
         normalizedHref.includes('book=1') ||
