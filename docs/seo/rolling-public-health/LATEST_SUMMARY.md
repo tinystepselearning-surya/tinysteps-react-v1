@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 2 — 30 October 2026 (01:15 IST; origin probes 2026-10-29T19:45:59.867655Z–2026-10-29T19:46:12.928699Z)
+
+**Preflight:** Fetched all three tracking files from `seo-url-health-tracker`. Verified **202 unique URLs**, sequential indices, 22-column quote-aware CSV integrity, slots 1–19 with 10 URLs each and slot 20 with 12, and consistent stored UTC/IST dates. Exactly **10 current-day distinct URLs (rows 1–10)** were checked before this run. Rows 11–20 were eligible and were not previously checked today. No future-slot or duplicate probes.
+
+**Executed:** Ten independent read-only `curl -L` HTTPS GETs for rows 11–20 with **10 distinct actual UTC start times** (2026-10-29T19:45:59.867655Z–2026-10-29T19:46:04.922569Z). Nine returned curl exit **6**, `curl: (6) Could not resolve host: tinystepslearning.com`; the OA guide returned exit **28**, `curl: (28) Resolving timed out after 8001 milliseconds`. No origin HTTP response or headers were obtained. Curl `000` is a non-HTTP placeholder; echoed effective URLs and zero redirects do not establish redirect behavior. **Audit-environment DNS failures are not verified production failures.**
+
+**Partial provider evidence:** Direct exact-URL ChatGPT web retrieval yielded substantive page-specific extracted text and an H1 for **10/10** guides: SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE. Each snapshot was labelled `Crawled yesterday` by the provider, without a precise crawl time. The CSV records each exact URL, H1, provider reference, UTC probe start/end and stderr. This does **not** verify live-origin HTTP status, redirect target, canonical, robots/noindex/X-Robots-Tag, bot access, initial HTML or JSON-LD.
+
+**Today's attempted coverage:** **20/202 distinct URLs (9.90%)**, **182 not yet attempted** in future slots, **0 fully origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, **20 UNVERIFIED** for full technical readiness. Yesterday's checks are excluded; all 20 current-day UTC check timestamps are distinct and map to 30 October IST. Historical PASS values are not current-day verification. No indexing, rankings, or AI citations were asserted.
+
+**Workflow safety:** GitHub repository Actions API showed **0 in-progress** runs and **0 queued** runs at this run's checks. The specific workflow's administrative enabled/disabled state endpoint remains unsupported, so the user's explicit 25 October UI disable confirmation is the operating assumption. No GitHub workflow was triggered or modified.
+
+**Changes and persistence:** No independently verified dated production regression or improvement; `CHANGES.md` unchanged. Updated `MASTER_URL_TRACKER.csv` and independently read back its new blob SHA `ef763c7a47561d51b4cb5556215f8d106af03898`. **Next:** Slot 3, rows 21–30. No source code, Firebase, Hosting, workflows or separate six-hour visibility audit changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 1 — 30 October 2026 (00:14 IST; probes 2026-10-29T18:44:42.330690Z–2026-10-29T18:44:55.403103Z)
 
 **Preflight:** Read all three tracker files from `seo-url-health-tracker` and validated **202 rows / 202 unique URLs**, sequential indices 1–202, **22 columns** per record, slots 1–19 with 10 URLs each and slot 20 with 12. All 202 prior check timestamps parsed consistently with their stored IST dates. **0 URLs** had a 30 October IST check timestamp before this batch; yesterday's 202 attempts were excluded from today's coverage. Rows 1–10 were eligible, with no rechecks or future-slot probes.
