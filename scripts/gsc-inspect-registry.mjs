@@ -15,7 +15,8 @@ export function normalizeInspection(url, result, inspectedAt) {
   const fetchFailure = ['SOFT_404','NOT_FOUND','SERVER_ERROR','ACCESS_DENIED','ACCESS_FORBIDDEN',
     'BLOCKED_ROBOTS_TXT','REDIRECT_ERROR','BLOCKED_4XX'].includes(data.pageFetchState);
   const actualState = indexed ? 'indexed'
-    : fetchFailure ? 'crawl_error'
+    : fetchFailure || /soft\\s*404/i.test(state) ? 'crawl_error'
+    : /unknown to Google/i.test(state) ? 'unknown_to_google'
     : /discovered\s*[-–]\s*currently not indexed/i.test(state) ? 'discovered_not_indexed'
     : /crawled\s*[-–]\s*currently not indexed/i.test(state) ? 'crawled_not_indexed'
     : verdict === 'FAIL' || verdict === 'NEUTRAL' ? 'excluded_other' : 'unknown';
