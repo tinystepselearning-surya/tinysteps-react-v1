@@ -19,7 +19,7 @@ npm run seo:gsc-registry
 npm run test:gsc-inspection
 ```
 
-Outputs: `docs/seo/gsc-inspection/URL_REGISTRY.csv` and `URL_REGISTRY.json`. The JSON also includes exact source references and any source/sitemap mismatches. Refresh these files on the target branch after site content changes. Check the production sitemaps separately: checked-in or locally generated sitemaps are not proof of deployed sitemaps.
+Outputs: `docs/seo/gsc-inspection/URL_REGISTRY.csv` and `URL_REGISTRY.json`. After inspecting, run `npm run seo:gsc-reconcile` to generate `artifacts/gsc-indexing-reconciliation.{csv,md}` with each URL's intended state, Google observation, mismatch and investigation action. The JSON also includes exact source references and any source/sitemap mismatches. Refresh these files on the target branch after site content changes. Check the production sitemaps separately: checked-in or locally generated sitemaps are not proof of deployed sitemaps.
 
 ## Google Cloud setup (the account owner performs this)
 
