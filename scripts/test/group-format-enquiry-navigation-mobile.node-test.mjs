@@ -63,9 +63,15 @@ test('all nine group-class CTAs navigate to the matching group enquiry, never th
           await links.nth(i).click({ timeout: 12000 });
           await page.waitForURL(url => url.pathname === '/book-demo' && url.searchParams.get('format') === 'small_group'
             && url.searchParams.get('program') === target.program, { timeout: 12000 });
-          assert.match(await page.locator('main h1').first().textContent() || '',
-            new RegExp('Register Interest in Group ' + target.heading + ' Classes'));
-          assert.equal(await page.getByRole('button', { name: 'Group Classes' }).getAttribute('aria-pressed'), 'true');
+          // Client-side routing updates the URL before its lazy BookDemoPage
+          // finishes rendering; wait for that destination, not the old H1.
+          const destinationHeading = page.getByRole('heading', {
+            name: 'Register Interest in Group ' + target.heading + ' Classes', level: 1,
+          });
+          await destinationHeading.waitFor({ state: 'visible', timeout: 15000 });
+          const selectedGroupFormat = page.getByRole('button', { name: 'Group Classes' });
+          await selectedGroupFormat.waitFor({ state: 'visible', timeout: 15000 });
+          assert.equal(await selectedGroupFormat.getAttribute('aria-pressed'), 'true');
           assert.equal(await page.getByRole('dialog').count(), 0, 'generic booking modal opened instead of group page');
           console.log(target.route + ' CTA ' + (i + 1) + ' correctly reaches its programme-specific group form');
         } finally {
