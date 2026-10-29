@@ -69,8 +69,14 @@ const founderProfilePageSchema = {
   publisher: {
     '@id': ORGANIZATION_ID,
   },
+  // Explicitly identify the main entity as a Person for Google's ProfilePage
+  // parser while reusing (not replacing) the full canonical Person node above.
   mainEntity: {
+    '@type': 'Person',
     '@id': FOUNDER_ID,
+    name: PUBLIC_FACTS.founder.fullName,
+    url: FOUNDER_PROFILE_URL,
+    image: FOUNDER_IMAGE_URL,
   },
   about: {
     '@id': FOUNDER_ID,
