@@ -532,6 +532,7 @@ export default function GrammarPage() {
             <Link to="/pricing" className="font-semibold underline underline-offset-2">Review class pricing</Link>
             <Link to="/book-demo" className="font-semibold underline underline-offset-2">Book the free {demoMinutes}-minute assessment</Link>
             <Link to="/class-samples" className="font-semibold underline underline-offset-2">See real class samples</Link>
+            <Link to="/group-grammar-classes-for-kids" className="font-semibold underline underline-offset-2">Explore small-group grammar classes</Link>
           </div>
 
           <div className="mt-7 border-t border-slate-200 pt-6">
