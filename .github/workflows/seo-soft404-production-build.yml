@@ -19,6 +19,7 @@ on:
       - 'scripts/diagnose-gsc735-phase1-live.mjs'
       - 'scripts/test/gsc735-resource-cache.node-test.mjs'
       - 'scripts/test/gsc735-public-resource-fallback.node-test.mjs'
+      - 'scripts/test/gsc-live-soft404-chunk-mobile.node-test.mjs'
       - 'scripts/test/gsc-group-class-chunk-mobile.node-test.mjs'
       - 'scripts/test/group-format-enquiry-navigation-mobile.node-test.mjs'
       - 'scripts/test/core-commercial-chunk-mobile.node-test.mjs'
@@ -133,6 +134,8 @@ jobs:
         run: node --test scripts/test/gsc735-public-blog-chunk-mobile.node-test.mjs
       - name: Simulate failed group-class chunks in mobile Chromium
         run: node --test scripts/test/gsc-group-class-chunk-mobile.node-test.mjs
+      - name: Simulate GSC live Soft 404 public route chunk failures in mobile Chromium
+        run: node --test scripts/test/gsc-live-soft404-chunk-mobile.node-test.mjs
       - name: Verify group enquiry CTA navigation in real mobile Chromium
         run: node --test scripts/test/group-format-enquiry-navigation-mobile.node-test.mjs
       - name: Simulate failed primary commercial chunks in mobile Chromium

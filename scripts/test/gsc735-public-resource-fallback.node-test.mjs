@@ -182,3 +182,54 @@ test('six commercial owners preserve only their own substantive self-canonical p
     }
   }
 });
+
+const GSC_GOOGLEBOT_LIVE_SOFT404 = [
+  ['/free-reading-fluency-game-for-kids', 'Free Reading Fluency Game for Kids'],
+  ['/free-phonics-games-for-kids', 'Free Phonics Games for Kids'],
+  ['/why-tiny-steps', 'Why Parents Choose Tiny Steps Learning'],
+  ['/resources', 'English Learning Resources for Kids, Parents & Educators'],
+];
+const meaningfulPublicCopy = 'Families can learn how to practise reading, phonics and English with child-friendly examples, independent activities and teacher support. '.repeat(9);
+function gscLiveSoft404Fixture({ route, heading, canonical = route, robots = 'index, follow', content = meaningfulPublicCopy } = {}) {
+  return new JSDOM(`<!DOCTYPE html><html><head>
+    <link rel="canonical" href="${ORIGIN}${canonical}">
+    <meta name="robots" content="${robots}">
+    </head><body><div id="root"><main class="public-shell"><h1>${heading}</h1>
+      <section><p>${content}</p><a href="/book-demo">Book a demo</a></section>
+      </main></div></body></html>`, { url: ORIGIN + route });
+}
+
+test('GSC 2026-10-29 live Soft 404: retain four exact public prerendered owners when a lazy import fails', () => {
+  for (const [route, heading] of GSC_GOOGLEBOT_LIVE_SOFT404) {
+    const dom = gscLiveSoft404Fixture({ route, heading });
+    const snapshot = captureOriginalPublicResource(dom.window.document, dom.window.location);
+    assert.ok(snapshot, route + ': expected existing substantive initial HTML to be eligible');
+    assert.equal(snapshot.path, route);
+    saveOriginalPublicResource(dom.window.document, dom.window.location);
+    const error = new TypeError('Failed to fetch dynamically imported module: ' + ORIGIN + '/assets/FreeEnglishGameLandingPage-test.js');
+    assert.match(originalResourceForChunkError(error, dom.window.location), /Book a demo/);
+    const recovered = originalResourceForChunkError(error, dom.window.location);
+    assert.equal(new JSDOM(recovered).window.document.querySelector('h1')?.textContent, heading);
+    assert.equal(originalResourceForChunkError(new Error('Permission denied'), dom.window.location), null);
+    assert.equal(originalResourceForChunkError(error, new URL(ORIGIN + '/pricing')), null);
+  }
+});
+
+test('GSC 2026-10-29 live Soft 404: recovery rejects thin, wrong-owner, noindex and actual-error content', () => {
+  for (const [route, heading] of GSC_GOOGLEBOT_LIVE_SOFT404) {
+    const invalid = [
+      gscLiveSoft404Fixture({ route, heading: 'Page temporarily unavailable' }),
+      gscLiveSoft404Fixture({ route, heading: '404 - Page not found' }),
+      gscLiveSoft404Fixture({ route, heading: 'Wrong heading' }),
+      gscLiveSoft404Fixture({ route, heading, canonical: '/phonics' }),
+      gscLiveSoft404Fixture({ route, heading, robots: 'noindex,follow' }),
+      gscLiveSoft404Fixture({ route, heading, content: 'Too short' }),
+      gscLiveSoft404Fixture({ route, heading, content: 'Something went wrong. ' + meaningfulPublicCopy }),
+    ];
+    for (const dom of invalid) {
+      assert.equal(captureOriginalPublicResource(dom.window.document, dom.window.location), null, route);
+    }
+  }
+  const unapproved = gscLiveSoft404Fixture({ route: '/free-games/example', heading: GSC_GOOGLEBOT_LIVE_SOFT404[0][1] });
+  assert.equal(captureOriginalPublicResource(unapproved.window.document, unapproved.window.location), null);
+});
