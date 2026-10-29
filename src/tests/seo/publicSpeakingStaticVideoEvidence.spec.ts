@@ -15,6 +15,7 @@ describe('Issue 804 approved Public Speaking video evidence', () => {
     expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.title).toBe('Instant Storytelling Activity');
     expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.videoId).toBe('H-xTpL6tKWU');
     expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.publicationDate).toBe('2026-04-09');
+    expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.publicationDateTime).toBe('2026-04-09T06:58:46Z');
     expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.duration).toBe('PT1M45S');
     expect(PUBLIC_SPEAKING_VIDEO_EVIDENCE.description).toContain('created and presented a story');
   });
@@ -30,7 +31,7 @@ describe('Issue 804 approved Public Speaking video evidence', () => {
       name: PUBLIC_SPEAKING_VIDEO_EVIDENCE.title,
       description: PUBLIC_SPEAKING_VIDEO_EVIDENCE.description,
       thumbnailUrl: urls.thumbnail,
-      uploadDate: '2026-04-09',
+      uploadDate: '2026-04-09T06:58:46Z',
       duration: 'PT1M45S',
       embedUrl: urls.embed,
       url: urls.watch,
