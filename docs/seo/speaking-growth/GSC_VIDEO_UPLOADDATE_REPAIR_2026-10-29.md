@@ -23,7 +23,7 @@ Official requirements: https://developers.google.com/search/docs/appearance/stru
 - `createPublicSpeakingVideoObject` uses the verified DateTime if supplied and otherwise retains the established date-only source. This preserves the **currently valid** VideoObject and avoids degrading site discoverability.
 - Tests cover success, invalid inputs, and no fabricated fallback. The prerender verifier prints a warning while date-only metadata remains.
 
-**Current state: PREPARED, NOT RESOLVED.** No verified exact publication time was found in the repository or accessible public sources. This branch intentionally does not pretend that the two GSC warnings are solved.
+**Current state: CODE FIX APPLIED ON THIS BRANCH; NOT YET DEPLOYED.** The owner supplied the public YouTube metadata view confirming first public publication on **2026-04-09 at 06:58:46 UTC** (the recorded livestream/premiere also started at that instant). The original day-only schema is now replaced by `2026-04-09T06:58:46Z`. The Search Console warnings remain pending until deployment, a fresh Rich Results Test and Google recrawl.
 
 ## Required evidence to complete this issue
 
@@ -44,3 +44,12 @@ Official requirements: https://developers.google.com/search/docs/appearance/stru
 - No new route, new video, fabricated date/time, change to `/speaking` canonical, video title or text.
 - No destructive update to class-sample admin data.
 - Do not merge an incomplete “warning resolved” claim. Preserve the existing indexable markup until the exact time is verifiable.
+
+## Verified owner-supplied publication evidence (29 October 2026)
+
+- Video ID: `H-xTpL6tKWU`, public, embeddable.
+- Published / went public: **2026-04-09 06:58:46 UTC**.
+- Livestream/premiere scheduled for 06:58:31 UTC and started at 06:58:46 UTC.
+- Duration 1:45; verified public-video metadata supplied by the owner in chat.
+- All schema, unit and prerender assertions now require **`2026-04-09T06:58:46Z`**.
+- GSC Validate Fix remains a post-deployment user action; Google report updates are not instantaneous.
