@@ -897,6 +897,9 @@ export default function PhonicsPage({
               <Link to="/curriculum?tab=phonics" className="rounded-full border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-900 hover:bg-slate-50">
                 Review curriculum
               </Link>
+              <Link to="/group-phonics-classes-for-kids" className="rounded-full border border-sky-300 bg-sky-50 px-4 py-2 text-xs font-semibold text-sky-900 hover:bg-sky-100">
+                Explore level-matched group phonics
+              </Link>
             </div>
           </div>
         </div>
