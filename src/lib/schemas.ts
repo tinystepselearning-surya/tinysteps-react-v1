@@ -12,6 +12,7 @@ import {
 export const SITE_ORIGIN = SEMANTIC_FACTS.brand.websiteOrigin;
 export const PUBLIC_FACTS = {
   brandName: SEMANTIC_FACTS.brand.name,
+  operatingSinceYear: SEMANTIC_FACTS.brand.operatingSinceYear,
   shortBrandName: SEMANTIC_FACTS.brand.shortName,
   organizationName: SEMANTIC_FACTS.brand.organizationName,
   founder: {
@@ -110,7 +111,7 @@ export const organizationSchema = {
   '@type': 'EducationalOrganization',
   '@id': ORGANIZATION_ID,
   name: PUBLIC_FACTS.organizationName,
-  alternateName: [PUBLIC_FACTS.brandName, PUBLIC_FACTS.shortBrandName],
+  alternateName: [PUBLIC_FACTS.shortBrandName],
   url: `${SITE_ORIGIN}/`,
   logo: {
     '@type': 'ImageObject',
@@ -135,7 +136,7 @@ export const organizationSchema = {
   },
   description:
     'Tiny Steps Learning is a premium online English learning school for children aged 3–12, offering structured phonics, grammar, reading, sentence formation, communication, and public speaking programs.',
-  foundingDate: '2020',
+  foundingDate: SEMANTIC_FACTS.brand.operatingSinceYear,
   foundingLocation: {
     '@type': 'Place',
     name: SEMANTIC_FACTS.serviceArea.primaryCountry,

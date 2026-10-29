@@ -91,7 +91,7 @@ const curriculumFaqItems = [
   {
     question: 'Do you support children from CBSE, ICSE, IB, Cambridge, and other schools?',
     answer:
-      'Yes. Tiny Steps teaches transferable English skills that can support children studying in different school environments. Tiny Steps Learning is an independent learning provider and does not imply formal affiliation with those school systems.',
+      'Yes. Tiny Steps develops transferable literacy, grammar, writing and speaking skills through a structured sequence, guided practice, independent application and progress review. Children studying in CBSE, ICSE, IB, Cambridge and other school environments can apply these skills in their own classroom work. School names describe learning contexts, not official programme approval.',
   },
   {
     question: 'How do parents track progress?',
