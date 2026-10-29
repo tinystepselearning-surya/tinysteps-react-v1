@@ -960,6 +960,7 @@ export default function SpeakingPage() {
 
       <div className="mx-auto -mt-2 flex max-w-6xl flex-wrap gap-x-4 gap-y-2 px-4 pb-3 text-sm sm:px-5 lg:px-6">
         <Link to="/class-samples" className="font-semibold text-slate-900 underline underline-offset-2">View real class samples</Link>
+        <Link to="/group-public-speaking-classes-for-kids" className="font-semibold text-violet-800 underline underline-offset-2">Explore small-group Public Speaking</Link>
         <Link to="/book-demo" className="font-semibold text-slate-700 underline underline-offset-2">Book the free assessment</Link>
       </div>
 
