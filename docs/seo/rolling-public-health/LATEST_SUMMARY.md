@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-29 IST)
 
+## Slot 9 — 29 October 2026 (08:16 IST)
+
+**Preflight:** Re-read all three GitHub tracker files. Verified exactly 202 unique selected URLs, sequential indices, 22 CSV fields per row, slots 1–19 containing 10 URLs each and slot 20 containing 12. Exactly **80 distinct** current-day UTC check timestamps existed before this batch. Rows 81–90 had only 28 October IST historical checks and were eligible. No previously checked current-day URL was rechecked.
+
+**Executed:** Ten independent read-only `curl -L` HTTPS GET probes for rows 81–90 started between **2026-10-29T02:46:16.467959Z and 2026-10-29T02:46:41.496907Z**, with the last probe ending **2026-10-29T02:46:41.507281Z**. All ten exited **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; no origin HTTP response was received. `HTTP_STATUS:000` is a curl placeholder, not a server HTTP status; echoed effective URL and `REDIRECTS:0` do not verify final/redirect destination. This is an **audit-environment DNS limitation, not evidence of a production outage**.
+
+**Provider content evidence (partial, not live-origin verification):** Direct exact-URL ChatGPT `web.open` returned substantive page-specific extracted text for **10/10** URLs: Writing, phonics fee guide, grammar level guide, spoken English, broad English classes, Hyderabad English classes, ages 4, 5, 6 and 7–10. Provider labelled each `Crawled today`, without precise provider crawl timestamps. Individual exact H1, web reference, UTC probe start/end times and stderr are recorded in the CSV. Provider-extracted text does not verify origin HTTP status, redirect destinations, canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial raw HTML or JSON-LD. No search indexing, ranking or AI citation claims are made.
+
+**Daily attempted coverage after Slot 9:** **90/202 distinct URLs (44.55%)**, **112 not yet attempted today**, **0 fully live-origin-verified PASS**, **0 confirmed production FAIL/WARN**, **90 UNVERIFIED**. All 90 current-day timestamps are distinct and map to 29 October IST; yesterday's checks on other rows are excluded.
+
+**Workflow safety:** GitHub Actions runs API returned **0 queued and 0 in-progress** runs at preflight. The administrative workflow-state endpoint could not be retrieved through connected GitHub fetch (unsupported URL), so the user's explicit 25 October disablement remains the operating assumption. Cron YAML presence alone does not prove enablement. No workflow was run or changed.
+
+**Changes:** No dated, verified before/after production regression or improvement; `CHANGES.md` unchanged. Next eligible batch: **Slot 10, rows 91–100**. No source, Firebase, Hosting, workflows, production settings or separate six-hour visibility task changed.
+
+---
+
 ## Slot 8 — 29 October 2026 (07:15 IST)
 
 **Preflight:** Re-read all three GitHub tracker files on `seo-url-health-tracker`. Validated exactly 202 unique selected URLs, sequential indices, 22 columns, slots 1–19 with 10 URLs each and slot 20 with 12. Exactly **70 distinct** current-day URL attempts existed before this batch; rows 71–80 had only 28 October IST timestamps and were eligible. No current-day checked URL was rechecked.
