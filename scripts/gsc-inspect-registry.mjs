@@ -95,30 +95,29 @@ async function main() {
   }
   const token = process.env.GSC_ACCESS_TOKEN?.trim();
   if (!token) throw new Error('GSC_ACCESS_TOKEN missing. Authorize with readonly OAuth; never commit or paste tokens into chat.');
-  const results = [...previous];
-  const existing = new Set(results.map((r) => r.url));
+  // Retain only the latest record per URL, including across previously interrupted runs.
+  const results = new Map(previous.map((result) => [result.url, result]));
   let failures = 0;
   for (const row of selected) {
     try {
       const raw = await inspectOne(row.url, token);
       const inspection = normalizeInspection(row.url, raw, new Date().toISOString());
-      results.push({ ...inspection, mismatch: classifyMismatch(row, inspection) });
-      existing.add(row.url);
+      results.set(row.url, { ...inspection, mismatch: classifyMismatch(row, inspection) });
       console.log(row.pathname + ' => ' + inspection.actual_state + ' (' + inspection.coverage_state + ')');
     } catch (error) {
       failures += 1;
       console.error(row.pathname + ': ' + String(error.message).slice(0, 300));
       if ([401, 403, 429].includes(error.status)) break; // Don't burn quotas or continue unauthorized.
-      results.push({ url: row.url, inspected_at: new Date().toISOString(), actual_state: 'api_error',
+      results.set(row.url, { url: row.url, inspected_at: new Date().toISOString(), actual_state: 'api_error',
         error: String(error.message).slice(0, 300), mismatch: 'unverified' });
     }
     fs.writeFileSync(output, JSON.stringify({
       property: GSC_PROPERTY, sourceRegistryGeneratedAt: source.generatedAt,
-      updatedAt: new Date().toISOString(), results,
+      updatedAt: new Date().toISOString(), results: [...results.values()],
     }, null, 2) + '\n');
     await wait(opts.delayMs);
   }
-  console.log(`Saved ${results.length} observed results to ${output} (${failures} API errors). No website or indexing submissions changed.`);
+  console.log(`Saved ${results.size} unique URL results to ${output} (${failures} API errors this batch). No website or indexing submissions changed.`);
   if (failures) process.exitCode = 1;
 }
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
