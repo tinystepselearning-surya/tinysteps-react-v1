@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 3 — 31 October 2026 (02:13–02:14 IST; independent origin attempts 2026-10-30T20:43:08.997637Z–2026-10-30T20:43:19.071538Z)
+
+**Preflight:** Re-fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns per record**, slots 1–19 containing 10 URLs and slot 20 containing 12. Confirmed 20 distinct checked URLs with actual UTC timestamps in the 31 October IST day (Slots 1–2) and 182 unchecked. No checked URLs or future-slot rows were selected.
+
+**Executed Slot 3 (rows 21–30):** All 10 exact public phonics-resource URLs were inspected through ChatGPT web retrieval. Direct URL retrieval returned page-specific text for rows 21, 28, 30; the other seven exact URLs were successfully retrieved by following internal links after direct `web.open` returned tool errors. Evidence references by row: 21 `turn248003view0`; 22 `turn408325view0`; 23 `turn244879view0`; 24 `turn244879view2`; 25 `turn244879view1`; 26 `turn244879view3`; 27 `turn244879view4`; 28 `turn248003view7`; 29 `turn408325view1`; 30 `turn248003view9`. Example observed H1s: “What is the Rabbit Rule in phonics?”, “Why does c sound different in cat and city?”, “When does y act like a vowel?”, and “Why does oo sound different in moon and book?”. Provider snapshots for rows **23 and 25** were labelled **Crawled 2 days ago**; the other eight were labelled **Crawled today**. Provider crawl time is unknown, and extracted text does **not** verify current raw initial HTML or origin technical health.
+
+Independent read-only `curl -L` HTTPS GETs were actually attempted for all 10 URLs with distinct UTC start timestamps. All 10 exited 6: `curl: (6) Could not resolve host: tinystepslearning.com`; no origin HTTP response or headers were obtained. `HTTP_CODE:000` is a curl placeholder, not a server response. Echoed effective URL and zero redirects do not verify redirect behaviour. Direct `robots.txt` web retrieval was inaccessible (`turn248003view10`). HTTP status, final destination, canonical, robots/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. The DNS errors are specific to this audit environment and do not establish a production outage.
+
+**31 October IST coverage after this batch:** **30/202 distinct URLs attempted (14.85%)**, **172 unchecked**, **30 current-day UNVERIFIED for full live-origin readiness**, **zero origin-verified PASS**. Historical 30 PASS records remain historical only. No verified dated before/after production regression or improvement or first-party Google/Bing indexing, rankings or AI citations was established; `CHANGES.md` remains unchanged.
+
+**Workflow safety:** The available connected GitHub functions did not expose repository-wide Actions run lists or workflow administrative state. Attempts to retrieve GitHub API workflow endpoints through the web interface failed. No concurrent run or disabled state could be independently confirmed; proceeded under the user's explicit 25 October GitHub UI-disable confirmation, without treating cron YAML as evidence of an active workflow. No GitHub Actions job was triggered or enabled.
+
+**Change control:** Only the tracker and this summary are updated on `seo-url-health-tracker`. No repo source, workflow, Firebase, Hosting, production settings, or separate six-hour visibility task changed. Next Slot 4: rows 31–40, subject to any earlier genuinely unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 2 — 31 October 2026 (01:10–01:11 IST; independent origin attempts 2026-10-30T19:40:57.066345Z–2026-10-30T19:41:11.120162Z)
 
 **Preflight:** Re-fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md` and `CHANGES.md` on `seo-url-health-tracker` and validated **202 selected rows / 202 unique URLs**, sequential indices 1–202, **22 columns in every CSV record**, slots 1–19 at 10 URLs and slot 20 at 12. Confirmed 10 distinct actual 31 October IST check timestamps from Slot 1, and 192 unchecked for the new IST day. Yesterday's timestamps were excluded; no future slots or checked rows were re-probed.
