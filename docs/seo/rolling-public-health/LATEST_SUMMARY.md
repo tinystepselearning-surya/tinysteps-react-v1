@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 15 — 30 October 2026 (14:12 IST; origin probes 2026-10-30T08:42:10.565210Z–2026-10-30T08:42:19.856071Z)
+
+**Preflight:** Read current tracker, summary and change ledger on `seo-url-health-tracker`. Verified **202 selected rows / 202 unique URLs**, **22 CSV columns**, sequential indices, slots 1–19 with 10 URLs each and slot 20 with 12. Found **140 distinct 30 October IST checked URLs** before this batch, each with a distinct UTC timestamp mapping to 30 October IST. Rows 141–150 had only prior-day checks. No duplicate or future-slot checks.
+
+**Provider-extracted page evidence (partial only):** All **10/10 exact URLs** in rows 141–150 returned substantive page-specific text and H1 headings through ChatGPT web.open, covering school-reopening English readiness, long vowels, choosing online English classes in India, online-versus-school phonics, online phonics games, home phonics activities, blending, comprehension and parent phonics assessment. Provider labelled all snapshots `Crawled today`, but precise provider crawl timestamps are unavailable. Exact URL, H1 and web reference `turn650154view0`–`turn650154view9` are recorded per tracker row. Provider text does **not** establish current origin HTTP status, raw initial HTML or bot readiness.
+
+**Independent origin attempts:** Ten read-only `curl -L` HTTPS GETs started at distinct UTC timestamps between `2026-10-30T08:42:10.565210Z` and `2026-10-30T08:42:10.838941Z`, finishing by `2026-10-30T08:42:19.856071Z`. Five (rows 141–145) exited **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. Five (rows 146–150) exited **28** with `curl: (28) Resolving timed out after 9000/9001 milliseconds`. No origin HTTP response, headers, redirect chain or raw initial HTML was obtained. `HTTP_CODE:000` is a curl placeholder, not a server response. Echoed effective URL and `REDIRECTS:0` do not verify redirects. These are **audit-environment DNS limitations**, not confirmed production failures.
+
+**30 October attempted coverage:** **150/202 distinct URLs (74.26%)**, **52 awaiting scheduled slots**, **0 fully origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **150 UNVERIFIED** for full production technical readiness. All 150 current-day UTC timestamps are distinct and map to 30 October IST. Canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain UNVERIFIED. Historical verified-state fields were preserved. No first-party indexing, ranking or AI citation evidence obtained; no dated verified production regression or improvement established.
+
+**Workflow safety:** GitHub Actions run API reported **0 in-progress and 0 queued** repository runs at preflight. Administrative workflow-state endpoint was unavailable through the connected GitHub fetch tool, so UI disablement could not independently be verified. Continued under user's explicit 25 October GitHub UI-disable confirmation. Cron YAML presence is not evidence of enablement; no workflow was triggered, enabled or modified.
+
+**Persistence:** Tracker and summary updated on `seo-url-health-tracker` with current blob SHA checks and readback verification. `CHANGES.md` intentionally unchanged because no verified meaningful production transition was established. **Next:** Slot 16, rows 151–160. No application source, workflows, Firebase, Hosting, production settings or separate six-hour visibility task changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 14 — 30 October 2026 (13:17 IST; origin probes 2026-10-30T07:47:12.208756Z–2026-10-30T07:47:22.259816Z)
 
 **Preflight:** Read current tracker, summary and change ledger on `seo-url-health-tracker`. Validated **202 rows / 202 unique URLs**, sequential slot allocation (slots 1–19: 10 URLs; slot 20: 12), **22 CSV columns** and **130 distinct 30 October IST checked URLs/timestamps** before this batch. Rows 131–140 had only 29 October checks; no current-day rechecks, missed earlier-slot URLs or premature future-slot scans.
