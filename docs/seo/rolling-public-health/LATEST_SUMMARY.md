@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 14 — 30 October 2026 (13:17 IST; origin probes 2026-10-30T07:47:12.208756Z–2026-10-30T07:47:22.259816Z)
+
+**Preflight:** Read current tracker, summary and change ledger on `seo-url-health-tracker`. Validated **202 rows / 202 unique URLs**, sequential slot allocation (slots 1–19: 10 URLs; slot 20: 12), **22 CSV columns** and **130 distinct 30 October IST checked URLs/timestamps** before this batch. Rows 131–140 had only 29 October checks; no current-day rechecks, missed earlier-slot URLs or premature future-slot scans.
+
+**Provider-extracted text (partial verification):** Direct exact-URL ChatGPT web retrieval returned substantive, page-specific H1 and article text for **10/10** blog URLs (rows 131–140). Topics: cross-skill phonics/grammar/communication, spelling, decoding assessment, home English engagement, reading fluency, sentence formation, paragraph writing, storytelling, vocabulary/comprehension and school phonics benchmarks. Web provider labelled each `Crawled today`, without precise crawl timestamps. Exact H1s, URLs and references `turn886058view0` through `turn886058view9` are in tracker evidence. This is **provider-extracted text only**, not independent live-origin or raw initial HTML verification.
+
+**Independent read-only origin attempts:** Ten `curl -L` HTTPS GETs began at ten distinct actual UTC timestamps from `2026-10-30T07:47:12.208756Z` through `2026-10-30T07:47:12.214118Z`, ending by `2026-10-30T07:47:22.259816Z`. Six exited **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; four (rows 132, 134, 139, 140) exited **28** with `curl: (28) Resolving timed out after 10001 milliseconds`. No origin HTTP response, headers, redirect chain or initial HTML was obtained. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed effective URL and zero redirects do not verify final destination or redirects. These are **audit-environment DNS limitations**, not verified production failures.
+
+**30 October attempted coverage:** **140/202 distinct URLs (69.31%)**, **62 awaiting scheduled slots**, **0 fully live-origin-verified current-day PASS**, **0 confirmed production FAIL/WARN** and **140 UNVERIFIED** for full technical readiness. All 140 current-day timestamps are distinct and map to 30 October IST. Canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw HTML and JSON-LD remain UNVERIFIED. No first-party indexing, ranking or AI citation evidence was obtained. Historical verified-state fields preserved; no dated verified production transition was established.
+
+**Workflow safety:** GitHub Actions repository run API returned **0 in-progress and 0 queued** runs at preflight. Administrative workflow disablement could not be independently verified through the connected GitHub endpoint; proceeded under user's explicit 25 October UI-disable confirmation. Cron YAML presence is not evidence of an enabled workflow. No GitHub workflow was triggered, enabled or modified.
+
+**Persistence:** Tracker and summary updated on `seo-url-health-tracker` with safe current blob SHA checks and verified readback. `CHANGES.md` intentionally unchanged because no verified meaningful production regression or improvement was established. **Next:** Slot 15, rows 141–150. No source, workflows, Firebase, Hosting, production settings or separate six-hour visibility task changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 13 — 30 October 2026 (12:17–12:18 IST; origin probes 2026-10-30T06:47:57.343948Z–2026-10-30T06:48:11.429770Z)
 
 **Preflight:** Read latest tracker, summary and changes ledger on `seo-url-health-tracker`. Verified **202 rows / 202 unique URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 with ten URLs each and slot 20 with twelve. Exactly **120 distinct 30 October IST attempts** preceded this batch, all with unique UTC timestamps mapping to 30 October IST. Rows 121–130 had only prior-day attempts. No rechecks or future-slot scans.
