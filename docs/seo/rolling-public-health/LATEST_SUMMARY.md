@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 17 — 30 October 2026 (16:13 IST; independent origin attempts 2026-10-30T10:43:47.222982Z–2026-10-30T10:43:57.264561Z)
+
+**Preflight:** Read latest tracker, summary and change ledger on `seo-url-health-tracker`. Validated **202 rows / 202 unique selected URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 with 10 URLs each and slot 20 with 12. Found **160 distinct 30 October IST checked URLs**, each with unique valid UTC check timestamp mapping to 30 October IST. Rows 161–170 had only prior-day checks; no earlier missed slots and no premature future-slot checks.
+
+**Provider retrieval (scoped partial verification):** All **10/10** assigned blog URLs yielded substantive page-specific extracted text and H1 headings. Nine exact-URL `web.open` results (`turn409422view0`, `turn409422view2`–`turn409422view9`) were labelled **Crawled today**; precise provider crawl times unknown. Row 162 direct `web.open` was inaccessible (`turn409422view1`), but following the link from the blog index (`turn708643view0`, link 25) returned its article and H1 (`turn860127view0`), labelled **Crawled last week**; not a current production verification. This provider-extracted text is not independent origin HTTP, initial HTML, canonical, structured-data or bot-readiness evidence. Direct robots.txt web retrieval was inaccessible (`turn244756view0`).
+
+**Independent origin attempts:** Ten read-only `curl -L` HTTPS GETs began at **ten distinct actual UTC timestamps** between `2026-10-30T10:43:47.222982Z` and `2026-10-30T10:43:47.230513Z`, ending by `2026-10-30T10:43:57.264561Z`. **Six** (rows 162, 164, 165, 166, 168, 169) exited 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. **Four** (rows 161, 163, 167, 170) exited 28 with `curl: (28) Resolving timed out after 10000/10001 milliseconds`. No origin HTTP response, headers, redirect chain or raw initial HTML was obtained. `CURL_HTTP_CODE:000` is a curl placeholder, not a server response; echoed effective URL and `CURL_REDIRECTS:0` do not verify redirects. These are **audit-environment DNS limitations**, not confirmed production failures.
+
+**30 October attempted coverage:** **170/202 distinct URLs (84.16%)**, **32 awaiting scheduled slots**, **0 fully origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **170 UNVERIFIED** for full production technical readiness. All 170 current-day timestamps are distinct and map to 30 October IST. Canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain UNVERIFIED. Historical verified-state fields preserved. No dated verified production regression or improvement established; no first-party indexing, ranking or AI citation evidence obtained.
+
+**Workflow safety:** GitHub Actions run API reported **0 queued and 0 in-progress** repository runs at preflight. Administrative workflow-state endpoint was rejected by the connected GitHub fetch tool; the user's explicit 25 October UI-disable confirmation remains the operating assumption. Cron YAML presence does not prove enablement. No GitHub Actions workflow was triggered, enabled or modified.
+
+**Persistence:** Tracker and summary updated on `seo-url-health-tracker` with blob SHA checks and post-write readback verification. `CHANGES.md` intentionally unchanged (preflight blob `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`) because no verified meaningful production transition was established. **Next:** Slot 18, rows 171–180. No application source, workflows, Firebase, Hosting, production settings or separate six-hour visibility task changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 16 — 30 October 2026 (15:15–15:16 IST; origin attempts 2026-10-30T09:45:23.618233Z–2026-10-30T09:45:32.678117Z)
 
 **Preflight:** Read current tracker, summary and change ledger on `seo-url-health-tracker`. Validated **202 rows / 202 unique selected URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 with ten URLs each and slot 20 with twelve. **150 distinct 30 October IST attempts** existed before this run, all with unique UTC timestamps mapping to the correct IST day. Rows 151–160 had only prior-day checks; no earlier missed slots or premature future-slot checks.
