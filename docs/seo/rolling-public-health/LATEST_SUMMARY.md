@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 4 — 31 October 2026 (03:17 IST; origin attempts 2026-10-30T21:47:47.758224Z–2026-10-30T21:47:57.798669Z)
+
+**Preflight:** Re-fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns per record**, slots 1–19 at 10 URLs each and slot 20 at 12. Before Slot 4, 30 distinct 31 October IST checks existed in Slots 1–3; rows 31–40 were not yet checked today. No future-slot or already-checked rows were selected.
+
+**Executed Slot 4 (rows 31–40):** All 10 assigned URLs were inspected through ChatGPT web retrieval. Nine direct exact-URL opens returned substantive page-specific extracted text; the OU/OW guide (row 31) was retrieved by following its link from the phonics resource hub after the direct open was inaccessible. Evidence references: row 31 `turn378202view0`; rows 32–40 `turn916150view1`–`turn916150view9`. Example observed H1s: “Why are ou and ow tricky for children?”, “Why can the ending sound /shun/ be spelled in different ways?”, “Grammar & Writing Resources”, “Speaking & Communication Resources”, “Online English Classes for Kids: Fees & Pricing”, and “How Can We Help?”. Provider snapshots: row 31 labelled **Crawled last week**, rows 32–38 **Crawled yesterday**, rows 39–40 **Crawled today**. Exact provider crawl timestamps unknown. Text extraction does not prove current origin HTML, technical SEO health, indexing, or AI citations.
+
+**Independent origin probes:** Ten read-only `curl -L` HTTPS GETs were executed, with ten distinct actual UTC start times recorded individually in the tracker. All exited 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; no origin HTTP response, headers or body was obtained. `HTTP_CODE:000` is a curl placeholder, not an origin status, and echoed effective URL/zero redirects are not verified redirect observations. Direct `robots.txt` web retrieval was inaccessible (`turn634322view0`). Origin HTTP status, final/redirect destination, canonical, noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot rules, raw initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not establish a production outage.
+
+**31 October IST coverage:** **40/202 distinct URLs attempted (19.80%)**, **162 unchecked**, **40 current-day UNVERIFIED for complete live-origin readiness**, **zero current-day origin-verified PASS**. Thirty historical PASS records remain historical only. No dated verified before/after production regression or improvement, first-party indexing/rankings or AI-citation evidence was established; `CHANGES.md` remains unchanged.
+
+**Workflow safety:** Available GitHub connector functions did not expose repository-wide Actions run lists or administrative workflow state. GitHub API endpoints were inaccessible through both web retrieval and direct curl. Concurrent GitHub runs and administrative disablement therefore remain independently unverified. Proceeded under the user's explicit 25 October GitHub UI-disable confirmation; cron YAML alone does not establish an active workflow. No GitHub Actions job was run, enabled or modified.
+
+**Change control:** Only the tracker and this summary were updated on `seo-url-health-tracker`. No source, workflows, Firebase, Hosting, production settings or separate six-hour visibility task changed. Next Slot 5: rows 41–50, subject to earlier genuine unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 3 — 31 October 2026 (02:13–02:14 IST; independent origin attempts 2026-10-30T20:43:08.997637Z–2026-10-30T20:43:19.071538Z)
 
 **Preflight:** Re-fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns per record**, slots 1–19 containing 10 URLs and slot 20 containing 12. Confirmed 20 distinct checked URLs with actual UTC timestamps in the 31 October IST day (Slots 1–2) and 182 unchecked. No checked URLs or future-slot rows were selected.
