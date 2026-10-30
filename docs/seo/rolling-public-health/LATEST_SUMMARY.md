@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 18 — 30 October 2026 (17:09–17:10 IST; origin attempts 2026-10-30T11:39:53.522384Z–2026-10-30T11:40:03.584562Z)
+
+**Preflight:** Read the current tracker, summary and changes ledger on `seo-url-health-tracker`. Confirmed **202 selected rows / 202 unique URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 containing ten URLs each and slot 20 containing twelve. Found **170 distinct 30 October IST attempts** with unique UTC timestamps before this batch. Rows 171–180 had only 29 October attempts; no earlier missed or future-slot checks.
+
+**Provider text retrieval (partial verification only):** All **10/10** exact assigned blog URLs returned substantive, page-specific H1 and article text via ChatGPT `web.open`, references `turn354207view0`–`turn354207view9`. Topics: speaking competition preparation, speaking confidence, debates, family showcases, speech structure, video feedback, visual aids, synthetic phonics versus traditional reading, systematic/cumulative school phonics, and phonics starting age. Each provider snapshot was labelled **Crawled today**; precise crawl timestamps were not supplied. Provider-extracted text does **not** prove live origin HTTP, initial HTML, canonical, robots or structured data. Direct `robots.txt` retrieval was inaccessible (`turn354207view10`).
+
+**Independent read-only origin attempts:** Ten `curl -L` HTTPS GETs began at **ten distinct actual UTC timestamps** from `2026-10-30T11:39:53.522384Z` to `2026-10-30T11:39:53.529345Z`, ending by `2026-10-30T11:40:03.584562Z`. All **10 exited 6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response, headers, redirect chain or raw initial HTML was received. `CURL_HTTP_CODE:000` is a curl placeholder, not an HTTP response; echoed effective URL and `CURL_REDIRECTS:0` do not verify redirects. This is an **audit-environment DNS limitation**, not evidence of a production outage.
+
+**30 October attempted coverage:** **180/202 distinct URLs (89.11%)**, **22 awaiting scheduled slots**, **0 fully origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **180 UNVERIFIED** for complete production technical readiness. All 180 current-day timestamps are distinct and correspond to 30 October IST. Canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain UNVERIFIED. Historical verified-state fields were preserved. No verified dated production regression or improvement; no first-party indexing, ranking or AI-citation evidence.
+
+**Workflow safety:** The connected GitHub actions interface exposed no repository-wide workflow-state or queued/in-progress run listing in this run. Public GitHub API URLs were inaccessible through web retrieval. Therefore administrative disablement and concurrent runs **could not be independently verified**; proceeded under the user's explicit 25 October UI-disable confirmation. Cron YAML presence is not evidence of an enabled workflow. No GitHub Actions workflow was triggered, enabled or modified.
+
+**Persistence:** Tracker updated using current blob SHA and verified by readback; this summary is the accompanying evidence record. `CHANGES.md` intentionally unchanged (preflight blob `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`) because no verified meaningful production transition was established. **Next:** Slot 19, rows 181–190. No application source, workflows, Firebase, Hosting, production settings or separate six-hour search-visibility task changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 17 — 30 October 2026 (16:13 IST; independent origin attempts 2026-10-30T10:43:47.222982Z–2026-10-30T10:43:57.264561Z)
 
 **Preflight:** Read latest tracker, summary and change ledger on `seo-url-health-tracker`. Validated **202 rows / 202 unique selected URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 with 10 URLs each and slot 20 with 12. Found **160 distinct 30 October IST checked URLs**, each with unique valid UTC check timestamp mapping to 30 October IST. Rows 161–170 had only prior-day checks; no earlier missed slots and no premature future-slot checks.
