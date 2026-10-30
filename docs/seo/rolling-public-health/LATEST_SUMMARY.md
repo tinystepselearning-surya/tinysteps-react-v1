@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 8 — 30 October 2026 (07:13 IST; origin attempts 2026-10-30T01:43:22.543948Z–2026-10-30T01:43:55.327998Z)
+
+**Preflight:** Read latest tracker, summary and change ledger on `seo-url-health-tracker`. Verified 202 rows, 202 unique URLs, 22 columns, sequential indices, slots 1–19 at 10 URLs each and slot 20 at 12. All stored UTC timestamps mapped to stored Asia/Kolkata dates. Exactly 70 distinct 30 October IST checks preceded this batch (rows 1–70). Rows 71–80 were eligible, previously checked only on 29 October; no duplicate current-day checks or future-slot probes.
+
+**Independent live-origin attempts:** Ten read-only `curl -L` HTTPS GETs for rows 71–80 started at ten distinct actual UTC times between `2026-10-30T01:43:22.543948Z` and `2026-10-30T01:43:55.317401Z`, completed by `2026-10-30T01:43:55.327998Z`. All ten exited **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response, headers, redirects or raw HTML obtained. Curl `HTTP_CODE:000` is not an HTTP status; echoed effective URL and `REDIRECTS:0` do not establish redirect behavior. DNS failure is an **audit-environment access limitation**, not evidence of production outage.
+
+**Provider-text partial verification:** ChatGPT web retrieval returned substantive page-specific extracted text and H1 for **10/10** exact URLs: letter tracing with sounds, balloon-pop phonics, vocabulary flashcards, Phonics, Grammar, Public Speaking, Speaking Progress Framework, For Schools, Book Demo and Reading Classes. Nine opened directly. Direct open of Speaking Progress Framework initially failed, but following its exact URL link from Book Demo returned the page text (`turn453184view0`). Provider snapshots were labelled `Crawled today`, without precise crawl times. Row-specific H1s, references, UTC probe start/end times and curl stderr are preserved in tracker rows 71–80. Provider text does **not** independently verify origin HTTP status, final/redirect destination, canonical, robots/noindex/X-Robots-Tag, bot access, raw initial HTML, JSON-LD or form/game functionality.
+
+**30 October attempted coverage:** **80/202 distinct URLs (39.60%)**, **122 awaiting scheduled slots**, **0 fully live-origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **80 UNVERIFIED** for full technical readiness. All 80 current-day timestamps are distinct and correspond to 30 October IST. Historical 25 October `last_verified_status=PASS` entries preserved, not treated as current checks or regression evidence. No first-party Google/Bing indexing, ranking or AI citation claims.
+
+**Workflow safety:** GitHub repository Actions API reported **0 in-progress and 0 queued runs**. Workflow administrative-state endpoint unavailable via connected fetch interface; disabled state **not independently verified**. Continued under user's explicit 25 October GitHub UI disable confirmation. No workflow triggered, enabled or changed.
+
+**Persistence and changes:** Master tracker updated via current blob SHA and independently read back (blob `3c869962c01150e0c3a0256e78b5d20fe704d1db`). No independently verified dated production regression/improvement, so `CHANGES.md` remains unchanged (blob `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`). **Next:** Slot 9, rows 81–90. No application source, Firebase, Hosting, workflows, production settings or separate six-hour visibility task changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 7 — 30 October 2026 (06:12 IST; origin probes 2026-10-30T00:42:48.181919Z–2026-10-30T00:43:03.303191Z)
 
 **Preflight:** Fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 rows / 202 unique selected URLs**, sequential indices, **22 CSV columns**, slots 1–19 with 10 URLs each and slot 20 with 12, and consistent stored UTC/Asia-Kolkata dates. Exactly **60 distinct current-day checked URLs** (rows 1–60) preceded this run. Rows 61–70 were eligible, with prior-day timestamps only; no current-day rechecks or future-slot probes.
