@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 5 — 31 October 2026 (04:17 IST; origin attempts 2026-10-30T22:47:23.412055Z–2026-10-30T22:47:38.460478Z)
+
+**Preflight:** Re-fetched the latest `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md` and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns per row**, slots 1–19 with 10 URLs each and slot 20 with 12. Before Slot 5, **40 distinct 31 October IST attempts** existed in slots 1–4; rows 41–50 were not checked today. Yesterday's timestamps were not counted. No previously checked or future-slot URLs were selected.
+
+**Executed Slot 5 (rows 41–50):** All 10 exact public URLs returned substantive page-specific provider-extracted text through ChatGPT web.open, references `turn480233view0`–`turn480233view9`. These include /why-tiny-steps, /team, /team/vannala-ravali-priya, /class-samples, /testimonials, /careers, /courses, /curriculum, /faq and /best-online-phonics-classes-for-kids-in-india. Observed H1 examples: “Why Parents Choose Tiny Steps Learning”, “Vannala Ravali Priya”, “Find the Right English Course for Your Child”, “English Curriculum for Kids Ages 3–12” and “Best Online Phonics Classes for Kids in India”. Provider snapshots were labelled **Crawled today** for rows 42–45 and **Crawled yesterday** for rows 41 and 46–50. Exact provider crawl times are unknown; extracted text does not establish current raw initial HTML or live-origin technical health.
+
+**Independent origin probes:** Ten read-only `curl -L` HTTPS GET requests were executed with ten distinct actual UTC start timestamps saved individually in the tracker (from 22:47:23.412055Z to 22:47:28.436286Z; last completion 22:47:38.460478Z). All ten exited 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; no origin HTTP response, headers or body was obtained. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed URL_EFFECTIVE and NUM_REDIRECTS:0 do not verify redirects. Direct robots.txt web retrieval was inaccessible (`turn480233view10`). Origin HTTP status, final/redirect destination, canonical, noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do **not** establish a production outage.
+
+**31 October IST coverage:** **50/202 distinct URLs attempted (24.75%)**, **152 unchecked**, **50 current-day UNVERIFIED for complete origin technical readiness**, **zero current-day origin-verified PASS**. The 30 historical PASS records remain historical only. No verified dated before/after production regression or improvement, first-party indexing/ranking or AI-citation evidence was established; `CHANGES.md` remains unchanged.
+
+**Workflow safety:** GitHub API returned **zero queued and zero in-progress repository Actions runs**. The administrative workflow state endpoint was rejected by the connector as unsupported; disablement remains independently unverified. Proceeded under the user's explicit 25 October GitHub UI-disable confirmation. Cron YAML alone does not prove an active workflow. No workflow was run, enabled or changed.
+
+**Change control:** Only the audit tracker and this summary were updated on `seo-url-health-tracker`. No application source, workflows, Firebase, Hosting, production settings or separate six-hour visibility task changed. Next Slot 6: rows 51–60, subject to earlier genuine unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 4 — 31 October 2026 (03:17 IST; origin attempts 2026-10-30T21:47:47.758224Z–2026-10-30T21:47:57.798669Z)
 
 **Preflight:** Re-fetched `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md`, and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns per record**, slots 1–19 at 10 URLs each and slot 20 at 12. Before Slot 4, 30 distinct 31 October IST checks existed in Slots 1–3; rows 31–40 were not yet checked today. No future-slot or already-checked rows were selected.
