@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 12 — 30 October 2026 (11:17 IST; origin probes 2026-10-30T05:47:16.605163Z–2026-10-30T05:47:29.640840Z)
+
+**Preflight:** Read the current tracker, summary and changes ledger on `seo-url-health-tracker`. Verified **202 rows / 202 unique URLs**, 22-column CSV integrity, sequential indices, slots 1–19 with ten URLs each and slot 20 with twelve. Exactly **110 distinct 30 October IST attempts** preceded this batch; all had distinct UTC timestamps mapping to 30 October IST. Rows 111–120 had only prior-day checks, and no earlier eligible unchecked rows remained. No rechecks or future-slot scans.
+
+**Actual URL checks:** All ten exact blog URLs (rows 111–120) returned substantive page-specific provider-extracted text, with visible H1s about grammar-rule transfer, class-to-home reading, speaking confidence, conversation skills, CVC decoding, digraphs, CBSE/NCF phonics, grammar assessment, conjunctions and creative writing. ChatGPT web snapshots were labelled **Crawled yesterday**, with exact provider crawl times unknown. The page-specific headings, URLs and references are recorded in each tracker row. These snapshots cannot independently certify current origin HTTP responses or initial HTML.
+
+**Independent origin attempts:** Ten read-only `curl -L` HTTPS GETs were executed with distinct actual UTC start times between `2026-10-30T05:47:16.605163Z` and `2026-10-30T05:47:21.630232Z`, completing by `2026-10-30T05:47:29.640840Z`. **Eight** returned exit **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; **two** (rows 116 and 119) returned exit **28** with `curl: (28) Resolving timed out after 8001 milliseconds`. No origin HTTP response, headers, redirect chain or raw initial HTML was obtained. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed effective URL and `REDIRECTS:0` do not verify destination/redirect behavior. These are **audit-environment DNS failures**, not proof of a production outage.
+
+**30 October attempted coverage:** **120/202 distinct URLs (59.41%)**, **82 awaiting scheduled slots**, **0 fully live-origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **120 UNVERIFIED** for full origin technical readiness. All 120 UTC timestamps are distinct and map to 30 October IST. Canonical, meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw HTML and JSON-LD remain UNVERIFIED. No first-party Google/Bing indexing, rankings or AI citations were checked or claimed.
+
+**Workflow safety:** Current GitHub Actions workflow state and concurrent runs could **not** be independently verified in this run; public Actions API endpoints were inaccessible and the connected GitHub tool does not expose a repository-wide run/state listing. Continued under the user's explicit 25 October UI-disable confirmation; cron YAML presence is not evidence of enablement. No workflow was triggered, enabled or changed.
+
+**Persistence:** Tracker update and independent blob/content readback verified (commit `e1e6c7d5043099346659d488f371dfac7ca95ec4`, blob `b09112cbce1dfc60c203630ae936ba337d0e0eb8`). No dated, independently verified production regression or improvement was established, so `CHANGES.md` remains unchanged (blob `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`). **Next:** Slot 13, rows 121–130. No application source, workflows, Firebase, Hosting, production settings or separate six-hour visibility audit changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 11 — 30 October 2026 (10:10 IST; origin probes 2026-10-30T04:40:07.168545Z–2026-10-30T04:40:22.255281Z)
 
 **Preflight:** Independently read the current tracker, summary and changes ledger on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, 22 columns, slots 1–19 with 10 URLs each and slot 20 with 12. Exactly **100 distinct 30 October IST attempts** (rows 1–100) preceded this batch, with distinct UTC timestamps mapping to 30 October IST. Rows 101–110 had only prior-day checks. No current-day rechecks or future-slot scans.
