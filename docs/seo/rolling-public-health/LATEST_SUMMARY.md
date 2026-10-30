@@ -1,3 +1,21 @@
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
+## Slot 1 — 31 October 2026 (00:13 IST; origin attempts 2026-10-30T18:43:40.730109Z–2026-10-30T18:43:50.802906Z)
+
+**Preflight:** Re-read `MASTER_URL_TRACKER.csv`, `LATEST_SUMMARY.md` and `CHANGES.md` on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices 1–202, **22 columns in every CSV record**, slots 1–19 containing ten URLs each and slot 20 containing twelve. Prior to Slot 1, **zero** records had 31 October IST check dates; the 202 checks dated 30 October are yesterday's coverage, not today's. No duplicates, future-slot checks or backfilled timestamps.
+
+**Executed checks (10 assigned URLs, rows 1–10):** ChatGPT live web retrieval returned substantive page-specific extracted text for **all 10** exact URLs (sources `turn786227view0`–`turn786227view9`, snapshots labelled *Crawled today*, precise provider crawl times unknown). Examples of directly observed headings: homepage `Online English Classes for Kids.`; resources `English Learning Resources for Kids, Parents & Educators`; CK guide `When should a child use ck instead of k at the end of a word?`; NG guide `Why should ng be read as one sound in words such as sing?`. These are provider-extracted text observations, **not independently validated raw initial HTML or origin health**.
+
+Independent read-only `curl -L` HTTPS GETs were actually attempted on all ten exact URLs, with **ten distinct actual UTC start timestamps** recorded per row. All ten ended with exit 6 and exact diagnostic `curl: (6) Could not resolve host: tinystepslearning.com`. The audit environment obtained no origin HTTP response. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed effective URL and redirect count do not verify destination or redirects. Direct web retrieval of `https://tinystepslearning.com/robots.txt` was inaccessible (`turn779931view0`). This limitation is **not evidence of a production outage**. HTTP status, redirect destination, canonical, meta/X-Robots-Tag, robots access for Googlebot/Bingbot/OAI-SearchBot, raw initial HTML and JSON-LD all remain **UNVERIFIED**.
+
+**Current-day coverage:** **10/202 distinct URLs attempted (4.95%)**, **192 unchecked**, **10 UNVERIFIED for complete live-origin technical readiness**, **zero current-day origin-verified PASS**. The 30 historical PASS records are preserved but are not current-day verification. The previous day's 202 attempts do not count toward 31 October coverage. No verified dated before/after production regression or improvement, Google/Bing indexing, rankings or AI citations was established; `CHANGES.md` intentionally unchanged.
+
+**GitHub Actions safety:** Connected GitHub API returned **zero in-progress** and **zero queued** repository Actions runs at this check. The workflow administrative-state endpoint was rejected as unsupported, so disablement remains independently unverified. Proceeded under the user's explicit 25 October UI-disable confirmation; cron YAML presence alone does not establish an enabled workflow. No GitHub Actions workflow was run, enabled or modified.
+
+**Change control and next step:** Only the audit tracker and this summary were updated on `seo-url-health-tracker`; no source, workflows, Firebase, Hosting or production settings were changed. Next scheduled Slot 2 audits rows 11–20, unless an earlier eligible unchecked gap requires recovery. The separate six-hour outside-in visibility task remains unchanged.
+
+---
+
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
 ## Slot 24 — final catch-up review (no new URL probes)
