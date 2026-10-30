@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
 
+## Slot 10 — 30 October 2026 (09:12–09:13 IST; independent origin probes 2026-10-30T03:42:49.355656Z–2026-10-30T03:43:14.489613Z)
+
+**Preflight:** Read the latest tracker, summary and changes ledger on `seo-url-health-tracker`. Validated **202 selected rows, 202 unique URLs, 22 columns, sequential indices**, slots 1–19 with 10 URLs each and slot 20 with 12. Exactly **90 distinct 30 October IST attempts** (rows 1–90) preceded this batch, with unique timestamps mapping to the correct IST date. Rows 91–100 had only 29 October checks; no rechecks of today's rows or premature future-slot scans.
+
+**Actual independent origin attempts:** Ten read-only `curl -L` HTTPS GETs for rows 91–100 started at distinct UTC times between `2026-10-30T03:42:49.355656Z` and `2026-10-30T03:43:09.475957Z`, ending by `2026-10-30T03:43:14.489613Z`. All 10 exited **6**; exact stderr: `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP response, headers, redirect chain or raw initial HTML was received. `HTTP_CODE:000` is a curl placeholder, not a server HTTP status; echoed effective URLs and zero redirects do not verify destination or redirect behavior. This is an **audit-environment DNS access limitation**, not proof of production outage.
+
+**Partial provider-text evidence:** Exact-URL ChatGPT web retrieval returned substantive page-specific extracted text and H1 for **10/10**: child not reading properly; slow reader help; shy child speaking confidence; reading fluency programme; confidence-building programme; English foundation programme; summer camps; India summer-camp planning; summer reading; summer speaking. Provider snapshots labelled `Crawled yesterday`, with precise provider crawl time unknown. The four summer pages explicitly identify 2026 programmes as concluded/historical resources, not live camp booking pages. Row-specific H1s, references, UTC probe start/end times and exact stderr are preserved in tracker rows 91–100. Provider-extracted text cannot verify origin HTTP status, redirect destination, canonical, robots/noindex or X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML or JSON-LD; these remain **UNVERIFIED**.
+
+**30 October attempted coverage:** **100/202 distinct URLs (49.50%)**, **102 awaiting scheduled slots**, **0 fully live-origin-verified current-day PASS**, **0 confirmed production FAIL/WARN**, and **100 UNVERIFIED** for full origin technical readiness. All 100 current-day UTC timestamps are distinct and correctly map to 30 October IST. Historical verified-state fields preserved; no unsupported claims about Google/Bing indexing, rankings or AI citations.
+
+**Workflow safety:** GitHub repository Actions run API returned **0 in-progress and 0 queued** runs at preflight. Administrative workflow-state endpoint was rejected as unsupported, so UI disablement was **not independently verified**. Continued under user's explicit 25 October UI-disable confirmation; cron YAML alone is not proof of enablement. No GitHub workflow was triggered, enabled or changed.
+
+**Persistence and changes:** Updated and independently read back `MASTER_URL_TRACKER.csv` (blob `b06eaf33efd93422534868d0d9a8d660c8ee05f2`, commit `caf79ea436a48950d976b7fda619422854c13b49`). No dated, independently verified production regression or improvement; `CHANGES.md` intentionally unchanged (blob `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`). **Next:** Slot 11, rows 101–110. No source, workflows, Firebase, Hosting, production settings or separate six-hour visibility audit changed.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-30 IST)
+
 ## Slot 9 — 30 October 2026 (08:16 IST; origin attempts 2026-10-30T02:46:47.384141Z–2026-10-30T02:46:56.644520Z)
 
 **Preflight:** Read the current tracker, summary and change ledger on `seo-url-health-tracker`. Verified exactly **202 selected rows / 202 unique URLs**, sequential indices, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. The 80 previously checked 30 October IST rows (1–80) had distinct UTC timestamps correctly mapped to their IST date. Rows 81–90 were eligible and last checked 29 October, so no current-day recheck or future-slot scan was performed.
