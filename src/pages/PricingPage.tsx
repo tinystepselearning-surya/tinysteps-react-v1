@@ -92,7 +92,7 @@ const faqItems = [
   {
     question: 'Where can I compare phonics fees in India?',
     answer:
-      'Use the dedicated Phonics Class Fees in India page for Tiny Steps phonics pricing plus the research-led phonics market benchmark. This main pricing page remains the owner for cross-programme English class fees and value comparison.',
+      'See the Phonics Class Fees in India page for Tiny Steps phonics pricing and a comparison of other phonics class fees. Use this page to compare Tiny Steps class fees across programmes.',
   },
   {
     question: 'What is included in the live class fee?',
@@ -466,7 +466,7 @@ const PricingPage: FC = () => {
         <div className="grid gap-5 lg:grid-cols-2">
           <article className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-indigo-700">What the live class fee covers</p>
-            <h2 className="mt-2 text-2xl font-bold text-slate-950">Keep inclusions factual and programme-led</h2>
+            <h2 className="mt-2 text-2xl font-bold text-slate-950">What is included in each live class fee?</h2>
             <ul className="mt-5 space-y-3 text-sm leading-7 text-slate-700">
               <li>• Live teacher-led class time</li>
               <li>• Assessment-led programme and starting-point recommendation</li>
@@ -483,7 +483,7 @@ const PricingPage: FC = () => {
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Phonics-specific research</p>
             <h2 className="mt-2 text-2xl font-bold text-slate-950">Looking specifically for phonics fees in India?</h2>
             <p className="mt-3 text-sm leading-7 text-slate-700">
-              The dedicated Phonics Class Fees in India page contains Tiny Steps phonics pricing plus the anonymised research benchmark for live 1:1 and group phonics fees. This page stays focused on cross-programme English-class pricing.
+              The dedicated Phonics Class Fees in India page includes Tiny Steps phonics pricing and a research-based comparison of live 1:1 and group phonics fees. You can compare our other English class fees on this page.
             </p>
             <Link to="/phonics-fees-india" className="mt-5 inline-flex text-sm font-semibold text-slate-950 underline underline-offset-4">
               See the phonics fee research
@@ -495,9 +495,9 @@ const PricingPage: FC = () => {
       <section className="mx-auto max-w-6xl px-6 pb-12">
         <div className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-sky-700">Choose the programme after assessment</p>
-          <h2 className="mt-2 text-3xl font-bold text-slate-950">The price owner should not replace the programme owner</h2>
+          <h2 className="mt-2 text-3xl font-bold text-slate-950">Explore the learning programmes behind the pricing</h2>
           <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
-            Standard pricing is shared across the core live 1:1 programme system. Use the specialist pages to understand what the child will learn, then use this page to compare format and price.
+            Standard live 1:1 pricing applies across our core English programmes. Explore what your child will learn in each programme, then compare teaching formats and fees here.
           </p>
           <div className="mt-6 flex flex-wrap gap-3 text-sm font-semibold text-slate-900">
             {[
