@@ -17,7 +17,7 @@ export const SEMANTIC_FACTS = {
   brand: {
     name: 'Tiny Steps Learning',
     shortName: 'Tiny Steps',
-    organizationName: 'Tiny Steps Early Education',
+    organizationName: 'Tiny Steps Learning',
     websiteOrigin: 'https://tinystepslearning.com',
     positioning: 'premium online English learning school for children aged 3–12',
   },
