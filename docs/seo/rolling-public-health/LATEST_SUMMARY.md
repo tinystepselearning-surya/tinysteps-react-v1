@@ -1,3 +1,19 @@
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
+## Slot 1 — 1 November 2026, 00:12 IST (observations 2026-10-31T18:42:17.134864Z–18:42:42.261058Z UTC)
+
+**Tracker preflight:** Re-read all three tracker files. Validated 202 sequential selected records / 202 unique URLs, 22 CSV columns per row, slots 1–19 with 10 each and slot 20 with 12. No valid 1 November IST observation existed before this run; 31 October records were excluded from today's coverage. Exactly 10 assigned Slot 1 URLs (rows 1–10) were checked, with 10 distinct actual UTC start timestamps. **Today's attempted coverage: 10/202 (4.95%); 192 URLs remain for later scheduled slots. Fully origin-verified current-day URLs: 0; current-day complete technical readiness: 10 UNVERIFIED.** No future-slot URLs scanned or old-day timestamps counted.
+
+**Public evidence:** ChatGPT web.open returned page-specific extracted text for all 10 exact URLs (homepage, blog, resources hub, phonics hub and six phonics-pattern pages), including homepage H1 “Online English Classes for Kids.” (turn249416view0) and CK rule H1 “When should a child use ck instead of k at the end of a word?” (turn249416view4). Sources: turn249416view0–turn249416view9. Provider labels were “Crawled today”; precise provider crawl times and raw initial HTML are not independently established. Direct robots.txt retrieval was inaccessible (turn249416view10).
+
+**Origin check limitation:** Ten distinct independent read-only curl HTTPS GET probes at the UTC times above failed before origin HTTP with exit code 6 and “Could not resolve host: tinystepslearning.com” (audit-environment DNS resolution). HTTP_CODE:000 is not an origin status. No live origin HTTP status, redirect destination, canonical, robots/noindex directives, initial HTML, structured data or crawler-specific access was verified; this does **not** establish a production outage. No first-party Google/Bing indexing, ranking or AI-citation evidence was obtained. No verified dated production regression/improvement was identified; 30 historical PASS records remain historical only.
+
+**Workflow safety:** GitHub Actions administrative enablement and concurrent repository runs could not be independently inspected with the available GitHub connector. Read-only attempts to access the GitHub Actions/API pages through web retrieval were inaccessible. The user's confirmed 25 October UI disablement remains the operating assumption; presence of cron YAML is not evidence of an enabled workflow. No GitHub workflow was started, enabled or modified.
+
+**Change control:** MASTER_URL_TRACKER.csv updated using its current blob SHA and independently read back; LATEST_SUMMARY.md updated with this scoped evidence. CHANGES.md remains unchanged because no meaningful verified production transition was established. No repo application source, workflows, Firebase, Hosting or production settings changed. **Next: Slot 2 (rows 11–20), only when eligible.**
+
+---
+
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
 ## Slot 24 — 31 October 2026, catch-up closeout (23:19 IST; readback approximately 2026-10-31T17:49:07Z UTC)
