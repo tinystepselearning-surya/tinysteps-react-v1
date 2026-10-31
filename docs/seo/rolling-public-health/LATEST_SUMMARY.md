@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 12 — 31 October 2026 (11:10 IST; origin attempts 2026-10-31T05:40:01.863482Z–2026-10-31T05:40:15.915529Z)
+
+**Preflight:** Re-fetched the latest tracker, summary and change ledger on `seo-url-health-tracker`. Confirmed exactly **202 rows / 202 unique URLs**, sequential indices, valid 22-column CSV, slots 1–19 containing 10 URLs each and slot 20 containing 12. Before this run **110 distinct URLs** had current-day UTC probe timestamps, each mapping to 31 October in Asia/Kolkata; rows **111–120** were the earliest eligible unchecked assigned rows. No already-checked or future-slot URLs selected; yesterday's timestamps excluded.
+
+**Executed Slot 12 (rows 111–120):** All ten exact blog URLs returned substantive, page-specific provider-extracted text through ChatGPT web.open (`turn951935view0`–`turn951935view9`), with H1s: “My Child Knows Grammar Rules but Still Makes Mistakes — Why?”; “Why Can My Child Read in Class but Struggle at Home? What Parents Can Do”; “My Child Understands English but Does Not Speak in Class — Is It Confidence or Language?”; “Conversation Skills for Kids: Listening, Turn-Taking and Better Responses”; “CVC Words Explained for Parents: The First Real Decoding Milestone”; “Digraphs and Tricky Words for Kids: Examples & Reading Tips”; “Does CBSE Include Phonics? What the NCF Says About Foundational Literacy and Early Reading”; “Grammar Assessment for Kids: A Simple Parent Checklist”; “Conjunctions for Kids: And, But, Because & So Examples”; “Creative Writing Scaffolds for Ages 8–10”. Provider snapshots labelled **Crawled today** but provided no precise crawl time. These text extracts are not independently verified raw origin HTML.
+
+**Independent HTTPS GET probes:** Ten read-only `curl -L` requests executed with **ten distinct actual UTC start timestamps** between `2026-10-31T05:40:01.863482Z` and `2026-10-31T05:40:06.901233Z`, ending by `05:40:15.915529Z`. Nine exited **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; row 116 exited **28** with `curl: (28) Resolving timed out after 9001 milliseconds`. No origin HTTP response, headers or raw HTML was received. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed effective URLs and `REDIRECTS:0` do not establish final destination or redirects. Direct robots.txt web retrieval was inaccessible (`turn648201view0`). Origin HTTP status, redirects, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not prove a production outage.
+
+**Daily coverage:** **120/202 distinct URLs actually attempted (59.41%)**, **82 awaiting scheduled checks**, **120 current-day UNVERIFIED for full live-origin readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Historical verified-state fields preserved and not counted as current verification. No verified before/after production regression or improvement; no first-party indexing, ranking or AI citation evidence. `CHANGES.md` unchanged.
+
+**Workflow safety:** GitHub Actions API returned zero queued and zero in-progress repository runs. No rolling SEO audit execution was present among the latest 100 repository runs. Administrative workflow-state endpoint could not be read through the connected interface, so disablement is not independently verified; proceeded under the user's explicit 25 October confirmation. Cron YAML alone does not prove enablement. No GitHub workflow was run, enabled or changed.
+
+**Change control:** Only tracker and summary on `seo-url-health-tracker` updated. No application source, workflows, Firebase, Hosting or production settings changed. The separate six-hour outside-in visibility audit remains unchanged. **Next scheduled Slot 13:** rows 121–130, subject to any earlier genuine unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 11 — 31 October 2026 (10:12 IST; origin attempts 2026-10-31T04:42:42.939878Z–2026-10-31T04:42:52.999417Z)
 
 **Preflight:** Re-fetched current tracker, summary and change ledger on `seo-url-health-tracker`. Validated 202 rows / 202 unique URLs, 22 CSV columns, sequential indices, slots 1–19 at 10 URLs each and slot 20 at 12. Exactly 100 distinct URLs had been attempted on 31 October IST before this run; rows 101–110 were earliest eligible unchecked URLs. No future-slot or previously checked rows selected; yesterday's timestamps excluded.
