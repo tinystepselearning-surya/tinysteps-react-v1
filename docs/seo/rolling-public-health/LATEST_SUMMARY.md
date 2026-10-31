@@ -1,5 +1,34 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 18 — 31 October 2026 (17:13 IST; origin attempts 2026-10-31T11:42:53.953685Z–2026-10-31T11:43:03.033645Z)
+
+**Preflight:** Re-read the latest tracker, summary and changes ledger on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, 22-column CSV integrity, slots 1–19 with 10 each and slot 20 with 12. Exactly **170 distinct URLs** had valid current-day Asia/Kolkata check timestamps before this batch, and rows 171–180 were the earliest eligible unchecked Slot 18 URLs. Prior-day checks were excluded from today's coverage; no future-slot or previously checked URLs were audited.
+
+**Executed Slot 18 (rows 171–180):** All ten exact URLs yielded substantive page-specific text from the ChatGPT web retrieval provider, with the following observed H1 titles. The provider snapshots were labelled **Crawled yesterday** (exact crawl times unavailable), which confirms only provider text retrieval, not current origin response, initial HTML or indexing.
+
+- 171: “Public Speaking Competition Checklist for Kids: How to Prepare Step by Step” (`turn229817view0`)
+- 172: “How to Build Speaking Confidence in Kids: A 7-Day Calm Practice Plan” (`turn229817view1`)
+- 173: “Debate Topics and Starters for Kids and Tweens to Build Speaking Confidence” (`turn229817view2`)
+- 174: “Public Speaking Activities for Kids at Home: Host a Family Showcase” (`turn229817view3`)
+- 175: “How to Structure a Speech for Kids: Hook, Body and Conclusion” (`turn229817view4`)
+- 176: “How Video Feedback Helps Kids Improve Public Speaking” (`turn229817view5`)
+- 177: “How Kids Can Use Visual Aids in Public Speaking” (`turn229817view6`)
+- 178: “Synthetic Phonics vs Traditional Reading: How Parents Decide What to Use” (`turn229817view7`)
+- 179: “Systematic and Cumulative Phonics: A School Leader’s Guide to Implementation” (`turn229817view8`)
+- 180: “What Is the Right Age to Start Phonics? A Parent Readiness Guide” (`turn229817view9`)
+
+**Independent live-origin HTTPS GET probes:** Ten read-only `curl -L` requests began at distinct actual UTC times from **2026-10-31T11:42:53.953685Z** to **2026-10-31T11:42:53.967634Z**, ending by **2026-10-31T11:43:03.033645Z**. Six exited 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; four exited 28 with `curl: (28) Resolving timed out after 9001–9002 milliseconds`. No origin HTTP response, headers or raw HTML were received. `STATUS:000` is a curl placeholder, not a server HTTP status; echoed `EFFECTIVE` URLs and `REDIRECTS:0` do not establish redirects. Direct robots.txt retrieval was inaccessible (`turn229817view10`). HTTP status, final destination, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot policy, initial HTML and JSON-LD are **UNVERIFIED**. Audit-environment DNS errors do not establish production downtime.
+
+**Daily coverage:** **180/202 distinct URLs actually attempted (89.11%)**, **22 awaiting scheduled checks**, **180 current-day UNVERIFIED for full live-origin readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Thirty historical PASS records remain historical only. No verified dated before/after production regression or improvement, and no first-party Google/Bing indexing, ranking or AI-citation evidence. `CHANGES.md` unchanged.
+
+**Workflow safety:** GitHub REST returned **zero queued** and **zero in-progress** repository Actions runs; the latest 100 runs contained no rolling SEO audit execution. The named workflow's administrative enabled/disabled state could not be independently read because the endpoint was not available through the connector. Proceeded under the user's explicit 25 October disable confirmation; cron YAML is not evidence of enablement. No workflow was executed, enabled or modified.
+
+**Change control:** Updated and read-back-verified only the tracker and summary on `seo-url-health-tracker`. No source, workflows, Firebase, Hosting or production settings changed. The separate six-hour outside-in search visibility task remains unchanged. **Next scheduled Slot 19:** rows 181–190, subject to earlier genuinely unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 17 — 31 October 2026 (16:18 IST; origin attempts 2026-10-31T10:48:56.973985Z–2026-10-31T10:49:06.052041Z)
 
 **Preflight:** Re-read tracker, summary and changes ledger on `seo-url-health-tracker`. Validated 202 selected rows / 202 unique URLs, sequential indices, 22-column CSV round-trip, slots 1–19 with 10 each and slot 20 with 12. Exactly 160 distinct URLs had valid current-day Asia/Kolkata UTC check timestamps before this batch. Rows 161–170 were the earliest eligible unchecked URLs in Slot 17. No future-slot, previously checked, or prior-day checks were counted as new.
