@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 6 — 1 November 2026, 05:17 IST (HTTPS probes 2026-10-31T23:47:21.814289Z–23:47:31.862556Z UTC)
+
+**Preflight and coverage:** Read current tracker and confirmed exactly **202 sequential unique URLs**, 22 CSV columns per record, slots 1–19 with ten each and slot 20 with twelve. Before Slot 6, 50 distinct actual UTC observation timestamps mapped to 1 November IST. Only ten eligible, previously unchecked Slot 6 URLs (rows 51–60) were attempted; no checked row was rechecked and no future slot was scanned. **Today's attempted coverage: 60/202 (29.70%); 142 awaiting scheduled checks; zero fully origin-verified; all 60 current-day records UNVERIFIED for full technical readiness.** The 30 historical PASS records are historical only.
+
+**Page-specific provider retrieval:** Exact URL web.open returned substantive page-specific provider-extracted text for all ten, with snapshots labelled **Crawled yesterday** (precise provider crawl time unknown): 51 Phonics Apps for Preschoolers in India (turn699433view0); 52 Phonics Games for Preschoolers (turn699433view1); 53 Playful learning games that help children practice phonics with confidence. (turn699433view2); 54 English Excellence Games (turn699433view3); 55 Free Phonics Games for Kids (turn699433view4); 56 Free Letter Sound Games for Kids (turn699433view5); 57 Free Word Building Games for Kids (turn699433view6); 58 Free Sentence Building Games for Kids (turn699433view7); 59 Free Reading Games for Kids (turn699433view8); 60 Free Grammar Games for Kids (turn699433view9). Provider-extracted content does **not** establish raw current origin HTML, HTTP status or crawler readiness.
+
+**Live-origin limitation:** Ten independent read-only HTTPS curl --noproxy '*' -L GET attempts failed before origin HTTP with **exit 6** and exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. Distinct UTC start/end timestamps are recorded per URL in MASTER_URL_TRACKER.csv. No response headers or body were obtained. `HTTP_CODE:000` is curl's placeholder, not an origin response; echoed effective URL and zero redirects do not establish final destination or redirect behavior. This is an **audit-environment DNS failure**, not a verified production outage. Origin status, redirects, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain **UNVERIFIED**. No first-party Google/Bing indexing, ranking or AI citation evidence obtained.
+
+**Workflow safety:** GitHub Actions administrative workflow-state and run-list API could not be read through web.open (turn699433view10 and turn699433view11); direct API curl also failed DNS for api.github.com. Therefore no current-run or disabled-state claim is made. User's 25 October UI disable confirmation remains the operating assumption. No workflow was started, enabled or modified.
+
+**Change control:** No verified dated before/after production regression or improvement; CHANGES.md remains unchanged. Only tracker CSV and summary are updated; no source, workflow, Firebase, Hosting or production settings changed. **Next: Slot 7 (rows 61–70), when eligible.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 5 — 1 November 2026, 04:19 IST (HTTPS probes 2026-10-31T22:49:06.577692Z–22:49:16.641930Z UTC)
 
 **Preflight and coverage:** Fetched and validated the current tracker: exactly **202 sequential unique selected URLs**, 22 columns per row, slots 1–19 containing 10 URLs each and slot 20 containing 12. Before Slot 5, 40 distinct UTC observations mapped to 1 November IST. Audited only ten eligible previously unchecked Slot 5 URLs (rows 41–50) with distinct actual UTC probe start times. No earlier checked row was rechecked and no future slot was scanned. **Today's attempted coverage: 50/202 (24.75%); 152 awaiting scheduled checks; 0 fully origin-verified; 50 current-day technical-readiness records UNVERIFIED.** The 30 historical PASS values remain historical only.
