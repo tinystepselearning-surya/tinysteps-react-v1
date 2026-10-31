@@ -1,5 +1,17 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 21 — reconciliation and recovery (20:16 IST; 2026-10-31T14:46:42.022Z)
+
+**Tracker integrity readback:** Confirmed 202 rows, 202 unique exact selected URLs, 22 CSV columns per row, sequential indices, slots 1–19 at 10 each and slot 20 at 12. All **202 distinct URLs** have **202 unique valid actual UTC check timestamps** falling on 31 October in Asia/Kolkata, with matching `today_ist` dates. Current-day statuses: **202 UNVERIFIED**, **0 PASS**, **0 FAIL**, **0 WARN**. **30 historical PASS** entries remain historical only. This is a reconciliation of previously recorded observations, **not a new URL audit or renewed live-origin verification**.
+
+**Recovery eligibility:** No unchecked URLs remain for today's 202-URL schedule. No previously checked URLs were re-probed; no check timestamps, page statuses, or production evidence were backfilled or changed. Zero complete live-origin verifications are established by the current-day evidence; HTTP response, redirects, canonical, robots/noindex, initial HTML, and JSON-LD remain unverified where the original DNS probes failed. No new dated, verified before/after regression or improvement was identified, so `CHANGES.md` remains unchanged.
+
+**Workflow safety:** Connected GitHub actions available here do not expose the repository workflow administrative-state or full run-list endpoints. A read-only public GitHub API attempt was inaccessible; concurrent GitHub audit runs therefore could not be independently ruled out. Continued under the user's 25 October confirmation that the old workflow was disabled in the GitHub UI. Cron YAML alone is not evidence of enablement. No workflow was executed, enabled or modified.
+
+**Change control:** This Slot 21 run updates the summary only. `MASTER_URL_TRACKER.csv` and `CHANGES.md` remain byte-for-byte unchanged. No website source, GitHub workflow, Firebase, Hosting or production setting was touched. Next: Slot 22 reconciliation/recovery, followed by Slots 23–24 catch-up only if a genuine gap appears; new-day coverage must start afresh.
+
+---
+
 ## Slot 20 — 31 October 2026 (19:15 IST; origin attempts 2026-10-31T13:45:44.959800Z–2026-10-31T13:45:55.006118Z)
 
 **Preflight:** Read the latest tracker, summary and changes ledger on `seo-url-health-tracker`. Validated **202 selected rows / 202 unique URLs**, sequential indices, 22-column CSV round-trip, slots 1–19 with 10 each and slot 20 with 12. Exactly **190 distinct URLs** had valid current-day Asia/Kolkata check timestamps before this batch. Rows 191–202 were the earliest eligible unchecked Slot 20 URLs. Prior-day checks were excluded and no already-checked or future-slot URLs were audited.
