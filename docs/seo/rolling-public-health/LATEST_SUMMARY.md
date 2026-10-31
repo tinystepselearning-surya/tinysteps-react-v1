@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 2 — 1 November 2026, 01:18 IST (origin attempts 2026-10-31T19:48:28.778425Z–19:48:43.822268Z UTC)
+
+**Preflight and coverage:** Re-read the current tracker, summary and change ledger on `seo-url-health-tracker`. Verified **202 sequential selected records / 202 unique URLs**, 22 valid CSV columns, slots 1–19 with 10 URLs each and slot 20 with 12. Only Slot 1's 10 URLs had valid 1 November IST observations before this run; 31 October records were excluded. Inspected Slot 2's 10 previously unchecked URLs (rows 11–20) with distinct actual UTC probe start timestamps. **Today's attempted coverage: 20/202 (9.90%); 182 URLs await later slots; fully origin-verified current-day URLs: 0.** All 20 current-day rows remain **UNVERIFIED** for complete technical readiness; 30 historical PASS records remain historical only. No future-slot URL was scanned or previously checked row rechecked.
+
+**Public retrieval evidence:** ChatGPT web.open returned substantive page-specific provider-extracted text for all 10 exact phonics resource URLs (SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE). Examples: SH H1 “How do I teach sh as one sound instead of two letters?” (turn567195view0); EA H1 “Why does ea sound different in team and head?” (turn567195view4); consonant-LE H1 “Why does the ending in table, little and purple form its own syllable?” (turn567195view9). Provider snapshots were labelled “Crawled yesterday”; their precise crawl times are unknown, and this is **not** proof of current raw initial HTML. Direct robots.txt retrieval was inaccessible (turn567195view10).
+
+**Live-origin limitation:** Ten independent read-only HTTPS GET attempts ended without reaching origin: **nine** `curl: (6) Could not resolve host: tinystepslearning.com` and **one** `curl: (28) Resolving timed out after 10000 milliseconds`. `HTTP_CODE:000` is not an HTTP response. No live HTTP status, final redirect, canonical, robots/noindex directives, crawler access, initial HTML or JSON-LD was verified; this does **not** establish a production outage. No first-party Google/Bing indexing, rankings or AI citations were verified. No dated verified production regression or improvement was identified.
+
+**Workflow safety:** Read-only GitHub Actions API listed **zero active queued/in-progress/waiting/pending/requested repository runs** and no rolling-public SEO audit among the latest 100 runs. Administrative workflow state endpoint was not permitted, so UI enablement/disablement remains independently unverified; the user's confirmed 25 October disablement remains the operating assumption. Cron YAML is not evidence of workflow enablement. No workflow was run or changed.
+
+**Change control:** Updated tracker with 10 real UTC probe start times and scoped UNVERIFIED evidence, then updated this summary; `CHANGES.md` unchanged because no meaningful verified production transition was established. No source, workflow, Firebase, Hosting or production settings changed. **Next: Slot 3 (rows 21–30), only when eligible.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 1 — 1 November 2026, 00:12 IST (observations 2026-10-31T18:42:17.134864Z–18:42:42.261058Z UTC)
 
 **Tracker preflight:** Re-read all three tracker files. Validated 202 sequential selected records / 202 unique URLs, 22 CSV columns per row, slots 1–19 with 10 each and slot 20 with 12. No valid 1 November IST observation existed before this run; 31 October records were excluded from today's coverage. Exactly 10 assigned Slot 1 URLs (rows 1–10) were checked, with 10 distinct actual UTC start timestamps. **Today's attempted coverage: 10/202 (4.95%); 192 URLs remain for later scheduled slots. Fully origin-verified current-day URLs: 0; current-day complete technical readiness: 10 UNVERIFIED.** No future-slot URLs scanned or old-day timestamps counted.
