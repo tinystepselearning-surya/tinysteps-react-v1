@@ -133,7 +133,7 @@ export default function OnlinePhonicsReadingClassesPage() {
           provider: {
             '@type': 'EducationalOrganization',
             '@id': 'https://tinystepslearning.com/#educational-organization',
-            name: 'Tiny Steps Early Education',
+            name: PUBLIC_FACTS.organizationName,
             url: 'https://tinystepslearning.com/',
           },
           url: canonicalUrl,
