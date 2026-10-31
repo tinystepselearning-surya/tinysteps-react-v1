@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 15 — 31 October 2026 (14:11 IST; origin attempts 2026-10-31T08:42:04.289517Z–2026-10-31T08:42:14.335003Z)
+
+**Preflight:** Read current tracker, summary and changes ledger from `seo-url-health-tracker`. Verified 202 selected rows / 202 unique URLs, sequential indices, 22-column CSV structure, slots 1–19 at 10 each and slot 20 at 12. Prior to the batch 140 distinct URLs had valid 31 October IST check timestamps; earliest eligible unchecked URLs were Slot 15 rows 141–150. Yesterday's timestamps were excluded and no already-checked or future-slot URLs were selected.
+
+**Executed Slot 15 (rows 141–150):** All ten exact public blog URLs returned substantive, page-specific provider-extracted text. H1s: “School Reopening English Readiness Checklist for Kids: Reading, Writing and Speaking”; “Long Vowel Sounds for Kids: Rules, Patterns & Examples”; “Online English Classes for Kids in India: A Parent Decision Guide (Ages 3–12)”; “Online Phonics Classes vs School: What Works for Which Child”; “Online Phonics Games for Kids: What Actually Builds Reading”; “Phonics Activities at Home: A Parent Routine That Actually Sticks”; “Phonics Blending Activities That Help Children Read Words Confidently”; “Blending Practice for Kids at Home: A Simple Daily Routine”; “From Decoding to Comprehension: How to Help Kids Understand What They Read”; “Phonics Assessment Checklist for Parents Before a New School Term”. Source references: `turn387952view0`, `turn387952view1`, `turn387952view2`, `turn387952view3`, `turn387952view4`, `turn387952view5`, `turn387952view6`, `turn387952view7`, `turn387952view8`, `turn387952view9`. All provider snapshots were labelled **Crawled today**, but precise provider crawl times are unknown. Provider text extraction is evidence of content retrieval only; it does not establish live origin status or raw initial HTML.
+
+**Independent HTTPS GET probes:** Ten read-only `curl -L` requests with ten distinct real UTC start timestamps between `2026-10-31T08:42:04.289517Z` and `2026-10-31T08:42:04.296066Z`, ending by `08:42:14.335003Z`. Six exited **6** with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; four exited **28** with `curl: (28) Resolving timed out after 10000/10001 milliseconds`. No origin HTTP response, headers or raw HTML received. `HTTP_CODE:000` is a curl placeholder, not an origin server status; echoed effective URLs and `REDIRECTS:0` do not verify final destinations or redirects. Direct robots.txt web retrieval inaccessible (`turn387952view10`). Origin HTTP status, redirect destinations, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain **UNVERIFIED**. DNS failures in the audit environment are not proof of production outage.
+
+**Daily coverage:** **150/202 distinct URLs actually attempted (74.26%)**, **52 awaiting scheduled checks**, **150 current-day UNVERIFIED for full origin readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Thirty historical PASS records remain historical only. No dated verified before/after production regression or improvement; no first-party indexing, rankings or AI citation evidence. `CHANGES.md` unchanged.
+
+**Workflow safety:** Connected GitHub REST read reported **zero in-progress** and **zero queued** repository runs at audit time; the latest 100 repository runs showed no rolling SEO audit execution. The administrative enabled/disabled state of the named workflow could not be independently read (workflow-state endpoint not permitted). Proceeded under the user's explicit 25 October disable confirmation. Cron YAML alone does not establish enablement. No workflow was executed, enabled or modified.
+
+**Change control:** Only tracker and summary on `seo-url-health-tracker` updated; no source, workflow, Firebase, Hosting or production settings changed. The separate six-hour outside-in visibility task remains unchanged. **Next scheduled Slot 16:** rows 151–160, subject to earlier genuinely unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 14 — 31 October 2026 (13:10 IST; origin attempts 2026-10-31T07:40:56.764644Z–2026-10-31T07:41:05.805230Z)
 
 **Preflight:** Read latest tracker, summary and changes ledger on `seo-url-health-tracker`. Confirmed **202 selected rows / 202 unique URLs**, sequential indices, **22-column CSV integrity**, slots 1–19 with 10 URLs each and slot 20 with 12. Before the run **130 distinct URLs** had valid 31 October IST check timestamps. Rows **131–140** were the earliest eligible unchecked rows in Slot 14; yesterday's timestamps excluded. No already-checked or future-slot URLs selected.
