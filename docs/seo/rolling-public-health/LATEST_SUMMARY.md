@@ -1,5 +1,34 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 17 — 31 October 2026 (16:18 IST; origin attempts 2026-10-31T10:48:56.973985Z–2026-10-31T10:49:06.052041Z)
+
+**Preflight:** Re-read tracker, summary and changes ledger on `seo-url-health-tracker`. Validated 202 selected rows / 202 unique URLs, sequential indices, 22-column CSV round-trip, slots 1–19 with 10 each and slot 20 with 12. Exactly 160 distinct URLs had valid current-day Asia/Kolkata UTC check timestamps before this batch. Rows 161–170 were the earliest eligible unchecked URLs in Slot 17. No future-slot, previously checked, or prior-day checks were counted as new.
+
+**Executed Slot 17 (rows 161–170):** All ten URLs yielded substantive page-specific provider-extracted text with the H1 titles and references below. Rows 161 and 163–170 were labelled Crawled yesterday; row 162's direct URL retrieval failed, but following its search-result reference yielded page text labelled Crawled 2 weeks ago. Precise provider crawl times are unknown. Provider text extraction does not establish current origin HTTP or raw initial HTML.
+
+- 161: “How to Teach Tricky Words to Kids Without Encouraging Guessing” (`turn351695view0`)
+- 162: “Phonological Awareness vs Phonemic Awareness vs Phonics: A Parent Guide” (`turn846862view0`) — search-result reference retrieval
+- 163: “How to Prevent the Summer Slide in Reading (10-Minute Daily Plan)” (`turn351695view2`)
+- 164: “Public Speaking Delivery for Kids: Pace, Volume, Pauses and Audience Connection” (`turn351695view3`)
+- 165: “Punctuation and Capital Letters for Kids: A Parent Guide to Clear Sentences” (`turn351695view4`)
+- 166: “R-Controlled Vowels Explained: Pattern Groups, Confusions, and Practice Order” (`turn351695view5`)
+- 167: “SATPIN Phonics Guide: Sounds, Order, Words & Blending” (`turn351695view6`)
+- 168: “Phonics vs Sight Words: What Helps Children Read Better” (`turn351695view7`)
+- 169: “Screen-Smart Summer Learning Routine for Kids: Balance English Practice and Screen Time” (`turn351695view8`)
+- 170: “Should Children Memorize Sight Words or Learn Phonics First?” (`turn351695view9`)
+
+**Independent HTTPS GET probes:** Ten read-only `curl -L` requests with distinct actual UTC start timestamps from `2026-10-31T10:48:56.973985Z` through `2026-10-31T10:48:57.021714Z`, all ending by `2026-10-31T10:49:06.052041Z`. Six exited 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; four exited 28 with `curl: (28) Resolving timed out after 9000–9001 milliseconds`. No origin HTTP responses, headers or raw HTML received. `STATUS:000` is a curl placeholder, not a server HTTP status; echoed effective URLs and `REDIRECTS:0` do not establish redirect observations. Direct robots.txt web retrieval was inaccessible (`turn351695view10`). Origin HTTP status, redirect destinations, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. DNS failures in the audit environment are not evidence of production outage.
+
+**Daily coverage:** **170/202 distinct URLs actually attempted (84.16%)**, **32 awaiting scheduled checks**, **170 current-day UNVERIFIED for full origin readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Thirty historical PASS records remain historical only. No dated verified before/after production regression or improvement; no first-party Google/Bing indexing, rankings or AI citation evidence. `CHANGES.md` unchanged.
+
+**Workflow safety:** GitHub REST read reported **zero in-progress** and **zero queued** repository runs; latest 100 runs contained no rolling SEO audit execution. The administrative enabled/disabled state of the named workflow could not be independently read (endpoint not permitted). Proceeded under the user's explicit 25 October disable confirmation. Cron YAML presence does not establish enablement. No workflow executed, enabled or modified.
+
+**Change control:** Only tracker and summary on `seo-url-health-tracker` updated; no source, workflows, Firebase, Hosting or production settings changed. The separate six-hour outside-in visibility task remains unchanged. **Next scheduled Slot 18:** rows 171–180, subject to earlier genuinely unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 16 — 31 October 2026 (15:16 IST; origin attempts 2026-10-31T09:46:25.854845Z–2026-10-31T09:46:34.922065Z)
 
 **Preflight:** Re-read the current tracker, summary and changes ledger from `seo-url-health-tracker`. Verified **202 selected rows / 202 unique URLs**, sequential indices, valid 22-column CSV semantics, slots 1–19 with 10 each and slot 20 with 12. Exactly **150 distinct URLs** had valid 31 October Asia/Kolkata check timestamps before the batch; rows 151–160 were the earliest eligible unchecked URLs in Slot 16. Yesterday's timestamps were excluded; no already-checked or future-slot URLs selected.
