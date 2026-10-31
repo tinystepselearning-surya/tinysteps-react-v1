@@ -25,7 +25,7 @@ const productionTrustFiles = [
 
 describe('B14 trust, entity and schools authority guardrails', () => {
   it('publishes one canonical educational-organization identity', () => {
-    expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Early Education');
+    expect(PUBLIC_FACTS.organizationName).toBe('Tiny Steps Learning');
     expect(ORGANIZATION_ID).toBe('https://tinystepslearning.com/#educational-organization');
     expect(organizationSchema).toMatchObject({
       '@context': 'https://schema.org',
@@ -34,7 +34,8 @@ describe('B14 trust, entity and schools authority guardrails', () => {
       name: PUBLIC_FACTS.organizationName,
       url: `${SITE_ORIGIN}/`,
     });
-    expect(organizationSchema.alternateName).toContain(PUBLIC_FACTS.brandName);
+    expect(organizationSchema.alternateName).toContain(PUBLIC_FACTS.shortBrandName);
+    expect(organizationSchema.alternateName).not.toContain(PUBLIC_FACTS.brandName);
 
     const sourceFiles = fs
       .readdirSync(path.join(repoRoot, 'src'), { recursive: true, withFileTypes: true })
