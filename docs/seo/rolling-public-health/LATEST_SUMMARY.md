@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 8 — 31 October 2026 (07:10 IST; independent origin attempts 2026-10-31T01:39:54.908813Z–2026-10-31T01:40:04.959540Z)
+
+**Preflight:** Fetched current tracker, summary and change ledger on `seo-url-health-tracker`. Confirmed 202 selected rows / 202 unique URLs, sequential indices, 22 CSV columns, slots 1–19 at 10 each and slot 20 at 12. Exactly 70 distinct URLs were already attempted for 31 October IST; rows 71–80 were the earliest eligible unchecked rows. Yesterday's timestamps excluded; no already-checked or future-slot URLs selected.
+
+**Executed Slot 8 (rows 71–80):** All ten exact URLs yielded substantive, page-specific provider-extracted text, nine via direct ChatGPT web.open (`turn956880view0`–`turn956880view5`, `turn956880view7`–`turn956880view9`); /speaking-progress-framework initially failed direct web.open but succeeded when its exact link was followed from /book-demo (`turn169026view0`). Provider snapshots labelled **Crawled today**, with unknown precise crawl times. H1 evidence includes “Letter Tracing With Sounds Game”, “Free Phonics Balloon Pop Game for Kids”, “Vocabulary Adventure”, “Online Phonics Classes for Kids”, “Online Grammar Classes for Kids”, “Online Public Speaking Classes for Kids”, “How Tiny Steps Measures Speaking Progress”, “CBSE defines the literacy goal. Tiny Steps builds the implementation pathway.”, “Book a Free 35-Minute 1:1 English Assessment” and “Online Reading Classes for Kids”. These are provider-extracted text observations, not certification of current origin initial HTML or working interactive functionality.
+
+**Independent HTTPS probes:** Ten read-only `curl -L` GET requests executed with ten distinct actual UTC start timestamps from 2026-10-31T01:39:54.908813Z to 01:39:54.921767Z; all completed by 01:40:04.959540Z with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP headers or HTML were obtained. `CURL_HTTP:000` is a curl placeholder, not a server response; echoed effective URL and zero redirects do not verify final destinations. Direct robots.txt web retrieval failed (`turn956880view10`). Origin HTTP status, redirects, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not establish a production outage.
+
+**Daily coverage:** **80/202 distinct URLs actually attempted (39.60%)**, **122 awaiting scheduled checks**, **80 current-day UNVERIFIED for complete live-origin technical readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Historical PASS fields (including rows 71–80 from 25 October) remain historical only. No verified before/after production regression or improvement or first-party indexing, ranking or AI-citation evidence established. `CHANGES.md` unchanged.
+
+**Workflow safety:** GitHub Actions API reported zero queued and zero in-progress repository runs; latest 100 repository runs showed no rolling SEO audit execution. Administrative workflow state endpoint was unsupported; disablement independently unverified, so proceeded under user's explicit 25 October confirmation. No GitHub workflow executed, enabled or modified.
+
+**Change control:** Updated tracker and summary on `seo-url-health-tracker` only; no source, workflows, Firebase, Hosting or production settings changed. Separate six-hour visibility monitoring unchanged. Next scheduled Slot 9: rows 81–90, subject to earlier genuine unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 7 — 31 October 2026 (06:18 IST; independent origin attempts 2026-10-31T00:47:55.426074Z–2026-10-31T00:48:05.478093Z)
 
 **Preflight:** Re-fetched the latest tracker, summary and change ledger on `seo-url-health-tracker`. Validated 202 selected rows / 202 unique URLs, sequential indices, 22 CSV columns, slots 1–19 at 10 URLs each and slot 20 at 12. Exactly 60 distinct 31 October IST URLs were attempted in slots 1–6; rows 61–70 were eligible. No earlier unchecked or future-slot rows were selected.
