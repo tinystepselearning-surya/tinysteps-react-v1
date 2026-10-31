@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
 
+## Slot 10 — 31 October 2026 (09:12 IST; origin attempts 2026-10-31T03:42:37.565434Z–2026-10-31T03:42:47.613728Z)
+
+**Preflight:** Re-fetched current tracker, summary and change ledger on `seo-url-health-tracker`. Validated 202 selected rows / 202 unique URLs, 22-column CSV semantics, sequential indices, slots 1–19 at 10 URLs and slot 20 at 12. Exactly 90 distinct 31 October IST URLs had been attempted; rows 91–100 were the earliest eligible unchecked rows. Yesterday's checks excluded; no future-slot or already-checked rows selected.
+
+**Executed Slot 10 (rows 91–100):** Ten exact public URLs returned substantive page-specific provider-extracted text via ChatGPT web.open (`turn650335view0`–`turn650335view9`). H1s: "Child Not Reading Properly? Start by Finding the Real Gap"; "Slow Reader Child Help: Find the Right Reading Support"; "Shy Child Speaking Confidence Help for Parents"; "Online Reading Fluency Classes for Kids"; "Confidence Building Classes for Kids"; "English Foundation Program for Kids: Reading, Grammar, and Confidence"; "Summer Camp 2026: learning design, parent guidance, and year-round next steps"; "How to choose a useful summer learning programme for your child"; "Summer Reading Plan for Kids: Decode, Read, Understand"; "School-Break Speaking Practice: From Short Answers to Clear Expression". Snapshots labelled **Crawled today**; exact provider crawl times unknown. The four summer-themed pages (97–100) explicitly describe the 2026 summer camp as concluded and retained as an archive or evergreen planning guide, not active enrolment pages. Provider-extracted text does not establish current raw initial origin HTML or functionality.
+
+**Independent HTTPS GET probes:** Ten read-only `curl -L` requests executed with distinct actual UTC start timestamps from 2026-10-31T03:42:37.565434Z to 03:42:37.572753Z, ending by 03:42:47.613728Z. All exited **6**, with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP headers or HTML obtained. `CURL_HTTP:000` is a curl placeholder, not a server HTTP status; echoed effective URL and zero redirects do not establish redirect observations. Direct robots.txt web retrieval inaccessible (`turn650335view10`). Origin HTTP status, final destination/redirect chain, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not establish a production outage.
+
+**Daily coverage:** **100/202 distinct URLs actually attempted (49.50%)**, **102 awaiting scheduled checks**, **100 current-day UNVERIFIED for complete live-origin technical readiness**, **zero current-day origin-verified PASS/FAIL/WARN**. Historical verified fields preserved, not counted as current verification. No dated verified before/after production regression or improvement; no first-party indexing, ranking or AI-citation evidence established. `CHANGES.md` unchanged.
+
+**Workflow safety:** GitHub Actions repository runs API showed zero queued/in-progress runs among the latest 100, with no rolling SEO audit execution among them. Administrative workflow state endpoint inaccessible through connected GitHub interface; disablement independently unverified. Proceeded under user's explicit 25 October disable confirmation. No workflow run, enabled or modified.
+
+**Change control:** Only tracker and summary on `seo-url-health-tracker` updated. Application source, workflows, Firebase, Hosting and production settings unchanged. Separate six-hour search visibility task unchanged. Next scheduled Slot 11: rows 101–110, subject to earlier genuine unchecked gaps.
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-10-31 IST)
+
 ## Slot 9 — 31 October 2026 (08:16 IST; origin attempts 2026-10-31T02:45:52.794946Z–2026-10-31T02:46:02.875871Z)
 
 **Preflight:** Fetched current tracker, summary and change ledger from `seo-url-health-tracker`. Verified 202 unique selected URLs, sequential indices, 22 CSV columns, slots 1–19 at 10 URLs and slot 20 at 12. Exactly 80 distinct 31 October IST URLs had been attempted; rows 81–90 were the earliest eligible unchecked rows. Yesterday's checks excluded; no future-slot or already-checked rows selected.
