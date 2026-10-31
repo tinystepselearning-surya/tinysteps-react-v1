@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 3 — 1 November 2026, 02:09 IST (HTTPS attempts 2026-10-31T20:39:38.928266Z–20:39:46.976195Z UTC)
+
+**Preflight:** Validated the latest tracker: exactly **202 sequential unique URLs**, 22 columns, Slots 1–19 with ten URLs each and Slot 20 with twelve. Before Slot 3, exactly 20 distinct valid UTC observations mapped to 1 November IST. Audited the ten eligible Slot 3 URLs (rows 21–30) without rechecking existing current-day rows or scanning future slots. All ten new HTTPS attempt start times are distinct and map to 1 November IST. **Daily attempted coverage: 30/202 (14.85%); 172 not yet attempted; fully origin-verified: 0; 30 current-day technical-readiness records UNVERIFIED.** The 30 historical PASS values remain historical only.
+
+**Public retrieval scope:** Exact-URL ChatGPT web.open returned substantive provider-extracted page text for 3/10: Rabbit Rule H1 “What is the Rabbit Rule in phonics?” (turn342454view0), AU/AW H1 “How do children choose between au and aw?” (turn342454view7), and OO H1 “Why does oo sound different in moon and book?” (turn342454view9). Exact-page web.open failed for the other seven. Search yielded **cached page-specific excerpts** for four: Soft C (turn708791search2), Soft G (turn708791search1), AR (turn708791search0) and OI/OY (turn708791search3), each labelled Crawled 3 weeks ago; these are not fresh origin checks. No exact-page content was independently retrieved for ER/IR/UR, OR, or Y-as-vowel (rows 24, 26, 27). Direct robots.txt retrieval was inaccessible (turn342454view10).
+
+**Independent HTTPS checks:** Ten actual read-only curl -L GET attempts failed before origin HTTP: **six** exit 6, exact error “curl: (6) Could not resolve host: tinystepslearning.com”; **four** exit 28, exact error “Resolving timed out after 8000/8001 milliseconds.” Per-URL start/end UTC times and errors are in the tracker. These audit-environment DNS failures do **not** establish a production outage. No origin HTTP status, final redirect, canonical, robots/noindex directives, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML or JSON-LD was verified. Provider snippets cannot establish current technical PASS/FAIL/WARN; no first-party indexing/ranking/AI-citation evidence was obtained.
+
+**Workflow safety:** Read-only GitHub Actions API showed **zero in-progress and zero queued repository runs**; the latest 100 runs contained no rolling-public-seo-health audit and no active run. The administrative workflow-state endpoint was not permitted, so the user's 25 October disable confirmation remains the operating assumption. Cron YAML presence does not prove enablement. No workflow was run, enabled or modified.
+
+**Change control:** Tracker and this summary were updated with scoped actual observations; no verified dated production improvement or regression, so CHANGES.md was not modified. No application source, workflows, Firebase, Hosting or production settings changed. **Next: Slot 4 (rows 31–40).**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 2 — 1 November 2026, 01:18 IST (origin attempts 2026-10-31T19:48:28.778425Z–19:48:43.822268Z UTC)
 
 **Preflight and coverage:** Re-read the current tracker, summary and change ledger on `seo-url-health-tracker`. Verified **202 sequential selected records / 202 unique URLs**, 22 valid CSV columns, slots 1–19 with 10 URLs each and slot 20 with 12. Only Slot 1's 10 URLs had valid 1 November IST observations before this run; 31 October records were excluded. Inspected Slot 2's 10 previously unchecked URLs (rows 11–20) with distinct actual UTC probe start timestamps. **Today's attempted coverage: 20/202 (9.90%); 182 URLs await later slots; fully origin-verified current-day URLs: 0.** All 20 current-day rows remain **UNVERIFIED** for complete technical readiness; 30 historical PASS records remain historical only. No future-slot URL was scanned or previously checked row rechecked.
