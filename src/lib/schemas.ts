@@ -110,7 +110,7 @@ export const organizationSchema = {
   '@type': 'EducationalOrganization',
   '@id': ORGANIZATION_ID,
   name: PUBLIC_FACTS.organizationName,
-  alternateName: [PUBLIC_FACTS.brandName, PUBLIC_FACTS.shortBrandName],
+  alternateName: [PUBLIC_FACTS.shortBrandName],
   url: `${SITE_ORIGIN}/`,
   logo: {
     '@type': 'ImageObject',
