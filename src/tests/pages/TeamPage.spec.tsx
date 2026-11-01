@@ -42,14 +42,14 @@ describe('TeamPage', () => {
     expect(teamNavigation.querySelector('a[href="#teachers"]')).toBeInTheDocument();
     expect(teamNavigation.querySelector('a[href="#teaching-quality"]')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Meet the educators behind every live lesson' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Thoughtful teaching. More confident learning.' })).toBeInTheDocument();
-    expect(screen.getByText('Graduate educators with classroom experience')).toBeInTheDocument();
+    expect(screen.getByText('Thoughtful teaching. More confident learning.')).toBeInTheDocument();
+    expect(screen.getByText(/Meet our graduate educators with school-classroom experience/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See class samples' })).toHaveAttribute('href', '/class-samples');
     expect(screen.getByText('How we guide learning: model, practise, apply.')).toBeInTheDocument();
     const previews = screen.getAllByRole('img', { name: /Tiny Steps educator preview/ });
     expect(previews).toHaveLength(4);
     previews.forEach((preview) => {
-      expect(preview).toHaveAttribute('src', expect.stringMatching(/^\\/team\\/.+\\.webp$/));
+      expect(preview.getAttribute('src')).toMatch(/^\/team\/.*\.webp$/);
     });
     expect(screen.getByText(/All Tiny Steps teachers are graduates with professional school-classroom teaching experience/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Training, observation and ongoing quality checks' })).toBeInTheDocument();
