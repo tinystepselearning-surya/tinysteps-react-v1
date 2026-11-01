@@ -62,7 +62,7 @@ export function parentIdsForAvsTeacherMonth(
   sessions.forEach((session) => {
     if (cleanText(session.teacherId) !== teacherId) return;
     const date = cleanText(session.date);
-    if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || date.slice(0, 7) !== monthKey) return;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.slice(0, 7) !== monthKey) return;
     const parentId = cleanText(session.parentId);
     if (parentId && !parentId.includes('/')) ids.add(parentId);
   });
