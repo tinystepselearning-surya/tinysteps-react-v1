@@ -65,6 +65,9 @@ The private reviewed JSON is **not committed**. Never commit customer-level data
 
 ## Brick 1 completion gates
 
+See [the new-parent cohort and keyword-volume input contract](./BRICK_01_COHORT_AND_KEYWORD_VOLUME_CONTRACT.md) for source-checked reporting design, test cases, privacy guardrails, and unresolved live-data dependencies. **Design documented; no live new-parent admin panel or national keyword-volume dataset has been implemented.**
+
+
 - [x] Review and reuse existing C1/C2 owners and Analytics V2, avoiding duplicate architecture.
 - [x] Freeze owner-supplied reviewed historical baseline with explicit date/attribution caveats.
 - [x] Establish primary KPI, source/intent reconciliation and commercial query owner contract.
