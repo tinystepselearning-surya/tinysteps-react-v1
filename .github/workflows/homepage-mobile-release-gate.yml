@@ -68,6 +68,10 @@ jobs:
           src/tests/seo/homeAiEntityVisibility.spec.ts
           src/tests/seo/homeRuntimeImportBoundary.spec.ts
           src/tests/seo/homeMachineReadability.spec.ts
+      - name: Validate Speaking-only snippet experiment and SEO control guards
+        run: |
+          npx vitest run src/tests/seo/speakingNov2026ApprovedSnippet.spec.ts src/tests/seo/speakingOct2026CtrGate.spec.ts src/tests/seo/commercialC4CtrOptimization.spec.ts
+          node scripts/audit-commercial-c4-ctr-optimization.mjs
       - name: Validate public text contrast and inventory the whole source tree
         run: |
           npx vitest run src/tests/seo/sunriseOceanTheme.spec.ts src/tests/seo/publicTextPalette.spec.ts
