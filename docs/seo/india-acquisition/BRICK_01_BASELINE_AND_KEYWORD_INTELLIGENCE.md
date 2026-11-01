@@ -63,7 +63,7 @@ Previous Deep Research found a **third-party historical estimate** of **9,900 In
 
 The private reviewed JSON is **not committed**. Never commit customer-level datasets or credentials.
 
-## Brick 1 completion gates
+See also [the independent all-country GSC export review](./BRICK_01_GSC_EXPORT_REVIEW_20261101.md) (31 July–30 October 2026). Do not conflate this worldwide 92-day export with the India-only reviewed baseline or national Keyword Planner demand.\n\n## Brick 1 completion gates
 
 See [the new-parent cohort and keyword-volume input contract](./BRICK_01_COHORT_AND_KEYWORD_VOLUME_CONTRACT.md) for source-checked reporting design, test cases, privacy guardrails, and unresolved live-data dependencies. **Design documented; no live new-parent admin panel or national keyword-volume dataset has been implemented.**
 
