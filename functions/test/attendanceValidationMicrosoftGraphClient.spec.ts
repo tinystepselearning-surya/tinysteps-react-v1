@@ -242,6 +242,32 @@ describe('MicrosoftGraphClient', () => {
     );
   });
 
+  it('follows bounded same-meeting Teams attendance pagination for parent-month checks', async () => {
+    const path = '/v1.0/users/organizer/onlineMeetings/meeting/attendanceReports';
+    const nextLink = 'https://graph.microsoft.com' + path + '?%24skiptoken=page2';
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'oct-20' }], '@odata.nextLink': nextLink }))
+      .mockResolvedValueOnce(jsonResponse({ value: [{ id: 'oct-21' }] }));
+    const client = new MicrosoftGraphClient({ credentials, fetchImpl: asFetch(fetchMock) });
+    const result = await client.listAttendanceReportsBounded('organizer', 'meeting');
+    expect(result.value.map((item) => item.id)).toEqual(['oct-20', 'oct-21']);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('rejects an off-domain Graph pagination URL without sending a bearer token to it', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(tokenResponse())
+      .mockResolvedValueOnce(jsonResponse({
+        value: [{ id: 'report-1' }], '@odata.nextLink': 'https://malicious.example/steal',
+      }));
+    const client = new MicrosoftGraphClient({ credentials, fetchImpl: asFetch(fetchMock) });
+    await expect(client.listAttendanceReportsBounded('organizer', 'meeting')).rejects.toMatchObject({
+      kind: 'ambiguous_result',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it('honors Retry-After for rate limits and keeps retrying read-only requests within bounds', async () => {
     const sleep = vi.fn().mockResolvedValue(undefined);
     const fetchMock = vi.fn()
