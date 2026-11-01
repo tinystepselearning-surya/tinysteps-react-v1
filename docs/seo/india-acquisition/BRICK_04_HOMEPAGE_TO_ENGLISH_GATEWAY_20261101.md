@@ -9,12 +9,12 @@ The existing homepage contains a strong premium live 1:1 hero and four learning-
 Insert exactly one naturally worded contextual link into the homepage's existing "The complete English-learning journey" explanation for parents who do not know which programme fits. No added fifth card, additional CTA, hero copy rewrite, or new landing page. Existing `/phonics`, Reading, Grammar, Speaking and Spoken English targets remain distinct; canonical / pricing / demos / security untouched.
 
 ## Verification
-Run `node --test scripts/test/india-acquisition-brick4-gateway.node-test.mjs` from PR CI. Also require existing Homepage Mobile Release Gate and SEO Soft 404 Production Build Gate, including prerender, to pass before merge. Mobile visual review is a separate release gate where an interactive screenshot is accessible. Build configuration is not proof of live Google indexing.
+Run `node --test scripts/test/india-acquisition-brick4-gateway.node-test.mjs` from PR CI. Also require the existing Homepage Mobile Release Gate (including its `npm run build:deploy`, prerender and homepage browser checks) to pass before merge. The standalone SEO Soft 404 workflow is path-filtered and need not trigger on a homepage-only change; do not imply it passed unless a run exists. Mobile visual review is a separate release gate where an interactive screenshot is accessible. Build configuration is not proof of live Google indexing.
 
 ### Acceptance
 - [ ] Brick 4 source/ownership gate green
 - [ ] Homepage Mobile Release Gate green
-- [ ] SEO Soft 404 production build green
+- [ ] Homepage Mobile production build and prerender checks green (standalone Soft 404 workflow not triggered on this PR)
 - [ ] Review exact copy and semantics
 - [ ] Approval, merge and Firebase deployment verification
 - [ ] **After Brick 10:** Google Search Console URL Inspection for five C2 owners, including Google-selected canonicals
