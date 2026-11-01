@@ -85,6 +85,49 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(businessView).toContain('Mark Present');
   });
 
+  it('filters the month-close parent roster by a bounded historical teacher/month lookup', () => {
+    const teacherScope = readRepoFile('src/lib/attendanceValidationTeacherMonthScope.ts');
+    const indexes = readRepoFile('firestore.indexes.json');
+
+    expect(tracker).toContain('Filter monthly close by teacher');
+    expect(tracker).toContain('loadAvsTeacherMonthParentScope(selectedTeacherId, selectedMonth)');
+    expect(tracker).toContain('setTeacherScope(null)');
+    expect(tracker).toContain('teacherScope.monthKey === selectedMonth');
+    expect(tracker).toContain('return monthParents.filter((parent) => parentIds.has(parent.id))');
+    expect(tracker).toContain('scopedParents.forEach((parent)');
+    expect(tracker).toContain('parentMonthClosePaymentLabel(billing)');
+    expect(tracker).toContain('Teacher matching uses actual sessions from this month.');
+    expect(tracker).toContain('Sessions without a selectable teacher appear under Unknown / Unmapped teacher.');
+    expect(tracker).toContain('Use All teachers for a complete parent-month review.');
+    expect(tracker).toContain('<option value={AVS_UNKNOWN_TEACHER_FILTER_ID}>Unknown / Unmapped teacher</option>');
+    expect(tracker).toContain('current === AVS_UNKNOWN_TEACHER_FILTER_ID');
+    expect(tracker).toContain('loadAvsUnknownTeacherMonthParentScope(');
+    expect(tracker).toContain('selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID');
+    expect(tracker).toContain('teacherOptionsLoading || teacherOptionsError');
+    expect(teacherScope).toContain("where('date', '>=', fromDate)");
+    expect(teacherScope).toContain("orderBy('date', 'asc')");
+    expect(teacherScope).toContain('startAfter(cursor)');
+    expect(teacherScope).toContain('AVS_MONTH_CLOSE_UNKNOWN_SCAN_CAP - total');
+    expect(teacherScope).toContain('No partial results are shown.');
+    expect(tracker).toContain('teacherScope.unmatchedSessionCount > 0');
+    expect(tracker).toContain('could not be linked to a parent');
+    expect(tracker).not.toContain("collection(db, 'classSessions')");
+    expect(tracker).not.toContain("collection(db, 'teacherEarnings')");
+    expect(tracker).not.toContain("collection(db, 'billingCharges')");
+    expect(teacherScope).toContain("where('teacherId', '==', canonicalTeacherId)");
+    expect(teacherScope).toContain("where('date', '>=', fromDate)");
+    expect(teacherScope).toContain("where('date', '<=', toDate)");
+    expect(teacherScope).toContain('limit(AVS_MONTH_CLOSE_TEACHER_SESSION_CAP + 1)');
+    expect(teacherScope).toContain('No partial results are shown.');
+    expect(teacherScope).not.toContain('onSnapshot(');
+    expect(teacherScope).not.toContain('updateDoc(');
+    expect(indexes).toContain('"fieldPath": "teacherId"');
+    expect(indexes).toContain('"fieldPath": "date"');
+    expect(dashboard).toContain('initialTeacherId={requestedTeacherId}');
+    expect(dashboard).toContain('returnTeacherQuery');
+    expect(dashboard).toContain('input.teacherId');
+  });
+
   it('filters the already-loaded business groups by canonical teacher identity', () => {
     expect(businessView).toContain("const [teacherFilter, setTeacherFilter] = useState('all')");
     expect(businessView).toContain('teacherFilterKey(group.teacherId, group.teacherName)');

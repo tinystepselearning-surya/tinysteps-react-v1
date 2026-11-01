@@ -737,6 +737,10 @@ export default function AttendanceValidationDashboard() {
   const isParentReviewMode = Boolean(routeParentId) && !isAdvancedMode;
   const isTrackerMode = !isAdvancedMode && !isParentReviewMode;
   const requestedMonth = searchParams.get('month');
+  const requestedTeacherId = searchParams.get('teacher')?.trim() || '';
+  const returnTeacherQuery = requestedTeacherId && !requestedTeacherId.includes('/')
+    ? `&teacher=${encodeURIComponent(requestedTeacherId)}`
+    : '';
   const detailMonthKey = requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)
     ? requestedMonth
     : previousCompletedMonthKey();
@@ -803,9 +807,12 @@ export default function AttendanceValidationDashboard() {
   const openParentMonthFromTracker = (input: {
     parentId: string;
     monthKey: string;
+    teacherId?: string;
   }) => {
+    const teacherQuery = input.teacherId
+      ? `&teacher=${encodeURIComponent(input.teacherId)}` : '';
     navigate(
-      `/surya/attendance-validation/${encodeURIComponent(input.parentId)}?month=${encodeURIComponent(input.monthKey)}`,
+      `/surya/attendance-validation/${encodeURIComponent(input.parentId)}?month=${encodeURIComponent(input.monthKey)}${teacherQuery}`,
     );
   };
 
@@ -1279,7 +1286,7 @@ export default function AttendanceValidationDashboard() {
   };
 
   const detailReturnTo = isParentReviewMode && routeParentId
-    ? `/surya/attendance-validation/${encodeURIComponent(routeParentId)}?month=${encodeURIComponent(detailMonthKey)}`
+    ? `/surya/attendance-validation/${encodeURIComponent(routeParentId)}?month=${encodeURIComponent(detailMonthKey)}${returnTeacherQuery}`
     : undefined;
 
   const detailNextAction = deriveParentMonthCloseNextAction({
@@ -1389,6 +1396,7 @@ export default function AttendanceValidationDashboard() {
           parents={parents}
           loadParents={loadParentsForTracker}
           initialMonth={detailMonthKey}
+          initialTeacherId={requestedTeacherId}
           disabled={
             loading
             || loadingMore
@@ -1411,7 +1419,7 @@ export default function AttendanceValidationDashboard() {
             size="sm"
             variant="ghost"
             className="-ml-2 mb-2"
-            onClick={() => navigate(`/surya?tab=attendance-validation&month=${encodeURIComponent(detailMonthKey)}`)}
+            onClick={() => navigate(`/surya?tab=attendance-validation&month=${encodeURIComponent(detailMonthKey)}${returnTeacherQuery}`)}
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to {formatMonthKey(detailMonthKey)} tracker
