@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Pure attribution checks must not initialize Firebase or read production data.
 vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 
-import { parentIdsForAvsTeacherMonth, resolveAvsTeacherMonthParentScope } from '../../lib/attendanceValidationTeacherMonthScope';
+import { parentIdsForAvsTeacherMonth, resolveAvsTeacherMonthParentScope, resolveAvsUnknownTeacherMonthParentScope } from '../../lib/attendanceValidationTeacherMonthScope';
 
 describe('Parent Month Close teacher attribution', () => {
   it('matches the actual canonical session teacher during the selected month and deduplicates parents', () => {
@@ -40,6 +40,63 @@ describe('Parent Month Close teacher attribution', () => {
       parentIds: ['parent-1', 'parent-2'],
       unmatchedSessionCount: 2,
     });
+  });
+
+
+  it('includes missing teacher IDs and teacher IDs absent from the selectable directory', () => {
+    const sessions = [
+      { date: '2026-10-04', parentId: 'parent-1', teacherId: '' },
+      { date: '2026-10-05', parentId: 'parent-2', teacherId: 'deleted-teacher' },
+      { date: '2026-10-06', parentId: 'parent-3', teacherId: 'teacher-a' },
+      { date: '2026-10-07', parentId: 'parent-1', teacherId: null },
+      { date: '2026-11-01', parentId: 'outside-month', teacherId: '' },
+      { date: '2026-10-08', parentId: 'alias-does-not-count', assignedTeacherId: 'teacher-a' },
+    ];
+    expect(resolveAvsUnknownTeacherMonthParentScope(sessions, new Set(['teacher-a']), '2026-10'))
+      .toEqual({
+        parentIds: ['alias-does-not-count', 'parent-1', 'parent-2'],
+        unmatchedSessionCount: 0,
+        unknownTeacherSessionCount: 4,
+      });
+  });
+
+  it('retains overlap with mapped teachers so a partially unmapped household is not hidden', () => {
+    const sessions = [
+      { date: '2026-09-10', teacherId: 'teacher-a', parentId: 'family' },
+      { date: '2026-09-13', teacherId: '', parentId: 'family' },
+      { date: '2026-09-17', teacherId: 'teacher-b', parentId: 'only-mapped' },
+      { date: '2026-09-21', teacherId: '', parentIds: ['multiple-a', 'multiple-b'] },
+    ];
+    const known = new Set(['teacher-a', 'teacher-b']);
+    expect(resolveAvsUnknownTeacherMonthParentScope(sessions, known, '2026-09'))
+      .toEqual({
+        parentIds: ['family', 'multiple-a', 'multiple-b'],
+        unmatchedSessionCount: 0,
+        unknownTeacherSessionCount: 2,
+      });
+    expect(parentIdsForAvsTeacherMonth(sessions, 'teacher-a', '2026-09')).toEqual(['family']);
+  });
+
+  it('fails to assign a parent when unresolved sessions lack a usable parent reference', () => {
+    const sessions = [
+      { date: '2026-10-01', teacherId: '', parentId: '' },
+      { date: '2026-10-02', teacherId: 'unknown-uid', parentIds: ['invalid/path'] },
+      { date: '2026-10-03', teacherId: '', parentIds: ['valid-parent', 'valid-parent'] },
+    ];
+    expect(resolveAvsUnknownTeacherMonthParentScope(sessions, new Set(['teacher-a']), '2026-10'))
+      .toEqual({
+        parentIds: ['valid-parent'],
+        unmatchedSessionCount: 2,
+        unknownTeacherSessionCount: 3,
+      });
+  });
+
+  it('considers every teacher unknown when the confirmed teacher directory is empty', () => {
+    expect(resolveAvsUnknownTeacherMonthParentScope(
+      [{ date: '2026-10-01', teacherId: 'historic-uid', parentId: 'parent-1' }],
+      new Set(),
+      '2026-10',
+    ).parentIds).toEqual(['parent-1']);
   });
 
   it('does not infer teacher ownership from stale aliases or current enrollment assignments', () => {
