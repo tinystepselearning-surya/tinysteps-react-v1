@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 3 — 2 November 2026, approximately 02:16 IST
+
+**Preflight:** Read current `MASTER_URL_TRACKER.csv` blob `3ea3ef82a1efacf78915ff6c528546a235f43d9d`. Verified exactly 202 sequential unique URLs and 22 columns; Slots 1–19 contain 10 each, Slot 20 contains 12. Exactly 20 distinct URLs in Slots 1–2 had valid 2 November IST observation timestamps before this run; earlier-day observations were excluded. No Slot 3 URL had a 2 November check.
+
+**Executed checks:** Inspected exactly 10 Slot 3 URLs, rows 21–30. Each returned substantive page-specific provider-extracted text with H1 captured in the tracker: Rabbit Rule, soft C, soft G, ER/IR/UR, AR, OR, Y as a vowel, AU/AW, OI/OY and OO. Seven initially inaccessible exact-URL opens were recovered through exact-page search results or followed internal links. Three previously text-unretrievable pages (rows 24, 26, 27) now yielded page-specific text via internal links; this is **improved audit retrieval evidence only**, not proof of a production deployment or indexing change. Provider crawl labels are 'yesterday' for three and '2 days ago' for seven; actual provider crawl times are unknown. Sources: `turn670933view0`, `turn412726view0`, `turn412726view1`, `turn412726view4`, `turn750936view0`, `turn412726view3`, `turn412726view5`, `turn670933view7`, `turn412726view2`, `turn670933view9`.
+
+**Origin checks:** Ten independent read-only `curl --noproxy '*'` HTTPS GETs began at distinct actual UTC timestamps from **2026-11-01T20:46:12.535992Z** through **2026-11-01T20:46:17.583495Z** and ended no later than **2026-11-01T20:46:26.593382Z**. Nine failed DNS resolution (`curl: (6) Could not resolve host: tinystepslearning.com`); one timed out resolving (`curl: (28) Resolving timed out after 9002 milliseconds`). Independent DNS checks for unrelated `example.com` and `api.github.com` failed too. `curl HTTP_CODE:000` is not an origin HTTP status. Direct robots.txt web retrieval was inaccessible (`turn670933view10`). These failures indicate an **audit-environment DNS limitation**, not a confirmed Tiny Steps outage.
+
+**Coverage:** **30/202 distinct URLs attempted today (14.85%)**; **0/202 fully origin-verified**; **172 not yet attempted today** (scheduled future slots). All 30 current-day technical statuses remain `UNVERIFIED`. HTTP status, final/redirect destination, canonical, robots/meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain unverified. Historical verified values remain historical and are not counted. No dated verified production regression/improvement or search indexing/ranking/AI citation change is established.
+
+**Workflow safety:** Current repository-wide Actions runs and administrative workflow enabled/disabled state could not be independently checked: connected GitHub tools lack a current repository-wide workflow state endpoint, direct GitHub API DNS failed, and web API retrieval was inaccessible (`turn126055view0`, `turn126055view1`). No concurrent rolling audit was positively observed, but its absence is unverified. Continued under the user's 25 October confirmation that the old workflow was disabled in GitHub UI. Cron YAML alone does not prove enablement. No workflow was run or enabled.
+
+**Change control:** This batch updates only the tracker and summary, plus a scoped audit-evidence recovery entry in `CHANGES.md`; no application source, workflow, Firebase, Hosting or production settings are changed. **Next eligible batch: Slot 4, rows 31–40.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 2 — 2 November 2026, approximately 01:10–01:11 IST
 
 **Tracker preflight:** Read latest tracker blob `3d40d0ca8ab551078aa517bd694e79e6be519b11` on `seo-url-health-tracker`. Validated 202 sequential rows, 202 unique URLs, exactly 22 CSV columns, Slots 1–19 with 10 URLs each and Slot 20 with 12. Exactly 10 distinct observations (Slot 1, rows 1–10) already fell on 2 November IST; older dates were excluded. No Slot 2 rows had been checked today.
