@@ -33,6 +33,8 @@ jobs:
         run: node --test scripts/test/team-photo-manifest.node-test.mjs
       - name: Check TypeScript
         run: npm run typecheck
+      - name: Run Team page rendering and metadata regression tests
+        run: npx vitest run src/tests/pages/TeamPage.spec.tsx
       - name: Install Chromium for real prerender
         run: npx playwright install --with-deps chromium
       - name: Build complete public site (no deployment)
