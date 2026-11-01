@@ -3,6 +3,7 @@ name: TSSA-7 B5 Internal Links and External Identity
 on:
   pull_request:
     paths:
+      - 'src/pages/parents/reading-at-home.tsx'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/pages/public/ReadingFluencyProgramPage.tsx'
       - 'scripts/tssa7-b5-authority-path-audit.mjs'
@@ -63,6 +64,12 @@ jobs:
           import assert from 'node:assert/strict';
           const hub=fs.readFileSync('dist/resources/phonics/index.html','utf8');
           const fluency=fs.readFileSync('dist/reading-fluency-program/index.html','utf8');
+          const readingAtHome=fs.readFileSync('dist/parents/reading-at-home/index.html','utf8');
+          assert.match(readingAtHome,/href="\/reading-classes-for-kids"/);
+          assert.match(readingAtHome,/href="\/phonics"/);
+          assert.match(readingAtHome,/href="\/book-demo"/);
+          assert.match(readingAtHome,/rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/parents\/reading-at-home"/);
+          assert.doesNotMatch(readingAtHome,/<meta[^>]*name="robots"[^>]*content="noindex/);
           assert.match(hub,/href="\/reading-classes-for-kids"/);
           assert.match(hub,/href="\/reading-fluency-program"/);
           assert.match(fluency,/href="\/blog\/how-to-improve-reading-fluency-in-children"/);
