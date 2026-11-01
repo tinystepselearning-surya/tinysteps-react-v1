@@ -3,6 +3,8 @@ name: SEO Reading and Grammar Lead Attribution Gate
 on:
   pull_request:
     paths:
+      - 'functions/test/seoReadingGrammarAttribution.emulator.spec.ts'
+      - 'functions/src/enrichPublicLeadAttribution.ts'
       - 'src/tests/lib/leadAttribution.spec.ts'
       - 'src/tests/lib/publicLeadForm.spec.ts'
       - 'src/lib/leadAttribution.ts'
@@ -32,3 +34,47 @@ jobs:
         run: npx vitest run src/tests/lib/leadAttribution.spec.ts src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx
       - name: Validate TypeScript types
         run: npm run typecheck
+
+  firestore-emulator:
+    name: Synthetic Reading and Grammar server attribution (no production)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      GCLOUD_PROJECT: demo-tinysteps-seo-attribution
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-seo-attribution
+      FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Refuse production credentials and project
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-seo-attribution
+          test "$GOOGLE_CLOUD_PROJECT" = demo-tinysteps-seo-attribution
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -z "${FIREBASE_TOKEN:-}"
+      - name: Install locked dependencies without lifecycle scripts
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ci --prefix functions --include=dev --ignore-scripts --no-audit --no-fund
+      - name: Verify real Cloud Function code compiles
+        run: npm --prefix functions run build
+      - name: Run synthetic website-lead persistence exclusively on Firestore emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@latest emulators:exec \
+            --project demo-tinysteps-seo-attribution \
+            --only firestore \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 GCLOUD_PROJECT=demo-tinysteps-seo-attribution GOOGLE_CLOUD_PROJECT=demo-tinysteps-seo-attribution npx vitest run --config functions/vitest.config.ts functions/test/seoReadingGrammarAttribution.emulator.spec.ts'
