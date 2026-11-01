@@ -9,6 +9,7 @@ import { discoverAvsRangeGroups, loadAvsGroupEvidence, normalizeAvsRangeCursor, 
 import { loadProductionStaffIdentityRegistry } from './staffIdentityRegistry';
 import { MicrosoftGraphClient } from './microsoftGraphClient';
 import { resolveAttendanceValidationOrganizerUserId } from './organizerConfig';
+import { discoverTeamsOnlyParentMonth } from './virtualTeamsDiscovery';
 import { buildBaselineEvidenceSessionSnapshot } from './freshEvidenceSession';
 import { createOccurrenceSelectingTeamsEvidenceGraphClient } from './occurrenceSelectingGraphClient';
 import { collectTeamsEvidence, type TeamsEvidenceGraphClient } from './teamsEvidenceCollector';
@@ -126,6 +127,26 @@ export const runAttendanceValidationRange = onCall({
     failures.push(...result.failures.map((error) => classifyAvsFailure(error)));
   }
   const hasMore = plan.hasMore;
+  // Virtual-calendar classes never materialize classSessions until a teacher
+  // deliberately marks attendance. Once session-based pagination completes,
+  // independently inspect this parent's recurring Teams occurrences so a
+  // genuinely taught but unmarked class cannot silently vanish from AVS.
+  let virtualTeamsDiscovery = null as Awaited<ReturnType<typeof discoverTeamsOnlyParentMonth>> | null;
+  if (parentId && enrollmentIds && !hasMore) {
+    const staff = registry ?? await loadProductionStaffIdentityRegistry(db);
+    const organizer = organizerUserId
+      ?? (await resolveAttendanceValidationOrganizerUserId(db)).organizerUserId;
+    const parentGraph = new MicrosoftGraphClient({ credentials: {
+      tenantId: MICROSOFT_TENANT_ID.value(),
+      clientId: MICROSOFT_CLIENT_ID.value(),
+      clientSecret: MICROSOFT_CLIENT_SECRET.value(),
+    } });
+    virtualTeamsDiscovery = await discoverTeamsOnlyParentMonth({
+      db, enrollmentIds, range, registry: staff,
+      graph: parentGraph, organizerUserId: organizer,
+    });
+    graphLogicalCalls += virtualTeamsDiscovery.graphCalls;
+  }
   const failureSummary = summarizeAvsFailures(failures);
   logger.info('AVS group-first validation completed', {
     ...range,
@@ -152,6 +173,7 @@ export const runAttendanceValidationRange = onCall({
     baselineDeferred: false, graphLogicalCalls,
     enrollmentJoinUrlFallbackReads, enrollmentJoinUrlFallbackUses,
     identityMappingsWritten, identityClaimsWritten,
+    virtualTeamsDiscovery,
     concurrentMarkerChangeDetected: false, hasMore, continueValidation: hasMore,
     operationalMutationAllowed: false,
     readBudget: {

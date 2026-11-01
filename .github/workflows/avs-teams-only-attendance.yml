@@ -1,0 +1,52 @@
+name: AVS Teams-Only Attendance Regression Gate
+
+on:
+  pull_request:
+    paths:
+      - 'functions/src/attendanceValidation/**'
+      - 'functions/test/attendanceValidation*.spec.ts'
+      - 'src/pages/admin/components/AttendanceValidationBusinessView.tsx'
+      - 'src/lib/attendanceValidationBusinessReconciliation.ts'
+      - '.github/workflows/avs-teams-only-attendance.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: avs-teams-only-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend-attendance:
+    name: Functions build and AVS regression tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+      # Vitest is a root workspace devDependency; Functions only installs tsc.
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
+      - name: TypeScript compile
+        run: npm --prefix functions run build
+      - name: Complete Functions regression suite (includes AVS cases)
+        run: npm --prefix functions test
+
+  admin-ui:
+    name: Parent Month Close TypeScript and business outcomes
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npx vitest run src/tests/admin/attendanceValidationBusinessReconciliation.spec.ts

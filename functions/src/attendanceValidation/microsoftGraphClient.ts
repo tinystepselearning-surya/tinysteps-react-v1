@@ -473,6 +473,41 @@ export class MicrosoftGraphClient {
     );
   }
 
+  /**
+   * Parent-month AVS must see recurring-meeting reports beyond Graph's first page.
+   * Follow only same-resource Graph nextLinks, with a strict cap; never accept an
+   * arbitrary URL or use an incomplete page as proof that a class was absent.
+   */
+  async listAttendanceReportsBounded(
+    organizerUserId: string,
+    onlineMeetingId: string,
+  ): Promise<GraphCollection<GraphMeetingAttendanceReport>> {
+    const path = `/users/${pathSegment(organizerUserId)}/onlineMeetings/${pathSegment(onlineMeetingId)}/attendanceReports`;
+    let nextPath: string | null = path;
+    const collected: GraphMeetingAttendanceReport[] = [];
+    const visited = new Set<string>();
+    for (let pageNumber = 0; pageNumber < 8 && nextPath; pageNumber += 1) {
+      if (visited.has(nextPath)) {
+        throw new MicrosoftGraphError({ kind: 'ambiguous_result', message: 'Teams attendance pagination loop.' });
+      }
+      visited.add(nextPath);
+      const page: GraphCollection<GraphMeetingAttendanceReport> = await this.graphJson(nextPath);
+      if (!Array.isArray(page.value) || collected.length + page.value.length > 400) {
+        throw new MicrosoftGraphError({ kind: 'ambiguous_result', message: 'Teams attendance report bound exceeded.' });
+      }
+      collected.push(...page.value);
+      if (!page['@odata.nextLink']) return { value: collected };
+      const link = page['@odata.nextLink'];
+      const url = new URL(link);
+      if (url.origin !== new URL(this.graphBaseUrl).origin
+        || !url.href.startsWith(`${this.graphBaseUrl}${path}?`)) {
+        throw new MicrosoftGraphError({ kind: 'ambiguous_result', message: 'Teams attendance pagination URL rejected.' });
+      }
+      nextPath = url.href.slice(this.graphBaseUrl.length);
+    }
+    throw new MicrosoftGraphError({ kind: 'ambiguous_result', message: 'Teams attendance report pagination incomplete.' });
+  }
+
   async listAttendanceRecords(
     organizerUserId: string,
     onlineMeetingId: string,
