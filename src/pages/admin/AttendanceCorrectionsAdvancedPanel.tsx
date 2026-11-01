@@ -28,6 +28,9 @@ import {
 } from './attendanceCorrectionTeacherPay';
 import TeacherPayHandlingControl from './TeacherPayHandlingControl';
 
+// Historical recovery performs expensive, privileged lookups. Load it only after an explicit Admin action.
+const HistoricalAttendanceMissingSessionPanel = React.lazy(() => import('./HistoricalAttendanceMissingSessionPanel'));
+
 type AttendanceCorrectionMode = 'existing' | 'create';
 
 type AttendanceCorrectionStatus = 'present' | 'absent' | 'rescheduled';
@@ -235,6 +238,8 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [teacherOptions, setTeacherOptions] = useState<TeacherOption[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [selectedDate, setSelectedDate] = useState(toIstDateLabel(new Date()));
+  const [includeLegacyTeacherHistory, setIncludeLegacyTeacherHistory] = useState(false);
+  const [showHistoricalRecovery, setShowHistoricalRecovery] = useState(false);
 
   const [sessionRows, setSessionRows] = useState<AttendanceCorrectionSession[]>([]);
   const [existingKidNameById, setExistingKidNameById] = useState<Record<string, string>>({});
@@ -254,6 +259,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [reason, setReason] = useState('');
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [sessionLookupError, setSessionLookupError] = useState('');
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -509,8 +515,10 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       }
 
       setLoadingSessions(true);
+      setSessionLookupError('');
       try {
         const sessionMap = new Map<string, Record<string, unknown>>();
+        let successfulQueries = 0;
         const mergeDocs = (docs: Array<{ id: string; data: () => unknown }>) => {
           docs.forEach((docSnap) => {
             sessionMap.set(docSnap.id, (docSnap.data() || {}) as Record<string, unknown>);
@@ -528,6 +536,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         for (const plannedQuery of primaryQueries) {
           try {
             const snap = await getDocs(plannedQuery);
+            successfulQueries += 1;
             mergeDocs(snap.docs);
           } catch (queryErr) {
             console.warn('Attendance correction canonical date query failed, continuing bounded fallback', queryErr);
@@ -548,6 +557,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           for (const plannedQuery of boundedQueries) {
             try {
               const snap = await getDocs(plannedQuery);
+              successfulQueries += 1;
               mergeDocs(snap.docs);
             } catch (queryErr) {
               console.warn('Attendance correction canonical bounded query failed, continuing fallback', queryErr);
@@ -555,13 +565,15 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           }
         }
 
-        if (sessionMap.size === 0) {
+        // Legacy teacher-wide reads are expensive: never run them on a normal date selection.
+        if (sessionMap.size === 0 && includeLegacyTeacherHistory) {
           const fallbackQueries = selectedTeacherIdentityIds.map((teacherIdentityId) =>
             query(collection(db, 'classSessions'), where('teacherId', '==', teacherIdentityId)),
           );
           for (const plannedQuery of fallbackQueries) {
             try {
               const snap = await getDocs(plannedQuery);
+              successfulQueries += 1;
               mergeDocs(snap.docs);
             } catch (queryErr) {
               console.warn('Attendance correction canonical teacher fallback query failed', queryErr);
@@ -569,6 +581,9 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           }
         }
         if (cancelled) return;
+        if (successfulQueries === 0) {
+          throw new Error('Session lookup failed. Please retry or ask support to verify Firestore permissions and indexes.');
+        }
 
         const rows = Array.from(sessionMap.entries())
           .map(([id, data]): AttendanceCorrectionSession => {
@@ -600,12 +615,14 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         if (!cancelled) {
           setSessionRows(rows);
           setExistingKidNameById(kidMap);
+          setSessionLookupError('');
         }
       } catch (err) {
         console.error('Failed to load attendance correction sessions', err);
         if (!cancelled) {
           setSessionRows([]);
           setExistingKidNameById({});
+          setSessionLookupError(err instanceof Error ? err.message : 'Please try again.');
           toast({
             title: 'Unable to load sessions',
             description: err instanceof Error ? err.message : 'Please try again.',
@@ -621,7 +638,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
     return () => {
       cancelled = true;
     };
-  }, [selectedTeacherId, selectedTeacherIdentityIds, selectedDate, reloadKey, toast]);
+  }, [selectedTeacherId, selectedTeacherIdentityIds, selectedDate, includeLegacyTeacherHistory, reloadKey, toast]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1151,7 +1168,10 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           <select
             className="h-9 w-full rounded-md border border-slate-300 bg-white px-2 text-sm"
             value={selectedTeacherId}
-            onChange={(event) => setSelectedTeacherId(event.target.value)}
+            onChange={(event) => {
+              setSelectedTeacherId(event.target.value);
+              setIncludeLegacyTeacherHistory(false);
+            }}
             disabled={loadingTeachers || saving || hasLockedPrefill}
           >
             {teacherOptions.length === 0 ? (
@@ -1169,7 +1189,10 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           <Input
             type="date"
             value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
+            onChange={(event) => {
+              setSelectedDate(event.target.value);
+              setIncludeLegacyTeacherHistory(false);
+            }}
             disabled={saving || hasLockedPrefill}
           />
         </div>
@@ -1177,6 +1200,33 @@ export default function AttendanceCorrectionsAdvancedPanel() {
 
       {mode === 'existing' ? (
         <>
+          {!hasLockedPrefill && isAdmin && Boolean(sessionLookupError) && (
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+              {sessionLookupError}
+              <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button>
+            </div>
+          )}
+          {!hasLockedPrefill && isAdmin && selectedTeacherId && selectedDate && !loadingSessions && !sessionLookupError && sessionRows.length === 0 && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
+              <p className="text-slate-700">
+                No saved sessions found for this teacher and date.
+                {includeLegacyTeacherHistory
+                  ? ' No matching legacy records were found either.'
+                  : ' Older records without a standard date may require a manual legacy search.'}
+              </p>
+              {!includeLegacyTeacherHistory && (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="mt-2"
+                  onClick={() => setIncludeLegacyTeacherHistory(true)}
+                >
+                  Search Legacy Teacher History
+                </Button>
+              )}
+            </div>
+          )}
           <div className="grid gap-3 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-medium text-slate-600">Student</label>
@@ -1384,6 +1434,36 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         </Button>
       </div>
 
+      {isAdmin && !hasLockedPrefill && (
+        <div className="border-t border-slate-200 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h4 className="text-sm font-semibold">Previous Course / Teacher Recovery</h4>
+              <p className="text-xs text-slate-600">
+                For an older class with no session record after a course or teacher change.
+                Historical records are fetched only when you open this tool.
+              </p>
+            </div>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              aria-expanded={showHistoricalRecovery}
+              onClick={() => setShowHistoricalRecovery((open) => !open)}
+              disabled={saving}
+            >
+              {showHistoricalRecovery ? 'Close Historical Recovery' : 'Open Historical Recovery'}
+            </Button>
+          </div>
+          {showHistoricalRecovery && (
+            <React.Suspense fallback={<p className="mt-3 text-sm text-slate-600">Loading historical recovery...</p>}>
+              <div className="mt-3">
+                <HistoricalAttendanceMissingSessionPanel />
+              </div>
+            </React.Suspense>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

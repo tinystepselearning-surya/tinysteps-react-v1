@@ -29,7 +29,14 @@ describe('historical attendance correction routing', () => {
     expect(parentSource).toContain("httpsCallable<");
     expect(parentSource).toContain("(functions, 'createAdminManualSession')");
     expect(parentSource).toContain('saveAdminAttendanceCorrectionWithTeacherPayDecision');
-    expect(parentSource).not.toContain('HistoricalAttendanceMissingSessionPanel');
+    expect(parentSource).toContain("React.lazy(() => import('./HistoricalAttendanceMissingSessionPanel'))");
+    expect(parentSource).toContain('showHistoricalRecovery && (');
+    expect(parentSource).toContain('<HistoricalAttendanceMissingSessionPanel />');
+    expect(parentSource).toContain('setShowHistoricalRecovery((open) => !open)');
+    expect(parentSource).toContain('if (sessionMap.size === 0 && includeLegacyTeacherHistory)');
+    expect(parentSource).toContain('setIncludeLegacyTeacherHistory(true)');
+    expect(parentSource).toContain('successfulQueries === 0');
+    // Historical sessions are fetched only after Admin explicitly opens the recovery tool.
     // The legacy source and restricted callable remain available for manual recovery.
     expect(panelSource).toContain('<details');
     expect(panelSource).toContain('Historical / Previous Course — Missing Session');
