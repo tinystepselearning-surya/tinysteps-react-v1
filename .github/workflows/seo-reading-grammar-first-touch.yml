@@ -1,0 +1,34 @@
+name: SEO Reading and Grammar Lead Attribution Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/tests/lib/leadAttribution.spec.ts'
+      - 'src/tests/lib/publicLeadForm.spec.ts'
+      - 'src/lib/leadAttribution.ts'
+      - 'src/lib/publicLeadForm.ts'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
+      - 'src/pages/public/BookDemoPage.tsx'
+      - '.github/workflows/seo-reading-grammar-first-touch.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  attribution-regression:
+    name: Reading and Grammar parent first-touch and enquiry safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: First-touch, payload and form regressions (mocked, no production writes)
+        run: npx vitest run src/tests/lib/leadAttribution.spec.ts src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx
+      - name: Validate TypeScript types
+        run: npm run typecheck
