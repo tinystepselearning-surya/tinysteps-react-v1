@@ -90,13 +90,15 @@ describe('AV6 admin attendance validation dashboard', () => {
     const indexes = readRepoFile('firestore.indexes.json');
 
     expect(tracker).toContain('Filter monthly close by teacher');
-    expect(tracker).toContain('loadAvsTeacherMonthParentIds(selectedTeacherId, selectedMonth)');
+    expect(tracker).toContain('loadAvsTeacherMonthParentScope(selectedTeacherId, selectedMonth)');
     expect(tracker).toContain('setTeacherScope(null)');
     expect(tracker).toContain('teacherScope.monthKey === selectedMonth');
     expect(tracker).toContain('return monthParents.filter((parent) => parentIds.has(parent.id))');
     expect(tracker).toContain('scopedParents.forEach((parent)');
     expect(tracker).toContain('parentMonthClosePaymentLabel(billing)');
     expect(tracker).toContain('Teacher matching uses actual sessions from this month.');
+    expect(tracker).toContain('teacherScope.unmatchedSessionCount > 0');
+    expect(tracker).toContain('could not be linked to a parent');
     expect(tracker).not.toContain("collection(db, 'classSessions')");
     expect(tracker).not.toContain("collection(db, 'teacherEarnings')");
     expect(tracker).not.toContain("collection(db, 'billingCharges')");
