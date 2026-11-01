@@ -151,12 +151,13 @@ export default function AttendanceValidationMonthlyTracker({
   );
 
   const scopedParents = useMemo(() => {
+    const includedIds = new Set(Object.keys(billingByParent));
+    Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
     const monthParents = scope === 'all_parents'
       ? parents
-      : parents.filter((parent) =>
-          Object.hasOwn(billingByParent, parent.id) || Object.hasOwn(progress, parent.id));
+      : parents.filter((parent) => includedIds.has(parent.id));
     if (selectedTeacherId === 'all') return monthParents;
-    const parentIds = teacherScope?.teacherId === selectedTeacherId
+    const parentIds = teacherScope && teacherScope.teacherId === selectedTeacherId
       && teacherScope.monthKey === selectedMonth
       ? new Set(teacherScope.parentIds)
       : new Set<string>();
@@ -304,7 +305,7 @@ export default function AttendanceValidationMonthlyTracker({
   };
 
   const teacherScopeReady = selectedTeacherId === 'all' || (
-    teacherScope?.teacherId === selectedTeacherId && teacherScope.monthKey === selectedMonth
+    !!teacherScope && teacherScope.teacherId === selectedTeacherId && teacherScope.monthKey === selectedMonth
   );
   const trackerReady = loadedMonth === selectedMonth && teacherScopeReady && !teacherScopeError;
 
@@ -353,7 +354,7 @@ export default function AttendanceValidationMonthlyTracker({
               aria-label="Filter monthly close by teacher"
               className="h-10 min-w-[190px] max-w-[250px] rounded-md border bg-white px-3"
               value={selectedTeacherId}
-              disabled={disabled || loading || savingParentId !== null || teacherOptionsLoading || !!teacherOptionsError}
+              disabled={disabled || loading || savingParentId !== null || teacherOptionsLoading}
               onChange={(event) => {
                 setSelectedTeacherId(event.target.value);
                 setTeacherScope(null);
@@ -393,7 +394,7 @@ export default function AttendanceValidationMonthlyTracker({
             {loading
               ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               : <ClipboardCheck className="mr-2 h-4 w-4" />}
-            {trackerReady ? 'Refresh tracker' : 'Loading tracker…'}
+            {loading ? 'Loading tracker…' : 'Refresh tracker'}
           </Button>
         </div>
       </div>
