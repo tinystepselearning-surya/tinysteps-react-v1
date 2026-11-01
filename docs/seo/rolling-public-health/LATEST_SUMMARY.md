@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 21 — reconciliation / recovery assessment, 1 November 2026, approximately 20:19 IST
+
+**Read-only tracker integrity:** Re-fetched `MASTER_URL_TRACKER.csv` from `seo-url-health-tracker` (blob SHA `8aa8029aeaffe15dc394a71c97b9bb5dfdccae41`). Parsed 202 rows with 22 columns, sequential indices 1–202 and 202 unique selected URLs; slots 1–19 contain 10 each and slot 20 contains 12. All 202 rows have distinct, valid UTC check timestamps whose **Asia/Kolkata local date is 2026-11-01**, with no future-dated attempts. All 202 current-day statuses are `UNVERIFIED`; none has a confirmed current origin HTTP response. There are 30 historical `PASS` entries dated 2026-10-25, retained as historical evidence **not** counted toward today's verified coverage. Today's **attempted** coverage is 202/202 (100%), with zero missed assigned URL attempts, but **fully origin-verified coverage is 0/202**.
+
+**Evidence reconciliation:** Across the 202 already-attempted URLs, 195 rows record provider-extracted page text, four rows (22, 23, 25, 29) have only older exact-page search snippets, and three rows (24, 26, 27) have **no direct page text or exact-page search result**. The three are `/resources/phonics/er-ir-ur-r-controlled-vowels-phonics`, `/resources/phonics/or-r-controlled-vowels-phonics`, and `/resources/phonics/y-as-a-vowel-phonics`. These are **content-evidence gaps, not confirmed live page failures**. Prior read-only HTTPS origin attempts: 156 DNS failures (curl exit 6) and 46 DNS timeouts (exit 28); no HTTP response. No prior URL rows were rechecked, no timestamps backfilled, and no future slots scanned.
+
+**Read-only recovery diagnostics (not a URL batch):** At **2026-11-01T14:48:52.694585488Z**, a new GET to `https://tinystepslearning.com/robots.txt` (not one of the 202 tracked URLs) failed with `curl: (6) Could not resolve host: tinystepslearning.com`; HTTP_CODE 000 is a curl placeholder, not a server status. At **2026-11-01T14:49:10.603291656Z**, resolver checks yielded no A records for `tinystepslearning.com`, `example.com`, or `github.com` in this audit environment (configured resolver `168.63.129.16`). Failure to resolve unrelated domains strengthens the **audit-environment DNS limitation** explanation and is not evidence of a Tiny Steps production outage. Origin status, redirects, canonical, noindex/robots, raw initial HTML and JSON-LD remain `UNVERIFIED`.
+
+**Workflow safety:** GitHub Actions read API reported one in-progress **Deploy to Firebase** run (run ID `41317833167`, created `2026-11-01T14:46:21Z`) and zero queued runs; **no concurrently running rolling SEO audit** was observed. The administrative workflow-state endpoint was rejected by the connector, so disabled state cannot be independently confirmed; user's 25 October UI-disable confirmation remains the operating assumption. No GitHub workflow was started, enabled or modified.
+
+**Change control:** This is a reconciliation-only check. `MASTER_URL_TRACKER.csv` is intentionally unchanged (no newly executed selected-URL checks); `CHANGES.md` remains unchanged (no verified before/after production transition). Only this summary is updated on the tracker branch. No application source, workflows, Firebase, Hosting or production settings modified. **Next: Slot 22 reconciliation/recovery; Slot 23–24 catch-up if eligible, then next local-day cycle.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 20 — 1 November 2026, approximately 19:14 IST (origin probes 2026-11-01T13:44:35.967624Z–13:44:46.032623Z UTC)
 
 **Preflight and coverage:** Re-fetched current tracker and verified exactly 202 sequential unique URLs, 22 columns, slots 1–19 with 10 URLs each and slot 20 with 12. Before this batch, 190 distinct URLs had valid 1 November IST UTC observation timestamps, including early IST checks dated 31 October UTC. Inspected only the twelve eligible previously unchecked Slot 20 URLs (rows 191–202); each received a distinct real UTC probe start timestamp. **Today's attempted coverage: 202/202 (100%); zero outstanding scheduled URL attempts; zero fully origin-verified URLs.** All 202 current-day technical readiness statuses remain **UNVERIFIED**. Prior-day IST observations excluded; historical verification fields preserved.
