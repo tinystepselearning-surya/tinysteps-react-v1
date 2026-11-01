@@ -233,7 +233,10 @@ export async function discoverTeamsOnlyParentMonth(params: {
       });
       const classified = classifyVirtualTeamsOccurrence(collected.evidence, registry, day);
       const caseRef = db.collection('attendanceValidationCases').doc(id);
-      if (classified.businessOutcome === null) continue;
+      if (classified.businessOutcome === null) {
+        eligibleIds.delete(id);
+        continue;
+      }
       const output = makeVirtualCase({ id, day, enrollmentId: candidate.id,
         kidId: candidate.kidId, teacherId: candidate.teacherId,
         evidence: collected.evidence, classified });
