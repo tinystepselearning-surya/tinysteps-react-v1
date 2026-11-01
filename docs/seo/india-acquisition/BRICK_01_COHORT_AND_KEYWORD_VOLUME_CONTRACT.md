@@ -1,5 +1,7 @@
 # Brick 1 — Live new-parent cohort and India keyword-volume input contract
 
+> **Business rule updated 1 November 2026 — overrides the parent-phone counting specification below.** The acquisition KPI is **distinct first-observed parent–child enquiry opportunities** (normalized parent phone **plus child name**). **One parent enquiring about two different children counts as two new enquiries; subsequent enquiries for the same child count as repeats.** Distinct parent phone contacts remain a secondary metric. Historical September/October targets calculated using phone-only identity require rebaselining; do not compare them directly. See [ARG-2 issue #856](https://github.com/tinystepselearning-surya/tinysteps-react-v1/issues/856) and [draft PR #857](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/857). The original text is retained as a dated design record and is **not the current counting rule**.
+
 **Status (1 Nov 2026): design only, not an implementation.** Follow-up to [Brick 1 baseline](./BRICK_01_BASELINE_AND_KEYWORD_INTELLIGENCE.md), tracked in #834 and PR #835. This document is based on source inspection of `main`; it does not claim a new production Firestore read.
 
 ## Why a separate read model is needed
