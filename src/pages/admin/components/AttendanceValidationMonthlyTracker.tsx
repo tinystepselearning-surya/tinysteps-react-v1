@@ -466,6 +466,8 @@ export default function AttendanceValidationMonthlyTracker({
             <p className="mt-2 text-xs text-slate-500">
               Teacher matching uses actual sessions from this month. Session counts, billed classes,
               invoices and payments remain whole-parent totals, even when multiple teachers taught the family.
+              Sessions missing a recorded teacher ID cannot appear in any teacher-specific view.
+              Use All teachers for a complete parent-month review.
             </p>
           )}
 
