@@ -1,0 +1,26 @@
+name: ARG-2 Offline Parent Cohort Fixture Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/lib/arg2-parent-cohort-fixture.mjs'
+      - 'scripts/test/arg2-parent-cohort-fixture.node-test.mjs'
+      - 'docs/acquisition/ARG2_PARENT_COHORT_FIXTURE_CONTRACT_20261101.md'
+      - '.github/workflows/arg2-parent-cohort-fixture.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    name: Validate parent-grain acquisition fixture contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+      - name: Offline synthetic cohort acceptance tests
+        run: node --test scripts/test/arg2-parent-cohort-fixture.node-test.mjs
