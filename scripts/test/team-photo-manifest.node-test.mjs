@@ -62,5 +62,5 @@ test('public-facing assurance accurately describes targeted audits and follow-up
   assert.match(trust, /Ongoing lesson and conduct reviews/);
   assert.match(trust, /selected lessons and recordings/);
   assert.match(trust, /Feedback, coaching and follow-up/);
-  assert.match(trust, /not a claim that every class is individually audited/);
+  assert.match(trust, /Our academic reviews focus on instructional quality and professional standards/);
 });
