@@ -97,6 +97,8 @@ describe('AV6 admin attendance validation dashboard', () => {
     expect(tracker).toContain('scopedParents.forEach((parent)');
     expect(tracker).toContain('parentMonthClosePaymentLabel(billing)');
     expect(tracker).toContain('Teacher matching uses actual sessions from this month.');
+    expect(tracker).toContain('Sessions missing a recorded teacher ID cannot appear in any teacher-specific view.');
+    expect(tracker).toContain('Use All teachers for a complete parent-month review.');
     expect(tracker).toContain('teacherScope.unmatchedSessionCount > 0');
     expect(tracker).toContain('could not be linked to a parent');
     expect(tracker).not.toContain("collection(db, 'classSessions')");
