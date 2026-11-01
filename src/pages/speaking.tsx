@@ -86,9 +86,9 @@ const faqItems = [
       'Tiny Steps teaches children to organise ideas and communicate them clearly for a listener or audience. In practice, the programme develops structured answers, storytelling, show-and-tell, presentation skills, audience awareness, listening and response, idea organisation, and increasingly independent speaking through guided live practice.',
   },
   {
-    question: 'Are Tiny Steps public speaking classes live and 1:1?',
+    question: 'Are Tiny Steps public speaking classes available as live 1:1 or small groups?',
     answer:
-      `Yes. Standard Tiny Steps 1:1 classes are live online and run for ${PUBLIC_SESSION_DURATION_LABEL}. Small-group options may also be available for selected schedules or programme fits.`,
+      `Both formats are offered. Standard live 1:1 Public Speaking classes run for ${PUBLIC_SESSION_DURATION_LABEL} with individual pacing and feedback. Separately, small-group Public Speaking classes can include up to four children per teacher, matched by communication needs and compatible schedules. Families can register interest, but group demos and places depend on a suitable batch forming and are not immediately guaranteed.`,
   },
   {
     question: 'How much do Tiny Steps public speaking classes cost?',
