@@ -117,9 +117,9 @@ const faqItems = [
       'Yes. When children understand sound patterns, digraphs, and vowel teams, spelling becomes more logical and less guess-based over time.',
   },
   {
-    question: 'Are Tiny Steps phonics classes 1:1?',
+    question: 'Are Tiny Steps phonics classes available as 1:1 or small groups?',
     answer:
-      'Yes. Tiny Steps offers live 1:1 online phonics guidance with level-based progression and personalized correction.',
+      'Both formats are offered. Standard live 1:1 phonics classes provide individual pacing and correction. Families can also register interest in level-matched small-group phonics classes, with up to four children per teacher. New groups form only when suitable learning levels and schedules match, so immediate group availability is not guaranteed.',
   },
   {
     question: 'Do parents receive recordings of every live phonics class?',
