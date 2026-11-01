@@ -84,3 +84,26 @@ test('Brick 10: specialist owners and conditional group-interest boundaries rema
     assert.match(page, /1:1/);
   }
 });
+
+test('Brick 10: release workflow runs when protected commercial sources change', () => {
+  const workflow = read('.github/workflows/india-acquisition-brick10.yml');
+  const mustTrigger = [
+    ...owners.map(({ source }) => source),
+    'src/pages/HomePage.tsx',
+    'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx',
+    'src/pages/public/GroupClassPage.tsx',
+    'src/pages/parents/ParentsHubPage.tsx',
+    'src/pages/parents/reading-at-home.tsx',
+    'src/lib/publicRouteManifest.js',
+    'src/lib/commercialC2KeywordOwnership.ts',
+    'src/lib/routeSeoRegistry.js',
+    'src/lib/schemas.ts',
+    'src/config/semanticFacts.ts',
+    'src/config/publicFacts.ts',
+    'src/config/pricing.ts',
+  ];
+  for (const source of new Set(mustTrigger)) {
+    assert.ok(workflow.includes("- '" + source + "'"), source + ': must trigger commercial release gate');
+  }
+  assert.ok(workflow.includes("scripts/test/india-acquisition-brick*.node-test.mjs"), 'brick regression tests must trigger gate');
+});
