@@ -1,4 +1,5 @@
 import { HOMEPAGE_SEO_META } from './homeSeoMeta.js';
+import { SPEAKING_META_DESCRIPTION_EXPERIMENT } from './speakingMetaDescriptionExperiment.js';
 import { PUBLIC_COURSE_PAGE_CONFIGS } from './publicCoursePages.js';
 import { PHONICS_PUBLISHED_RESOURCE_SEO } from './phonicsPublicationRegistry.js';
 import { PHONICS_AGE_PROGRAMME_SEO } from './phonicsAgeProgrammeRegistry.js';
@@ -47,8 +48,7 @@ export const ROUTE_SEO_REGISTRY = {
   },
   '/speaking': {
     title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
-    description:
-      'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
+    description: SPEAKING_META_DESCRIPTION_EXPERIMENT.candidateDescription,
     canonicalPath: '/speaking',
     ogType: 'website',
     keywords:
