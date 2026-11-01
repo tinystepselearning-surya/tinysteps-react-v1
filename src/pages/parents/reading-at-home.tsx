@@ -263,6 +263,12 @@ const ReadingAtHome: React.FC = () => {
               </div>
             ))}
           </div>
+          <p className="mt-5 text-sm leading-6 text-slate-700">
+            If your child reads individual words but still needs help with connected-text fluency or understanding a passage, explore{' '}
+            <Link to="/reading-classes-for-kids" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-800">live online reading classes for kids</Link>.
+            If blending or decoding unfamiliar words is still difficult, begin with{' '}
+            <Link to="/phonics" className="font-semibold text-slate-900 underline underline-offset-2 hover:text-sky-800">phonics support</Link> instead.
+          </p>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
