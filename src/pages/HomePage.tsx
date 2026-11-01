@@ -90,7 +90,9 @@ function LearningPathwaysSection() {
             Tiny Steps brings together phonics, blending and spelling; reading fluency, vocabulary and comprehension; grammar and sentence building; and spoken English, public speaking and communication skills.
           </p>
           <p>
-            Instead of following one fixed sequence for every child, we assess their starting point and build the next skills through age-appropriate activities, guided practice and teacher feedback.
+            Instead of following one fixed sequence for every child, we assess their starting point and build the next skills through age-appropriate activities, guided practice and teacher feedback. If you are unsure which programme fits, explore our{' '}
+            <Link to="/online-english-classes-for-kids" className="font-semibold text-[#102A43] underline decoration-[#FF7A00] decoration-2 underline-offset-4 hover:text-[#9B4300] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">online English classes for kids</Link>{' '}
+            before choosing a learning path.
           </p>
         </div>
         <div className="mt-6 grid gap-px overflow-hidden rounded-[1.75rem] border border-slate-200 bg-slate-200 shadow-[0_8px_32px_rgba(16,42,67,0.035)] sm:mt-9 sm:grid-cols-2 lg:grid-cols-4">
