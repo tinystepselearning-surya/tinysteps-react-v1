@@ -16,6 +16,10 @@
 - A fresh, **121-row deduplicated research queue** was prepared from those 79 observations plus **42 analyst-proposed class-intent seeds**, preserving source origin and C2 canonical owner. Breakdown: Phonics 45, Reading 15, Grammar 16, Public Speaking 19, Broad English 20, spoken-English specialist 6. The specialist category must remain separate from public speaking/broad English.
 - Two copy-ready free-checker batches contain **100 and 21** distinct queries respectively. The queue leaves all current third-party India volume cells **blank** rather than writing false zeroes. These private/user export files are not committed to the repository.
 
+## Connected Ahrefs access check (1 November 2026)
+
+The owner connected Ahrefs in ChatGPT. An API subscription/usage read and a minimal India (`IN`) Keyword Explorer overview request for `online phonics classes for kids` both failed with **`UNAVAILABLE: Insufficient plan`**. No keyword-volume rows were returned. **Do not present Ahrefs as a measured source or infer that any zero-volume keywords were found.** Provider connection alone is not proof of sufficient API subscription access. Fallback remains a permitted third-party CSV export with full provenance; avoid purchasing or changing plans without owner approval.
+
 ## Measurement protocol
 
 1. Prefer **one primary third-party provider** for a consistently dated India country dataset across five programmes. Use an Indian Google database with documented historical period and per-keyword volume, including units (12-month average vs observed monthly). Record plan/account limitations honestly.
