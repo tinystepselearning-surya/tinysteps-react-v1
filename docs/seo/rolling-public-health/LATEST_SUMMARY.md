@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 10 — 1 November 2026, approximately 09:18–09:19 IST (origin probes 2026-11-01T03:48:58.878256Z–03:49:24.020150Z UTC)
+
+**Preflight and coverage:** Validated 202 sequential unique selected URLs, 22-column CSV integrity, Slots 1–19 with ten URLs each and Slot 20 with twelve. Before this run, 90 distinct 1 November IST attempts were recorded. Only previously unchecked Slot 10 URLs (rows 91–100) were checked, with ten distinct actual UTC start timestamps and end times. **Today's attempted coverage: 100/202 (49.50%); 102 awaiting scheduled checks; zero fully origin-verified; all 100 current-day origin technical-readiness statuses UNVERIFIED.** Previous-day timestamps excluded; no previously checked or future-slot URL re-probed.
+
+**Provider text retrieval:** All ten exact public URLs yielded page-specific provider-extracted HTML text (snapshots labelled Crawled yesterday; precise provider crawl times unknown): 91 Child Not Reading Properly? (turn962256view0); 92 Slow Reader Child Help (turn962256view1); 93 Shy Child Speaking Confidence (turn962256view2); 94 Reading Fluency Classes (turn962256view3); 95 Confidence Building Classes (turn962256view4); 96 English Foundation Program (turn962256view5); 97 Summer Camp 2026 archive (turn962256view6); 98 Summer Camp India planning guide (turn962256view7); 99 Summer Reading Plan (turn962256view8); 100 School-Break Speaking Practice (turn962256view9). The four summer pages clearly label the 2026 camp as concluded, with archived or planning content rather than active enrollment. Provider text is partial evidence only, not live-origin initial HTML verification.
+
+**Independent origin HTTPS:** Ten distinct read-only `curl --noproxy '*' -L` GET requests failed before receiving origin HTTP, all exit 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. Per-URL UTC start/end times, evidence refs and stderr are in the tracker. No HTTP response, headers or raw HTML obtained. `HTTP_CODE:000` is a curl placeholder, not server status; echoed effective URLs and zero redirects do not establish redirect behavior. Origin status, redirects, canonical, noindex/meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot robots access, initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not establish a production outage. Direct robots.txt retrieval was inaccessible (turn962256view10). No first-party indexing, ranking or AI citation evidence.
+
+**Workflow safety:** GitHub Actions repository run API reported zero in-progress and zero queued runs; none of the latest 100 runs matched the rolling SEO audit workflow. The workflow's administrative enabled/disabled state could not be read independently via the connected endpoint, so user's confirmed 25 October UI disablement remains the operating assumption. No GitHub workflow executed or enabled.
+
+**Change control:** No independently verified dated production regression or improvement; `CHANGES.md` unchanged. No source, workflow, Firebase, Hosting or production settings modified. **Next: Slot 11, rows 101–110.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 9 — 1 November 2026, approximately 08:18 IST (origin probes 2026-11-01T02:48:08.639857Z–02:48:35.604232Z UTC)
 
 **Preflight and coverage:** Validated 202 sequential unique selected URLs, 22-column CSV semantics, Slots 1–19 at 10 URLs each and Slot 20 at 12. Before Slot 9, 80 distinct current-day attempts were present. Only ten previously unchecked Slot 9 URLs (rows 81–90) were probed, with distinct actual UTC timestamps. **Today's attempted coverage: 90/202 (44.55%); 112 awaiting scheduled checks; zero fully origin-verified; 90 current-day technical-readiness statuses UNVERIFIED.** Prior-day timestamps were excluded; no earlier checked or future-slot URL was probed. Historical PASS entries do not establish current production health.
