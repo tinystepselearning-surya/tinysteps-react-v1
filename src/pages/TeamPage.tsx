@@ -86,6 +86,13 @@ export default function TeamPage() {
     });
   }, []);
 
+  // Route-level faculty links target real Team-page anchors after React mounts.
+  useEffect(() => {
+    const target = window.location.hash.slice(1);
+    if (!['teachers-phonics', 'teachers-grammar', 'teachers-public-speaking'].includes(target)) return;
+    document.getElementById(target)?.scrollIntoView({ block: 'start' });
+  }, []);
+
   return (
     <div className="overflow-x-clip bg-[#fffdf9] text-slate-950">
       <TeamHero />
