@@ -70,3 +70,15 @@ test('researched English-speaking classes intent routes naturally to its existin
   assert.match(national, /Explore \{track\.linkLabel \?\? track\.title\}/);
   assert.match(local, /Explore \{card\.linkLabel \?\? card\.title\}/);
 });
+
+test('national English trust claims trace to the published academic teaching process', () => {
+  const national = read('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
+  const team = read('src/pages/team/TeamPageSections.tsx');
+  assert.match(national, /Teachers are reviewed for spoken English, subject understanding, child interaction, reliability and online-class readiness/);
+  assert.match(national, /They receive programme guidance and lesson resources, with academic feedback and parent insights supporting continued development/);
+  assert.match(national, /<Link to="\/team"[^>]*>How our teachers are selected and supported<\/Link>/);
+  assert.match(national, /<Link to="\/class-samples"/);
+  assert.match(national, /<Link to="\/parents\/tracking-progress"/);
+  assert.match(national, /const canonicalPath = '\/online-english-classes-for-kids'/);
+  assert.match(team, /TeacherDevelopmentSection/);
+});
