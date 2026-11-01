@@ -1,0 +1,43 @@
+name: India Acquisition Brick 10 Commercial Release Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/test/india-acquisition-brick10-release.node-test.mjs'
+      - 'docs/seo/india-acquisition/BRICK_10_*'
+      - '.github/workflows/india-acquisition-brick10.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commercial-release-contract:
+    name: Validate five owners, offer facts and production SEO build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Playwright Chromium for static prerender
+        run: npx playwright install --with-deps chromium
+      - name: Five-owner/price/conversion safety contract
+        run: node --test scripts/test/india-acquisition-brick10-release.node-test.mjs
+      - name: Regression coverage for earlier acquisition bricks
+        run: |
+          node --test scripts/test/india-acquisition-brick2-intent.node-test.mjs
+          node --test scripts/test/india-acquisition-brick3-phonics.node-test.mjs
+          node --test scripts/test/india-acquisition-brick4-gateway.node-test.mjs
+          node --test scripts/test/india-acquisition-brick5-evidence.node-test.mjs
+          node --test scripts/test/india-acquisition-brick7-grammar.node-test.mjs
+          node --test scripts/test/india-acquisition-brick8-speaking.node-test.mjs
+          node --test scripts/test/india-acquisition-brick9-brand-entity.node-test.mjs
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Full build, SEO and prerender integrity
+        run: npm run build
