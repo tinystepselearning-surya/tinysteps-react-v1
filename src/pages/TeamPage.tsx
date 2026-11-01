@@ -26,7 +26,7 @@ import {
   TrustMetrics,
 } from './team/TeamPageSections';
 import { teamFaqItems } from './team/teamPageContent';
-import PublicTeacherProfilesSection from './team/PublicTeacherProfilesSection';
+import PublicTeacherProfilesSection, { AcademicLeadershipProfilesSection, TeacherTrainingFacultySection } from './team/PublicTeacherProfilesSection';
 
 const teamSeo = getRouteConfig('/team');
 const teamSeoTitle = teamSeo?.title ?? 'Meet the Tiny Steps Learning Team | Founder-Led English Learning';
@@ -94,7 +94,14 @@ export default function TeamPage() {
         <strong className="text-slate-950">Tiny Steps Learning</strong> has supported children&apos;s English learning since {PUBLIC_FACTS.operatingSinceYear},
         with live online programmes serving families in India and internationally.
       </div>
-      <FounderSection />
+      <div id="academic-leadership" className="scroll-mt-24">
+        <div className="bg-white px-4 pt-12 text-center sm:px-6">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-orange-700">Level 1 · Founder & Academic Leadership</p>
+          <h2 className="mt-3 font-heading text-2xl font-bold text-slate-950 sm:text-3xl">The people guiding our academic direction</h2>
+        </div>
+        <FounderSection />
+        <AcademicLeadershipProfilesSection />
+      </div>
       <section
         aria-label="Founder profile"
         className="border-y border-orange-100 bg-[#fffaf3] px-4 py-5 sm:px-6 lg:px-8"
@@ -118,6 +125,7 @@ export default function TeamPage() {
       <AcademicSystemSection />
       <ResearchToClassroomSection />
       <TeacherDevelopmentSection />
+      <TeacherTrainingFacultySection />
       <PublicTeacherProfilesSection />
       <QualitySystemSection />
       <TeachingCommunitySection />
