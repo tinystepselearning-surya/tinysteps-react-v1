@@ -137,7 +137,7 @@ export const teamFaqItems = [
   {
     question: 'Are Tiny Steps teachers graduates?',
     answer:
-      'Our teachers are graduate educators. Individual academic degrees or external teaching certifications are shown only when their details have been verified and approved for publication.',
+      'Yes. Our teachers are graduate-qualified educators with school-classroom teaching experience. They teach with a shared English curriculum, prepared lesson resources and ongoing academic guidance and feedback.',
   },
   {
     question: 'Are live classes and teacher standards reviewed?',
