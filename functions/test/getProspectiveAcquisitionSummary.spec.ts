@@ -173,10 +173,10 @@ describe('ARG-2 callable authorization and aggregate privacy boundary', () => {
   );
 
   it.each([
-    ['suspended Admin', 'admin', { personStatus: 'suspended', authStatus: 'disabled', accessActive: false }],
-    ['archived Founder', 'founder', { personStatus: 'archived', authStatus: 'archived', accessActive: false }],
-    ['malformed active lifecycle', 'admin', { authStatus: 'disabled', accessActive: true }],
-  ])('denies %s and fails closed', async (_label, role, overrides) => {
+    { label: 'suspended Admin', role: 'admin', overrides: { personStatus: 'suspended', authStatus: 'disabled', accessActive: false } },
+    { label: 'archived Founder', role: 'founder', overrides: { personStatus: 'archived', authStatus: 'archived', accessActive: false } },
+    { label: 'malformed active lifecycle', role: 'admin', overrides: { authStatus: 'disabled', accessActive: true } },
+  ])('denies $label and fails closed', async ({ role, overrides }) => {
     principal('inactive', [role], overrides);
     candidate();
     await expect(invoke('inactive')).rejects.toMatchObject({ code: 'permission-denied' });
