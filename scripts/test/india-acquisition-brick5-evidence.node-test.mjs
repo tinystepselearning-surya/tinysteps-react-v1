@@ -24,7 +24,7 @@ test('existing broad English Trust proof gives direct access to three real suppo
 test('each referenced evidence page exists and is statically public', () => {
   const routes = read('src/lib/publicRouteManifest.js');
   const files = [
-    ['/team', 'static', 'src/pages/TeamPage.tsx', /TeacherDevelopmentSection/],
+    ['/team', 'static', 'src/pages/TeamPage.tsx', /TeachingAssuranceSection/],
     ['/class-samples', 'static', 'src/pages/ClassSamplesPage.tsx', /class/],
     ['/parents/tracking-progress', 'parents', 'src/pages/parents/tracking-progress.tsx', /progress/i],
   ];
@@ -32,6 +32,8 @@ test('each referenced evidence page exists and is statically public', () => {
     assert.ok(routes.includes(`route('${path}', '${group}')`), path + ' public route');
     assert.match(read(source), indicator, source + ' has appropriate evidence');
   }
+  // The public Team page now delegates its teaching-quality evidence to this module.
+  assert.match(read('src/pages/team/TeachingAssuranceSection.tsx'), /id="teaching-quality"/, 'teacher-quality evidence section remains public');
 });
 
 test('keyword owner, assessment and specialist commercial navigation are unchanged', () => {
