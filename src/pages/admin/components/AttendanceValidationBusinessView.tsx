@@ -432,7 +432,9 @@ export default function AttendanceValidationBusinessView({ cases, returnTo, onRe
                                   {group.outcome === 'false_absent' && (
                                     <div className="mt-1 font-medium text-orange-700">
                                       Tiny Steps has {group.tinyStepsPresentCount ?? 0} Present.
-                                      {' '}Choose {group.differenceCount} row{group.differenceCount === 1 ? '' : 's'} below to mark Present.
+                                      {group.cases.some((item) => !item.classSessionId)
+                                        ? ' Teams confirms attendance, but no Tiny Steps class session was created. Restore or create the correct class through the authorized attendance workflow before recording Present.'
+                                        : <> Choose {group.differenceCount} row{group.differenceCount === 1 ? '' : 's'} below to mark Present.</>}
                                     </div>
                                   )}
                                 </div>
