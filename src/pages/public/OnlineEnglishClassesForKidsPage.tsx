@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS } from '../../config/publicFacts';
-import { ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
+import { NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
 import { applySeo } from '../../lib/seo';
 import { createCourseSchema, createFAQPageSchema, createWebPageSchema, PUBLIC_FACTS } from '../../lib/schemas';
 import {
@@ -148,7 +148,7 @@ const faqItems = [
   {
     question: 'Do you offer one-on-one English classes or an online English tutor for kids?',
     answer:
-      `Yes. Tiny Steps offers live 1:1 online English learning and may also offer small-group options. In a 1:1 class, one child works live with the teacher, who can focus the session on the child’s assessed starting point and current skill goal. Standard 1:1 classes are ${PUBLIC_SESSION_DURATION_LABEL}; small-group duration varies with group size.`,
+      `Yes. Tiny Steps offers live 1:1 online English learning and may also offer small-group options. In a 1:1 class, one child works live with the teacher, who can focus the session on the child’s assessed starting point and current skill goal. Standard 1:1 classes are ${PUBLIC_SESSION_DURATION_LABEL}. Newly formed small-group classes are ${NEW_GROUP_CLASS_PLAN.durationMinutes} minutes when a suitable level-matched batch is available.`,
   },
   {
     question: 'What is the difference between an online English tutor and an online English class at Tiny Steps?',
@@ -491,7 +491,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               </div>
             </div>
             <p className="mt-4 text-sm leading-7 text-slate-700">
-              Standard 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. Small-group duration varies with group size. Review all available formats and packages on the{' '}
+              Standard 1:1 classes are {PUBLIC_SESSION_DURATION_LABEL}. New small-group classes are {NEW_GROUP_CLASS_PLAN.durationMinutes} minutes when suitable level-matched batches form. Review available formats and packages on the{' '}
               <Link to="/pricing" className="font-semibold underline underline-offset-4">
                 pricing page
               </Link>.
