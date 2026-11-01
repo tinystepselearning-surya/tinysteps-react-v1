@@ -16,7 +16,7 @@ permissions:
 jobs:
   brick2-source-and-prerender:
     name: Verify five owners, page copy and rendered build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
