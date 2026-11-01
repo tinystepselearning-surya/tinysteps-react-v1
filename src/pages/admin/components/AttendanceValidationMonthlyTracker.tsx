@@ -3,8 +3,9 @@ import { ClipboardCheck, Loader2, Search } from 'lucide-react';
 import type { AvsParentOption } from '../../../lib/attendanceValidationParentScope';
 import {
   loadAvsMonthCloseTeacherOptions,
-  loadAvsTeacherMonthParentIds,
+  loadAvsTeacherMonthParentScope,
   type AvsMonthCloseTeacherOption,
+  type AvsTeacherMonthParentScope,
 } from '../../../lib/attendanceValidationTeacherMonthScope';
 import {
   completedMonthOptions,
@@ -127,11 +128,9 @@ export default function AttendanceValidationMonthlyTracker({
   const [teacherOptions, setTeacherOptions] = useState<AvsMonthCloseTeacherOption[]>([]);
   const [teacherOptionsLoading, setTeacherOptionsLoading] = useState(true);
   const [teacherOptionsError, setTeacherOptionsError] = useState<string | null>(null);
-  const [teacherScope, setTeacherScope] = useState<{
-    teacherId: string;
-    monthKey: string;
-    parentIds: string[];
-  } | null>(null);
+  const [teacherScope, setTeacherScope] = useState<(
+    AvsTeacherMonthParentScope & { teacherId: string; monthKey: string }
+  ) | null>(null);
   const [teacherScopeError, setTeacherScopeError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [savingParentId, setSavingParentId] = useState<string | null>(null);
@@ -241,9 +240,9 @@ export default function AttendanceValidationMonthlyTracker({
     let active = true;
     setTeacherScope(null);
     setTeacherScopeError(null);
-    void loadAvsTeacherMonthParentIds(selectedTeacherId, selectedMonth)
-      .then((parentIds) => {
-        if (active) setTeacherScope({ teacherId: selectedTeacherId, monthKey: selectedMonth, parentIds });
+    void loadAvsTeacherMonthParentScope(selectedTeacherId, selectedMonth)
+      .then((attribution) => {
+        if (active) setTeacherScope({ teacherId: selectedTeacherId, monthKey: selectedMonth, ...attribution });
       })
       .catch((loadError) => {
         if (active) setTeacherScopeError(loadError instanceof Error
@@ -453,6 +452,13 @@ export default function AttendanceValidationMonthlyTracker({
               Showing {scopedParents.length} parents {selectedTeacherId === 'all'
                 ? 'with sessions' : 'linked to the selected teacher\'s sessions'} in {formatMonthKey(selectedMonth)}.
               Attendance and finance status reuse the existing canonical parent-month read model.
+            </p>
+          )}
+
+          {selectedTeacherId !== 'all' && teacherScope && teacherScope.unmatchedSessionCount > 0 && (
+            <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800" role="status">
+              {teacherScope.unmatchedSessionCount} session(s) for this teacher could not be linked to a parent
+              from the stored session identifiers. Some parents may be missing from this filtered view.
             </p>
           )}
 
