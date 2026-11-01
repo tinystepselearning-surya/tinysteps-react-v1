@@ -3,11 +3,11 @@ import { publicTeacherPhotos } from 'virtual:tiny-steps-team-photos';
 
 export function TeacherPortraitsSection() {
   return (
-    <section id="teachers" aria-labelledby="team-teachers-title" className="border-y border-orange-100 bg-gradient-to-b from-[#fffaf4] via-[#fffdfa] to-[#f5f8ff] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section id="teachers" aria-labelledby="team-teachers-title" className="border-y border-[#E4DCF8] bg-gradient-to-br from-[#FFF7EC] via-[#FBF8FF] to-[#EAF6FF] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-4xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#C2410C]">Our teaching team</p>
-          <h2 id="team-teachers-title" className="mx-auto mt-3 max-w-3xl font-heading text-3xl font-bold tracking-tight text-[#10243e] sm:text-4xl">
+          <h2 id="team-teachers-title" className="mx-auto mt-3 max-w-3xl font-heading text-3xl font-bold tracking-tight text-[#102A43] sm:text-4xl">
             Meet the educators behind every live lesson
           </h2>
           <p className="mx-auto mt-5 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
@@ -18,7 +18,7 @@ export function TeacherPortraitsSection() {
 
         <div className="mt-10 flex items-center justify-center gap-4 sm:mt-14">
           <span className="hidden h-px max-w-24 flex-1 bg-[#e9d9cb] sm:block" aria-hidden="true" />
-          <h3 className="font-heading text-center text-lg font-bold leading-snug text-[#10243e] sm:text-xl">
+          <h3 className="font-heading text-center text-lg font-bold leading-snug text-[#102A43] sm:text-xl">
             Early Years &amp; Primary English Educators
           </h3>
           <span className="hidden h-px max-w-24 flex-1 bg-[#e9d9cb] sm:block" aria-hidden="true" />
@@ -40,7 +40,7 @@ export function TeacherPortraitsSection() {
                   />
                 </div>
                 <figcaption className="mt-4 max-w-full px-1 text-center">
-                  <h3 className="font-heading text-base font-bold leading-snug text-[#10243e] sm:text-lg">{teacher.name}</h3>
+                  <h3 className="font-heading text-base font-bold leading-snug text-[#102A43] sm:text-lg">{teacher.name}</h3>
                 </figcaption>
               </figure>
             ))}
