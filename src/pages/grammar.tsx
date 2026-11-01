@@ -1,3 +1,4 @@
+import FacultyTrustLink from '../components/programs/FacultyTrustLink';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import TestimonialSnippets from '../components/common/TestimonialSnippets';
@@ -674,6 +675,8 @@ export default function GrammarPage() {
           <ProgrammeFaqAccordion items={faqItems} accent="orange" />
         </div>
       </section>
+
+      <FacultyTrustLink track="grammar" />
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
         <div className="mx-auto max-w-6xl overflow-hidden rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,#D9EEFF_0%,#FFFFFF_52%,#EAF6FF_100%)] p-6 text-center text-slate-950 sm:p-8 md:p-9">
