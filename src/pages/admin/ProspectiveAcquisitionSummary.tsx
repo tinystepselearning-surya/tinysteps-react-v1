@@ -100,7 +100,7 @@ export default function ProspectiveAcquisitionSummary({
               </div>
             </div>
             <div className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
-              <div className="text-xs text-muted-foreground">Awaiting identity verification</div>
+              <div className="text-xs text-muted-foreground">Unresolved candidate records</div>
               <div className="mt-1 text-2xl font-semibold tabular-nums">
                 {loading ? '…' : error ? 'Unavailable' : result?.unresolvedCandidateRecords ?? '—'}
               </div>
@@ -122,7 +122,7 @@ export default function ProspectiveAcquisitionSummary({
         </>
       )}
       <p className="mt-3 text-[11px] leading-5 text-muted-foreground">
-        A newly received enquiry may appear after the existing Firebase canonicalization completes.
+        Unresolved records may still be processing or have an identity conflict; they are not included in the new-enquiry total. A newly received enquiry may appear after Firebase canonicalization completes.
         Repeat submission totals need dated inquiry history and are not inferred from lifetime counts.
         The existing lead-reporting cards below remain operational document counts.
       </p>
