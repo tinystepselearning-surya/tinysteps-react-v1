@@ -29,7 +29,8 @@ jobs:
           node-version: 22.x
           cache: npm
           cache-dependency-path: functions/package-lock.json
-      - run: npm ci --prefix functions --include=dev
+      # Vitest is a root workspace devDependency; Functions only installs tsc.
+      - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
       - name: TypeScript compile
         run: npm --prefix functions run build
       - name: AVS group, Graph and Teams-only missing-date regressions
