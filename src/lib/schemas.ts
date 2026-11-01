@@ -5,6 +5,7 @@
 
 import {
   CORE_PROGRAMS_TEXT as SEMANTIC_CORE_PROGRAMS_TEXT,
+  FOUNDER_PUBLIC_PROFILE_URLS,
   ORGANIZATION_SAME_AS_URLS,
   SEMANTIC_FACTS,
 } from '../config/semanticFacts';
@@ -123,6 +124,7 @@ export const organizationSchema = {
     givenName: PUBLIC_FACTS.founder.givenName,
     familyName: PUBLIC_FACTS.founder.familyName,
     alternateName: [...PUBLIC_FACTS.founder.alternateNames],
+    sameAs: [...FOUNDER_PUBLIC_PROFILE_URLS],
     jobTitle: SEMANTIC_FACTS.founder.title,
     url: FOUNDER_PROFILE_URL,
     image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,

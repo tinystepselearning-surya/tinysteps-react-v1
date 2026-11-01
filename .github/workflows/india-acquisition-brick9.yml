@@ -1,0 +1,35 @@
+name: India Acquisition Brick 9 Brand Entity Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/schemas.ts'
+      - 'scripts/test/india-acquisition-brick9-brand-entity.node-test.mjs'
+      - 'docs/seo/india-acquisition/BRICK_09_*'
+      - '.github/workflows/india-acquisition-brick9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  founder-brand-identity:
+    name: Verify brand and founder JSON-LD and prerender SEO
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Install Playwright Chromium for SEO prerender
+        run: npx playwright install --with-deps chromium
+      - name: Check canonical founder and organisation identity
+        run: node --test scripts/test/india-acquisition-brick9-brand-entity.node-test.mjs
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Full SEO and prerender build
+        run: npm run build
