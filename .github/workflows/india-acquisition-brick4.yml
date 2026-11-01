@@ -1,0 +1,25 @@
+name: India Acquisition Brick 4 Homepage Gateway Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/HomePage.tsx'
+      - 'scripts/test/india-acquisition-brick4-gateway.node-test.mjs'
+      - 'docs/seo/india-acquisition/BRICK_04_*'
+      - '.github/workflows/india-acquisition-brick4.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  homepage-gateway:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+      - name: Preserve existing home keyword gateway and SEO owners
+        run: node --test scripts/test/india-acquisition-brick4-gateway.node-test.mjs
