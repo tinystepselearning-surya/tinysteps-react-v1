@@ -7,6 +7,11 @@ export interface AvsMonthCloseTeacherOption {
   label: string;
 }
 
+export interface AvsTeacherMonthParentScope {
+  parentIds: string[];
+  unmatchedSessionCount: number;
+}
+
 // These are independent safety ceilings, not pagination cut-offs. Exceeding a
 // ceiling must fail visibly rather than silently omitting parents or teachers.
 export const AVS_MONTH_CLOSE_TEACHER_DIRECTORY_CAP = 500;
@@ -53,27 +58,46 @@ export async function loadAvsMonthCloseTeacherOptions(): Promise<AvsMonthCloseTe
  * A parent may legitimately appear under multiple teachers (different children,
  * courses or reassignment). Never allocate or divide billing here.
  */
+export function resolveAvsTeacherMonthParentScope(
+  sessions: Array<Record<string, unknown>>,
+  teacherId: string,
+  monthKey: string,
+): AvsTeacherMonthParentScope {
+  const ids = new Set<string>();
+  let unmatchedSessionCount = 0;
+  sessions.forEach((session) => {
+    if (cleanText(session.teacherId) !== teacherId) return;
+    const date = cleanText(session.date);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.slice(0, 7) !== monthKey) return;
+    const candidateIds = [
+      session.parentId,
+      ...(Array.isArray(session.parentIds) ? session.parentIds : []),
+    ];
+    const validParentIds = candidateIds
+      .map(cleanText)
+      .filter((id) => id && !id.includes('/'));
+    if (!validParentIds.length) {
+      unmatchedSessionCount += 1;
+      return;
+    }
+    validParentIds.forEach((id) => ids.add(id));
+  });
+  return { parentIds: [...ids].sort(), unmatchedSessionCount };
+}
+
 export function parentIdsForAvsTeacherMonth(
   sessions: Array<Record<string, unknown>>,
   teacherId: string,
   monthKey: string,
 ): string[] {
-  const ids = new Set<string>();
-  sessions.forEach((session) => {
-    if (cleanText(session.teacherId) !== teacherId) return;
-    const date = cleanText(session.date);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date.slice(0, 7) !== monthKey) return;
-    const parentId = cleanText(session.parentId);
-    if (parentId && !parentId.includes('/')) ids.add(parentId);
-  });
-  return [...ids].sort();
+  return resolveAvsTeacherMonthParentScope(sessions, teacherId, monthKey).parentIds;
 }
 
 /** A single bounded query is issued only when a specific teacher is selected. */
-export async function loadAvsTeacherMonthParentIds(
+export async function loadAvsTeacherMonthParentScope(
   teacherId: string,
   monthKey: string,
-): Promise<string[]> {
+): Promise<AvsTeacherMonthParentScope> {
   const canonicalTeacherId = cleanText(teacherId);
   if (!canonicalTeacherId || canonicalTeacherId.includes('/')) {
     throw new Error('Invalid monthly-close teacher.');
@@ -89,7 +113,7 @@ export async function loadAvsTeacherMonthParentIds(
   if (snapshot.size > AVS_MONTH_CLOSE_TEACHER_SESSION_CAP) {
     throw new Error('Teacher-month session scope exceeds the 1,000-record safety limit. No partial results are shown.');
   }
-  return parentIdsForAvsTeacherMonth(
+  return resolveAvsTeacherMonthParentScope(
     snapshot.docs.map((docSnapshot) => docSnapshot.data() as Record<string, unknown>),
     canonicalTeacherId,
     monthKey,
