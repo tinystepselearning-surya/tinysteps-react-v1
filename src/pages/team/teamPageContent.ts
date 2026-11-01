@@ -135,6 +135,16 @@ export const teamFaqItems = [
       'Tiny Steps connects assessment, structured programme placement, guided lessons, purposeful practice, academic review and clear parent communication in one learning system.',
   },
   {
+    question: 'Are Tiny Steps teachers graduates?',
+    answer:
+      'Our teachers are graduate educators. Individual academic degrees or external teaching certifications are shown only when their details have been verified and approved for publication.',
+  },
+  {
+    question: 'Are live classes and teacher standards reviewed?',
+    answer:
+      'Yes. Our academic team uses targeted lesson and recording reviews, professional expectations, teaching feedback and ongoing coaching. Review practices vary by need; this does not imply every session is independently audited.',
+  },
+  {
     question: 'How is my child’s starting level decided?',
     answer:
       'A free 35-minute 1:1 assessment class helps the team understand the child’s current strengths and gaps before recommending an appropriate programme and starting point.',
