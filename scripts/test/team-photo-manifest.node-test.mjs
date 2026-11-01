@@ -108,3 +108,13 @@ test('Team page keeps the merged concise structure while using Phonics pastel pa
   assert.ok(!team.includes('<QualitySystemSection />'));
   assert.equal((sections.match(/alt="Priya, Founder of Tiny Steps Learning"/g) || []).length, 1);
 });
+
+test('Team hero uses substantive teaching evidence rather than unverified seniority or school affiliations', () => {
+  const sections = readFileSync(new URL('../../src/pages/team/TeamPageSections.tsx', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../../src/pages/team/teamPageContent.ts', import.meta.url), 'utf8');
+  assert.ok(sections.includes('Thoughtful teaching. More confident learning.'));
+  assert.ok(sections.includes('How we guide learning'));
+  assert.ok(sections.includes('to="/class-samples"'));
+  assert.ok(content.includes('graduate-qualified educators with school-classroom teaching experience'));
+  assert.doesNotMatch(sections + content, /senior[- ]most|international[- ]school teachers|IB certified|exclusive faculty|100% audited/i);
+});
