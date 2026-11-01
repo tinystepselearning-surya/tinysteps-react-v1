@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
 import { PUBLIC_FACTS } from '../../lib/schemas';
+import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
 import {
   academicSystemCards,
   founderResponsibilities,
@@ -135,7 +136,7 @@ export function TeamHero() {
             <div className="grid gap-3 sm:grid-cols-[0.88fr_1.12fr]">
               <div className="relative min-h-[330px] overflow-hidden rounded-[22px] bg-slate-200 sm:min-h-[430px]">
                 <img
-                  src="/priya-founder-tiny-steps-learning.webp"
+                  src={founderPhotoSrc}
                   alt="Priya, Founder of Tiny Steps Learning"
                   width={1024}
                   height={1024}
@@ -205,7 +206,7 @@ export function FounderSection() {
           <div className="absolute -bottom-5 -left-5 h-full w-full rounded-[30px] bg-[#FFF5DF]" aria-hidden="true" />
           <figure className="relative overflow-hidden rounded-[30px] border-8 border-white bg-slate-100 shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
             <img
-              src="/priya-founder-tiny-steps-learning.webp"
+              src={founderPhotoSrc}
               alt="Priya, Founder of Tiny Steps Learning, reviewing academic materials"
               width={1024}
               height={1024}
