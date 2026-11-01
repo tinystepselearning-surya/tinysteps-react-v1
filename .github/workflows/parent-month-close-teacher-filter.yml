@@ -13,6 +13,7 @@ on:
       - 'src/tests/admin/parentMonthClose.spec.ts'
       - 'src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts'
       - 'firestore.indexes.json'
+      - 'scripts/audit-month-close-teacher-filter.mjs'
       - '.github/workflows/parent-month-close-teacher-filter.yml'
   workflow_dispatch:
 
@@ -47,6 +48,8 @@ jobs:
           src/tests/admin/attendanceValidationDashboard.spec.ts
           src/tests/admin/parentMonthClose.spec.ts
           src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
+      - name: Read-only production audit CLI syntax smoke check
+        run: node scripts/audit-month-close-teacher-filter.mjs --help
       - name: Verify teacher/date composite index is declared
         run: |
           node --input-type=module <<'NODE'
