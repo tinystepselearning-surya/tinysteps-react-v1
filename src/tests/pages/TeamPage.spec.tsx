@@ -48,7 +48,7 @@ describe('TeamPage', () => {
     for (const stage of ['Model', 'Practise', 'Apply']) {
       expect(screen.getByRole('heading', { name: stage, level: 3 })).toBeInTheDocument();
     }
-    expect(screen.getByText(/graduate-qualified educators with school-classroom teaching experience/)).toBeInTheDocument();
+    expect(screen.getByText(/All Tiny Steps teachers are graduates with professional school-classroom teaching experience/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Training, observation and ongoing quality checks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ongoing lesson and conduct reviews' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vannala Ravali Priya — Founder' })).toHaveAttribute('href', '/team/vannala-ravali-priya');
