@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 8 — 1 November 2026, approximately 07:10 IST (origin probes 2026-11-01T01:39:54.489506Z–01:40:04.542929Z UTC)
+
+**Preflight and coverage:** Fetched and validated 202 sequential unique selected URLs, 22 columns per record, slots 1–19 at 10 each and slot 20 at 12. Before Slot 8, 70 distinct actual current-day UTC observation timestamps were present. Audited only ten previously unchecked Slot 8 URLs (rows 71–80), preserving the earlier 70 rows and all historical fields. **Today's attempted coverage: 80/202 (39.60%); 122 awaiting scheduled checks; zero fully origin-verified; all 80 current-day technical-readiness statuses UNVERIFIED.** No prior-day timestamps counted and no future slots scanned. Historical PASS entries do not establish current production health.
+
+**Provider text retrieval:** All ten yielded substantive page-specific text labelled **Crawled today** (exact provider crawl time unknown): 71 Letter Tracing With Sounds Game (turn739798view0); 72 Free Phonics Balloon Pop Game for Kids (turn739798view1); 73 Vocabulary Adventure (turn739798view2); 74 Online Phonics Classes for Kids (turn739798view3); 75 Online Grammar Classes for Kids (turn739798view4); 76 Online Public Speaking Classes for Kids (turn739798view5); 77 How Tiny Steps Measures Speaking Progress (turn470209view0, reached via link on /book-demo after exact URL web.open was inaccessible); 78 CBSE defines the literacy goal. Tiny Steps builds the implementation pathway. (turn739798view7); 79 Book a Free 35-Minute 1:1 English Assessment (turn739798view8); 80 Online Reading Classes for Kids (turn739798view9). These are provider-extracted content observations only, not proof of current origin raw HTML or successful game/form interactions.
+
+**Live-origin limitation:** Ten distinct read-only HTTPS curl --noproxy '*' -L GET attempts failed before HTTP with exit 6 and exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. Per-URL actual UTC probe start/end timestamps are in the tracker. No origin HTTP response, headers or raw HTML were obtained; curl HTTP_CODE:000 is not a server HTTP response and echoed final URL/zero redirects do not establish redirect behavior. HTTP status, redirect chain/final URL, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. These audit-environment DNS errors do not establish a production outage. No first-party Google/Bing indexing, ranking, AI mention or citation evidence was obtained.
+
+**Workflow safety:** GitHub Actions administrative workflow-state and repository run-list API web.open inaccessible (turn739798view10, turn739798view11). The GitHub connector lacks a general workflow-state/run-list reader; therefore no independent disablement or concurrent-run claim is made. The user's 25 October UI disable confirmation remains the operating assumption; no GitHub workflow was run, enabled or modified.
+
+**Change control:** No verified dated before/after production regression or improvement; CHANGES.md remains unchanged. Only the tracker and summary were updated on seo-url-health-tracker; no source, workflows, Firebase, Hosting or production settings changed. **Next: Slot 9 (rows 81–90) when eligible.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 7 — 1 November 2026, approximately 06:16 IST (HTTPS probes 2026-11-01T00:46:06.166362Z–00:46:32.891162Z UTC)
 
 **Preflight and coverage:** Fetched current tracker on `seo-url-health-tracker` and validated exactly **202 sequential unique selected URLs**, 22 columns per record, slots 1–19 containing 10 each and slot 20 containing 12. Before this run, 60 distinct current-day UTC observation timestamps were present. Audited only ten previously unchecked Slot 7 URLs (rows 61–70) with distinct actual UTC probe start times; no earlier checked rows or future slots were scanned. **Today's attempted coverage: 70/202 (34.65%); 132 awaiting scheduled checks; zero fully origin-verified; all 70 current-day records UNVERIFIED for complete origin technical readiness.** Prior-day observations do not count toward today's coverage. Historical PASS values do not establish current production health.
