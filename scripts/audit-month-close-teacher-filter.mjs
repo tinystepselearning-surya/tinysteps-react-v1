@@ -10,14 +10,15 @@
  * Date-bound queries do not measure legacy sessions with no date field.
  */
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { applicationDefault, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { isRequiredIndex } from './ensure-teacher-earnings-session-index.mjs';
 
-const CAP_PER_MONTH = 2000;
+export const MAX_SESSION_READS_PER_MONTH = 50_000;
+export const SESSION_PAGE_SIZE = 500;
 const DEFAULT_MONTHS = ['2026-09', '2026-10'];
 const clean = (value) => typeof value === 'string' ? value.trim() : '';
-const count = (rows, check) => rows.reduce((sum, row) => sum + Number(check(row)), 0);
 
 const readIndexState = (project) => {
   const args = [
@@ -41,35 +42,116 @@ const monthRange = (month) => {
   return { from: `${month}-01`, to: `${month}-${String(lastDay).padStart(2, '0')}` };
 };
 
-const summarizeSessions = (rows) => {
-  const teacherIds = new Set();
-  const parentTeachers = new Map();
-  const validParentIds = (row) => [
-    row.parentId,
-    ...(Array.isArray(row.parentIds) ? row.parentIds : []),
-  ].map(clean).filter((id) => id && !id.includes('/'));
-  rows.forEach((row) => {
-    const teacherId = clean(row.teacherId);
-    if (!teacherId) return;
-    teacherIds.add(teacherId);
-    validParentIds(row).forEach((parentId) => {
-      if (!parentTeachers.has(parentId)) parentTeachers.set(parentId, new Set());
-      parentTeachers.get(parentId).add(teacherId);
-    });
-  });
-  return {
-    dateIndexedSessionCount: rows.length,
-    canonicalTeacherIdPresent: count(rows, (row) => !!clean(row.teacherId)),
-    missingCanonicalTeacherId: count(rows, (row) => !clean(row.teacherId)),
-    sessionsWithTeacherAliasOnly: count(rows, (row) =>
-      !clean(row.teacherId) && (clean(row.assignedTeacherId) || (Array.isArray(row.teacherIds) && row.teacherIds.length))),
-    missingParentIdentifiers: count(rows, (row) => validParentIds(row).length === 0),
-    distinctCanonicalTeachers: teacherIds.size,
-    distinctParentsAttributableToCanonicalTeachers: parentTeachers.size,
-    parentsWithMultipleActualTeachers: [...parentTeachers.values()].filter((ids) => ids.size > 1).length,
-  };
-};
+/**
+ * Accumulate only aggregate counters and deduplication sets. Raw Firestore
+ * records are discarded after each page and no personal identifiers are logged.
+ */
+const createSessionSummary = () => ({
+  dateIndexedSessionCount: 0,
+  canonicalTeacherIdPresent: 0,
+  missingCanonicalTeacherId: 0,
+  sessionsWithTeacherAliasOnly: 0,
+  missingParentIdentifiers: 0,
+  teacherIds: new Set(),
+  parentTeachers: new Map(),
+});
 
+const validParentIds = (row) => [
+  row.parentId,
+  ...(Array.isArray(row.parentIds) ? row.parentIds : []),
+].map(clean).filter((id) => id && !id.includes('/'));
+
+export function addSessionToAuditSummary(summary, row) {
+  summary.dateIndexedSessionCount += 1;
+  const teacherId = clean(row.teacherId);
+  const parents = validParentIds(row);
+  if (!teacherId) {
+    summary.missingCanonicalTeacherId += 1;
+    if (clean(row.assignedTeacherId) || (Array.isArray(row.teacherIds) && row.teacherIds.length > 0)) {
+      summary.sessionsWithTeacherAliasOnly += 1;
+    }
+  } else {
+    summary.canonicalTeacherIdPresent += 1;
+    summary.teacherIds.add(teacherId);
+    parents.forEach((parentId) => {
+      if (!summary.parentTeachers.has(parentId)) summary.parentTeachers.set(parentId, new Set());
+      summary.parentTeachers.get(parentId).add(teacherId);
+    });
+  }
+  if (!parents.length) summary.missingParentIdentifiers += 1;
+}
+
+export function finalizedSessionAuditSummary(summary) {
+  return {
+    dateIndexedSessionCount: summary.dateIndexedSessionCount,
+    canonicalTeacherIdPresent: summary.canonicalTeacherIdPresent,
+    missingCanonicalTeacherId: summary.missingCanonicalTeacherId,
+    sessionsWithTeacherAliasOnly: summary.sessionsWithTeacherAliasOnly,
+    missingParentIdentifiers: summary.missingParentIdentifiers,
+    distinctCanonicalTeachers: summary.teacherIds.size,
+    distinctParentsAttributableToCanonicalTeachers: summary.parentTeachers.size,
+    parentsWithMultipleActualTeachers: [...summary.parentTeachers.values()].filter((ids) => ids.size > 1).length,
+  };
+}
+
+/**
+ * Read only the selected month with a stable cursor. Pages have a fixed size,
+ * and a hard upper bound prevents unintentional unbounded production scans.
+ * A complete result is returned only after the final (short/empty) page.
+ *
+ * Ordering by date retains Firestore's implicit document-ID tie-breaker,
+ * including many sessions on the same date. DocumentSnapshot cursors preserve
+ * that tie-breaker; never use a date-only cursor here.
+ */
+export async function auditMonthSessions({
+  db,
+  month,
+  pageSize = SESSION_PAGE_SIZE,
+  maxSessions = MAX_SESSION_READS_PER_MONTH,
+}) {
+  if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 1000) {
+    throw new Error('Invalid read-only session page size.');
+  }
+  if (!Number.isInteger(maxSessions) || maxSessions < 1) {
+    throw new Error('Invalid read-only session ceiling.');
+  }
+  const { from, to } = monthRange(month);
+  const baseQuery = db.collection('classSessions')
+    .where('date', '>=', from)
+    .where('date', '<=', to)
+    .orderBy('date', 'asc')
+    .select('date', 'teacherId', 'teacherIds', 'assignedTeacherId', 'parentId', 'parentIds', 'status');
+
+  const summary = createSessionSummary();
+  let lastDocument = null;
+  let pagesRead = 0;
+  while (true) {
+    // The extra read checks for overflow when the exact ceiling is reached.
+    const remaining = maxSessions - summary.dateIndexedSessionCount;
+    const pageLimit = Math.min(pageSize, remaining + 1);
+    const pageQuery = lastDocument ? baseQuery.startAfter(lastDocument) : baseQuery;
+    const snapshot = await pageQuery.limit(pageLimit).get();
+    const docs = snapshot.docs;
+    pagesRead += 1;
+    if (docs.length > remaining) {
+      throw new Error(
+        'Month ' + month + ' exceeds the ' + maxSessions.toLocaleString('en-US') + '-record audited read ceiling; no partial result is reported.',
+      );
+    }
+    for (const doc of docs) addSessionToAuditSummary(summary, doc.data());
+    if (docs.length < pageLimit) break;
+    lastDocument = docs[docs.length - 1];
+  }
+  return {
+    month,
+    ...finalizedSessionAuditSummary(summary),
+    pagesRead,
+    complete: true,
+  };
+}
+
+const isDirectInvocation = process.argv[1] && pathToFileURL(process.argv[1]).href === import.meta.url;
+if (isDirectInvocation) {
 const args = process.argv.slice(2);
 const projectPosition = args.indexOf('--project');
 const project = projectPosition >= 0 ? clean(args[projectPosition + 1]) : '';
@@ -89,16 +171,7 @@ if (args.includes('--help')) {
     const db = getFirestore();
     const months = [];
     for (const month of DEFAULT_MONTHS) {
-      const { from, to } = monthRange(month);
-      const snapshot = await db.collection('classSessions')
-        .where('date', '>=', from)
-        .where('date', '<=', to)
-        .select('date', 'teacherId', 'teacherIds', 'assignedTeacherId', 'parentId', 'parentIds', 'status')
-        .limit(CAP_PER_MONTH + 1).get();
-      if (snapshot.size > CAP_PER_MONTH) {
-        throw new Error(`Month ${month} exceeds the ${CAP_PER_MONTH}-record read ceiling; sample is incomplete.`);
-      }
-      months.push({ month, ...summarizeSessions(snapshot.docs.map((document) => document.data())) });
+      months.push(await auditMonthSessions({ db, month }));
     }
     console.log(JSON.stringify({
       projectId: project,
@@ -115,4 +188,5 @@ if (args.includes('--help')) {
     console.error(`Read-only audit blocked: ${String(error?.message || error)}`);
     process.exitCode = 1;
   }
+}
 }
