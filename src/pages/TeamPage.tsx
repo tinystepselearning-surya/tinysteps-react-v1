@@ -84,7 +84,7 @@ export default function TeamPage() {
   }, []);
 
   return (
-    <div className="overflow-x-clip bg-[#fffdf9] text-slate-950">
+    <div className="overflow-x-clip bg-[#F6FBFF] text-slate-950">
       <TeamHero />
       <FounderSection />
       <div className="border-b border-[#f0e9dd] bg-white px-4 py-4 sm:px-6 lg:px-8">

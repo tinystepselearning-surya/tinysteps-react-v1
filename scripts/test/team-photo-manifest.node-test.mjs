@@ -91,3 +91,30 @@ test('founder and teacher photos use responsive oval masks without extra titles 
   assert.ok(teacher.includes('rounded-[50%]'));
   assert.ok(teacher.includes('{teacher.name}'));
 });
+
+test('Team page keeps the merged concise structure while using Phonics pastel palette', () => {
+  const sections = readFileSync(new URL('../../src/pages/team/TeamPageSections.tsx', import.meta.url), 'utf8');
+  const gallery = readFileSync(new URL('../../src/pages/team/TeacherPortraitsSection.tsx', import.meta.url), 'utf8');
+  const team = readFileSync(new URL('../../src/pages/TeamPage.tsx', import.meta.url), 'utf8');
+  for (const token of ['from-[#D9EEFF] via-[#F4FAFF] to-[#FFF4DC]', 'from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC]']) {
+    assert.ok(sections.includes(token), 'Missing approved gradient ' + token);
+  }
+  assert.ok(gallery.includes('from-[#FFF7EC] via-[#FBF8FF] to-[#EAF6FF]'));
+  assert.ok(gallery.includes('Early Years &amp; Primary English Educators'));
+  assert.ok(gallery.includes('publicTeacherPhotos.map'));
+  assert.ok(team.includes('<TeamOfficialLinksSection />'));
+  assert.ok(!team.includes('<TrustMetrics />'));
+  assert.ok(!team.includes('<ResearchToClassroomSection />'));
+  assert.ok(!team.includes('<QualitySystemSection />'));
+  assert.equal((sections.match(/alt="Priya, Founder of Tiny Steps Learning"/g) || []).length, 1);
+});
+
+test('Team hero uses substantive teaching evidence rather than unverified seniority or school affiliations', () => {
+  const sections = readFileSync(new URL('../../src/pages/team/TeamPageSections.tsx', import.meta.url), 'utf8');
+  const content = readFileSync(new URL('../../src/pages/team/teamPageContent.ts', import.meta.url), 'utf8');
+  assert.ok(sections.includes('Thoughtful teaching. More confident learning.'));
+  assert.ok(sections.includes('How we guide learning'));
+  assert.ok(sections.includes('to="/class-samples"'));
+  assert.ok(content.includes('All Tiny Steps teachers are graduates with professional school-classroom teaching experience'));
+  assert.doesNotMatch(sections + content, /senior[- ]most|international[- ]school teachers|IB certified|exclusive faculty|100% audited/i);
+});
