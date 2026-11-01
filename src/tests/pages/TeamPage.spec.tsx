@@ -33,10 +33,9 @@ describe('TeamPage', () => {
     expect(screen.getByText(/Structured English programmes for children ages 3–12/)).toBeInTheDocument();
     expect(screen.getAllByText(/Founder, Tiny Steps Learning/, { selector: 'p' })).toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Built around how children actually learn' })).toBeInTheDocument();
-    expect(screen.getByAltText('Priya, Founder of Tiny Steps Learning')).toHaveAttribute(
-      'src',
-      founderPhotoSrc,
-    );
+    const founderPortraits = screen.getAllByAltText('Priya, Founder of Tiny Steps Learning');
+    expect(founderPortraits).toHaveLength(2);
+    founderPortraits.forEach((portrait) => expect(portrait).toHaveAttribute('src', founderPhotoSrc));
     expect(screen.getByRole('heading', { name: 'Meet the educators behind every live lesson' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /Teacher training is only the beginning/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ongoing lesson and conduct reviews' })).toBeInTheDocument();
