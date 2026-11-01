@@ -124,6 +124,11 @@ export function TeamHero() {
               Explore Our Curriculum
             </TrackedLink>
           </div>
+          <nav aria-label="Team sections" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-blue-800">
+            <a href="#founder" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
+            <a href="#teachers" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
+            <a href="#teaching-quality" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Teacher training &amp; quality</a>
+          </nav>
           <p className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-600">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
             Structured English programmes for children ages 3–12
