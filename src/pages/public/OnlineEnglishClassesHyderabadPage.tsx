@@ -64,6 +64,7 @@ const programmeCards = [
     title: 'Spoken English',
     body: 'For everyday conversation, fuller spoken responses, vocabulary in use and conversational English fluency.',
     href: '/spoken-english-classes-for-kids-online',
+    linkLabel: 'English Speaking Classes for Kids',
   },
   {
     title: 'Public Speaking & Communication',
@@ -253,7 +254,7 @@ export default function OnlineEnglishClassesHyderabadPage() {
               <h3 className="text-lg font-semibold text-slate-900">{card.title}</h3>
               <p className="mt-2 text-sm leading-7 text-slate-700">{card.body}</p>
               <Link to={card.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
-                Explore {card.title}
+                Explore {card.linkLabel ?? card.title}
               </Link>
             </LeadCard>
           ))}
