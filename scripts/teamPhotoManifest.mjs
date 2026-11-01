@@ -1,8 +1,24 @@
-import { existsSync, readdirSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 
 const VALID_PORTRAIT = /^[\p{L}\p{N}][\p{L}\p{N} ._'’-]*\.webp$/iu;
 const FALLBACK_FOUNDER_IMAGE = '/priya-founder-tiny-steps-learning.webp';
+
+function assertWebpPortrait(directory, filename) {
+  const bytes = readFileSync(join(directory, filename));
+  const type = bytes.toString('ascii', 12, 16);
+  // Reject PNG/JPEG files merely renamed .webp and truncated/corrupt RIFF headers.
+  // We do not infer academic credentials from public image filenames.
+  if (
+    bytes.length < 20 ||
+    bytes.toString('ascii', 0, 4) !== 'RIFF' ||
+    bytes.toString('ascii', 8, 12) !== 'WEBP' ||
+    bytes.readUInt32LE(4) !== bytes.length - 8 ||
+    !['VP8 ', 'VP8L', 'VP8X'].includes(type)
+  ) {
+    throw new Error('Invalid WebP image in public/team: ' + filename + '. Export a genuine WebP portrait.');
+  }
+}
 
 export function displayNameFromPhoto(filename) {
   const stem = filename.replace(/\.webp$/i, '').replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
@@ -21,6 +37,13 @@ export function getTeamPhotoManifest(directory) {
 
   const collator = new Intl.Collator('en', { numeric: true, sensitivity: 'base' });
   files.sort(collator.compare);
+
+  const invalidFounderNames = files.filter((filename) =>
+    filename.toLocaleLowerCase() === 'founder.webp' && filename !== 'Founder.webp');
+  if (invalidFounderNames.length > 0) {
+    throw new Error('Founder portrait must be named exactly Founder.webp');
+  }
+  for (const filename of files) assertWebpPortrait(directory, filename);
 
   const founder = files.find((filename) => filename === 'Founder.webp');
   const teachers = files
