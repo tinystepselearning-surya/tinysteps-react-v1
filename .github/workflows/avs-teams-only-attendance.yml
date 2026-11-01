@@ -33,12 +33,8 @@ jobs:
       - run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev
       - name: TypeScript compile
         run: npm --prefix functions run build
-      - name: AVS group, Graph and Teams-only missing-date regressions
-        run: >
-          npm --prefix functions test --
-          test/attendanceValidationVirtualTeamsDiscovery.spec.ts
-          test/attendanceValidationMicrosoftGraphClient.spec.ts
-          test/attendanceValidationGroupFirst.spec.ts
+      - name: Complete Functions regression suite (includes AVS cases)
+        run: npm --prefix functions test
 
   admin-ui:
     name: Parent Month Close TypeScript and business outcomes
