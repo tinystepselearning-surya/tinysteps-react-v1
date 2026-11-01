@@ -1,0 +1,26 @@
+name: India Acquisition Brick 1 Baseline Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/lib/india-acquisition-brick1.mjs'
+      - 'scripts/india-acquisition-brick1.mjs'
+      - 'scripts/test/india-acquisition-brick1.node-test.mjs'
+      - 'docs/seo/india-acquisition/**'
+      - '.github/workflows/india-acquisition-brick1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline-reconciliation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+      - name: Validate aggregate-only market owners, source, parent and GSC contracts
+        run: node --test scripts/test/india-acquisition-brick1.node-test.mjs
