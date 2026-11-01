@@ -72,7 +72,7 @@ const faqItems = [
   {
     question: 'Can grammar classes improve sentence formation?',
     answer:
-      'Yes. Grammar becomes useful when children apply it in complete sentences. This improves sentence structure, clarity, and confidence in both writing and speaking.',
+      'They can help children build clearer sentences through meaningful practice. The teacher models a sentence pattern, guides word order, tense or punctuation corrections, and then asks the child to create a fresh sentence with less prompting. This checks application rather than only memorising a grammar rule.',
   },
   {
     question: 'Can grammar help my child write better school answers?',
@@ -95,9 +95,9 @@ const faqItems = [
       'Beginner Grammar is designed for ages 5–10 and Advanced Grammar for ages 8–12. The age ranges overlap intentionally because placement depends on the child’s current grammar control and readiness, not age alone.',
   },
   {
-    question: 'Are Tiny Steps grammar classes live and 1:1?',
+    question: 'Are Tiny Steps grammar classes available as live 1:1 or small groups?',
     answer:
-      `Yes. Standard Tiny Steps grammar classes are live 1:1 online classes and run for ${PUBLIC_SESSION_DURATION_LABEL}.`,
+      `Both formats are offered. Standard live 1:1 grammar classes run for ${PUBLIC_SESSION_DURATION_LABEL} with individual pacing and correction. Separate small-group grammar classes include up to four children per teacher, matched by grammar readiness and compatible schedules. Families may register interest, but a group demo or place is not confirmed until a suitable batch forms.`,
   },
   {
     question: 'Can children outside India join Tiny Steps grammar classes?',
