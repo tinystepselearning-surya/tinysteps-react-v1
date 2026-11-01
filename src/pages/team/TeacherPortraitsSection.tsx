@@ -19,18 +19,20 @@ export function TeacherPortraitsSection() {
         {publicTeacherPhotos.length > 0 && (
           <div className="mt-9 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:grid-cols-5">
             {publicTeacherPhotos.map((teacher) => (
-              <figure key={teacher.src} className="overflow-hidden rounded-[22px] border border-orange-100 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
-                <img
-                  src={teacher.src}
-                  alt={teacher.name + ', Tiny Steps educator'}
-                  loading="lazy"
-                  decoding="async"
-                  width={960}
-                  height={1200}
-                  className="aspect-[4/5] w-full bg-slate-100 object-cover object-top"
-                />
-                <figcaption className="px-3 py-4 text-center">
-                  <h3 className="font-heading text-base font-bold text-slate-900 sm:text-lg">{teacher.name}</h3>
+              <figure key={teacher.src} className="flex min-w-0 flex-col items-center">
+                <div className="aspect-[4/5] w-full max-w-[230px] overflow-hidden rounded-[50%] border-[5px] border-white bg-[#f7ead8] shadow-[0_12px_35px_rgba(15,23,42,0.10)] ring-1 ring-orange-200">
+                  <img
+                    src={teacher.src}
+                    alt={teacher.name + ', Tiny Steps educator'}
+                    loading="lazy"
+                    decoding="async"
+                    width={960}
+                    height={1200}
+                    className="h-full w-full object-cover object-top"
+                  />
+                </div>
+                <figcaption className="mt-3 max-w-full px-1 text-center">
+                  <h3 className="font-heading text-base font-bold leading-snug text-slate-900 sm:text-lg">{teacher.name}</h3>
                 </figcaption>
               </figure>
             ))}
