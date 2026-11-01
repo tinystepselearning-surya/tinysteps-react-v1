@@ -14,6 +14,7 @@ import {
   isSpeakingOriginLead,
 } from '../../lib/speakingAttribution';
 import DemoSessionsManagement from './DemoSessionsManagement';
+import ProspectiveAcquisitionSummary from './ProspectiveAcquisitionSummary';
 import {
   addDaysToDateKey,
   dateKeyInRange,
@@ -324,6 +325,15 @@ export default function LeadSourceAnalysis({
             analyticsEndKey={endDateKey}
           />
         </section>
+      ) : null}
+
+      {showAttribution ? (
+        <ProspectiveAcquisitionSummary
+          startDateKey={startDateKey}
+          endDateKey={endDateKey}
+          rangeDays={rangeDays}
+          refreshKey={refreshKey}
+        />
       ) : null}
 
       {showAttribution ? (
