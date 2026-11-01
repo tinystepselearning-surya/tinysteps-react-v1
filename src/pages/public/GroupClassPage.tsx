@@ -1,3 +1,4 @@
+import FacultyTrustLink from '../../components/programs/FacultyTrustLink';
 import { Link } from 'react-router-dom';
 import Meta from '../../components/common/Meta';
 import { NEW_GROUP_CLASS_PLAN, ONE_TO_ONE_MONTHLY_PACKAGES, PER_CLASS_PRICE, formatINR } from '../../config/pricing';
@@ -295,6 +296,8 @@ export default function GroupClassPage({ track }: { track: GroupTrack }) {
           <p className="mt-4 text-xs leading-5 text-[#D0E3F0]">Standard Indian-teacher rates. Group fees are per child. New group demos depend on compatible learners and schedules.</p>
         </div>
       </section>
+
+      <FacultyTrustLink track={track} />
 
       <section className="bg-[#F5FAFF] px-5 py-10 sm:px-8 sm:py-12" aria-labelledby="group-faq">
         <div className="mx-auto max-w-5xl">
