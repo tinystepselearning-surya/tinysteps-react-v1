@@ -28,6 +28,9 @@ test('Brick 1 reconciles parent, channel, raw need and separate GSC grains', () 
   const result = reconcileReviewedIndiaAcquisition(sample());
   assert.equal(result.months.length, 4);
   assert.equal(result.months[0].leadHistoryComplete, false);
+  assert.equal(result.months[1].leadHistoryComplete, false);
+  assert.equal(result.months[1].leadEventCalendarWindowComplete, true);
+  assert.equal(result.months[0].leadEventCalendarWindowComplete, false);
   assert.equal(result.months[3].gsc.octoberIndiaSitePartial, true);
   assert.equal(result.septemberToOctober.newParentsDelta, 0);
   assert.equal(result.months[2].channels['ChatGPT'], 1);
@@ -62,4 +65,20 @@ test('sanitizes input: raw names and phones are not emitted into aggregate outpu
   input.extra = [{ childName: 'Private child' }];
   const output = JSON.stringify(reconcileReviewedIndiaAcquisition(input));
   assert.doesNotMatch(output, /999999|Private child|parentPhone|childName/);
+});
+
+test('never leaks unexpected user-supplied channel or intent labels in aggregate output or errors', () => {
+  const source = sample();
+  const privateLabel = 'Parent +919999999999';
+  source.queries.channel_month.rows[0].channel = privateLabel;
+  assert.throws(
+    () => reconcileReviewedIndiaAcquisition(source),
+    error => error.message.includes('unexpected channel category') && !error.message.includes(privateLabel),
+  );
+  const need = sample();
+  need.queries.intent_month.rows[0].intent = 'Private Child Name';
+  assert.throws(
+    () => reconcileReviewedIndiaAcquisition(need),
+    error => error.message.includes('unexpected intent category') && !error.message.includes('Private Child Name'),
+  );
 });
