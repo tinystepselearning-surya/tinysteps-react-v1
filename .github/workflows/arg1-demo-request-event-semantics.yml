@@ -7,6 +7,7 @@ on:
       - 'src/lib/conversionTracking.ts'
       - 'src/tests/components/PublicAssessmentForm.spec.tsx'
       - 'scripts/audit-commercial-c5-conversion-flow.mjs'
+      - 'scripts/test/arg1-demo-request-event-semantics.node-test.mjs'
       - 'docs/acquisition/ARG1_DEMO_REQUEST_EVENT_CUTOVER_20261101.md'
       - '.github/workflows/arg1-demo-request-event-semantics.yml'
   workflow_dispatch:
@@ -31,8 +32,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Form integration tests
         run: npx vitest run src/tests/components/PublicAssessmentForm.spec.tsx
-      - name: Commercial C5 source contract
-        run: node scripts/audit-commercial-c5-conversion-flow.mjs
+      - name: Demo request and booking event source contract
+        run: node --test scripts/test/arg1-demo-request-event-semantics.node-test.mjs
       - name: TypeScript check
         run: npm run typecheck
       - name: Full prerender and SEO build
