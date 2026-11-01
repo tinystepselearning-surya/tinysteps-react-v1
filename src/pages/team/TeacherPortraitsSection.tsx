@@ -16,7 +16,7 @@ export function TeacherPortraitsSection() {
         <p className="mt-3 max-w-3xl text-sm font-semibold text-[#604577]">
           Early Years &amp; Primary English Educators
         </p>
-        {publicTeacherPhotos.length > 0 ? (
+        {publicTeacherPhotos.length > 0 && (
           <div className="mt-9 grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-6 lg:grid-cols-4 xl:grid-cols-5">
             {publicTeacherPhotos.map((teacher) => (
               <figure key={teacher.src} className="overflow-hidden rounded-[22px] border border-orange-100 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
@@ -34,10 +34,6 @@ export function TeacherPortraitsSection() {
                 </figcaption>
               </figure>
             ))}
-          </div>
-        ) : (
-          <div className="mt-8 max-w-2xl rounded-2xl border border-orange-200 bg-white px-5 py-5 text-sm leading-6 text-slate-700">
-            Our teachers work within the Tiny Steps academic framework. Individual portraits will be displayed here as approved images are added.
           </div>
         )}
         <p className="mt-8 max-w-3xl text-sm leading-6 text-slate-600">
