@@ -27,14 +27,14 @@ jobs:
         with:
           node-version: '22.22.1'
           cache: npm
+      - name: Install website dependencies (shared Vitest)
+        run: npm ci --no-audit --no-fund
       - name: Install functions dependencies
         run: npm ci --prefix functions --no-audit --no-fund
       - name: Run targeted aggregate tests
-        run: cd functions && npx vitest run --config vitest.config.ts functions/test/prospectiveAcquisitionMetrics.spec.ts
+        run: cd functions && ../node_modules/.bin/vitest run --config vitest.config.ts functions/test/prospectiveAcquisitionMetrics.spec.ts
       - name: Build Functions TypeScript
         run: npm --prefix functions run build
-      - name: Install website dependencies
-        run: npm ci --no-audit --no-fund
       - name: TypeScript check
         run: npm run typecheck
       - name: Install Playwright Chromium
