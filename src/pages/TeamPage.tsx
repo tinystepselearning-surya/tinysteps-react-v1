@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
-import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';
+import { TeamOfficialLinksSection } from './team/TeamOfficialLinksSection';
 import { TeacherPortraitsSection } from './team/TeacherPortraitsSection';
 import { TeachingAssuranceSection } from './team/TeachingAssuranceSection';
 import { applySeo, getRouteConfig } from '../lib/seo';
@@ -19,13 +19,9 @@ import {
   AcademicSystemSection,
   FinalAssessmentSection,
   FounderSection,
-  QualitySystemSection,
-  ResearchToClassroomSection,
   SchoolPartnershipSection,
-  TeacherDevelopmentSection,
   TeamFaqSection,
   TeamHero,
-  TrustMetrics,
 } from './team/TeamPageSections';
 import { teamFaqItems } from './team/teamPageContent';
 
@@ -90,37 +86,24 @@ export default function TeamPage() {
   return (
     <div className="overflow-x-clip bg-[#fffdf9] text-slate-950">
       <TeamHero />
-      <TrustMetrics />
       <FounderSection />
-      <section
-        aria-label="Founder profile"
-        className="border-y border-orange-100 bg-[#fffaf3] px-4 py-5 sm:px-6 lg:px-8"
-      >
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">Founder profile</p>
-            <p className="mt-1 text-sm leading-6 text-slate-700">
-              Read Priya&apos;s dedicated founder profile, academic leadership scope and learning principles.
-            </p>
-          </div>
-          <Link
-            to={FOUNDER_PROFILE_PATH}
-            className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-900 transition hover:border-slate-500 hover:bg-slate-50"
-          >
+      <div className="border-b border-[#f0e9dd] bg-white px-4 py-4 sm:px-6 lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <p className="text-sm leading-6 text-slate-600">
+            Read more about Priya&apos;s academic leadership and learning philosophy.
+          </p>
+          <Link to={FOUNDER_PROFILE_PATH} className="inline-flex min-h-9 items-center text-sm font-semibold text-[#8b3917] underline underline-offset-4 hover:text-[#10243e]">
             Vannala Ravali Priya — Founder
           </Link>
         </div>
-      </section>
+      </div>
       <TeacherPortraitsSection />
-      <TeacherDevelopmentSection />
       <TeachingAssuranceSection />
       <AcademicSystemSection />
-      <ResearchToClassroomSection />
-      <QualitySystemSection />
       <SchoolPartnershipSection />
-      <OfficialProfilesSection />
       <FinalAssessmentSection />
       <TeamFaqSection />
+      <TeamOfficialLinksSection />
     </div>
   );
 }

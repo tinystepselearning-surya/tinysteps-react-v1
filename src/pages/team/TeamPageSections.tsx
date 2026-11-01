@@ -101,21 +101,21 @@ function SectionHeading({
 
 export function TeamHero() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-orange-100 bg-[#fffaf3] px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-24">
+    <section className="relative isolate overflow-hidden border-b border-[#eee6dc] bg-[#fffaf4] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute -right-32 top-12 h-80 w-80 rounded-full bg-blue-200/45 blur-3xl" />
-        <div className="absolute -left-28 bottom-4 h-72 w-72 rounded-full bg-orange-200/50 blur-3xl" />
+        <div className="absolute -right-28 top-0 h-64 w-64 rounded-full bg-[#ececfc] blur-3xl" />
+        <div className="absolute -left-28 bottom-0 h-56 w-56 rounded-full bg-[#ffeddc] blur-3xl" />
       </div>
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:gap-16">
+      <div className="mx-auto grid max-w-7xl items-center gap-9 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
         <div>
-          <Eyebrow>Founder-led • Child-centred • Progress-focused</Eyebrow>
-          <h1 className="mt-5 max-w-4xl font-heading text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-[#10243e] min-[430px]:text-[2.45rem] sm:text-5xl lg:text-[3.65rem]">
-            The academic team behind confident young readers, writers and speakers
+          <Eyebrow>Meet our team</Eyebrow>
+          <h1 className="mt-4 max-w-3xl font-heading text-[2.25rem] font-bold leading-[1.1] tracking-[-0.035em] text-[#10243e] sm:text-5xl lg:text-[3.25rem]">
+            The people behind every Tiny Steps lesson
           </h1>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-8">
-            Tiny Steps Learning brings together structured curriculum, trained online teachers, guided live practice and clear parent communication to help children use English with greater confidence and independence.
+          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
+            Meet our founder and teachers, and see how careful lesson preparation and ongoing academic guidance support your child’s English learning.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <TrackedLink to="/book-demo" eventName="team_hero_book_assessment" className={primaryButtonClass}>
               Book a Free 35-Minute Assessment
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -124,63 +124,33 @@ export function TeamHero() {
               Explore Our Curriculum
             </TrackedLink>
           </div>
-          <nav aria-label="Team sections" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-blue-800">
-            <a href="#founder" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
-            <a href="#teachers" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
-            <a href="#teaching-quality" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Teacher training &amp; quality</a>
+          <nav aria-label="Team sections" className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#70517a]">
+            <a href="#founder" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
+            <a href="#teachers" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
+            <a href="#teaching-quality" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Training &amp; quality</a>
           </nav>
-          <p className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-600">
-            <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
-            Structured English programmes for children ages 3–12
-          </p>
         </div>
-
-        <div className="relative mx-auto w-full max-w-[590px]">
-          <div className="absolute -inset-4 -z-10 rotate-2 rounded-[36px] bg-[#dbeafe]" aria-hidden="true" />
-          <div className="overflow-hidden rounded-[30px] border border-white/80 bg-[#10243e] p-3 shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:p-5">
-            <div className="grid gap-3 sm:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative flex min-h-[330px] items-center justify-center rounded-[22px] bg-[#e6edf6] px-4 pb-16 pt-5 sm:min-h-[430px]">
-                <div className="aspect-[4/5] w-full max-w-[285px] overflow-hidden rounded-[50%] border-[6px] border-white bg-[#f7ead8] shadow-lg">
-                  <img
-                    src={founderPhotoSrc}
-                    alt="Priya, Founder of Tiny Steps Learning"
-                    width={1200}
-                    height={1500}
-                    fetchPriority="high"
-                    className="h-full w-full object-cover object-top"
-                  />
-                </div>
-                <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/95 p-3 shadow-lg">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C2410C]">Founder-led</p>
-                  <p className="mt-1 font-heading text-lg font-bold text-slate-950">Priya</p>
-                  <p className="text-sm text-slate-600">Founder, Tiny Steps Learning</p>
-                </div>
-              </div>
-              <div className="flex flex-col justify-between rounded-[22px] bg-white p-5 sm:p-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">One connected system</p>
-                  <h2 className="mt-3 font-heading text-2xl font-bold leading-tight text-slate-950">More than the teacher on screen</h2>
-                </div>
-                <div className="mt-8 space-y-3">
-                  {[
-                    ['01', 'Structured curriculum'],
-                    ['02', 'Prepared teachers'],
-                    ['03', 'Guided live practice'],
-                    ['04', 'Parent visibility'],
-                  ].map(([number, label]) => (
-                    <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF5DF] text-xs font-black text-[#C2410C]">{number}</span>
-                      <span className="text-sm font-semibold text-slate-800">{label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex items-center gap-2 border-t border-slate-200 pt-4 text-xs font-semibold text-slate-500">
-                  <Sparkles className="h-4 w-4 text-[#C2410C]" aria-hidden="true" />
-                  Progress-focused by design
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="rounded-[28px] border border-[#e8e1ec] bg-white/90 p-6 shadow-[0_16px_45px_rgba(16,36,62,0.06)] sm:p-8">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#805274]">One connected academic approach</p>
+          <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-[#10243e] sm:text-3xl">
+            Personal teaching, supported by a shared standard
+          </h2>
+          <p className="mt-3 text-sm leading-7 text-slate-600">
+            Our educators work with a structured curriculum, purposeful teaching resources and ongoing academic feedback.
+          </p>
+          <ul className="mt-5 divide-y divide-[#eee9e7]">
+            {[
+              ['01', 'Founder-led academic direction'],
+              ['02', 'Well-prepared live lessons'],
+              ['03', 'Observation, coaching and progress support'],
+            ].map(([number, label]) => (
+              <li key={number} className="flex items-center gap-4 py-3.5">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fff0e0] font-heading text-xs font-bold text-[#9a3412]">{number}</span>
+                <span className="text-sm font-semibold leading-6 text-[#21354a]">{label}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-4 text-xs leading-5 text-slate-500">English learning for children aged 3–12.</p>
         </div>
       </div>
     </section>
@@ -208,8 +178,8 @@ export function TrustMetrics() {
 
 export function FounderSection() {
   return (
-    <section id="founder" className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
+    <section id="founder" className="bg-white px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <div className="mx-auto grid max-w-7xl items-center gap-9 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div className="relative mx-auto w-full max-w-[520px]">
           <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF5DF]" aria-hidden="true" />
           <figure className="relative mx-auto aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[50%] border-[8px] border-white bg-[#f7ead8] shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
@@ -237,19 +207,11 @@ export function FounderSection() {
             <p>She leads the academic direction of the organisation, working across curriculum development, lesson design, teacher guidance, teaching quality and parent communication for Phonics, Reading, Grammar, Writing and Public Speaking programmes.</p>
             <p>The goal is not simply to help children complete lessons. It is to keep learning progress observable through evidence such as reading accuracy, sentence formation, language use and increasingly independent communication.</p>
           </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            {founderResponsibilities.map((item) => {
-              const Icon = iconMap[item.icon];
-              return (
-                <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#fffaf3] p-4">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#C2410C] shadow-sm">
-                    <Icon className="h-5 w-5" aria-hidden="true" />
-                  </span>
-                  <span className="text-sm font-bold leading-5 text-slate-800">{item.title}</span>
-                </div>
-              );
-            })}
-          </div>
+          <ul className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-[#eee7df] pt-5">
+            {founderResponsibilities.map((item) => (
+              <li key={item.title} className="text-sm font-medium text-[#70517a]">{item.title}</li>
+            ))}
+          </ul>
         </div>
       </div>
     </section>
@@ -258,19 +220,19 @@ export function FounderSection() {
 
 export function AcademicSystemSection() {
   return (
-    <section className="bg-[#f3f7fb] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section className="bg-[#f6f7fc] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           centered
           eyebrow="One connected academic system"
-          title="Every lesson is supported by more than the teacher on screen"
-          description="Tiny Steps is not a teacher-directory marketplace. Educators work within one programme framework, supported by curriculum, resources, academic guidance and parent communication."
+          title="What supports every Tiny Steps lesson"
+          description="Our educators work within a connected system of curriculum planning, lesson resources, academic guidance and parent communication."
         />
-        <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {academicSystemCards.map((card, index) => {
             const Icon = iconMap[card.icon];
             return (
-              <article key={card.title} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.06)]">
+              <article key={card.title} className="rounded-[22px] border border-[#e7eaf1] bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,0.035)]">
                 <div className="flex items-center justify-between">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                     <Icon className="h-6 w-6" aria-hidden="true" />
@@ -508,18 +470,15 @@ export function TeachingCommunitySection() {
 
 export function SchoolPartnershipSection() {
   return (
-    <section className="bg-[#0b3040] px-4 py-16 text-white sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1fr_auto] lg:gap-16">
-        <div className="max-w-4xl">
-          <Eyebrow inverse>For schools</Eyebrow>
-          <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] sm:text-4xl">The same academic system can strengthen school classrooms</h2>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-white/75 sm:text-lg">Tiny Steps works with schools that want more than a one-time phonics workshop. We provide structured curriculum, classroom resources, progressive teacher training, implementation guidance, progress review and year-long support.</p>
+    <section className="border-t border-[#eee5df] bg-[#fbf8f5] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+        <div className="max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#9a3412]">For schools</p>
+          <h2 className="mt-1 font-heading text-lg font-bold text-[#10243e] sm:text-xl">Our academic approach also supports school classrooms.</h2>
+          <p className="mt-1 text-sm leading-6 text-slate-600">Explore structured phonics curriculum, teacher training and classroom implementation support.</p>
         </div>
-        <TrackedLink
-          to="/for-schools"
-          eventName="team_school_partnership_click"
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-orange-400 px-6 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-orange-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange-200"
-        >
+        <TrackedLink to="/for-schools" eventName="team_school_partnership_click"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-[#e5d5c8] bg-white px-5 py-2.5 text-center text-sm font-semibold text-[#10243e] transition hover:border-[#c2410c] hover:text-[#9a3412] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">
           Explore the School Partnership Programme
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </TrackedLink>
@@ -530,23 +489,17 @@ export function SchoolPartnershipSection() {
 
 export function FinalAssessmentSection() {
   return (
-    <section className="bg-[#f3f7fb] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[30px] bg-[#10243e] px-5 py-14 text-center text-white shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:px-10 sm:py-16">
-        <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
-        <div className="absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
-        <div className="relative mx-auto max-w-3xl">
-          <Eyebrow inverse>Start with clarity</Eyebrow>
-          <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.03em] sm:text-4xl lg:text-5xl">Find the right learning path for your child</h2>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">Begin with a free 35-minute 1:1 assessment class. We will understand your child’s current level and recommend the most appropriate starting point.</p>
-          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <TrackedLink to="/book-demo" eventName="team_final_book_assessment" className={primaryButtonClass}>
-              Book a Free 35-Minute Assessment
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </TrackedLink>
-            <TrackedLink to="/courses" eventName="team_view_programmes" className="inline-flex min-h-12 items-center justify-center rounded-full border border-white/30 bg-white/10 px-6 py-3 text-sm font-bold text-white transition hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white">
-              View Programmes
-            </TrackedLink>
-          </div>
+    <section className="bg-[#fffdf9] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <div className="mx-auto max-w-6xl rounded-[28px] border border-[#e5e4ef] bg-[#f5f3fa] px-6 py-10 text-center sm:px-10 sm:py-12">
+        <Eyebrow>Start with clarity</Eyebrow>
+        <h2 className="mx-auto mt-3 max-w-3xl font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-[#10243e] sm:text-4xl">Find the right learning path for your child</h2>
+        <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-700">Begin with a free 35-minute 1:1 assessment class to understand your child’s starting point and recommend an appropriate programme.</p>
+        <div className="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+          <TrackedLink to="/book-demo" eventName="team_final_book_assessment" className={primaryButtonClass}>
+            Book a Free 35-Minute Assessment
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </TrackedLink>
+          <TrackedLink to="/courses" eventName="team_view_programmes" className={secondaryButtonClass}>View Programmes</TrackedLink>
         </div>
       </div>
     </section>
@@ -555,7 +508,7 @@ export function FinalAssessmentSection() {
 
 export function TeamFaqSection() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8" id="team-faq">
+    <section className="bg-white px-4 py-12 sm:px-6 sm:py-14 lg:px-8" id="team-faq">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
         <SectionHeading eyebrow="Frequently asked questions" title="Direct answers about the people and system behind each class" />
         <div className="divide-y divide-slate-200 border-y border-slate-200">

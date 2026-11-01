@@ -49,9 +49,13 @@ jobs:
           const html = fs.readFileSync('dist/team/index.html', 'utf8');
           assert.match(html, /Meet the educators behind every live lesson/);
           assert.match(html, /Early Years &amp; Primary English Educators/);
-          assert.match(html, /Teacher training is only the beginning/);
+          assert.match(html, /Training, observation and ongoing quality checks/);
+          assert.match(html, /The people behind every Tiny Steps lesson/);
           assert.match(html, /Ongoing lesson and conduct reviews/);
           assert.match(html, /Feedback, coaching and follow-up/);
+          assert.doesNotMatch(html, /The academic team behind confident young readers, writers and speakers/);
+          assert.doesNotMatch(html, /The same academic system can strengthen school classrooms/);
+          assert.match(html, /Find Tiny Steps online/);
           assert.match(html, /rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/team"/);
           assert.doesNotMatch(html, /<meta[^>]*name="robots"[^>]*content="noindex/);
           assert.match(html, /\/priya-founder-tiny-steps-learning\.webp|\/team\/Founder\.webp/);

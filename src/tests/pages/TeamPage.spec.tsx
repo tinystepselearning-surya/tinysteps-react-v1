@@ -25,24 +25,29 @@ describe('TeamPage', () => {
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
     expect(
       screen.getByRole('heading', {
-        name: 'The academic team behind confident young readers, writers and speakers',
+        name: 'The people behind every Tiny Steps lesson',
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('5,000+')).toBeInTheDocument();
-    expect(screen.getByText('15+')).toBeInTheDocument();
-    expect(screen.getByText(/Structured English programmes for children ages 3–12/)).toBeInTheDocument();
-    expect(screen.getAllByText(/Founder, Tiny Steps Learning/, { selector: 'p' })).toHaveLength(2);
-    expect(screen.getByRole('heading', { name: 'Built around how children actually learn' })).toBeInTheDocument();
+    expect(screen.queryByText('5,000+')).not.toBeInTheDocument();
+    expect(screen.queryByText('15+')).not.toBeInTheDocument();
+    expect(screen.getByText(/English learning for children aged 3–12/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Founder, Tiny Steps Learning/, { selector: 'p' })).toHaveLength(1);
+    expect(screen.getByRole('heading', { name: 'What supports every Tiny Steps lesson' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Built around how children actually learn' })).not.toBeInTheDocument();
     const founderPortraits = screen.getAllByAltText('Priya, Founder of Tiny Steps Learning');
-    expect(founderPortraits).toHaveLength(2);
+    expect(founderPortraits).toHaveLength(1);
     founderPortraits.forEach((portrait) => expect(portrait).toHaveAttribute('src', founderPhotoSrc));
     const teamNavigation = screen.getByRole('navigation', { name: 'Team sections' });
     expect(teamNavigation.querySelector('a[href="#founder"]')).toBeInTheDocument();
     expect(teamNavigation.querySelector('a[href="#teachers"]')).toBeInTheDocument();
     expect(teamNavigation.querySelector('a[href="#teaching-quality"]')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Meet the educators behind every live lesson' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /Teacher training is only the beginning/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Training, observation and ongoing quality checks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ongoing lesson and conduct reviews' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Vannala Ravali Priya — Founder' })).toHaveAttribute('href', '/team/vannala-ravali-priya');
+    expect(screen.getByRole('link', { name: 'Explore the School Partnership Programme' })).toHaveAttribute('href', '/for-schools');
+    expect(screen.getByRole('region', { name: 'Official Tiny Steps and founder profiles' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /A clear pathway from assessment to visible progress/ })).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'View real class samples' })).toHaveAttribute(
       'href',
       '/class-samples',
