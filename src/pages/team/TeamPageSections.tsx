@@ -100,20 +100,41 @@ function SectionHeading({
 }
 
 export function TeamHero() {
+  const lessonStages = [
+    {
+      title: 'Model',
+      description: 'See and understand the skill',
+      Icon: BookOpenCheck,
+      tone: 'border-[#D6E6F7] bg-[#EAF6FF] text-[#245C88]',
+    },
+    {
+      title: 'Practise',
+      description: 'Try it with teacher guidance',
+      Icon: UsersRound,
+      tone: 'border-[#E4DCF8] bg-[#F5F0FF] text-[#604577]',
+    },
+    {
+      title: 'Apply',
+      description: 'Use it more independently',
+      Icon: Sparkles,
+      tone: 'border-[#F5DAB7] bg-[#FFF7EC] text-[#9A4A16]',
+    },
+  ];
+
   return (
     <section className="relative isolate overflow-hidden border-b border-[#D6E6F7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#FFF4DC] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
-        <div className="absolute -right-28 top-0 h-64 w-64 rounded-full bg-[#ececfc] blur-3xl" />
-        <div className="absolute -left-28 bottom-0 h-56 w-56 rounded-full bg-[#ffeddc] blur-3xl" />
+        <div className="absolute -right-28 top-0 h-72 w-72 rounded-full bg-[#D3B9E1]/35 blur-3xl" />
+        <div className="absolute -left-24 bottom-0 h-72 w-72 rounded-full bg-[#F6CF7E]/30 blur-3xl" />
       </div>
-      <div className="mx-auto grid max-w-7xl items-center gap-9 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
+      <div className="mx-auto grid max-w-7xl items-center gap-10 lg:grid-cols-[1.03fr_0.97fr] lg:gap-14">
         <div>
           <Eyebrow>Meet our team</Eyebrow>
           <h1 className="mt-4 max-w-3xl font-heading text-[2.25rem] font-bold leading-[1.1] tracking-[-0.035em] text-[#102A43] sm:text-5xl lg:text-[3.25rem]">
             The people behind every Tiny Steps lesson
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
-            Meet our founder and teachers, and see how careful lesson preparation and ongoing academic guidance support your child’s English learning.
+          <p className="mt-5 max-w-2xl text-base leading-7 text-[#29425B] sm:text-lg sm:leading-8">
+            Meet our graduate educators with school-classroom experience. With founder-led academic guidance and thoughtfully prepared lessons, they help children build English skills through active, supported practice.
           </p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <TrackedLink to="/book-demo" eventName="team_hero_book_assessment" className={primaryButtonClass}>
@@ -124,33 +145,56 @@ export function TeamHero() {
               Explore Our Curriculum
             </TrackedLink>
           </div>
-          <nav aria-label="Team sections" className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#70517a]">
-            <a href="#founder" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
-            <a href="#teachers" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
-            <a href="#teaching-quality" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Training &amp; quality</a>
+          <nav aria-label="Team sections" className="mt-7 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#604577]">
+            <a href="#founder" className="underline underline-offset-4 hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
+            <a href="#teachers" className="underline underline-offset-4 hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
+            <a href="#teaching-quality" className="underline underline-offset-4 hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Training &amp; quality</a>
           </nav>
         </div>
-        <div className="rounded-[28px] border border-white/90 bg-white/90 p-6 shadow-[0_16px_45px_rgba(16,36,62,0.06)] sm:p-8">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#805274]">One connected academic approach</p>
-          <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-[#102A43] sm:text-3xl">
-            Personal teaching, supported by a shared standard
-          </h2>
-          <p className="mt-3 text-sm leading-7 text-slate-600">
-            Our educators work with a structured curriculum, purposeful teaching resources and ongoing academic feedback.
-          </p>
-          <ul className="mt-5 divide-y divide-[#eee9e7]">
-            {[
-              ['01', 'Founder-led academic direction'],
-              ['02', 'Well-prepared live lessons'],
-              ['03', 'Observation, coaching and progress support'],
-            ].map(([number, label]) => (
-              <li key={number} className="flex items-center gap-4 py-3.5">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#fff0e0] font-heading text-xs font-bold text-[#9a3412]">{number}</span>
-                <span className="text-sm font-semibold leading-6 text-[#21354a]">{label}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-xs leading-5 text-slate-500">English learning for children aged 3–12.</p>
+
+        <div className="relative mx-auto w-full max-w-[580px]">
+          <div className="pointer-events-none absolute inset-x-5 inset-y-3 rotate-[2deg] rounded-[32px] bg-[#D3B9E1]/35" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-[30px] border border-white/90 bg-white shadow-[0_24px_65px_rgba(16,36,62,0.11)]">
+            <div className="bg-gradient-to-br from-[#EAF6FF] via-[#F5F0FF] to-[#FFF7EC] px-5 pb-6 pt-6 sm:px-7 sm:pt-7">
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#D6E6F7] bg-white/90 px-3 py-1.5 text-xs font-bold text-[#102A43]">
+                <GraduationCap className="h-4 w-4 shrink-0 text-[#245C88]" aria-hidden="true" />
+                Graduate educators with classroom experience
+              </p>
+              <h2 className="mt-5 max-w-lg font-heading text-2xl font-bold leading-tight tracking-[-0.025em] text-[#102A43] sm:text-[1.85rem]">
+                Thoughtful teaching. More confident learning.
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-6 text-[#29425B] sm:text-base sm:leading-7">
+                Our lessons are designed for children to understand a skill, practise it with support and gradually use it independently.
+              </p>
+            </div>
+            <div className="px-4 pb-5 pt-5 sm:px-6 sm:pb-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#604577]">
+                How we guide learning
+              </p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {lessonStages.map(({ title, description, Icon, tone }) => (
+                  <div key={title} className={`min-w-0 rounded-[18px] border p-3 sm:p-4 ${tone}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    <h3 className="mt-3 font-heading text-sm font-bold text-[#102A43] sm:text-base">{title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-[#29425B]">{description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex flex-col gap-3 rounded-[18px] bg-[#102A43] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#F6CF7E]" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-bold">Prepared, observed and supported</p>
+                    <p className="mt-1 text-xs leading-5 text-[#EAF6FF]">Shared resources and targeted academic feedback</p>
+                  </div>
+                </div>
+                <Link to="/class-samples" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 self-start rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#102A43] transition hover:bg-[#EAF6FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:self-center">
+                  See class samples
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
