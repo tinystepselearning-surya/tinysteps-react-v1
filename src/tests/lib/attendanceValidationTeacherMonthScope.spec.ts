@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Pure attribution checks must not initialize Firebase or read production data.
 vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
 
-import { parentIdsForAvsTeacherMonth } from '../../lib/attendanceValidationTeacherMonthScope';
+import { parentIdsForAvsTeacherMonth, resolveAvsTeacherMonthParentScope } from '../../lib/attendanceValidationTeacherMonthScope';
 
 describe('Parent Month Close teacher attribution', () => {
   it('matches the actual canonical session teacher during the selected month and deduplicates parents', () => {
@@ -27,6 +27,19 @@ describe('Parent Month Close teacher attribution', () => {
     expect(parentIdsForAvsTeacherMonth(sessions, 'teacher-a', '2026-10')).toEqual(['same-family']);
     expect(parentIdsForAvsTeacherMonth(sessions, 'teacher-b', '2026-10')).toEqual(['same-family']);
     expect(parentIdsForAvsTeacherMonth(sessions, 'teacher-a', '2026-11')).toEqual([]);
+  });
+
+  it('reports missing parent identifiers and safely resolves stored parentIds for historical sessions', () => {
+    const sessions = [
+      { teacherId: 'teacher-a', parentId: '', parentIds: ['parent-1', 'parent-2'], date: '2026-10-08' },
+      { teacherId: 'teacher-a', parentId: null, date: '2026-10-09' },
+      { teacherId: 'teacher-a', parentIds: ['not/a-parent'], date: '2026-10-10' },
+      { teacherId: 'teacher-b', parentId: '', date: '2026-10-11' },
+    ];
+    expect(resolveAvsTeacherMonthParentScope(sessions, 'teacher-a', '2026-10')).toEqual({
+      parentIds: ['parent-1', 'parent-2'],
+      unmatchedSessionCount: 2,
+    });
   });
 
   it('does not infer teacher ownership from stale aliases or current enrollment assignments', () => {
