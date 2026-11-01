@@ -42,6 +42,13 @@ describe('TeamPage', () => {
     expect(teamNavigation.querySelector('a[href="#teachers"]')).toBeInTheDocument();
     expect(teamNavigation.querySelector('a[href="#teaching-quality"]')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Meet the educators behind every live lesson' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Thoughtful teaching. More confident learning.' })).toBeInTheDocument();
+    expect(screen.getByText('Graduate educators with classroom experience')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'See class samples' })).toHaveAttribute('href', '/class-samples');
+    for (const stage of ['Model', 'Practise', 'Apply']) {
+      expect(screen.getByRole('heading', { name: stage, level: 3 })).toBeInTheDocument();
+    }
+    expect(screen.getByText(/graduate-qualified educators with school-classroom teaching experience/)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Training, observation and ongoing quality checks' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Ongoing lesson and conduct reviews' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Vannala Ravali Priya — Founder' })).toHaveAttribute('href', '/team/vannala-ravali-priya');
