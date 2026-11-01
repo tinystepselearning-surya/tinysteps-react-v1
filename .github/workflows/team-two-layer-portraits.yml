@@ -51,5 +51,14 @@ jobs:
           assert.match(html, /rel="canonical"[^>]*href="https:\/\/tinystepslearning\.com\/team"/);
           assert.doesNotMatch(html, /<meta[^>]*name="robots"[^>]*content="noindex/);
           assert.match(html, /\/priya-founder-tiny-steps-learning\.webp|\/team\/Founder\.webp/);
+          const { getTeamPhotoManifest } = await import('./scripts/teamPhotoManifest.mjs');
+          const published = getTeamPhotoManifest('public/team');
+          for (const portrait of published.teachers) {
+            assert.ok(html.includes(portrait.src), portrait.name + ': image present in rendered Team page');
+            assert.ok(html.includes(portrait.name), portrait.name + ': visible name present in Team page');
+            assert.ok(fs.existsSync('dist' + decodeURIComponent(portrait.src)), portrait.name + ': actual WebP copied into hosting artifact');
+          }
+          assert.ok(html.includes(published.founderPhotoSrc), 'founder chosen asset appears in prerender');
+
           console.log('Founder, teachers, ongoing audits, canonical and build HTML verified');
           NODE
