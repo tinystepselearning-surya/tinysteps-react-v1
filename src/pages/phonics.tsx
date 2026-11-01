@@ -1,3 +1,4 @@
+import FacultyTrustLink from '../components/programs/FacultyTrustLink';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { applySeo, getRouteConfig } from '../lib/seo';
@@ -1308,6 +1309,8 @@ export default function PhonicsPage({
           </div>
         </div>
       </SectionShell>
+
+      <FacultyTrustLink track="phonics" />
 
       <SectionShell id="assessment" className="py-14">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-r from-slate-950 via-[#1f2a44] to-[#263e6d] p-8 text-center text-white shadow-2xl sm:p-11 lg:pr-20">
