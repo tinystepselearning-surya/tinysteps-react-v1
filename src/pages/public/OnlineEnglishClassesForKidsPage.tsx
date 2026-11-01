@@ -85,6 +85,7 @@ const programmeTracks = [
     title: 'Spoken English',
     description: 'For everyday conversation, fuller spoken responses, vocabulary in use, and conversational English fluency.',
     href: '/spoken-english-classes-for-kids-online',
+    linkLabel: 'English Speaking Classes for Kids',
     accent: 'from-[#ecfdf5] to-[#ffffff]',
   },
   {
@@ -375,7 +376,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               <h3 className="text-xl font-semibold text-slate-900">{track.title}</h3>
               <p className="mt-3 text-sm leading-7 text-slate-700">{track.description}</p>
               <Link to={track.href} className="mt-4 inline-flex text-sm font-semibold text-slate-900 underline underline-offset-4">
-                Explore {track.title}
+                Explore {track.linkLabel ?? track.title}
               </Link>
             </LeadCard>
           ))}
