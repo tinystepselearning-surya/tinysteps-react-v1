@@ -88,13 +88,13 @@ export default function TeamPage() {
   }, []);
 
   return (
-    <div className="overflow-x-clip bg-[#fffdf9] text-slate-950">
+    <div className="overflow-x-clip bg-[#F6FBFF] text-slate-950">
       <TeamHero />
       <TrustMetrics />
       <FounderSection />
       <section
         aria-label="Founder profile"
-        className="border-y border-orange-100 bg-[#fffaf3] px-4 py-5 sm:px-6 lg:px-8"
+        className="border-y border-[#E4DCF8] bg-[#F5F0FF] px-4 py-5 sm:px-6 lg:px-8"
       >
         <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
