@@ -5,6 +5,7 @@ import TestimonialSnippets from '../components/common/TestimonialSnippets';
 import { PUBLIC_LEARNER_REACH_LABEL, PUBLIC_SESSION_DURATION_LABEL, PUBLIC_SITE_FACTS, formatPublicInr } from '../config/publicFacts';
 import { SEMANTIC_FACTS } from '../config/semanticFacts';
 import { applySeo } from '../lib/seo';
+import { SPEAKING_META_DESCRIPTION_EXPERIMENT } from '../lib/speakingMetaDescriptionExperiment.js';
 import {
   PUBLIC_SPEAKING_VIDEO_EVIDENCE,
   createPublicSpeakingVideoObject,
@@ -31,8 +32,7 @@ const speakingAiVisibility = getProgrammeAiVisibility('/speaking');
 const speakingAgeRangeLabel = `Ages ${speakingFacts.levels.beginner.ageRange.min}–${speakingFacts.levels.advanced.ageRange.max}`;
 const speakingClassPriceLabel = `₹${formatPublicInr(PUBLIC_SITE_FACTS.standardOffer.oneToOnePerClassInr)}/class`;
 const seoTitle = 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps';
-const seoDescription =
-  'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.';
+const seoDescription = SPEAKING_META_DESCRIPTION_EXPERIMENT.candidateDescription;
 
 const SPEAKING_SEO_KEYWORDS = [
   'public speaking classes for kids online',

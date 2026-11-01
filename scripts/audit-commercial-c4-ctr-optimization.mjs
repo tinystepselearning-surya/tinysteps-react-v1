@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { SPEAKING_META_DESCRIPTION_EXPERIMENT } from '../src/lib/speakingMetaDescriptionExperiment.js';
 
 const root = process.cwd();
 const failures = [];
@@ -109,17 +110,45 @@ if (exists(routeSeoPath)) {
     },
     '/speaking': {
       title: 'Online Public Speaking Classes for Kids | Live 1:1 | Tiny Steps',
-      description: 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.',
+      description: SPEAKING_META_DESCRIPTION_EXPERIMENT.candidateDescription,
     },
     '/online-english-classes-hyderabad': {
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps',
       description: 'Live online English classes for kids ages 3–12 in Hyderabad. Start with a free 35-minute 1:1 assessment, then choose the right phonics, reading, grammar, writing or speaking path.',
     },
+    // Pricing was separately approved and deployed by PR #826. Retain its
+    // original C4 historical control in commercialC4CtrOptimization.ts.
     '/pricing': {
       title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
-      description: 'See Tiny Steps online English class fees: standard live 1:1 ₹400/class, 12 classes ₹4,800, small groups ₹180–₹300 per child/class, plus native-teacher options.',
+      description: 'Compare One-to-One Classes at ₹400 per 35-minute class with Group Classes at ₹250 per child for 50 minutes. View fees and programme options.',
     },
   };
+
+  // Historical C4 controls remain frozen. This explicitly authorized, single-page
+  // description exception must never expand to titles, other owners or course ages.
+  const historicC4 = read(c4Path);
+  const speakingPage = read('src/pages/speaking.tsx');
+  if (SPEAKING_META_DESCRIPTION_EXPERIMENT.ownerPath !== '/speaking') {
+    failures.push('Speaking experiment points to unexpected owner');
+  }
+  if (SPEAKING_META_DESCRIPTION_EXPERIMENT.status !== 'approved-description-only') {
+    failures.push('Speaking description change lacks explicit approval');
+  }
+  if (!historicC4.includes(SPEAKING_META_DESCRIPTION_EXPERIMENT.controlDescription)) {
+    failures.push('Historical Speaking C4 control was overwritten');
+  }
+  if (!speakingPage.includes('SPEAKING_META_DESCRIPTION_EXPERIMENT.candidateDescription')) {
+    failures.push('Runtime Speaking description not tied to approved experiment');
+  }
+  if (!SPEAKING_META_DESCRIPTION_EXPERIMENT.noCourseEligibilityChange || !SPEAKING_META_DESCRIPTION_EXPERIMENT.noOtherPageChange) {
+    failures.push('Speaking experiment is broader than approved description-only scope');
+  }
+  if (/\bages?\s+\d/i.test(SPEAKING_META_DESCRIPTION_EXPERIMENT.candidateDescription)) {
+    failures.push('Age range was reintroduced into Speaking meta description');
+  }
+  if (controlSnippets['/speaking'].title !== SPEAKING_META_DESCRIPTION_EXPERIMENT.titleFrozen) {
+    failures.push('Speaking title changed in experiment');
+  }
 
   for (const [route, expected] of Object.entries(controlSnippets)) {
     const entry = registry?.[route];
@@ -139,4 +168,4 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log('Commercial C4 CTR governance passed: page/query evidence is mapped, title and description controls are frozen, directional SERP rewrites are tracked, and deployment remains gated by fresh post-C3 evidence.');
+console.log('Commercial C4 CTR governance passed: historical controls protected; one explicitly approved Speaking description-only variant matches runtime and prerender; other owner metadata remains frozen.');
