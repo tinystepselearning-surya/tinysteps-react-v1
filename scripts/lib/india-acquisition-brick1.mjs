@@ -13,6 +13,25 @@ export const FIVE_PROGRAMME_OWNERS = Object.freeze([
   { market: 'Broad English', c2Cluster: 'broad-english-provider', owner: '/online-english-classes-for-kids' },
 ]);
 const bad = (message) => { throw new Error('Brick 1 aggregate mismatch: ' + message); };
+// Never echo arbitrary input strings as labels in published aggregate outputs.
+// Extend these reviewed category vocabularies only with verified aggregate schema updates.
+const ALLOWED_CHANNELS = new Set([
+  'ChatGPT', 'Google organic', 'Google Ads', 'Facebook', 'Instagram',
+  'WhatsApp', 'Referral', 'Direct', 'Other', 'Unknown', 'Unattributed',
+  'Other / unclassified', 'AI search', 'Organic social', 'Paid search',
+]);
+const ALLOWED_INTENTS = new Set([
+  'Phonics', 'Reading', 'Grammar', 'Sentence Formation', 'Writing',
+  'Spoken English', 'Public Speaking', 'Broad English', 'Online English',
+  'Communication', 'Confidence Building', 'Unknown', 'Unknown / ambiguous', 'Other',
+]);
+function validateCategories(rows, field, allowed, month) {
+  for (const row of rows) {
+    if (typeof row[field] !== 'string' || !allowed.has(row[field])) {
+      bad(month + ' unexpected ' + field + ' category (not permitted in aggregate output)');
+    }
+  }
+}
 const count = (value, label) => {
   if (!Number.isSafeInteger(value) || value < 0) bad(label + ' must be a nonnegative integer');
   return value;
@@ -46,6 +65,8 @@ export function reconcileReviewedIndiaAcquisition(data) {
     if (!Number.isFinite(row.attributionCoverage) || row.attributionCoverage < 0 || row.attributionCoverage > 1) bad(label + ' attribution coverage');
     const sourceRows = channels.get(month) || [], intentRows = needs.get(month) || [];
     if (!sourceRows.length || !intentRows.length) bad(label + ' missing channel/intent evidence');
+    validateCategories(sourceRows, 'channel', ALLOWED_CHANNELS, label);
+    validateCategories(intentRows, 'intent', ALLOWED_INTENTS, label);
     if (new Set(sourceRows.map(r => r.channel)).size !== sourceRows.length) bad(label + ' repeated channel');
     if (new Set(intentRows.map(r => r.intent)).size !== intentRows.length) bad(label + ' repeated intent');
     if (sum(sourceRows, 'newParents') !== total) bad(label + ' channel total != new parents');
@@ -75,7 +96,9 @@ export function reconcileReviewedIndiaAcquisition(data) {
         commercialPhonicsClicks: buyer.clicks, commercialPhonicsImpressions: buyer.impressions,
         octoberIndiaSitePartial: month === 'Oct',
       },
-      leadHistoryComplete: historyComplete,
+      // Calendar coverage is different from a complete historical identity lookback.
+      leadEventCalendarWindowComplete: historyComplete,
+      leadHistoryComplete: false, // until live archival/deletion and historical completeness are verified
     };
   });
   const sep = result[2], oct = result[3];
@@ -89,6 +112,7 @@ export function reconcileReviewedIndiaAcquisition(data) {
       'Attribution policies changed 10 August and 19 September 2026.',
       'GSC query privacy thresholds prevent treating disclosed queries as national search volume.',
       'Search clicks are not linked to individual Firestore enquiries.',
+      'Historical identity completeness has not been established: full-month event coverage is not complete parent lookback.',
     ],
     months: result,
     septemberToOctober: {
