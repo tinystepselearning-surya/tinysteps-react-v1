@@ -2,8 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardCheck, Loader2, Search } from 'lucide-react';
 import type { AvsParentOption } from '../../../lib/attendanceValidationParentScope';
 import {
+  AVS_UNKNOWN_TEACHER_FILTER_ID,
   loadAvsMonthCloseTeacherOptions,
   loadAvsTeacherMonthParentScope,
+  loadAvsUnknownTeacherMonthParentScope,
   type AvsMonthCloseTeacherOption,
   type AvsTeacherMonthParentScope,
 } from '../../../lib/attendanceValidationTeacherMonthScope';
@@ -151,7 +153,9 @@ export default function AttendanceValidationMonthlyTracker({
   const scopedParents = useMemo(() => {
     const includedIds = new Set(Object.keys(billingByParent));
     Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
-    const monthParents = scope === 'all_parents'
+    // An unmapped session is itself evidence of this month's activity, even if
+    // its parent's monthly billing read model has not yet been generated.
+    const monthParents = scope === 'all_parents' || selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID
       ? parents
       : parents.filter((parent) => includedIds.has(parent.id));
     if (selectedTeacherId === 'all') return monthParents;
@@ -221,7 +225,8 @@ export default function AttendanceValidationMonthlyTracker({
         if (!active) return;
         setTeacherOptions(options);
         setSelectedTeacherId((current) =>
-          current === 'all' || options.some((option) => option.id === current) ? current : 'all');
+          current === 'all' || current === AVS_UNKNOWN_TEACHER_FILTER_ID
+            || options.some((option) => option.id === current) ? current : 'all');
       })
       .catch((loadError) => {
         if (!active) return;
@@ -237,10 +242,19 @@ export default function AttendanceValidationMonthlyTracker({
 
   useEffect(() => {
     if (selectedTeacherId === 'all' || loadedMonth !== selectedMonth) return;
+    // Unknown classification is meaningless until the complete teacher
+    // directory is available; never call every session "unknown" on failure.
+    if (selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID
+      && (teacherOptionsLoading || teacherOptionsError)) return;
     let active = true;
     setTeacherScope(null);
     setTeacherScopeError(null);
-    void loadAvsTeacherMonthParentScope(selectedTeacherId, selectedMonth)
+    const attributionRequest = selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID
+      ? loadAvsUnknownTeacherMonthParentScope(
+          new Set(teacherOptions.map((teacher) => teacher.id)), selectedMonth,
+        )
+      : loadAvsTeacherMonthParentScope(selectedTeacherId, selectedMonth);
+    void attributionRequest
       .then((attribution) => {
         if (active) setTeacherScope({ teacherId: selectedTeacherId, monthKey: selectedMonth, ...attribution });
       })
@@ -250,7 +264,7 @@ export default function AttendanceValidationMonthlyTracker({
           : 'Unable to load parents for the selected teacher.');
       });
     return () => { active = false; };
-  }, [loadedMonth, selectedMonth, selectedTeacherId]);
+  }, [loadedMonth, selectedMonth, selectedTeacherId, teacherOptions, teacherOptionsLoading, teacherOptionsError]);
 
   const updateStatus = async (
     parentId: string,
@@ -363,6 +377,7 @@ export default function AttendanceValidationMonthlyTracker({
               {teacherOptions.map((teacher) => (
                 <option key={teacher.id} value={teacher.id}>{teacher.label}</option>
               ))}
+              <option value={AVS_UNKNOWN_TEACHER_FILTER_ID}>Unknown / Unmapped teacher</option>
             </select>
           </label>
 
@@ -450,7 +465,10 @@ export default function AttendanceValidationMonthlyTracker({
           {scope === 'with_sessions' && (
             <p className="mt-3 text-xs text-slate-500">
               Showing {scopedParents.length} parents {selectedTeacherId === 'all'
-                ? 'with sessions' : 'linked to the selected teacher\'s sessions'} in {formatMonthKey(selectedMonth)}.
+                ? 'with sessions'
+                : selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID
+                  ? 'with unknown or unmapped teacher sessions'
+                  : 'linked to the selected teacher\'s sessions'} in {formatMonthKey(selectedMonth)}.
               Attendance and finance status reuse the existing canonical parent-month read model.
             </p>
           )}
@@ -462,11 +480,18 @@ export default function AttendanceValidationMonthlyTracker({
             </p>
           )}
 
+          {selectedTeacherId === AVS_UNKNOWN_TEACHER_FILTER_ID && teacherScope && (
+            <p className="mt-2 text-xs text-slate-600" role="status">
+              {teacherScope.unknownTeacherSessionCount ?? 0} session(s) have no teacher ID or
+              no matching selectable teacher profile in {formatMonthKey(selectedMonth)}.
+              Parents can also appear under a named teacher when their other sessions are mapped.
+            </p>
+          )}
           {selectedTeacherId !== 'all' && (
             <p className="mt-2 text-xs text-slate-500">
               Teacher matching uses actual sessions from this month. Session counts, billed classes,
               invoices and payments remain whole-parent totals, even when multiple teachers taught the family.
-              Sessions missing a recorded teacher ID cannot appear in any teacher-specific view.
+              Sessions without a selectable teacher appear under Unknown / Unmapped teacher.
               Use All teachers for a complete parent-month review.
             </p>
           )}
