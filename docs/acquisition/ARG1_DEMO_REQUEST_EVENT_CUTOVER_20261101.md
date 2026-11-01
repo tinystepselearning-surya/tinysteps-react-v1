@@ -31,7 +31,7 @@ No user names, phone numbers, child names, or other direct PII are added to anal
 ## Release gates
 
 - [ ] `PublicAssessmentForm.spec.tsx` passes (saved, failed, group, retry and WhatsApp)
-- [ ] C5 commercial conversion source contract passes
+- [ ] Focused ARG-1 request-versus-booking source contract passes
 - [ ] TypeScript check and full SEO/prerender build pass
 - [ ] Diff remains limited to event semantics, associated tests/CI and documentation
 - [ ] Confirm analytics consumer usage and release annotation before merging
@@ -40,3 +40,7 @@ No user names, phone numbers, child names, or other direct PII are added to anal
 ## Out of scope
 
 Do not change phone validation, international phone normalization, Firestore rules, parent+child operational dedupe, first-observed parent cohort report, session/local storage attribution scope, or detached enrichment retry architecture in this PR. Their independent review tasks remain in #854.
+
+## Existing C5 gate limitation (not caused by this PR)
+
+The legacy `scripts/audit-commercial-c5-conversion-flow.mjs` fails on current `main` when run in isolation because it requires the absent `.github/workflows/commercial-c5-cro-decision-flow.yml`. The first PR-head attempt confirmed this prerequisite failure *after the form integration tests passed*. It is not evidence of an event regression. This PR updates the C5 script's expected event symbol but uses a dedicated source contract to test its own semantics, rather than restoring unrelated historical workflow files as scope creep. Reconcile the obsolete C5 gate in a separate review if it is to remain runnable.
