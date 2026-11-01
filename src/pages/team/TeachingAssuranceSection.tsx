@@ -41,8 +41,8 @@ export function TeachingAssuranceSection() {
           ))}
         </div>
         <p className="mt-7 max-w-3xl text-sm leading-6 text-slate-600">
-          Reviews are ongoing and targeted; this is not a claim that every class is individually audited or that external accreditation has been awarded.
-          Read more about our{' '}
+          Our academic reviews focus on instructional quality and professional standards, with follow-up when improvements are needed.
+          Explore our{' '}
           <Link to="/curriculum" className="font-semibold text-blue-800 underline underline-offset-4">structured curriculum</Link>.
         </p>
       </div>
