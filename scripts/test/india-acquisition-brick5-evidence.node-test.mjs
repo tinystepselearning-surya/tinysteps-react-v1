@@ -24,12 +24,12 @@ test('existing broad English Trust proof gives direct access to three real suppo
 test('each referenced evidence page exists and is statically public', () => {
   const routes = read('src/lib/publicRouteManifest.js');
   const files = [
-    ['/team', 'src/pages/TeamPage.tsx', /TeacherDevelopmentSection/],
-    ['/class-samples', 'src/pages/ClassSamplesPage.tsx', /class/],
-    ['/parents/tracking-progress', 'src/pages/parents/tracking-progress.tsx', /progress/i],
+    ['/team', 'static', 'src/pages/TeamPage.tsx', /TeacherDevelopmentSection/],
+    ['/class-samples', 'static', 'src/pages/ClassSamplesPage.tsx', /class/],
+    ['/parents/tracking-progress', 'parents', 'src/pages/parents/tracking-progress.tsx', /progress/i],
   ];
-  for (const [path, source, indicator] of files) {
-    assert.ok(routes.includes(`route('${path}', 'static')`), path + ' static route');
+  for (const [path, group, source, indicator] of files) {
+    assert.ok(routes.includes(`route('${path}', '${group}')`), path + ' public route');
     assert.match(read(source), indicator, source + ' has appropriate evidence');
   }
 });
