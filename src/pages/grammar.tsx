@@ -269,7 +269,7 @@ export default function GrammarPage() {
                 Online Grammar Classes for Kids
               </h1>
               <p className="mt-5 max-w-[680px] text-base font-medium leading-7 text-slate-700 md:text-[1.08rem] md:leading-8">
-                Trusted by parents in India and internationally, Tiny Steps delivers live 1:1 grammar support focused on sentence formation, tense control, punctuation, correction, and accurate short school answers.
+                Tiny Steps offers live 1:1 online English grammar classes for children in India and worldwide. Teaching focuses on sentence formation, tense control, punctuation, correction, and accurate short school answers.
               </p>
               <p className="mt-3 max-w-[660px] text-sm leading-6 text-slate-600 md:text-[15px] md:leading-7">
                 Assessment first separates a grammar-control problem from writing-composition or conversational-fluency needs, then identifies the right Beginner, Advanced, or focused starting point.
@@ -291,7 +291,7 @@ export default function GrammarPage() {
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                {[grammarFacts.levels.beginner.ageRange.label + ' Beginner', grammarFacts.levels.advanced.ageRange.label + ' Advanced', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, 'Trusted in India & internationally', PUBLIC_LEARNER_REACH_LABEL].map((chip) => (
+                {[grammarFacts.levels.beginner.ageRange.label + ' Beginner', grammarFacts.levels.advanced.ageRange.label + ' Advanced', `${PUBLIC_SESSION_DURATION_LABEL} live 1:1`, `₹${PUBLIC_SITE_FACTS.standardOffer.oneToOnePerClassInr} per standard 1:1 class`, 'Trusted in India & internationally', PUBLIC_LEARNER_REACH_LABEL].map((chip) => (
                   <span key={chip} className="rounded-full border border-slate-200/80 bg-white/75 px-3 py-1.5 text-xs font-medium text-slate-600 backdrop-blur sm:px-3.5 sm:text-sm">
                     {chip}
                   </span>
