@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'src/pages/parents/reading-at-home.tsx'
+      - 'src/pages/parents/ParentsHubPage.tsx'
       - 'src/pages/SubjectResourcesPage.tsx'
       - 'src/pages/public/ReadingFluencyProgramPage.tsx'
       - 'scripts/tssa7-b5-authority-path-audit.mjs'
@@ -65,6 +66,12 @@ jobs:
           const hub=fs.readFileSync('dist/resources/phonics/index.html','utf8');
           const fluency=fs.readFileSync('dist/reading-fluency-program/index.html','utf8');
           const readingAtHome=fs.readFileSync('dist/parents/reading-at-home/index.html','utf8');
+          const parentsHub=fs.readFileSync('dist/parents/index.html','utf8');
+          assert.match(parentsHub,/href="\\/grammar"[\\s\\S]{0,850}Child struggles to form sentences or apply grammar rules/);
+          assert.match(parentsHub,/href="\\/writing-classes-for-kids"[\\s\\S]{0,850}Child needs paragraph or creative writing support/);
+          assert.match(parentsHub,/rel="canonical"[^>]*href="https:\\/\\/tinystepslearning\\.com\\/parents"/);
+          assert.doesNotMatch(parentsHub,/<meta[^>]*name="robots"[^>]*content="noindex/);
+
           assert.match(readingAtHome,/href="\/reading-classes-for-kids"/);
           assert.match(readingAtHome,/href="\/phonics"/);
           assert.match(readingAtHome,/href="\/book-demo"/);
