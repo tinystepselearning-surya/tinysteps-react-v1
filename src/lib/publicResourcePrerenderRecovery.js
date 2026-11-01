@@ -21,6 +21,7 @@ const coreCommercialHeadings = Object.freeze({
   '/grammar': 'Online Grammar Classes for Kids',
   '/speaking': 'Online Public Speaking Classes for Kids',
   '/reading-classes-for-kids': 'Online Reading Classes for Kids',
+  '/spoken-english-classes-for-kids-online': 'Spoken English Classes for Kids Online',
 });
 // GSC live test 2026-10-29: Googlebot got a 200 status but React Router
 // replaced the prerendered Reading Fluency page with "Page temporarily
