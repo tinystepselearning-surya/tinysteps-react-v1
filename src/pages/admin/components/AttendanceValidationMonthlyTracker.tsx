@@ -133,7 +133,6 @@ export default function AttendanceValidationMonthlyTracker({
     parentIds: string[];
   } | null>(null);
   const [teacherScopeError, setTeacherScopeError] = useState<string | null>(null);
-  const [teacherScopeRefresh, setTeacherScopeRefresh] = useState(0);
   const [loading, setLoading] = useState(false);
   const [savingParentId, setSavingParentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -190,10 +189,10 @@ export default function AttendanceValidationMonthlyTracker({
 
   const loadTracker = useCallback(async () => {
     setLoading(true);
+    setLoadedMonth(null);
     setError(null);
     setTeacherScope(null);
     setTeacherScopeError(null);
-    setTeacherScopeRefresh((previous) => previous + 1);
     try {
       const [, saved, parentsWithSessions] = await Promise.all([
         loadParents(),
@@ -252,7 +251,7 @@ export default function AttendanceValidationMonthlyTracker({
           : 'Unable to load parents for the selected teacher.');
       });
     return () => { active = false; };
-  }, [loadedMonth, selectedMonth, selectedTeacherId, teacherScopeRefresh]);
+  }, [loadedMonth, selectedMonth, selectedTeacherId]);
 
   const updateStatus = async (
     parentId: string,
