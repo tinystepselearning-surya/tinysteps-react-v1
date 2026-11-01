@@ -253,11 +253,21 @@ export async function discoverTeamsOnlyParentMonth(params: {
     // Safe reruns: remove stale synthetic evidence cases only after all Graph
     // report pages were read successfully. Never touch real class-session cases.
     const from = params.range.fromDate > VIRTUAL_CUTOVER ? params.range.fromDate : VIRTUAL_CUTOVER;
+    const staleCandidateRefs = [];
     for (let ms = Date.parse(from + 'T00:00:00Z'); ms <= Date.parse(params.range.toDate + 'T00:00:00Z'); ms += 86_400_000) {
       const day = new Date(ms).toISOString().slice(0, 10);
       const id = virtualCaseId(candidate.id, day);
       if (!eligibleIds.has(id) || coveredDays.has(day)) {
-        await db.collection('attendanceValidationCases').doc(id).delete();
+        staleCandidateRefs.push(db.collection('attendanceValidationCases').doc(id));
+      }
+    }
+    if (staleCandidateRefs.length) {
+      const prior = await db.getAll(...staleCandidateRefs);
+      const stale = prior.filter((snap) => snap.exists);
+      if (stale.length) {
+        const batch = db.batch();
+        for (const snap of stale) batch.delete(snap.ref);
+        await batch.commit();
       }
     }
   }
