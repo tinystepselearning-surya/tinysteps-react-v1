@@ -155,6 +155,11 @@ const faqItems = [
       'On this page, “online English tutor” describes the live 1:1 teaching format, while the programme describes what the child needs to learn. The assessment identifies whether the best starting path is phonics, reading, grammar, writing, spoken English, or public speaking and communication.',
   },
   {
+    question: 'Is Tiny Steps suitable for parents seeking online English tuition for kids?',
+    answer:
+      'Yes, when the goal is building specific English skills rather than covering every school homework task. Tiny Steps offers live teacher-led phonics, reading, grammar, writing, spoken English and public speaking support. The free assessment helps parents choose a starting programme, and families can review pricing, class samples and suitable timings before enrolling.',
+  },
+  {
     question: 'Should I choose a general English tutor or a subject-specific English programme?',
     answer:
       'Choose the broad English starting point when you want individual English support but the main gap is not yet clear. If you already know the child specifically needs phonics, reading, grammar, writing, spoken English, or speaking and communication support, use that specialist programme so the learning goal stays clear.',
