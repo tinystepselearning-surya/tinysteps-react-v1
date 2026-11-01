@@ -231,6 +231,8 @@ export {
 export { contactForm } from "./contactForm";
 export { enrichPublicLeadAttribution } from "./enrichPublicLeadAttribution";
 export { onWebsiteLeadIdentityWrite } from "./websiteLeadDeduplication";
+// ARG-2: restricted, read-only prospective parent-child acquisition summary.
+export { getProspectiveAcquisitionSummary } from './getProspectiveAcquisitionSummary';
 // notFoundRoute retired after C1 moved public 404 handling and legacy redirects to Firebase Hosting.
 
 // Enrollment lifecycle helpers not replaced by the compatibility surface.
