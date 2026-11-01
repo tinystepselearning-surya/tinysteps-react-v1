@@ -114,11 +114,11 @@ export default function TeamPage() {
       <TeacherPortraitsSection />
       <TeacherDevelopmentSection />
       <TeachingAssuranceSection />
-      <OfficialProfilesSection />
       <AcademicSystemSection />
       <ResearchToClassroomSection />
       <QualitySystemSection />
       <SchoolPartnershipSection />
+      <OfficialProfilesSection />
       <FinalAssessmentSection />
       <TeamFaqSection />
     </div>
