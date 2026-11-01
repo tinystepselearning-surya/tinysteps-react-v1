@@ -2,6 +2,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ClipboardCheck, Loader2, Search } from 'lucide-react';
 import type { AvsParentOption } from '../../../lib/attendanceValidationParentScope';
 import {
+  loadAvsMonthCloseTeacherOptions,
+  loadAvsTeacherMonthParentIds,
+  type AvsMonthCloseTeacherOption,
+} from '../../../lib/attendanceValidationTeacherMonthScope';
+import {
   completedMonthOptions,
   formatMonthKey,
   loadAvsMonthlyParentProgress,
@@ -26,10 +31,12 @@ interface Props {
   parents: AvsParentOption[];
   loadParents: () => Promise<AvsParentOption[]>;
   initialMonth?: string;
+  initialTeacherId?: string;
   disabled: boolean;
   onOpenParentMonth: (input: {
     parentId: string;
     monthKey: string;
+    teacherId?: string;
   }) => void;
 }
 
@@ -99,6 +106,7 @@ export default function AttendanceValidationMonthlyTracker({
   parents,
   loadParents,
   initialMonth,
+  initialTeacherId,
   disabled,
   onOpenParentMonth,
 }: Props) {
@@ -115,6 +123,17 @@ export default function AttendanceValidationMonthlyTracker({
   const [scope, setScope] = useState<TrackerScope>('with_sessions');
   const [filter, setFilter] = useState<TrackerFilter>('all');
   const [search, setSearch] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState(initialTeacherId || 'all');
+  const [teacherOptions, setTeacherOptions] = useState<AvsMonthCloseTeacherOption[]>([]);
+  const [teacherOptionsLoading, setTeacherOptionsLoading] = useState(true);
+  const [teacherOptionsError, setTeacherOptionsError] = useState<string | null>(null);
+  const [teacherScope, setTeacherScope] = useState<{
+    teacherId: string;
+    monthKey: string;
+    parentIds: string[];
+  } | null>(null);
+  const [teacherScopeError, setTeacherScopeError] = useState<string | null>(null);
+  const [teacherScopeRefresh, setTeacherScopeRefresh] = useState(0);
   const [loading, setLoading] = useState(false);
   const [savingParentId, setSavingParentId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,11 +151,17 @@ export default function AttendanceValidationMonthlyTracker({
   );
 
   const scopedParents = useMemo(() => {
-    if (scope === 'all_parents') return parents;
-    const includedIds = new Set(Object.keys(billingByParent));
-    Object.keys(progress).forEach((parentId) => includedIds.add(parentId));
-    return parents.filter((parent) => includedIds.has(parent.id));
-  }, [billingByParent, parents, progress, scope]);
+    const monthParents = scope === 'all_parents'
+      ? parents
+      : parents.filter((parent) =>
+          Object.hasOwn(billingByParent, parent.id) || Object.hasOwn(progress, parent.id));
+    if (selectedTeacherId === 'all') return monthParents;
+    const parentIds = teacherScope?.teacherId === selectedTeacherId
+      && teacherScope.monthKey === selectedMonth
+      ? new Set(teacherScope.parentIds)
+      : new Set<string>();
+    return monthParents.filter((parent) => parentIds.has(parent.id));
+  }, [billingByParent, parents, progress, scope, selectedTeacherId, selectedMonth, teacherScope]);
 
   const summary = useMemo(() => {
     const counts = {
@@ -165,6 +190,9 @@ export default function AttendanceValidationMonthlyTracker({
   const loadTracker = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setTeacherScope(null);
+    setTeacherScopeError(null);
+    setTeacherScopeRefresh((previous) => previous + 1);
     try {
       const [, saved, parentsWithSessions] = await Promise.all([
         loadParents(),
@@ -186,6 +214,44 @@ export default function AttendanceValidationMonthlyTracker({
   useEffect(() => {
     void loadTracker();
   }, [loadTracker]);
+
+  useEffect(() => {
+    let active = true;
+    void loadAvsMonthCloseTeacherOptions()
+      .then((options) => {
+        if (!active) return;
+        setTeacherOptions(options);
+        setSelectedTeacherId((current) =>
+          current === 'all' || options.some((option) => option.id === current) ? current : 'all');
+      })
+      .catch((loadError) => {
+        if (!active) return;
+        setTeacherOptionsError(loadError instanceof Error
+          ? loadError.message
+          : 'Unable to load teacher options.');
+      })
+      .finally(() => {
+        if (active) setTeacherOptionsLoading(false);
+      });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (selectedTeacherId === 'all' || loadedMonth !== selectedMonth) return;
+    let active = true;
+    setTeacherScope(null);
+    setTeacherScopeError(null);
+    void loadAvsTeacherMonthParentIds(selectedTeacherId, selectedMonth)
+      .then((parentIds) => {
+        if (active) setTeacherScope({ teacherId: selectedTeacherId, monthKey: selectedMonth, parentIds });
+      })
+      .catch((loadError) => {
+        if (active) setTeacherScopeError(loadError instanceof Error
+          ? loadError.message
+          : 'Unable to load parents for the selected teacher.');
+      });
+    return () => { active = false; };
+  }, [loadedMonth, selectedMonth, selectedTeacherId, teacherScopeRefresh]);
 
   const updateStatus = async (
     parentId: string,
@@ -234,10 +300,13 @@ export default function AttendanceValidationMonthlyTracker({
       const updated = await updateStatus(parentId, 'in_progress');
       if (!updated) return;
     }
-    onOpenParentMonth({ parentId, monthKey: selectedMonth });
+    onOpenParentMonth({ parentId, monthKey: selectedMonth, ...(selectedTeacherId !== 'all' ? { teacherId: selectedTeacherId } : {}) });
   };
 
-  const trackerReady = loadedMonth === selectedMonth;
+  const teacherScopeReady = selectedTeacherId === 'all' || (
+    teacherScope?.teacherId === selectedTeacherId && teacherScope.monthKey === selectedMonth
+  );
+  const trackerReady = loadedMonth === selectedMonth && teacherScopeReady && !teacherScopeError;
 
   return (
     <Card className="p-4">
@@ -265,6 +334,8 @@ export default function AttendanceValidationMonthlyTracker({
                 setLoadedMonth(null);
                 setProgress({});
                 setBillingByParent({});
+                setTeacherScope(null);
+                setTeacherScopeError(null);
                 setScope('with_sessions');
                 setFilter('all');
                 setError(null);
@@ -272,6 +343,26 @@ export default function AttendanceValidationMonthlyTracker({
             >
               {monthOptions.map((value) => (
                 <option key={value} value={value}>{formatMonthKey(value)}</option>
+              ))}
+            </select>
+          </label>
+
+          <label className="space-y-1 text-xs font-medium text-slate-600">
+            <span>Teacher</span>
+            <select
+              aria-label="Filter monthly close by teacher"
+              className="h-10 min-w-[190px] max-w-[250px] rounded-md border bg-white px-3"
+              value={selectedTeacherId}
+              disabled={disabled || loading || savingParentId !== null || teacherOptionsLoading || !!teacherOptionsError}
+              onChange={(event) => {
+                setSelectedTeacherId(event.target.value);
+                setTeacherScope(null);
+                setTeacherScopeError(null);
+              }}
+            >
+              <option value="all">All teachers</option>
+              {teacherOptions.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>{teacher.label}</option>
               ))}
             </select>
           </label>
@@ -313,6 +404,23 @@ export default function AttendanceValidationMonthlyTracker({
         </p>
       )}
 
+      {teacherOptionsError && (
+        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+          Teacher filter unavailable: {teacherOptionsError}
+        </p>
+      )}
+      {teacherScopeError && selectedTeacherId !== 'all' && (
+        <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700" role="alert">
+          Teacher filter unavailable: {teacherScopeError} Choose another teacher or refresh the tracker.
+        </p>
+      )}
+      {loadedMonth === selectedMonth && selectedTeacherId !== 'all' && !teacherScopeReady && !teacherScopeError && (
+        <p className="mt-3 text-xs text-slate-500" role="status">
+          <Loader2 className="mr-2 inline h-4 w-4 animate-spin" aria-hidden="true" />
+          Loading parents for the selected teacher…
+        </p>
+      )}
+
       {trackerReady && (
         <>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -342,8 +450,16 @@ export default function AttendanceValidationMonthlyTracker({
 
           {scope === 'with_sessions' && (
             <p className="mt-3 text-xs text-slate-500">
-              Showing {scopedParents.length} parents with sessions in {formatMonthKey(selectedMonth)}.
+              Showing {scopedParents.length} parents {selectedTeacherId === 'all'
+                ? 'with sessions' : 'linked to the selected teacher\'s sessions'} in {formatMonthKey(selectedMonth)}.
               Attendance and finance status reuse the existing canonical parent-month read model.
+            </p>
+          )}
+
+          {selectedTeacherId !== 'all' && (
+            <p className="mt-2 text-xs text-slate-500">
+              Teacher matching uses actual sessions from this month. Session counts, billed classes,
+              invoices and payments remain whole-parent totals, even when multiple teachers taught the family.
             </p>
           )}
 
