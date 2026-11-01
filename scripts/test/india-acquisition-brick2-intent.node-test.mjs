@@ -84,3 +84,12 @@ test('national English trust claims trace to the published academic teaching pro
   assert.match(team, /Teachers receive programme structure, lesson resources, teaching guidance and expectations for child participation/);
   assert.match(team, /Teaching is supported through feedback, academic review, parent insights and continued development/);
 });
+
+test('national English standard small-group duration follows the current offer, not legacy ratios', () => {
+  const page = read('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
+  const pricing = read('src/config/pricing.ts');
+  assert.match(pricing, /export const NEW_GROUP_CLASS_PLAN = \{[\s\S]*?durationMinutes: 50/);
+  assert.match(page, /NEW_GROUP_CLASS_PLAN\.durationMinutes/);
+  assert.match(page, /when a suitable level-matched batch is available/);
+  assert.doesNotMatch(page, /small-group duration varies with group size/i);
+});
