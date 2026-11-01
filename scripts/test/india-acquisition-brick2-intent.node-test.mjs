@@ -73,12 +73,14 @@ test('researched English-speaking classes intent routes naturally to its existin
 
 test('national English trust claims trace to the published academic teaching process', () => {
   const national = read('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
-  const team = read('src/pages/team/TeamPageSections.tsx');
+  const team = read('src/pages/team/teamPageContent.ts');
   assert.match(national, /Teachers are reviewed for spoken English, subject understanding, child interaction, reliability and online-class readiness/);
   assert.match(national, /They receive programme guidance and lesson resources, with academic feedback and parent insights supporting continued development/);
   assert.match(national, /<Link to="\/team"[^>]*>How our teachers are selected and supported<\/Link>/);
   assert.match(national, /<Link to="\/class-samples"/);
   assert.match(national, /<Link to="\/parents\/tracking-progress"/);
   assert.match(national, /const canonicalPath = '\/online-english-classes-for-kids'/);
-  assert.match(team, /TeacherDevelopmentSection/);
+  assert.match(team, /Teachers are reviewed for spoken English, child interaction, subject understanding, reliability and online-class readiness/);
+  assert.match(team, /Teachers receive programme structure, lesson resources, teaching guidance and expectations for child participation/);
+  assert.match(team, /Teaching is supported through feedback, academic review, parent insights and continued development/);
 });
