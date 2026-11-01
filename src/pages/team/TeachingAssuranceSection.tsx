@@ -21,7 +21,7 @@ const qualityChecks = [
 
 export function TeachingAssuranceSection() {
   return (
-    <section aria-labelledby="teacher-quality-audits" className="bg-[#f4f8ff] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+    <section id="teaching-quality" aria-labelledby="teacher-quality-audits" className="bg-[#f4f8ff] px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-blue-800">Teaching standards and ongoing reviews</p>
         <h2 id="teacher-quality-audits" className="mt-3 max-w-4xl font-heading text-3xl font-bold tracking-tight text-[#10243e] sm:text-4xl">
