@@ -319,6 +319,11 @@ type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
   booking_type: string;
 };
 
+type FunnelDemoRequestReceivedParams = FunnelBaseParams & {
+  request_type: string;
+  submission_id: string;
+};
+
 function buildLeadDetailEventParams(params: FunnelLeadFormParams, pagePath: string) {
   return {
     sourcePath: params.sourcePath || pagePath,
@@ -640,6 +645,21 @@ export const trackParentCourseInterest = (params: FunnelCtaParams) => {
   });
 };
 
+// A saved assessment request is not a confirmed scheduled demo booking.
+export function trackDemoRequestReceived(params: FunnelDemoRequestReceivedParams) {
+  const pagePath = resolvePagePath(params.page_path);
+  trackEvent('demo_request_received', {
+    page_path: pagePath,
+    request_type: params.request_type,
+    submission_id: params.submission_id,
+    funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
+    program: resolveProgram(params.program, pagePath),
+    source_context: params.source_context || 'unknown',
+    ...buildAttributionEventParams(pagePath),
+  });
+}
+
+// Only invoke this legacy booking event from a genuinely confirmed booking transition.
 export function trackDemoBookingComplete(params: FunnelDemoBookingCompleteParams) {
   const pagePath = resolvePagePath(params.page_path);
   trackEvent('funnel_demo_booking_complete', {
@@ -665,6 +685,7 @@ export function trackConversionEvent(
     | 'funnel_cta_click'
     | 'funnel_form_start'
     | 'funnel_form_submit'
+    | 'demo_request_received'
     | 'funnel_demo_booking_complete',
   params: Record<string, unknown>
 ) {
