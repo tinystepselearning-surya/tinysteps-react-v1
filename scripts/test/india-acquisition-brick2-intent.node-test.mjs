@@ -58,17 +58,15 @@ test('Speaking keeps the existing public-speaking vs spoken-English boundary', (
   assert.match(s, /dedicated Spoken English programme is the stronger first fit/);
   assert.match(s, /SPEAKING_META_DESCRIPTION_EXPERIMENT\.candidateDescription/);
 });
-
 test('researched English-speaking classes intent routes naturally to its existing specialist owner', () => {
   const national = read('src/pages/public/OnlineEnglishClassesForKidsPage.tsx');
   const local = read('src/pages/public/OnlineEnglishClassesHyderabadPage.tsx');
   for (const source of [national, local]) {
-    assert.match(source, /title: 'Spoken English',[\\s\\S]*?href: '\\/spoken-english-classes-for-kids-online',[\\s\\S]*?linkLabel: 'English Speaking Classes for Kids'/);
-    assert.match(source, /href: '\\/speaking'/);
-    assert.match(source, /href: '\\/grammar'/);
+    assert.match(source, /title: 'Spoken English',[\s\S]*?href: '\/spoken-english-classes-for-kids-online',[\s\S]*?linkLabel: 'English Speaking Classes for Kids'/);
+    assert.ok(source.includes("href: '/speaking'"), 'Public Speaking owner retained');
+    assert.ok(source.includes("href: '/grammar'"), 'Grammar owner retained');
   }
-  // A researched child-specific parent phrase is a descriptive internal link,
-  // not a new commercial URL or a replacement for the Public Speaking owner.
+  // Research-backed descriptive anchor points to the existing specialist URL.
   assert.match(national, /Explore \{track\.linkLabel \?\? track\.title\}/);
   assert.match(local, /Explore \{card\.linkLabel \?\? card\.title\}/);
 });
