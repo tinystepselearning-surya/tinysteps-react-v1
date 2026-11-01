@@ -7,6 +7,8 @@ on:
       - 'src/pages/TeamPage.tsx'
       - 'src/pages/team/**'
       - 'src/types/teamPhotoManifest.d.ts'
+      - 'src/tests/pages/TeamPage.spec.tsx'
+      - 'vitest.config.ts'
       - 'scripts/teamPhotoManifest.mjs'
       - 'scripts/test/team-photo-manifest.node-test.mjs'
       - 'vite.config.js'
