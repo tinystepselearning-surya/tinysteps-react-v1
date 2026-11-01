@@ -1,0 +1,65 @@
+name: Parent Month Close Teacher Filter
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/AttendanceValidationDashboard.tsx'
+      - 'src/pages/admin/components/AttendanceValidationMonthlyTracker.tsx'
+      - 'src/lib/attendanceValidationTeacherMonthScope.ts'
+      - 'src/lib/attendanceValidationMonthlyParentProgress.ts'
+      - 'src/lib/parentMonthClose.ts'
+      - 'src/tests/lib/attendanceValidationTeacherMonthScope.spec.ts'
+      - 'src/tests/admin/attendanceValidationDashboard.spec.ts'
+      - 'src/tests/admin/parentMonthClose.spec.ts'
+      - 'src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts'
+      - 'firestore.indexes.json'
+      - '.github/workflows/parent-month-close-teacher-filter.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: parent-month-close-teacher-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  regression:
+    name: TypeScript, attribution and Parent Month Close regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout proposed code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Teacher-filter and Parent Month Close regression suite
+        run: >-
+          npx vitest run
+          src/tests/lib/attendanceValidationTeacherMonthScope.spec.ts
+          src/tests/admin/attendanceValidationDashboard.spec.ts
+          src/tests/admin/parentMonthClose.spec.ts
+          src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
+      - name: Verify teacher/date composite index is declared
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const indexes = JSON.parse(fs.readFileSync('firestore.indexes.json', 'utf8')).indexes;
+          const matches = indexes.filter(index => index.collectionGroup === 'classSessions'
+            && index.queryScope === 'COLLECTION'
+            && JSON.stringify(index.fields.filter(field => field.fieldPath !== '__name__')) === JSON.stringify([
+              { fieldPath: 'teacherId', order: 'ASCENDING' },
+              { fieldPath: 'date', order: 'ASCENDING' },
+            ]));
+          if (matches.length !== 1) {
+            throw new Error(`Expected exactly one teacherId/date collection index declaration; found ${matches.length}`);
+          }
+          console.log('Index declaration verified. Production index READY state requires a separate read-only check.');
+          NODE
