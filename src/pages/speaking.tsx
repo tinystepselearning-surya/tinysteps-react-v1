@@ -1,3 +1,4 @@
+import FacultyTrustLink from '../components/programs/FacultyTrustLink';
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import ClusterSeoNav from '../components/programs/ClusterSeoNav';
@@ -1289,6 +1290,8 @@ export default function SpeakingPage() {
           <ProgrammeFaqAccordion items={faqItems} accent="violet" />
         </div>
       </section>
+
+      <FacultyTrustLink track="speaking" />
 
       <section className="px-4 pb-9 pt-6 sm:px-5 lg:px-6">
         <div className="mx-auto max-w-6xl rounded-[28px] border border-sky-200 bg-[linear-gradient(135deg,#D9EEFF_0%,#FFFFFF_52%,#EAF6FF_100%)] p-6 text-center sm:p-8 md:p-9">
