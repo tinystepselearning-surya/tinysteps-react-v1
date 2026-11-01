@@ -443,9 +443,13 @@ export function TeacherDevelopmentSection() {
 
 export function QualitySystemSection() {
   return (
-    <section className="bg-[#fff7ed] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section id="academic-quality" className="scroll-mt-24 bg-[#fff7ed] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-7xl">
-        <SectionHeading centered eyebrow="How quality is maintained" title="A clear pathway from assessment to visible progress" />
+        <SectionHeading centered eyebrow="Level 4 · Academic Quality Assurance" title="A clear pathway from assessment to visible progress" />
+        <p className="mx-auto mt-5 max-w-3xl text-center text-base leading-7 text-slate-700">
+          Academic support includes classroom observations, teacher coaching, lesson review,
+          parent feedback and checks on each child's developing skills.
+        </p>
         <ol className="relative mt-14 grid gap-4 md:grid-cols-3 xl:grid-cols-6 xl:gap-3">
           <div className="absolute left-[8.5%] right-[8.5%] top-8 hidden h-px bg-orange-300 xl:block" aria-hidden="true" />
           {qualitySteps.map((step) => (
