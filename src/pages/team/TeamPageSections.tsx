@@ -150,6 +150,10 @@ export function TeamHero() {
             <a href="#teachers" className="underline underline-offset-4 hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
             <a href="#teaching-quality" className="underline underline-offset-4 hover:text-[#102A43] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Training &amp; quality</a>
           </nav>
+          <p className="mt-5 flex items-center gap-2 text-sm font-medium text-[#29425B]">
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-700" aria-hidden="true" />
+            English learning for children aged 3–12.
+          </p>
         </div>
 
         <div className="relative mx-auto w-full max-w-[580px]">
