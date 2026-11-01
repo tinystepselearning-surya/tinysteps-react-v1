@@ -46,6 +46,12 @@ jobs:
             ['online-english-classes-hyderabad', '/online-english-classes-hyderabad'],
           ]) {
             const html=fs.readFileSync('dist/'+path+'/index.html','utf8');
+            if (path === 'online-english-classes-for-kids') {
+              assert.match(html,/Teachers are reviewed for spoken English, subject understanding, child interaction, reliability and online-class readiness/);
+              assert.match(html,/<a\b[^>]*href="\/team"[^>]*>How our teachers are selected and supported<\/a>/);
+              assert.match(html,/<a\b[^>]*href="\/class-samples"/);
+              assert.match(html,/<a\b[^>]*href="\/parents\/tracking-progress"/);
+            }
             assert.match(html,/<a\b[^>]*href="\/spoken-english-classes-for-kids-online"[^>]*>[\s\S]{0,150}Explore English Speaking Classes for Kids[\s\S]{0,150}<\/a>/);
             assert.match(html,/<a\b[^>]*href="\/speaking"/);
             assert.match(html,new RegExp('rel="canonical"[^>]*href="https:\\/\\/tinystepslearning\\.com'+canonical+'"'));

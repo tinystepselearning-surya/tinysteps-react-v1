@@ -10,7 +10,7 @@ test('existing broad English Trust proof gives direct access to three real suppo
   assert.ok(anchor > 0 && boundary > anchor, 'trust panel precedes international content');
   const proof = page.slice(anchor, boundary);
   const links = [
-    ['/team', 'Meet the academic team'],
+    ['/team', 'How our teachers are selected and supported'],
     ['/class-samples', 'See class samples'],
     ['/parents/tracking-progress', 'How parents can track progress'],
   ];

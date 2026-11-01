@@ -409,13 +409,17 @@ export default function OnlineEnglishClassesForKidsPage() {
             <LeadSectionHeading
               eyebrow="Trust proof"
               title="What parents want to know before booking"
-              description="This page is built for families looking for one broad India-and-worldwide online English entry point, not a duplicated country or city landing page."
+              description="Review how Tiny Steps prepares and supports online teachers, alongside real class samples and parent progress guidance."
             />
+            <p className="mt-5 text-sm leading-7 text-slate-700">
+              Teachers are reviewed for spoken English, subject understanding, child interaction, reliability and online-class readiness.
+              They receive programme guidance and lesson resources, with academic feedback and parent insights supporting continued development.
+            </p>
             <div className="mt-5 space-y-3">
               {[
                 PUBLIC_LEARNER_REACH_LABEL,
                 'India + worldwide online access',
-                'Live teacher-led learning',
+                'Teacher selection, guided lesson preparation and academic feedback',
                 'Class samples available before parents decide',
                 'Parent-visible progress updates after classes begin',
               ].map((item) => (
@@ -425,7 +429,7 @@ export default function OnlineEnglishClassesForKidsPage() {
               ))}
             </div>
             <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold">
-              <Link to="/team" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">Meet the academic team</Link>
+              <Link to="/team" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">How our teachers are selected and supported</Link>
               <Link to="/class-samples" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">See class samples</Link>
               <Link to="/parents/tracking-progress" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">How parents can track progress</Link>
             </div>
