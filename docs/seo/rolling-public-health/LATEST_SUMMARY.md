@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 2 — 2 November 2026, approximately 01:10–01:11 IST
+
+**Tracker preflight:** Read latest tracker blob `3d40d0ca8ab551078aa517bd694e79e6be519b11` on `seo-url-health-tracker`. Validated 202 sequential rows, 202 unique URLs, exactly 22 CSV columns, Slots 1–19 with 10 URLs each and Slot 20 with 12. Exactly 10 distinct observations (Slot 1, rows 1–10) already fell on 2 November IST; older dates were excluded. No Slot 2 rows had been checked today.
+
+**Executed batch:** Inspected exactly ten assigned Slot 2 URLs (rows 11–20, phonics patterns SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE). ChatGPT web.open returned substantive page-specific extracted text for all ten, with exact H1 and provider references `turn508536view0` through `turn508536view9` recorded individually in the tracker. Each provider snapshot was labelled 'Crawled today'; precise crawl times are unknown. Ten independent read-only curl --noproxy '*' HTTPS GET attempts began at distinct observed UTC timestamps between **2026-11-01T19:40:41.251565Z** and **2026-11-01T19:41:01.375394Z**, with the last ending **2026-11-01T19:41:06.387921Z**. All ten returned `curl: (6) Could not resolve host: tinystepslearning.com` before receiving an origin HTTP response. Independent DNS requests to unrelated example.com also failed in the audit environment. These failures are not evidence of a Tiny Steps production outage. Direct robots.txt web.open was inaccessible (`turn508536view10`).
+
+**Current-day coverage:** **20/202 distinct attempted URLs (9.90%)**, **0/202 fully origin-verified**, **182 not yet attempted today** (scheduled later slots). Current technical readiness for the 20 attempts remains **UNVERIFIED**. HTTP status, final/redirect destination, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot robots permissions, initial HTML and JSON-LD cannot be certified from provider-extracted text. No verified dated before/after production regression or improvement was established.
+
+**Workflow safety:** Connected GitHub repository-wide run queries showed **one unrelated in-progress 'Homepage Mobile Release Gate'** workflow and **zero queued runs** during this audit. No concurrently running rolling-public SEO audit was observed in these queries. Administrative workflow enabled/disabled state could not be read: the connector rejects the workflow-list/state endpoints. The user's 2026-10-25 GitHub UI disable confirmation remains the operating assumption; cron YAML presence is not proof of enablement. No workflow was started or changed.
+
+**Change control:** Updated and independently verified `MASTER_URL_TRACKER.csv` (commit `0b92ea5e6c8506d0aeac36883931a308c284dde7`). This summary is updated separately using its current blob SHA. `CHANGES.md` is unchanged because no verified meaningful production transition was established. No source code, workflows, Firebase, Hosting or production settings were modified. **Next eligible batch: Slot 3, rows 21–30.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 1 — 2 November 2026, approximately 00:15–00:16 IST
 
 **Tracker preflight:** Read latest tracker blob `8aa8029aeaffe15dc394a71c97b9bb5dfdccae41` on `seo-url-health-tracker`. Validated 202 sequential rows, 202 unique URLs, 22 columns per row, Slots 1–19 with 10 URLs each and Slot 20 with 12. Prior-day 202/202 attempts on 1 November were excluded from today's coverage. No 2 November URL observations existed before this batch.
