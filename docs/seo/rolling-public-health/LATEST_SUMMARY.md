@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 15 — 1 November 2026, approximately 14:19 IST (origin probes 2026-11-01T08:49:01.040732Z–08:49:11.098206Z UTC)
+
+**Preflight and coverage:** Re-fetched the tracker and verified 202 sequential unique selected URLs, 22 CSV columns, Slots 1–19 at ten URLs each and Slot 20 at twelve. Before this batch, 140 distinct URLs had valid 1 November IST UTC check timestamps. Audited only the ten eligible previously unchecked Slot 15 URLs (rows 141–150), retaining historical verification fields. Ten distinct actual UTC origin-probe start times recorded. **Today's attempted coverage: 150/202 (74.26%); 52 awaiting scheduled checks; zero fully origin-verified; all 150 current-day technical-readiness statuses UNVERIFIED.** Prior-day timestamps excluded; no previously checked or future-slot URLs audited.
+
+**Provider text retrieval:** All ten exact public URLs returned substantive page-specific provider-extracted article text with unique H1s: 141 school reopening English readiness (turn396788view0); 142 long vowels (turn396788view1); 143 online English classes India (turn396788view2); 144 school vs online phonics (turn396788view3); 145 online phonics games (turn396788view4); 146 home phonics activities (turn396788view5); 147 blending activities (turn396788view6); 148 blending routine (turn396788view7); 149 decoding-to-comprehension (turn396788view8); 150 phonics assessment (turn396788view9). Provider snapshots labelled **Crawled yesterday**, exact provider crawl times unknown. Extracted text is partial evidence only, not proof of current origin HTTP/headers, initial HTML or deployed structured data.
+
+**Independent HTTPS origin probes:** Ten distinct read-only `curl --noproxy '*' -L` GET attempts executed at the UTC times in the tracker. All ten failed before reaching origin HTTP with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`. No origin HTTP responses, headers or raw HTML obtained. `CURL_HTTP:000` is a curl placeholder, not a server status; echoed effective URL and `CURL_REDIRECTS:0` do not verify final destinations or redirects. Origin HTTP status, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. DNS errors in this audit environment do **not** establish a production outage. Direct robots.txt retrieval inaccessible (turn396788view10). No first-party indexing, ranking or AI citation evidence.
+
+**Workflow safety:** GitHub Actions repository run API reported zero active runs in the latest 100 and zero queued/in-progress runs in separate status queries. No rolling SEO audit among latest 100 runs. Workflow administrative-state endpoint inaccessible through connected GitHub interface; rely on user's confirmed 25 October UI disablement, not cron YAML presence. No GitHub workflow run or enabled.
+
+**Change control:** No verified dated before/after production regression or improvement; `CHANGES.md` unchanged. Updated `MASTER_URL_TRACKER.csv` and this summary only on `seo-url-health-tracker`. No source, workflows, Firebase, Hosting or production settings modified. **Next: Slot 16, rows 151–160.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 14 — 1 November 2026, approximately 13:14 IST (origin probes 2026-11-01T07:44:26.481546Z–07:44:35.529690Z UTC)
 
 **Preflight and coverage:** Re-fetched the current tracker and verified 202 sequential unique URLs, 22 CSV columns, Slots 1–19 at 10 URLs each and Slot 20 at 12. Before this run, 130 distinct URLs had valid current-day UTC attempt timestamps (IST day 1 November). Audited only the ten eligible previously unchecked Slot 14 URLs (rows 131–140), retaining all historical verified-state fields and previous observations. Ten distinct actual UTC origin-probe start times recorded. **Today's attempted coverage: 140/202 (69.31%); 62 awaiting scheduled checks; zero fully origin-verified; all 140 current-day readiness statuses UNVERIFIED.** Yesterday's timestamps were excluded and no future-slot URLs scanned.
