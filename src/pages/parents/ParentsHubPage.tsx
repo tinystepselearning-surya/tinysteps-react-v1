@@ -33,14 +33,14 @@ const quickRoutes = [
     accent: 'from-[#FFE5EB] to-[#FFF5DF]',
   },
   {
-    title: 'Child makes grammar mistakes',
-    detail: 'Use the grammar pathway for sentence accuracy, writing clarity, and application.',
+    title: 'Child struggles to form sentences or apply grammar rules',
+    detail: 'Use Grammar for complete sentence formation, word order, accuracy, and applying rules independently.',
     to: '/grammar',
     accent: 'from-[#f3f8ef] to-[#eef6ff]',
   },
   {
-    title: 'Child needs sentence formation or writing support',
-    detail: 'Use the writing support page for sentence-building and writing progression.',
+    title: 'Child needs paragraph or creative writing support',
+    detail: 'Use Writing for organising ideas, connected sentences, paragraphs, and composition after the sentence basics are secure.',
     to: '/writing-classes-for-kids',
     accent: 'from-[#E7F3FF] to-[#F1EDFC]',
   },
