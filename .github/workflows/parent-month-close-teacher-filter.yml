@@ -14,6 +14,7 @@ on:
       - 'src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts'
       - 'firestore.indexes.json'
       - 'scripts/audit-month-close-teacher-filter.mjs'
+      - 'scripts/audit-month-close-teacher-filter.test.mjs'
       - '.github/workflows/parent-month-close-teacher-filter.yml'
   workflow_dispatch:
 
@@ -48,6 +49,8 @@ jobs:
           src/tests/admin/attendanceValidationDashboard.spec.ts
           src/tests/admin/parentMonthClose.spec.ts
           src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
+      - name: Verify bounded audit pagination and no partial results
+        run: node --test scripts/audit-month-close-teacher-filter.test.mjs
       - name: Read-only production audit CLI syntax smoke check
         run: node scripts/audit-month-close-teacher-filter.mjs --help
       - name: Verify teacher/date composite index is declared
