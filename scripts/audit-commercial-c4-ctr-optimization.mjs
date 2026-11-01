@@ -116,9 +116,11 @@ if (exists(routeSeoPath)) {
       title: 'Online English Classes for Kids in Hyderabad | Tiny Steps',
       description: 'Live online English classes for kids ages 3–12 in Hyderabad. Start with a free 35-minute 1:1 assessment, then choose the right phonics, reading, grammar, writing or speaking path.',
     },
+    // Pricing was separately approved and deployed by PR #826. Retain its
+    // original C4 historical control in commercialC4CtrOptimization.ts.
     '/pricing': {
       title: 'Online English Classes for Kids Fees & Pricing | Tiny Steps',
-      description: 'See Tiny Steps online English class fees: standard live 1:1 ₹400/class, 12 classes ₹4,800, small groups ₹180–₹300 per child/class, plus native-teacher options.',
+      description: 'Compare One-to-One Classes at ₹400 per 35-minute class with Group Classes at ₹250 per child for 50 minutes. View fees and programme options.',
     },
   };
 
