@@ -80,3 +80,13 @@ test('rejects JPEG or PNG renamed as .webp before publication', () => {
     assert.throws(() => getTeamPhotoManifest(folder), /Invalid WebP image/);
   });
 });
+
+test('founder and teacher photos use responsive oval masks without extra titles on each card', () => {
+  const founder = readFileSync(new URL('../../src/pages/team/TeamPageSections.tsx', import.meta.url), 'utf8');
+  const teacher = readFileSync(new URL('../../src/pages/team/TeacherPortraitsSection.tsx', import.meta.url), 'utf8');
+  assert.match(founder, /rounded-\\[50%\\]/);
+  assert.match(founder, /alt="Priya, Founder of Tiny Steps Learning"/);
+  assert.doesNotMatch(founder, /reviewing academic materials/);
+  assert.match(teacher, /aspect-\\[4\\/5\\][^"]*rounded-\\[50%\\]/);
+  assert.match(teacher, /<h3[^>]*>\\{teacher.name\\}<\\/h3>/);
+});
