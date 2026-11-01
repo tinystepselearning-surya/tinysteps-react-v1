@@ -67,6 +67,6 @@ describe('Unknown / Unmapped teacher bounded Firestore scan', () => {
     }));
     await expect(loadAvsUnknownTeacherMonthParentScope(new Set(), '2026-10'))
       .rejects.toThrow('No partial results are shown.');
-    expect(fake.readCounts.at(-1)).toBe(1);
+    expect(fake.readCounts[fake.readCounts.length - 1]).toBe(1);
   });
 });
