@@ -70,7 +70,6 @@ describe('leadAttribution helper', () => {
     });
   });
 
-
   it.each([
     {
       landingPage: '/reading-classes-for-kids',
