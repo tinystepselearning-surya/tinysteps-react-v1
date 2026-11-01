@@ -160,8 +160,9 @@ const CORE_COMMERCIAL = [
   ['/grammar', 'Online Grammar Classes for Kids'],
   ['/speaking', 'Online Public Speaking Classes for Kids'],
   ['/reading-classes-for-kids', 'Online Reading Classes for Kids'],
+  ['/spoken-english-classes-for-kids-online', 'Spoken English Classes for Kids Online'],
 ];
-test('six commercial owners preserve only their own substantive self-canonical prerendered HTML', () => {
+test('seven commercial owners preserve only their own substantive self-canonical prerendered HTML', () => {
   for (const [route, heading] of CORE_COMMERCIAL) {
     const dom = groupFixture({ route, heading, mainClass: 'commercial-programme-content' });
     assert.ok(captureOriginalPublicResource(dom.window.document, dom.window.location), route);
