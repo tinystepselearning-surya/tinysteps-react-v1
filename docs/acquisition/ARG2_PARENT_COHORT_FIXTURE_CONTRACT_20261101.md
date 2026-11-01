@@ -1,45 +1,47 @@
-# ARG-2 — Offline parent–child enquiry cohort fixture contract
+# ARG-2 — Forward-only parent–child enquiry measurement
 
-**Date:** 2026-11-01 IST. **Issue:** #856. **Status:** synthetic-only draft, no live reporting.
+**Owner decision:** 1 November 2026 (Asia/Kolkata) is the new reporting cutover. No July–October acquisition reconciliation or retrospective backfill is required. **Status:** offline fixture / draft only; not a live dashboard yet. Tracks #856 and PR #857.
 
-## Purpose and boundary
+## What counts
 
-The current acquisition dashboards report lead documents, but our primary marketing metric is **first-observed parent–child enquiry opportunities**. **Owner decision (1 Nov 2026): one parent enquiring for two different children counts as two new acquisition opportunities; repeat enquiries for the same child count only once.** Production operational website deduplication already uses parent phone **plus child name** and must remain unchanged.
+The primary acquisition KPI is **new parent–child enquiry opportunities**.
 
-This PR adds an **offline JavaScript reference calculation and synthetic tests only** in `scripts/lib` and `scripts/test`. It is not imported by the React application, Firebase Functions or the admin dashboard. There are **no Firestore reads, writes, migrations, phone exports, deployments or live URL changes** in this work.
+- Parent phone + Child A enquiring for the first time → **1 new opportunity**.
+- Same parent phone + Child B enquiring for the first time → **1 additional new opportunity**.
+- Same parent phone + Child A enquiring again → **repeat enquiry**, **0 additional new opportunities**.
+- Parent and child already known before 1 November, then returning after cutover → **repeat**, not a new acquisition.
 
-The reference accepts complete authorized historical records supplied *only by its caller* and reduces them to **aggregate counters**. In its current form it is **not** an authorized live reporting engine and always returns `historyIsComplete: false` plus a not-live-approved status.
+Count distinct normalized **parent-phone + child-name** combinations, preserving the existing operational Firebase deduplication algorithm. Distinct phone contacts and total enquiry submissions can be shown as **separate** metrics.
 
-## Input assumptions requiring production verification
+## Simplified forward-looking evidence rule
 
-- One `id` per recoverable historical lead row, with child name in `childName` and phone candidate values in `phoneNormalized`, `primaryPhone`, `whatsappNumber`.
-- A valid `firstInquiryAt` timestamp takes precedence over `receivedAtOriginal`, `receivedAt`, `requestedAt`, `createdAt`. This precedence is provisional until checked against actual merge and receipt timeline.
-- Indian 10-digit mobile numbers starting 6–9, +91, 91 and 0091 variants normalize together. An explicit international `+` or `00` form is preserved without India-only suffix stripping. This is **not full international phone validation**; suspicious or conflicting formats must stay unresolved and need phone validity work under ARG-3.
-- The business identity for the primary KPI is **normalized parent phone + normalized child name**. Two siblings on the same phone are separate opportunities; re-enquiries about the same child are repeats. Child-name matching normalizes case, diacritics and punctuation, but cannot safely resolve nicknames, misspellings, child-name changes, shared phone numbers or unresolved numbers without further evidence.
-- All recoverable historical leads, including archived rows, must be available before filtering selected dates; otherwise an October returner for the **same child** can be incorrectly counted as a new acquisition. Preserve original concern and channel per **child**; a new sibling can have a different first-touch source. Canonical merge/inquiry history and deleted-record coverage still require inspection.
-- Only allowlisted channel and selected concern category values are aggregated. `Not sure where to start` is an explicit undecided category, **without changing** the existing operational Reading routing.
-- Neither client-side identity processing nor Firebase access is implemented or authorized by this test utility. In future, aggregate **parent–child identities** only on a restricted, read-only, server-side path reviewed against existing permissions.
+Start date: **2026-11-01 00:00 Asia/Kolkata** (calendar cutover, not the PR deployment date). A reliable earliest inquiry timestamp anchored on the **existing canonical parent–child lead** determines whether an opportunity is new from this date. Older canonical records are used only as a *previously known* indicator when a returning child makes another enquiry. We do **not** need to reconstruct all July–October enquiries or reconcile former monthly conversion totals.
 
-## What the fixture proves
+The existing backend already uses parent phone + child identity and preserves `firstInquiryAt`, `lastInquiryAt`, `inquiryCount`, and an `inquiries` subcollection. The production reporting implementation must validate these fields in the *current* schema and choose a safe, efficient way to read new vs repeat events. A canonical lead's historic `firstInquiryAt` alone does **not** establish how many repeat enquiries occurred **after** 1 November: repeat counts require dated inquiry events or reliable post-cutover event snapshots. Do not invent repeat volume from a lifetime `inquiryCount`.
 
-It covers chronological first observation **per parent–child pair**, distinct siblings, repeated same-child enquiries, phone variants, international separation, unresolved phone/child identities, unverified source preservation, undecided parent intent, IST midnight, archive history, duplicates and no PII in returned aggregate objects.
+## Privacy and deployment boundary
 
-It does **not** prove real production parent–child cohort counts, completeness of deleted/historical inquiries, number of distinct children or parents in reality, actual campaign attribution or measured conversions. The previously reported **507 distinct parent phone proxies is a separate secondary metric**, not the primary new-enquiry KPI.
+- Current PR is a **pure offline synthetic fixture**, no Firestore read/write, migrations, backfills, test leads, Functions, rules, dashboard or deployable changes.
+- Keep the existing LeadSourceAnalysis dashboard and operational lead management intact.
+- For future live integration, use authorized **server-side, aggregate-only** reporting with existing admin/founder role protections. Never return parent/child names, phone numbers, normalized identity keys or unsalted hashes to public pages or GitHub artifacts.
+- Keep unresolvable or conflicting phone/child identity explicitly **unresolved**, not silently counted new. Validate international phones conservatively.
+- Preserve earliest attributable source for each first-observed child-specific opportunity; treat “Not sure where to start” as **undecided** in marketing analytics without changing operational routing.
+- `generate_lead` means persisted lead; WhatsApp opening and pending demo requests are not received WhatsApp messages or confirmed bookings.
 
-## Next, before connecting a live dashboard
+## Future integration gate (small, not a historical reconciliation)
 
-1. Read-only production aggregate review: exact `childName` and phone field prevalence, earliest historical timestamp per **parent–child pair**, sibling and same-child repeat shapes, archived/merged/deleted history, child-name alias risk and country/phone validity. Reconcile Codex ARG-1 reported 520 canonical website leads / 507 normalized phone proxies / 600 inquiries / 80 redirects, without exporting PII. Do not infer that the 520 minus 507 difference proves exactly 13 additional sibling opportunities.
-2. Review current Admin Analytics V3 access restrictions and Firestore authorization for any server-side read-only cohort aggregation. No public caller or raw identity return.
-3. Fix and approve any discrepancies found in the synthetic reference. Execute authenticated emulator/API tests for role enforcement and zero customer-detail responses.
-4. Add the aggregate-only result to existing Acquisition tab, label **new parent–child enquiry opportunities (first observed in available history)**. Keep distinct parent phones as a **secondary** metric if useful; keep operational lead rows, total inquiries and demo progression separate, and release with historical coverage caveat.
-5. Do not compare site sessions, GSC impressions, GA4 events or staff-maintained admission statuses to this metric without independently verifying compatible definitions.
+1. Confirm in read-only production source/schema that canonical lead `firstInquiryAt` and retained inquiry events can identify pre-existing and first-time parent–child opportunities around the November cutover. Check the exact **IST midnight** boundary and merge/redirect behaviour.
+2. Add a restricted aggregate query/report to existing Admin Analytics V3 **Acquisition** tab, displaying new parent–child opportunities **from 1 November onward**. Keep operational lead rows separate.
+3. If inquiry events are available, also display dated repeat enquiry counts, otherwise mark repeat volume as unavailable rather than claiming accuracy.
+4. Verify identical-parent/different-child vs same-child-repeat, archived lead, misspelled child, phone country, missing metadata and security tests.
+5. Verify real post-deployment counts against live production aggregates without importing/reconciling old monthly totals.
 
-## Test
+No promise that every event on 1 November has been already measured by this draft. Existing canonical receipt timestamps should support the cutover if schema checks pass; **the live dashboard has not been wired yet**.
+
+## Fixture acceptance
 
 ```bash
 node --test scripts/test/arg2-parent-cohort-fixture.node-test.mjs
 ```
 
-The workflow `ARG-2 Offline Parent Cohort Fixture Gate` runs these tests on the PR.
-
-**No production roll-out is authorized by this draft.**
+The offline fixture enforces the forward-only date window, counts siblings separately, counts same-child re-entries only once for acquisition, preserves international separation, undecided concerns and IST boundaries, and emits only safe aggregate output. This tests the metric contract, **not** production completeness.
