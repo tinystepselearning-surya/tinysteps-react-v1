@@ -4,6 +4,26 @@ on:
   pull_request:
     paths:
       - 'scripts/test/india-acquisition-brick10-release.node-test.mjs'
+      # Recheck commercial intent and pricing when actual owner pages or feeders change.
+      - 'src/pages/phonics.tsx'
+      - 'src/pages/grammar.tsx'
+      - 'src/pages/speaking.tsx'
+      - 'src/pages/HomePage.tsx'
+      - 'src/pages/public/ReadingClassesForKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx'
+      - 'src/pages/public/GroupClassPage.tsx'
+      - 'src/pages/parents/ParentsHubPage.tsx'
+      - 'src/pages/parents/reading-at-home.tsx'
+      # Shared routes, intent ownership, schema and canonical business-offer facts.
+      - 'src/lib/publicRouteManifest.js'
+      - 'src/lib/commercialC2KeywordOwnership.ts'
+      - 'src/lib/routeSeoRegistry.js'
+      - 'src/lib/schemas.ts'
+      - 'src/config/semanticFacts.ts'
+      - 'src/config/publicFacts.ts'
+      - 'src/config/pricing.ts'
+      - 'scripts/test/india-acquisition-brick*.node-test.mjs'
       - 'docs/seo/india-acquisition/BRICK_10_*'
       - '.github/workflows/india-acquisition-brick10.yml'
   workflow_dispatch:
