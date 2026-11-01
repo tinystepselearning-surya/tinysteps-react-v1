@@ -106,16 +106,16 @@ export function TeamHero() {
         <div className="absolute -right-32 top-12 h-80 w-80 rounded-full bg-blue-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-4 h-72 w-72 rounded-full bg-orange-200/50 blur-3xl" />
       </div>
-      <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:gap-16">
+      <div className="mx-auto max-w-5xl text-center">
         <div>
           <Eyebrow>Founder-led • Child-centred • Progress-focused</Eyebrow>
-          <h1 className="mt-5 max-w-4xl font-heading text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-[#10243e] min-[430px]:text-[2.45rem] sm:text-5xl lg:text-[3.65rem]">
+          <h1 className="mx-auto mt-5 max-w-5xl font-heading text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-[#10243e] min-[430px]:text-[2.45rem] sm:text-5xl lg:text-[3.65rem]">
             The academic team behind confident young readers, writers and speakers
           </h1>
-          <p className="mt-6 max-w-2xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-8">
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-8">
             Tiny Steps Learning brings together structured curriculum, trained online teachers, guided live practice and clear parent communication to help children use English with greater confidence and independence.
           </p>
-          <div className="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row sm:flex-wrap">
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row sm:flex-wrap">
             <TrackedLink to="/book-demo" eventName="team_hero_book_assessment" className={primaryButtonClass}>
               Book a Free 35-Minute Assessment
               <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -124,64 +124,17 @@ export function TeamHero() {
               Explore Our Curriculum
             </TrackedLink>
           </div>
-          <nav aria-label="Team sections" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-blue-800">
+          <nav aria-label="Team sections" className="mt-7 flex flex-wrap justify-center gap-x-5 gap-y-3 text-sm font-semibold text-blue-800">
             <a href="#founder" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
             <a href="#teachers" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
             <a href="#teaching-quality" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Teacher training &amp; quality</a>
           </nav>
-          <p className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-600">
+          <p className="mt-6 flex items-center justify-center gap-2 text-sm font-medium text-slate-600">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
             Structured English programmes for children ages 3–12
           </p>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[590px]">
-          <div className="absolute -inset-4 -z-10 rotate-2 rounded-[36px] bg-[#dbeafe]" aria-hidden="true" />
-          <div className="overflow-hidden rounded-[30px] border border-white/80 bg-[#10243e] p-3 shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:p-5">
-            <div className="grid gap-3 sm:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative flex min-h-[330px] items-center justify-center rounded-[22px] bg-[#e6edf6] px-4 pb-16 pt-5 sm:min-h-[430px]">
-                <div className="aspect-[4/5] w-full max-w-[285px] overflow-hidden rounded-[50%] border-[6px] border-white bg-[#f7ead8] shadow-lg">
-                  <img
-                    src={founderPhotoSrc}
-                    alt="Priya, Founder of Tiny Steps Learning"
-                    width={1200}
-                    height={1500}
-                    fetchPriority="high"
-                    className="h-full w-full object-cover object-top"
-                  />
-                </div>
-                <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/95 p-3 shadow-lg">
-                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C2410C]">Founder-led</p>
-                  <p className="mt-1 font-heading text-lg font-bold text-slate-950">Priya</p>
-                  <p className="text-sm text-slate-600">Founder, Tiny Steps Learning</p>
-                </div>
-              </div>
-              <div className="flex flex-col justify-between rounded-[22px] bg-white p-5 sm:p-6">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500">One connected system</p>
-                  <h2 className="mt-3 font-heading text-2xl font-bold leading-tight text-slate-950">More than the teacher on screen</h2>
-                </div>
-                <div className="mt-8 space-y-3">
-                  {[
-                    ['01', 'Structured curriculum'],
-                    ['02', 'Prepared teachers'],
-                    ['03', 'Guided live practice'],
-                    ['04', 'Parent visibility'],
-                  ].map(([number, label]) => (
-                    <div key={label} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#FFF5DF] text-xs font-black text-[#C2410C]">{number}</span>
-                      <span className="text-sm font-semibold text-slate-800">{label}</span>
-                    </div>
-                  ))}
-                </div>
-                <div className="mt-6 flex items-center gap-2 border-t border-slate-200 pt-4 text-xs font-semibold text-slate-500">
-                  <Sparkles className="h-4 w-4 text-[#C2410C]" aria-hidden="true" />
-                  Progress-focused by design
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </section>
   );
