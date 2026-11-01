@@ -115,6 +115,6 @@ test('Team hero uses substantive teaching evidence rather than unverified senior
   assert.ok(sections.includes('Thoughtful teaching. More confident learning.'));
   assert.ok(sections.includes('How we guide learning'));
   assert.ok(sections.includes('to="/class-samples"'));
-  assert.ok(content.includes('graduate-qualified educators with school-classroom teaching experience'));
+  assert.ok(content.includes('All Tiny Steps teachers are graduates with professional school-classroom teaching experience'));
   assert.doesNotMatch(sections + content, /senior[- ]most|international[- ]school teachers|IB certified|exclusive faculty|100% audited/i);
 });
