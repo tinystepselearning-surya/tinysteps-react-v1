@@ -9,6 +9,7 @@ on:
       - 'src/lib/attendanceValidationMonthlyParentProgress.ts'
       - 'src/lib/parentMonthClose.ts'
       - 'src/tests/lib/attendanceValidationTeacherMonthScope.spec.ts'
+      - 'src/tests/lib/attendanceValidationUnknownTeacherScope.spec.ts'
       - 'src/tests/admin/attendanceValidationDashboard.spec.ts'
       - 'src/tests/admin/parentMonthClose.spec.ts'
       - 'src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts'
@@ -46,6 +47,7 @@ jobs:
         run: >-
           npx vitest run
           src/tests/lib/attendanceValidationTeacherMonthScope.spec.ts
+          src/tests/lib/attendanceValidationUnknownTeacherScope.spec.ts
           src/tests/admin/attendanceValidationDashboard.spec.ts
           src/tests/admin/parentMonthClose.spec.ts
           src/tests/functions/attendanceValidationMonthlyParentProgressRouting.spec.ts
