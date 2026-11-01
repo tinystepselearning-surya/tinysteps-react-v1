@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 14 — 1 November 2026, approximately 13:14 IST (origin probes 2026-11-01T07:44:26.481546Z–07:44:35.529690Z UTC)
+
+**Preflight and coverage:** Re-fetched the current tracker and verified 202 sequential unique URLs, 22 CSV columns, Slots 1–19 at 10 URLs each and Slot 20 at 12. Before this run, 130 distinct URLs had valid current-day UTC attempt timestamps (IST day 1 November). Audited only the ten eligible previously unchecked Slot 14 URLs (rows 131–140), retaining all historical verified-state fields and previous observations. Ten distinct actual UTC origin-probe start times recorded. **Today's attempted coverage: 140/202 (69.31%); 62 awaiting scheduled checks; zero fully origin-verified; all 140 current-day readiness statuses UNVERIFIED.** Yesterday's timestamps were excluded and no future-slot URLs scanned.
+
+**Provider text retrieval:** All ten exact public URLs returned substantive page-specific provider-extracted text, with visible H1s and useful article content: 131 cross-skill phonics/grammar/communication (turn326896view0); 132 phonics and spelling (turn326896view1); 133 school decoding assessment (turn326896view2); 134 home English engagement (turn326896view3); 135 reading fluency (turn326896view4); 136 sentence formation (turn326896view5); 137 paragraph writing (turn326896view6); 138 storytelling (turn326896view7); 139 vocabulary and comprehension (turn326896view8); 140 international phonics benchmarks (turn326896view9). All snapshots labelled **Crawled yesterday**; exact provider crawl times unknown. Provider-extracted text is partial evidence only, not proof of current origin HTTP/headers/initial HTML or deployed structured data.
+
+**Independent HTTPS origin probes:** Ten distinct read-only `curl --noproxy '*' -L` GETs executed at the recorded UTC times. Six (rows 132–134 and 138–140) failed with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; four (rows 131, 135–137) failed with exit **28**, exact stderr `curl: (28) Resolving timed out after 9000 milliseconds`. No origin HTTP responses, headers or raw HTML obtained. `HTTP_CODE:000` is a curl placeholder, not a server status; echoed effective URL and `REDIRECTS:0` do not verify final destinations or redirects. Origin HTTP status, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. DNS errors in this audit environment do **not** establish a production outage. Direct robots.txt retrieval inaccessible (turn326896view10). No verified Google/Bing indexing, ranking or AI citations.
+
+**Workflow safety:** GitHub Actions API returned zero in-progress and zero queued repository runs; none of the latest 100 runs matched the former rolling public SEO health workflow. Workflow administrative-state endpoint inaccessible through the connected GitHub interface; rely on the user's confirmed 25 October GitHub UI disablement, not cron YAML presence. No GitHub workflow run, enabled or modified.
+
+**Change control:** No verified dated before/after production regression or improvement; `CHANGES.md` unchanged. Updated `MASTER_URL_TRACKER.csv` and this summary only on `seo-url-health-tracker`. No source, workflows, Firebase, Hosting or production settings modified. **Next: Slot 15, rows 141–150.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 13 — 1 November 2026, approximately 12:14 IST (origin probes 2026-11-01T06:44:28.251990Z–06:44:43.332455Z UTC)
 
 **Preflight and coverage:** Re-fetched and validated exactly 202 sequential unique URLs, 22 CSV columns, Slots 1–19 with ten URLs each and Slot 20 with twelve. Before Slot 13, 120 distinct 1 November IST check timestamps existed. Audited only ten previously unchecked Slot 13 URLs (rows 121–130), preserving historical verified fields and earlier records. Ten distinct actual UTC origin-probe start times recorded. **Today's attempted coverage: 130/202 (64.36%); 72 awaiting scheduled checks; zero fully origin-verified; all 130 current-day technical-readiness statuses UNVERIFIED.** Previous-day timestamps excluded; historical PASS fields do not certify current production health.
