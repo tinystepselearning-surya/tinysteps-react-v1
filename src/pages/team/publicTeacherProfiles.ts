@@ -78,6 +78,16 @@ export const APPROVED_PUBLIC_TRAINER_PROFILES: readonly PublicTrainerProfile[] =
 /** Add each teacher once; specialisms determine which public category links find them. */
 export const APPROVED_PUBLIC_TEACHER_PROFILES: readonly PublicTeacherProfile[] = [];
 
+
+/** Optional approved photo documenting quality-review work; no child details. */
+export type PublicAcademicQualityPhoto = {
+  photoPath: string;
+  alt: string;
+  caption: string;
+  publicationApproved: true;
+};
+export const APPROVED_ACADEMIC_QUALITY_PHOTOS: readonly PublicAcademicQualityPhoto[] = [];
+
 /** The publishability check is intentionally redundant with the TypeScript consent type. */
 export function isApprovedPublicProfile<T extends PublicAcademicProfile>(profile: T): boolean {
   return profile.publicationApproved === true
