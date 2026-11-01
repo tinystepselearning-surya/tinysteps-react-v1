@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 19 — 1 November 2026, approximately 18:10 IST (origin probes 2026-11-01T12:40:14.229207Z–12:40:23.347500Z UTC)
+
+**Preflight and coverage:** Re-fetched current tracker, verified 202 sequential unique URLs, 22 columns, slots 1–19 containing 10 URLs each and slot 20 containing 12. Before the batch, 180 distinct URLs had valid 1 November IST UTC observation timestamps. Inspected only ten eligible, previously unchecked Slot 19 URLs (rows 181–190); each has its own actual UTC probe start timestamp. **Today's attempted coverage: 190/202 (94.06%); 12 awaiting scheduled Slot 20; zero fully origin-verified URLs.** All 190 current-day technical readiness statuses remain **UNVERIFIED**. Prior-day observations excluded and historical last-verified fields preserved.
+
+**Provider-extracted content (partial evidence):** All ten exact URL web.open calls returned substantive page-specific text with distinct H1s; provider snapshots labelled **Crawled today** but precise crawl times unknown. Rows 181–186 cover phonics, reading comprehension, and public speaking articles; rows 187–190 cover Foundation, Early and Advanced Phonics and Beginner Grammar course pages. Example H1s: row 181 **"What Is Phonics for Kids? A Parent Start-Here Guide"** (turn542165view0); row 187 **"Phonics Foundation Course for Kids | Beginner Phonics Classes"** (turn542165view6); row 190 **"Beginner Grammar Foundations: Sentence Building & Punctuation"** (turn542165view9). Provider-extracted text is not independent confirmation of origin HTTP status, initial HTML, headers, or JSON-LD.
+
+**Independent HTTPS origin probes:** Ten distinct read-only `curl --noproxy '*' -L` GETs started 12:40:14.229207–12:40:14.245594 UTC and ended 12:40:14.284089–12:40:23.347500 UTC. Five rows (181–184, 188) failed with exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; five (185–187, 189–190) failed with exit **28**, exact stderr `curl: (28) Resolving timed out after 9000/9001/9002 milliseconds` (precise row-specific values in tracker). No origin HTTP response, headers or raw initial HTML obtained. `CURL_HTTP:000` is a curl placeholder, not an HTTP status; echoed effective URL and zero redirects do not establish redirect behaviour. HTTP status, final destination, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain **UNVERIFIED**. Direct robots.txt web.open inaccessible (turn542165view10). DNS errors in this audit environment do **not** establish a production outage. No first-party indexing, ranking or AI citation evidence.
+
+**Workflow safety:** GitHub Actions API reported **zero in-progress and zero queued repository runs** at preflight. No concurrent rolling public SEO audit observed. Administrative workflow-state endpoint was rejected by the connected GitHub fetch interface; user's 25 October UI disable confirmation remains the operating assumption, irrespective of cron YAML. No workflow run, enabled or modified.
+
+**Change control:** No verified dated before/after production regression or improvement; `CHANGES.md` unchanged (SHA `e9ed4354d5c0c1ac73a0c3115ce786d207edab34`). Only tracker and summary are to be updated on `seo-url-health-tracker`. No application source, workflows, Firebase, Hosting or production settings modified. **Next: Slot 20, rows 191–202.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 18 — 1 November 2026, approximately 17:18 IST (origin probes 2026-11-01T11:47:42.181402Z–11:47:51.215586Z UTC)
 
 **Preflight and coverage:** Re-fetched tracker and verified exactly 202 sequential unique selected URLs, 22 CSV columns, Slots 1–19 at 10 each and Slot 20 at 12. Before this run, 170 distinct URLs had valid 1 November IST attempt timestamps. Inspected only ten eligible, previously unchecked Slot 18 URLs (rows 171–180); each received its own real UTC curl start timestamp. **Today's attempted coverage: 180/202 (89.11%); 22 awaiting scheduled checks; zero fully origin-verified URLs.** All 180 current-day technical statuses remain **UNVERIFIED**; previous-day timestamps excluded. Historical last-verified fields preserved.
