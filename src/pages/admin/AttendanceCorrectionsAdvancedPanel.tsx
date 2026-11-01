@@ -259,6 +259,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
   const [reason, setReason] = useState('');
   const [loadingTeachers, setLoadingTeachers] = useState(true);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [sessionLookupError, setSessionLookupError] = useState('');
   const [loadingEnrollments, setLoadingEnrollments] = useState(false);
   const [saving, setSaving] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -514,6 +515,7 @@ export default function AttendanceCorrectionsAdvancedPanel() {
       }
 
       setLoadingSessions(true);
+      setSessionLookupError('');
       try {
         const sessionMap = new Map<string, Record<string, unknown>>();
         let successfulQueries = 0;
@@ -533,7 +535,8 @@ export default function AttendanceCorrectionsAdvancedPanel() {
 
         for (const plannedQuery of primaryQueries) {
           try {
-            const snap = await getDocs(plannedQuery);            successfulQueries += 1;
+            const snap = await getDocs(plannedQuery);
+            successfulQueries += 1;
             mergeDocs(snap.docs);
           } catch (queryErr) {
             console.warn('Attendance correction canonical date query failed, continuing bounded fallback', queryErr);
@@ -553,7 +556,8 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           );
           for (const plannedQuery of boundedQueries) {
             try {
-              const snap = await getDocs(plannedQuery);              successfulQueries += 1;
+              const snap = await getDocs(plannedQuery);
+              successfulQueries += 1;
               mergeDocs(snap.docs);
             } catch (queryErr) {
               console.warn('Attendance correction canonical bounded query failed, continuing fallback', queryErr);
@@ -568,7 +572,8 @@ export default function AttendanceCorrectionsAdvancedPanel() {
           );
           for (const plannedQuery of fallbackQueries) {
             try {
-              const snap = await getDocs(plannedQuery);              successfulQueries += 1;
+              const snap = await getDocs(plannedQuery);
+              successfulQueries += 1;
               mergeDocs(snap.docs);
             } catch (queryErr) {
               console.warn('Attendance correction canonical teacher fallback query failed', queryErr);
@@ -610,12 +615,14 @@ export default function AttendanceCorrectionsAdvancedPanel() {
         if (!cancelled) {
           setSessionRows(rows);
           setExistingKidNameById(kidMap);
+          setSessionLookupError('');
         }
       } catch (err) {
         console.error('Failed to load attendance correction sessions', err);
         if (!cancelled) {
           setSessionRows([]);
           setExistingKidNameById({});
+          setSessionLookupError(err instanceof Error ? err.message : 'Please try again.');
           toast({
             title: 'Unable to load sessions',
             description: err instanceof Error ? err.message : 'Please try again.',
@@ -1193,7 +1200,13 @@ export default function AttendanceCorrectionsAdvancedPanel() {
 
       {mode === 'existing' ? (
         <>
-          {!hasLockedPrefill && isAdmin && selectedTeacherId && selectedDate && !loadingSessions && sessionRows.length === 0 && (
+          {!hasLockedPrefill && isAdmin && Boolean(sessionLookupError) && (
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+              {sessionLookupError}
+              <Button type="button" size="sm" variant="outline" className="ml-2" onClick={() => setReloadKey((value) => value + 1)}>Retry</Button>
+            </div>
+          )}
+          {!hasLockedPrefill && isAdmin && selectedTeacherId && selectedDate && !loadingSessions && !sessionLookupError && sessionRows.length === 0 && (
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm">
               <p className="text-slate-700">
                 No saved sessions found for this teacher and date.
