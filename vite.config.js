@@ -4,6 +4,7 @@ import path from 'path';
 import tailwindcss from 'tailwindcss';
 import autoprefixer from 'autoprefixer';
 import { RETIRED_BLOG_PATH_REDIRECTS } from './scripts/blog-consolidation-map.mjs';
+import { teamPhotoManifestPlugin } from './scripts/teamPhotoManifest.mjs';
 
 const LEGACY_PHONICS_PROGRESS_COPY =
   'Progress is child-specific. Look for stronger accuracy, less prompting, better retry behaviour, retention of earlier patterns, and independent transfer to fresh words or text rather than expecting the same week-by-week timeline for every learner.';
@@ -95,7 +96,7 @@ const buildTime = new Date().toISOString();
 
 export default defineConfig({
   define: { 'import.meta.env.VITE_BUILD_TIME': JSON.stringify(buildTime) },
-  plugins: [canonicalInternalBlogLinks(), react()],
+  plugins: [canonicalInternalBlogLinks(), teamPhotoManifestPlugin(), react()],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),

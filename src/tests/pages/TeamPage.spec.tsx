@@ -3,6 +3,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import TeamPage from '../../pages/TeamPage';
 import { teamFaqItems } from '../../pages/team/teamPageContent';
+import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
 
 const { trackEvent } = vi.hoisted(() => ({ trackEvent: vi.fn() }));
 
@@ -32,16 +33,19 @@ describe('TeamPage', () => {
     expect(screen.getByText(/Structured English programmes for children ages 3–12/)).toBeInTheDocument();
     expect(screen.getAllByText(/Founder, Tiny Steps Learning/, { selector: 'p' })).toHaveLength(2);
     expect(screen.getByRole('heading', { name: 'Built around how children actually learn' })).toBeInTheDocument();
-    expect(screen.getByAltText('Priya, Founder of Tiny Steps Learning')).toHaveAttribute(
-      'src',
-      '/priya-founder-tiny-steps-learning.webp',
-    );
-    expect(
-      screen.getByRole('heading', { name: 'The teaching community behind every programme' }),
-    ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /Read approved parent reviews/ })).toHaveAttribute(
+    const founderPortraits = screen.getAllByAltText('Priya, Founder of Tiny Steps Learning');
+    expect(founderPortraits).toHaveLength(2);
+    founderPortraits.forEach((portrait) => expect(portrait).toHaveAttribute('src', founderPhotoSrc));
+    const teamNavigation = screen.getByRole('navigation', { name: 'Team sections' });
+    expect(teamNavigation.querySelector('a[href="#founder"]')).toBeInTheDocument();
+    expect(teamNavigation.querySelector('a[href="#teachers"]')).toBeInTheDocument();
+    expect(teamNavigation.querySelector('a[href="#teaching-quality"]')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Meet the educators behind every live lesson' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /Teacher training is only the beginning/ })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ongoing lesson and conduct reviews' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View real class samples' })).toHaveAttribute(
       'href',
-      '/testimonials',
+      '/class-samples',
     );
     expect(document.body).not.toHaveTextContent('What Parents Say');
     expect(document.body).not.toHaveTextContent('Within 8 lessons');
@@ -92,7 +96,7 @@ describe('TeamPage', () => {
       expect(document.querySelector('meta[name="robots"]')?.getAttribute('content')).toContain('index');
       expect(document.querySelector('meta[property="og:image"]')).toHaveAttribute(
         'content',
-        'https://tinystepslearning.com/priya-founder-tiny-steps-learning.webp',
+        `https://tinystepslearning.com${founderPhotoSrc}`,
       );
       expect(document.querySelector('meta[name="twitter:card"]')).toHaveAttribute(
         'content',

@@ -1,6 +1,9 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
 import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';
+import { TeacherPortraitsSection } from './team/TeacherPortraitsSection';
+import { TeachingAssuranceSection } from './team/TeachingAssuranceSection';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
@@ -20,7 +23,6 @@ import {
   ResearchToClassroomSection,
   SchoolPartnershipSection,
   TeacherDevelopmentSection,
-  TeachingCommunitySection,
   TeamFaqSection,
   TeamHero,
   TrustMetrics,
@@ -41,7 +43,7 @@ export default function TeamPage() {
       description: teamSeoDescription,
       canonicalPath: teamCanonicalPath,
       ogType: 'website',
-      ogImage: '/priya-founder-tiny-steps-learning.webp',
+      ogImage: founderPhotoSrc,
       jsonLd: [
         organizationSchema,
         {
@@ -66,7 +68,7 @@ export default function TeamPage() {
           jobTitle: 'Founder',
           url: FOUNDER_PROFILE_URL,
           mainEntityOfPage: { '@id': `${FOUNDER_PROFILE_URL}#webpage` },
-          image: `${SITE_ORIGIN}/priya-founder-tiny-steps-learning.webp`,
+          image: `${SITE_ORIGIN}${founderPhotoSrc}`,
           worksFor: { '@id': ORGANIZATION_ID, name: PUBLIC_FACTS.organizationName },
           description:
             'Founder of Tiny Steps Learning, leading academic direction across curriculum, lesson design, teacher guidance, teaching quality and parent communication.',
@@ -109,13 +111,14 @@ export default function TeamPage() {
           </Link>
         </div>
       </section>
-      <OfficialProfilesSection />
+      <TeacherPortraitsSection />
+      <TeacherDevelopmentSection />
+      <TeachingAssuranceSection />
       <AcademicSystemSection />
       <ResearchToClassroomSection />
-      <TeacherDevelopmentSection />
       <QualitySystemSection />
-      <TeachingCommunitySection />
       <SchoolPartnershipSection />
+      <OfficialProfilesSection />
       <FinalAssessmentSection />
       <TeamFaqSection />
     </div>

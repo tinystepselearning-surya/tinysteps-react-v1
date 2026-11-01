@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
 import { PUBLIC_FACTS } from '../../lib/schemas';
+import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
 import {
   academicSystemCards,
   founderResponsibilities,
@@ -123,6 +124,11 @@ export function TeamHero() {
               Explore Our Curriculum
             </TrackedLink>
           </div>
+          <nav aria-label="Team sections" className="mt-6 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-blue-800">
+            <a href="#founder" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our founder</a>
+            <a href="#teachers" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Our teachers</a>
+            <a href="#teaching-quality" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Teacher training &amp; quality</a>
+          </nav>
           <p className="mt-5 flex items-center gap-2 text-sm font-medium text-slate-600">
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden="true" />
             Structured English programmes for children ages 3–12
@@ -133,15 +139,18 @@ export function TeamHero() {
           <div className="absolute -inset-4 -z-10 rotate-2 rounded-[36px] bg-[#dbeafe]" aria-hidden="true" />
           <div className="overflow-hidden rounded-[30px] border border-white/80 bg-[#10243e] p-3 shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:p-5">
             <div className="grid gap-3 sm:grid-cols-[0.88fr_1.12fr]">
-              <div className="relative min-h-[330px] overflow-hidden rounded-[22px] bg-slate-200 sm:min-h-[430px]">
-                <img
-                  src="/priya-founder-tiny-steps-learning.webp"
-                  alt="Priya, Founder of Tiny Steps Learning"
-                  width={1024}
-                  height={1024}
-                  className="absolute inset-0 h-full w-full object-cover object-center"
-                />
-                <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/40 bg-white/90 p-3 shadow-lg backdrop-blur">
+              <div className="relative flex min-h-[330px] items-center justify-center rounded-[22px] bg-[#e6edf6] px-4 pb-16 pt-5 sm:min-h-[430px]">
+                <div className="aspect-[4/5] w-full max-w-[285px] overflow-hidden rounded-[50%] border-[6px] border-white bg-[#f7ead8] shadow-lg">
+                  <img
+                    src={founderPhotoSrc}
+                    alt="Priya, Founder of Tiny Steps Learning"
+                    width={1200}
+                    height={1500}
+                    fetchPriority="high"
+                    className="h-full w-full object-cover object-top"
+                  />
+                </div>
+                <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/50 bg-white/95 p-3 shadow-lg">
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#C2410C]">Founder-led</p>
                   <p className="mt-1 font-heading text-lg font-bold text-slate-950">Priya</p>
                   <p className="text-sm text-slate-600">Founder, Tiny Steps Learning</p>
@@ -202,15 +211,16 @@ export function FounderSection() {
     <section id="founder" className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
         <div className="relative mx-auto w-full max-w-[520px]">
-          <div className="absolute -bottom-5 -left-5 h-full w-full rounded-[30px] bg-[#FFF5DF]" aria-hidden="true" />
-          <figure className="relative overflow-hidden rounded-[30px] border-8 border-white bg-slate-100 shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
+          <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF5DF]" aria-hidden="true" />
+          <figure className="relative mx-auto aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[50%] border-[8px] border-white bg-[#f7ead8] shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
             <img
-              src="/priya-founder-tiny-steps-learning.webp"
-              alt="Priya, Founder of Tiny Steps Learning, reviewing academic materials"
-              width={1024}
-              height={1024}
+              src={founderPhotoSrc}
+              alt="Priya, Founder of Tiny Steps Learning"
+              width={1200}
+              height={1500}
               loading="lazy"
-              className="aspect-square h-auto w-full object-cover"
+              decoding="async"
+              className="h-full w-full object-cover object-top"
             />
           </figure>
         </div>
