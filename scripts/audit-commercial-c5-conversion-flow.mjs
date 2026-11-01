@@ -76,7 +76,7 @@ requireTokens('src/components/forms/PublicAssessmentForm.tsx', [
   'trackLeadFormStart',
   'trackLeadFormSubmit',
   'trackGenerateLead',
-  'trackDemoBookingComplete',
+  'trackDemoRequestReceived',
 ]);
 
 requireTokens('src/lib/commercialC0Foundation.ts', ["COMMERCIAL_C0_STATUS = 'frozen'"]);
