@@ -19,6 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
 import { PUBLIC_FACTS } from '../../lib/schemas';
+import { APPROVED_ACADEMIC_QUALITY_PHOTOS } from './publicTeacherProfiles';
 import {
   academicSystemCards,
   founderResponsibilities,
@@ -450,6 +451,12 @@ export function QualitySystemSection() {
           Academic support includes classroom observations, teacher coaching, lesson review,
           parent feedback and checks on each child's developing skills.
         </p>
+        {APPROVED_ACADEMIC_QUALITY_PHOTOS.filter((photo) => photo.publicationApproved).map((photo) => (
+          <figure key={photo.photoPath} className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-3xl border border-orange-100 bg-white">
+            <img src={photo.photoPath} alt={photo.alt} loading="lazy" width={1200} height={800} className="aspect-[3/2] w-full object-cover" />
+            <figcaption className="px-5 py-3 text-sm text-slate-700">{photo.caption}</figcaption>
+          </figure>
+        ))}
         <ol className="relative mt-14 grid gap-4 md:grid-cols-3 xl:grid-cols-6 xl:gap-3">
           <div className="absolute left-[8.5%] right-[8.5%] top-8 hidden h-px bg-orange-300 xl:block" aria-hidden="true" />
           {qualitySteps.map((step) => (
