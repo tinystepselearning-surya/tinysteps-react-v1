@@ -7,6 +7,7 @@ on:
       - 'functions/src/getProspectiveAcquisitionSummary.ts'
       - 'functions/src/index.ts'
       - 'functions/test/prospectiveAcquisitionMetrics.spec.ts'
+      - 'functions/test/getProspectiveAcquisitionSummary.spec.ts'
       - 'src/pages/admin/ProspectiveAcquisitionSummary.tsx'
       - 'src/pages/admin/LeadSourceAnalysis.tsx'
       - 'docs/acquisition/ARG2_LIVE_REPORT_RELEASE_GATES_20261101.md'
@@ -31,8 +32,8 @@ jobs:
         run: npm ci --no-audit --no-fund
       - name: Install functions dependencies
         run: npm ci --prefix functions --no-audit --no-fund
-      - name: Run targeted aggregate tests
-        run: cd functions && ../node_modules/.bin/vitest run --config vitest.config.ts functions/test/prospectiveAcquisitionMetrics.spec.ts
+      - name: Run aggregate and callable authorization/privacy tests
+        run: cd functions && ../node_modules/.bin/vitest run --config vitest.config.ts functions/test/prospectiveAcquisitionMetrics.spec.ts functions/test/getProspectiveAcquisitionSummary.spec.ts
       - name: Build Functions TypeScript
         run: npm --prefix functions run build
       - name: TypeScript check
