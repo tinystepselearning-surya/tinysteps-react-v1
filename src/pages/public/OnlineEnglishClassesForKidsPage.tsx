@@ -423,6 +423,11 @@ export default function OnlineEnglishClassesForKidsPage() {
                 </div>
               ))}
             </div>
+            <div className="mt-5 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold">
+              <Link to="/team" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">Meet the academic team</Link>
+              <Link to="/class-samples" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">See class samples</Link>
+              <Link to="/parents/tracking-progress" className="text-slate-900 underline underline-offset-4 hover:text-blue-800">How parents can track progress</Link>
+            </div>
           </LeadCard>
         </div>
       </LeadSection>
