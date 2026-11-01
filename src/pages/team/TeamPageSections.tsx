@@ -101,7 +101,7 @@ function SectionHeading({
 
 export function TeamHero() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-[#eee6dc] bg-[#fffaf4] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
+    <section className="relative isolate overflow-hidden border-b border-[#D6E6F7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#FFF4DC] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
         <div className="absolute -right-28 top-0 h-64 w-64 rounded-full bg-[#ececfc] blur-3xl" />
         <div className="absolute -left-28 bottom-0 h-56 w-56 rounded-full bg-[#ffeddc] blur-3xl" />
@@ -109,7 +109,7 @@ export function TeamHero() {
       <div className="mx-auto grid max-w-7xl items-center gap-9 lg:grid-cols-[1.05fr_0.95fr] lg:gap-14">
         <div>
           <Eyebrow>Meet our team</Eyebrow>
-          <h1 className="mt-4 max-w-3xl font-heading text-[2.25rem] font-bold leading-[1.1] tracking-[-0.035em] text-[#10243e] sm:text-5xl lg:text-[3.25rem]">
+          <h1 className="mt-4 max-w-3xl font-heading text-[2.25rem] font-bold leading-[1.1] tracking-[-0.035em] text-[#102A43] sm:text-5xl lg:text-[3.25rem]">
             The people behind every Tiny Steps lesson
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
@@ -130,9 +130,9 @@ export function TeamHero() {
             <a href="#teaching-quality" className="underline underline-offset-4 hover:text-[#10243e] focus-visible:outline focus-visible:outline-2 focus-visible:outline-orange-600">Training &amp; quality</a>
           </nav>
         </div>
-        <div className="rounded-[28px] border border-[#e8e1ec] bg-white/90 p-6 shadow-[0_16px_45px_rgba(16,36,62,0.06)] sm:p-8">
+        <div className="rounded-[28px] border border-white/90 bg-white/90 p-6 shadow-[0_16px_45px_rgba(16,36,62,0.06)] sm:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#805274]">One connected academic approach</p>
-          <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-[#10243e] sm:text-3xl">
+          <h2 className="mt-3 font-heading text-2xl font-bold leading-snug text-[#102A43] sm:text-3xl">
             Personal teaching, supported by a shared standard
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600">
@@ -178,10 +178,10 @@ export function TrustMetrics() {
 
 export function FounderSection() {
   return (
-    <section id="founder" className="bg-white px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+    <section id="founder" className="bg-gradient-to-br from-[#FBF8FF] via-white to-[#F3FAFF] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-9 lg:grid-cols-[0.8fr_1.2fr] lg:gap-14">
         <div className="relative mx-auto w-full max-w-[520px]">
-          <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF5DF]" aria-hidden="true" />
+          <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF4DC]" aria-hidden="true" />
           <figure className="relative mx-auto aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[50%] border-[8px] border-white bg-[#f7ead8] shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
             <img
               src={founderPhotoSrc}
@@ -220,7 +220,7 @@ export function FounderSection() {
 
 export function AcademicSystemSection() {
   return (
-    <section className="bg-[#f6f7fc] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+    <section className="bg-gradient-to-br from-[#EAF6FF] via-[#F4FAFF] to-[#F5F0FF] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           centered
@@ -232,7 +232,7 @@ export function AcademicSystemSection() {
           {academicSystemCards.map((card, index) => {
             const Icon = iconMap[card.icon];
             return (
-              <article key={card.title} className="rounded-[22px] border border-[#e7eaf1] bg-white p-5 shadow-[0_8px_28px_rgba(15,23,42,0.035)]">
+              <article key={card.title} className="rounded-[22px] border border-[#D6E6F7] bg-white/95 p-5 shadow-[0_8px_28px_rgba(15,23,42,0.035)]">
                 <div className="flex items-center justify-between">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                     <Icon className="h-6 w-6" aria-hidden="true" />
@@ -470,7 +470,7 @@ export function TeachingCommunitySection() {
 
 export function SchoolPartnershipSection() {
   return (
-    <section className="border-t border-[#eee5df] bg-[#fbf8f5] px-4 py-8 sm:px-6 lg:px-8">
+    <section className="border-t border-[#E4DCF8] bg-[#FFF7EC] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
         <div className="max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#9a3412]">For schools</p>
@@ -489,8 +489,8 @@ export function SchoolPartnershipSection() {
 
 export function FinalAssessmentSection() {
   return (
-    <section className="bg-[#fffdf9] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
-      <div className="mx-auto max-w-6xl rounded-[28px] border border-[#e5e4ef] bg-[#f5f3fa] px-6 py-10 text-center sm:px-10 sm:py-12">
+    <section className="bg-gradient-to-r from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC] px-4 py-14 sm:px-6 sm:py-16 lg:px-8">
+      <div className="mx-auto max-w-6xl rounded-[28px] border border-[#E4DCF8] bg-white/90 px-6 py-10 text-center sm:px-10 sm:py-12">
         <Eyebrow>Start with clarity</Eyebrow>
         <h2 className="mx-auto mt-3 max-w-3xl font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-[#10243e] sm:text-4xl">Find the right learning path for your child</h2>
         <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-700">Begin with a free 35-minute 1:1 assessment class to understand your child’s starting point and recommend an appropriate programme.</p>
@@ -508,7 +508,7 @@ export function FinalAssessmentSection() {
 
 export function TeamFaqSection() {
   return (
-    <section className="bg-white px-4 py-12 sm:px-6 sm:py-14 lg:px-8" id="team-faq">
+    <section className="bg-[#F6FBFF] px-4 py-12 sm:px-6 sm:py-14 lg:px-8" id="team-faq">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
         <SectionHeading eyebrow="Frequently asked questions" title="Direct answers about the people and system behind each class" />
         <div className="divide-y divide-slate-200 border-y border-slate-200">
