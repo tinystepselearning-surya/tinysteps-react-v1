@@ -3,7 +3,8 @@
  * Deliberately NOT imported by the browser, a Firebase Function or an endpoint.
  * Caller must supply complete, authorized historical records; outputs safe aggregates only.
  *
- * Phone identities are reporting proxies, not proof of distinct parents.
+ * Acquisition identity = normalized parent phone + normalized child name.
+ * It measures distinct child-learning opportunities, not distinct parents.
  * International phone formats are accepted conservatively, not formally validated.
  */
 const KNOWN_CHANNELS = new Set([
@@ -39,13 +40,27 @@ function phoneKey(value) {
   return null;
 }
 
+function normalizeChildName(value) {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().slice(0, 160)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+  return normalized.length >= 2 ? normalized : null;
+}
+
 function identityFor(row) {
   const values = [row.phoneNormalized, row.primaryPhone, row.whatsappNumber]
     .filter((v) => typeof v === 'string' && v.trim());
   if (!values.length) return null;
   const keys = values.map(phoneKey);
   if (keys.some((key) => !key) || new Set(keys).size !== 1) return null;
-  return keys[0];
+  const child = normalizeChildName(row.childName);
+  if (!child) return null;
+  // Preserve two children under the same parent as separate acquisition opportunities.
+  // Array encoding avoids delimiter collisions. Never return this key from the report.
+  return JSON.stringify([keys[0], child]);
 }
 
 function millis(value) {
@@ -103,9 +118,9 @@ function assertDateKey(value) {
 /**
  * @param {Array<Record<string, unknown>>} sourceRows recoverable historical leads, never logged
  * @param {Array<{start: string, end: string}>} periods complete Asia/Kolkata ranges
- * @returns {object} safe aggregate-only preview, NOT approved for live dashboard use
+ * @returns {object} parent-child aggregate-only preview, NOT approved for live dashboard use
  */
-export function previewFirstObservedParentCohorts(sourceRows, periods) {
+export function previewFirstObservedParentChildCohorts(sourceRows, periods) {
   if (!Array.isArray(sourceRows) || !Array.isArray(periods)) throw new Error('Expected rows and periods');
   for (const {start, end} of periods) {
     assertDateKey(start); assertDateKey(end);
@@ -134,19 +149,19 @@ export function previewFirstObservedParentCohorts(sourceRows, periods) {
   }));
   historical.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 
-  // Group by parent phone across the COMPLETE supplied lookback before applying date filters.
-  const firstByParent = new Map();
+  // Group by normalized parent phone AND child name across complete supplied history.
+  const firstByParentChild = new Map();
   for (const row of historical) {
-    if (row.identity && row.at && !firstByParent.has(row.identity)) firstByParent.set(row.identity, row);
+    if (row.identity && row.at && !firstByParentChild.has(row.identity)) firstByParentChild.set(row.identity, row);
   }
 
   const result = periods.map(({start, end}) => {
     const aggregate = {
       start, end,
-      firstObservedParentPhones: 0,
-      laterLeadRowsForKnownParents: 0,
+      firstObservedParentChildEnquiries: 0,
+      laterLeadRowsForKnownParentChild: 0,
       datedLeadRows: 0,
-      unresolvedPhoneRows: 0,
+      unresolvedParentChildIdentityRows: 0,
       firstTouchChannels: {},
       firstConcernGroups: {},
     };
@@ -155,15 +170,15 @@ export function previewFirstObservedParentCohorts(sourceRows, periods) {
       if (!date || date < start || date > end) continue;
       aggregate.datedLeadRows += 1;
       if (!row.identity) {
-        aggregate.unresolvedPhoneRows += 1;
+        aggregate.unresolvedParentChildIdentityRows += 1;
         continue;
       }
-      const first = firstByParent.get(row.identity);
+      const first = firstByParentChild.get(row.identity);
       if (first?.id !== row.id) {
-        aggregate.laterLeadRowsForKnownParents += 1;
+        aggregate.laterLeadRowsForKnownParentChild += 1;
         continue;
       }
-      aggregate.firstObservedParentPhones += 1;
+      aggregate.firstObservedParentChildEnquiries += 1;
       aggregate.firstTouchChannels[row.channel] = (aggregate.firstTouchChannels[row.channel] || 0) + 1;
       aggregate.firstConcernGroups[row.concern] = (aggregate.firstConcernGroups[row.concern] || 0) + 1;
     }
@@ -171,7 +186,7 @@ export function previewFirstObservedParentCohorts(sourceRows, periods) {
   });
 
   return {
-    metric: 'first_observed_parent_phone_in_supplied_history',
+    metric: 'first_observed_parent_child_enquiry_in_supplied_history',
     historyIsComplete: false,
     status: 'OFFLINE_FIXTURE_ONLY_NOT_LIVE_APPROVED',
     inputDocumentRows: sourceRows.length,
