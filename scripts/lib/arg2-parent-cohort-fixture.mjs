@@ -1,7 +1,9 @@
 /**
  * ARG-2 OFFLINE FIXTURE CONTRACT ONLY.
  * Deliberately NOT imported by the browser, a Firebase Function or an endpoint.
- * Caller must supply complete, authorized historical records; outputs safe aggregates only.
+ * Caller supplies authorized canonical lead anchors for the prospective reporting window.
+ * No July–October cohort reconstruction, migration or baseline backfill is required.
+ * Older canonical lead anchors are used solely to exclude returning children.
  *
  * Acquisition identity = normalized parent phone + normalized child name.
  * It measures distinct child-learning opportunities, not distinct parents.
@@ -116,15 +118,19 @@ function assertDateKey(value) {
 }
 
 /**
- * @param {Array<Record<string, unknown>>} sourceRows recoverable historical leads, never logged
- * @param {Array<{start: string, end: string}>} periods complete Asia/Kolkata ranges
- * @returns {object} parent-child aggregate-only preview, NOT approved for live dashboard use
+ * @param {Array<Record<string, unknown>>} sourceRows canonical lead snapshots/records, never logged
+ * @param {Array<{start: string, end: string}>} periods prospective Asia/Kolkata ranges
+ * @param {{cutoverDate?: string}} options fixed reporting cutover, defaults to 1 Nov 2026 IST
+ * @returns {object} aggregate-only preview, NOT approved for live dashboard use
  */
-export function previewFirstObservedParentChildCohorts(sourceRows, periods) {
+export function previewFirstObservedParentChildCohorts(sourceRows, periods, options = {}) {
   if (!Array.isArray(sourceRows) || !Array.isArray(periods)) throw new Error('Expected rows and periods');
+  const cutoverDate = options.cutoverDate ?? '2026-11-01';
+  assertDateKey(cutoverDate);
   for (const {start, end} of periods) {
     assertDateKey(start); assertDateKey(end);
     if (end < start) throw new Error('End date precedes start date');
+    if (start < cutoverDate) throw new Error('Prospective reporting period predates ARG-2 cutover');
   }
 
   const byId = new Map();
@@ -149,7 +155,9 @@ export function previewFirstObservedParentChildCohorts(sourceRows, periods) {
   }));
   historical.sort((a, b) => a.at - b.at || a.id.localeCompare(b.id));
 
-  // Group by normalized parent phone AND child name across complete supplied history.
+  // Use the canonical parent-child first-inquiry anchor, including older anchors
+  // only when needed to classify an active pair as pre-cutover returning.
+  // No full pre-November cohort reconstruction is needed.
   const firstByParentChild = new Map();
   for (const row of historical) {
     if (row.identity && row.at && !firstByParentChild.has(row.identity)) firstByParentChild.set(row.identity, row);
@@ -186,9 +194,11 @@ export function previewFirstObservedParentChildCohorts(sourceRows, periods) {
   });
 
   return {
-    metric: 'first_observed_parent_child_enquiry_in_supplied_history',
+    metric: 'new_parent_child_opportunity_since_cutover',
+    cutoverDate,
+    historicalReconciliationRequired: false,
     historyIsComplete: false,
-    status: 'OFFLINE_FIXTURE_ONLY_NOT_LIVE_APPROVED',
+    status: 'OFFLINE_PROSPECTIVE_FIXTURE_ONLY_NOT_LIVE_APPROVED',
     inputDocumentRows: sourceRows.length,
     uniqueDocumentRows: historical.length,
     duplicateDocumentRows: duplicatesByDocumentId,
