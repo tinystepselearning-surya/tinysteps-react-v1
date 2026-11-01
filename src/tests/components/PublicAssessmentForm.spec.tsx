@@ -5,6 +5,7 @@ import { PUBLIC_MAIN_CONCERN_OPTIONS } from '../../lib/publicLeadForm';
 
 const trackingMocks = vi.hoisted(() => ({
   trackDemoBookingComplete: vi.fn(),
+  trackDemoRequestReceived: vi.fn(),
   trackLeadFormView: vi.fn(),
   trackGenerateLead: vi.fn(),
   trackLeadFormError: vi.fn(),
@@ -146,6 +147,7 @@ describe('PublicAssessmentForm analytics', () => {
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(firestoreMocks.setDoc.mock.calls[0][1]).toMatchObject({ classFormatPreference: 'small_group' });
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
+    expect(trackingMocks.trackDemoRequestReceived).not.toHaveBeenCalled();
 
     fireEvent.click(undecidedButton);
     expect(undecidedButton).toHaveAttribute('aria-pressed', 'true');
@@ -226,7 +228,12 @@ describe('PublicAssessmentForm analytics', () => {
       mainConcern: 'Blending sounds to read words',
       value: 1,
     }));
-    expect(trackingMocks.trackDemoBookingComplete).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackDemoRequestReceived).toHaveBeenCalledWith(expect.objectContaining({
+      request_type: 'whatsapp_assessment_request',
+      submission_id: 'lead-123',
+      source_context: 'public_assessment_form',
+    }));
+    expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
     expect(globalThis.open).toHaveBeenCalledTimes(1);
@@ -307,6 +314,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
+    expect(trackingMocks.trackDemoRequestReceived).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(globalThis.open).toHaveBeenCalledTimes(1);
     expect(popupLocationReplace).toHaveBeenCalledTimes(1);

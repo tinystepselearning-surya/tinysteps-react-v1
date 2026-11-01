@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  trackDemoBookingComplete,
+  trackDemoRequestReceived,
   trackLeadFormView,
   trackGenerateLead,
   trackLeadFormError,
@@ -360,8 +360,9 @@ export default function PublicAssessmentForm({
         value: 1,
       });
       if (submittedForm.classFormatPreference !== 'small_group' && submittedForm.classFormatPreference !== 'unsure') {
-        trackDemoBookingComplete({
-          booking_type: 'whatsapp_assessment_request',
+        trackDemoRequestReceived({
+          request_type: 'whatsapp_assessment_request',
+          submission_id: leadRef.id,
           source_context: source || 'public_assessment_form',
         });
       }
