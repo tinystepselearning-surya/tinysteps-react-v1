@@ -26,6 +26,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+      - name: Install Playwright Chromium for prerender validation
+        run: npx playwright install --with-deps chromium
       - name: Guard frozen owner and keyword-intent changes
         run: node --test scripts/test/india-acquisition-brick2-intent.node-test.mjs
       - name: TypeScript check
