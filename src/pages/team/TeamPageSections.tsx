@@ -91,7 +91,7 @@ function SectionHeading({
   return (
     <div className={centered ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl'}>
       <Eyebrow>{eyebrow}</Eyebrow>
-      <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-slate-950 sm:text-4xl lg:text-[2.75rem]">
+      <h2 className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-[#102A43] sm:text-4xl lg:text-[2.75rem]">
         {title}
       </h2>
       {description ? <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">{description}</p> : null}
@@ -101,7 +101,7 @@ function SectionHeading({
 
 export function TeamHero() {
   return (
-    <section className="relative isolate overflow-hidden border-b border-orange-100 bg-[#fffaf3] px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-24">
+    <section className="relative isolate overflow-hidden border-b border-sky-100 bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#EAF6FF] px-4 pb-16 pt-20 sm:px-6 sm:pb-20 sm:pt-24 lg:px-8 lg:pb-24">
       <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
         <div className="absolute -right-32 top-12 h-80 w-80 rounded-full bg-blue-200/45 blur-3xl" />
         <div className="absolute -left-28 bottom-4 h-72 w-72 rounded-full bg-orange-200/50 blur-3xl" />
@@ -109,7 +109,7 @@ export function TeamHero() {
       <div className="mx-auto max-w-5xl text-center">
         <div>
           <Eyebrow>Founder-led • Child-centred • Progress-focused</Eyebrow>
-          <h1 className="mx-auto mt-5 max-w-5xl font-heading text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-[#10243e] min-[430px]:text-[2.45rem] sm:text-5xl lg:text-[3.65rem]">
+          <h1 className="mx-auto mt-5 max-w-5xl font-heading text-[2.15rem] font-bold leading-[1.08] tracking-[-0.04em] text-[#102A43] min-[430px]:text-[2.45rem] sm:text-5xl lg:text-[3.65rem]">
             The academic team behind confident young readers, writers and speakers
           </h1>
           <p className="mx-auto mt-6 max-w-3xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-8">
@@ -142,7 +142,7 @@ export function TeamHero() {
 
 export function TrustMetrics() {
   return (
-    <section aria-label="Tiny Steps trust metrics" className="border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8">
+    <section aria-label="Tiny Steps trust metrics" className="border-b border-[#D6E6F7] bg-[#F6FBFF] px-4 sm:px-6 lg:px-8">
       <div className="mx-auto grid max-w-7xl grid-cols-2 divide-x divide-y divide-slate-200 sm:grid-cols-4 sm:divide-y-0">
         {trustMetrics.map((metric) => {
           const Icon = iconMap[metric.icon];
@@ -161,10 +161,10 @@ export function TrustMetrics() {
 
 export function FounderSection() {
   return (
-    <section id="founder" className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section id="founder" className="bg-gradient-to-br from-[#FBF8FF] via-white to-[#EAF6FF] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:gap-20">
         <div className="relative mx-auto w-full max-w-[520px]">
-          <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF5DF]" aria-hidden="true" />
+          <div className="absolute -bottom-4 -left-4 h-full w-full rounded-[50%] bg-[#FFF4DC]" aria-hidden="true" />
           <figure className="relative mx-auto aspect-[4/5] w-full max-w-[420px] overflow-hidden rounded-[50%] border-[8px] border-white bg-[#f7ead8] shadow-[0_24px_65px_rgba(15,23,42,0.14)]">
             <img
               src={founderPhotoSrc}
@@ -194,7 +194,7 @@ export function FounderSection() {
             {founderResponsibilities.map((item) => {
               const Icon = iconMap[item.icon];
               return (
-                <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-[#fffaf3] p-4">
+                <div key={item.title} className="flex items-center gap-3 rounded-2xl border border-[#E4DCF8] bg-white/90 p-4">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white text-[#C2410C] shadow-sm">
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
@@ -211,7 +211,7 @@ export function FounderSection() {
 
 export function AcademicSystemSection() {
   return (
-    <section className="bg-[#f3f7fb] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section className="bg-gradient-to-br from-[#EAF6FF] via-[#F4FAFF] to-[#F5F0FF] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading
           centered
@@ -223,7 +223,7 @@ export function AcademicSystemSection() {
           {academicSystemCards.map((card, index) => {
             const Icon = iconMap[card.icon];
             return (
-              <article key={card.title} className="rounded-[24px] border border-slate-200 bg-white p-6 shadow-[0_14px_35px_rgba(15,23,42,0.06)]">
+              <article key={card.title} className="rounded-[24px] border border-[#D6E6F7] bg-white/95 p-6 shadow-[0_12px_32px_rgba(15,23,42,0.05)]">
                 <div className="flex items-center justify-between">
                   <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-50 text-blue-700">
                     <Icon className="h-6 w-6" aria-hidden="true" />
@@ -281,11 +281,11 @@ export function ResearchToClassroomSection() {
   ];
 
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8" aria-labelledby="academic-design-heading">
+    <section className="bg-[#FAFBFD] px-4 py-20 sm:px-6 sm:py-24 lg:px-8" aria-labelledby="academic-design-heading">
       <div className="mx-auto max-w-7xl">
         <div className="max-w-4xl">
           <Eyebrow>How Tiny Steps designs learning</Eyebrow>
-          <h2 id="academic-design-heading" className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-slate-950 sm:text-4xl lg:text-[2.75rem]">
+          <h2 id="academic-design-heading" className="mt-4 font-heading text-3xl font-bold leading-tight tracking-[-0.025em] text-[#102A43] sm:text-4xl lg:text-[2.75rem]">
             Built around how children actually learn
           </h2>
           <p className="mt-5 text-base leading-7 text-slate-600 sm:text-lg">
@@ -295,7 +295,7 @@ export function ResearchToClassroomSection() {
 
         <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
           {designInputs.map((item, index) => (
-            <article key={item.title} className="rounded-[24px] border border-slate-200 bg-[#fffaf3] p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
+            <article key={item.title} className="rounded-[24px] border border-[#E4DCF8] bg-[#FBF8FF] p-6 shadow-[0_12px_30px_rgba(15,23,42,0.05)]">
               <span className="text-xs font-black tracking-[0.16em] text-[#C2410C]">0{index + 1}</span>
               <h3 className="mt-4 font-heading text-xl font-bold text-slate-950">{item.title}</h3>
               <p className="mt-3 text-sm leading-6 text-slate-600">{item.detail}</p>
@@ -304,19 +304,19 @@ export function ResearchToClassroomSection() {
         </div>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1.08fr_0.92fr]">
-          <div className="rounded-[28px] bg-[#10243e] p-6 text-white shadow-[0_22px_60px_rgba(15,23,42,0.16)] sm:p-8">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">From research to classroom practice</p>
+          <div className="rounded-[28px] border border-[#D6E6F7] bg-gradient-to-br from-[#EAF6FF] via-white to-[#FBF8FF] p-6 text-[#102A43] shadow-[0_18px_45px_rgba(15,23,42,0.07)] sm:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">From research to classroom practice</p>
             <ol className="mt-6 grid gap-3 sm:grid-cols-2">
               {designProcess.map((step, index) => (
-                <li key={step} className="flex gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                <li key={step} className="flex gap-3 rounded-2xl border border-[#D6E6F7] bg-white/90 p-4">
                   <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-300 text-xs font-black text-slate-950">{index + 1}</span>
-                  <span className="text-sm font-semibold leading-6 text-white/85">{step}</span>
+                  <span className="text-sm font-semibold leading-6 text-[#102A43]">{step}</span>
                 </li>
               ))}
             </ol>
           </div>
 
-          <div className="rounded-[28px] border border-emerald-200 bg-emerald-50/70 p-6 sm:p-8">
+          <div className="rounded-[28px] border border-[#E4DCF8] bg-gradient-to-br from-[#FFF7EC] via-white to-[#FBF8FF] p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-800">Research-informed planning. Child-responsive teaching.</p>
             <h3 className="mt-3 font-heading text-2xl font-bold leading-tight text-slate-950">The curriculum is structured, but the child is not forced through it at a fixed speed.</h3>
             <p className="mt-4 text-sm leading-7 text-slate-700">
@@ -330,7 +330,7 @@ export function ResearchToClassroomSection() {
                 </li>
               ))}
             </ul>
-            <p className="mt-6 rounded-2xl border border-emerald-200 bg-white/80 p-4 text-xs leading-5 text-slate-600">
+            <p className="mt-6 rounded-2xl border border-[#E4DCF8] bg-white/90 p-4 text-xs leading-5 text-slate-600">
               This describes evidence-informed teaching practice, not clinical psychology, learning-style classifications or a guarantee that every child progresses at the same rate.
             </p>
           </div>
@@ -342,16 +342,16 @@ export function ResearchToClassroomSection() {
 
 export function TeacherDevelopmentSection() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section className="bg-gradient-to-br from-[#EAF6FF] via-[#F4FAFF] to-[#FBF8FF] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-20">
-        <div className="overflow-hidden rounded-[28px] bg-[#10243e] p-5 text-white shadow-[0_24px_70px_rgba(15,23,42,0.18)] sm:p-8">
-          <div className="flex items-center justify-between border-b border-white/15 pb-5">
+        <div className="overflow-hidden rounded-[28px] border border-[#D6E6F7] bg-gradient-to-br from-[#EAF6FF] via-white to-[#F5F0FF] p-5 text-[#102A43] shadow-[0_18px_45px_rgba(15,23,42,0.07)] sm:p-8">
+          <div className="flex items-center justify-between border-b border-[#D6E6F7] pb-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#D3B9E1]">Live learning studio</p>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">Live learning studio</p>
               <p className="mt-2 font-heading text-xl font-bold">A prepared lesson, not improvisation</p>
             </div>
-            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10">
-              <GraduationCap className="h-6 w-6 text-[#D3B9E1]" aria-hidden="true" />
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/90">
+              <GraduationCap className="h-6 w-6 text-[#604577]" aria-hidden="true" />
             </span>
           </div>
           <div className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -371,15 +371,15 @@ export function TeacherDevelopmentSection() {
                 <p className="mt-1 text-xs leading-5 text-slate-600">Lesson decks, reading tasks, activities and application practice.</p>
               </div>
             </div>
-            <div className="rounded-[22px] border border-white/15 bg-white/10 p-5">
-              <UsersRound className="h-6 w-6 text-blue-200" aria-hidden="true" />
+            <div className="rounded-[22px] border border-[#D6E6F7] bg-white/90 p-5">
+              <UsersRound className="h-6 w-6 text-blue-700" aria-hidden="true" />
               <p className="mt-4 font-heading text-lg font-bold">Teacher guidance</p>
-              <p className="mt-2 text-sm leading-6 text-white/70">Clear expectations for preparation, participation and child interaction.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Clear expectations for preparation, participation and child interaction.</p>
             </div>
-            <div className="rounded-[22px] border border-white/15 bg-white/10 p-5">
-              <MessageCircleMore className="h-6 w-6 text-emerald-200" aria-hidden="true" />
+            <div className="rounded-[22px] border border-[#D6E6F7] bg-white/90 p-5">
+              <MessageCircleMore className="h-6 w-6 text-emerald-700" aria-hidden="true" />
               <p className="mt-4 font-heading text-lg font-bold">Connected feedback</p>
-              <p className="mt-2 text-sm leading-6 text-white/70">Academic review and parent insights help strengthen future teaching.</p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">Academic review and parent insights help strengthen future teaching.</p>
             </div>
           </div>
         </div>
@@ -388,7 +388,7 @@ export function TeacherDevelopmentSection() {
           <SectionHeading eyebrow="Teacher selection & development" title="Teachers are selected carefully—and supported continuously" />
           <div className="mt-9 space-y-5">
             {teacherDevelopmentSteps.map((step, index) => (
-              <article key={step.title} className="grid grid-cols-[48px_1fr] gap-4 rounded-[22px] border border-slate-200 bg-[#fffdf9] p-5 sm:grid-cols-[56px_1fr] sm:p-6">
+              <article key={step.title} className="grid grid-cols-[48px_1fr] gap-4 rounded-[22px] border border-[#E4DCF8] bg-white/90 p-5 sm:grid-cols-[56px_1fr] sm:p-6">
                 <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#FFF5DF] font-heading text-sm font-black text-[#C2410C] sm:h-14 sm:w-14">0{index + 1}</span>
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">{step.label}</p>
@@ -406,14 +406,14 @@ export function TeacherDevelopmentSection() {
 
 export function QualitySystemSection() {
   return (
-    <section className="bg-[#fff7ed] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+    <section className="bg-gradient-to-r from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <SectionHeading centered eyebrow="How quality is maintained" title="A clear pathway from assessment to visible progress" />
         <ol className="relative mt-14 grid gap-4 md:grid-cols-3 xl:grid-cols-6 xl:gap-3">
-          <div className="absolute left-[8.5%] right-[8.5%] top-8 hidden h-px bg-orange-300 xl:block" aria-hidden="true" />
+          <div className="absolute left-[8.5%] right-[8.5%] top-8 hidden h-px bg-[#D3B9E1] xl:block" aria-hidden="true" />
           {qualitySteps.map((step) => (
-            <li key={step.title} className="relative rounded-[22px] border border-orange-200 bg-white p-5 shadow-[0_12px_28px_rgba(124,45,18,0.05)] xl:border-0 xl:bg-transparent xl:p-3 xl:text-center xl:shadow-none">
-              <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-[#fff7ed] bg-[#10243e] text-xs font-black text-white xl:mx-auto xl:h-16 xl:w-16">{step.label}</span>
+            <li key={step.title} className="relative rounded-[22px] border border-[#E4DCF8] bg-white/90 p-5 shadow-[0_12px_28px_rgba(124,45,18,0.05)] xl:border-0 xl:bg-transparent xl:p-3 xl:text-center xl:shadow-none">
+              <span className="relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-4 border-white bg-[#102A43] text-xs font-black text-white xl:mx-auto xl:h-16 xl:w-16">{step.label}</span>
               <h3 className="mt-4 font-heading text-lg font-bold text-slate-950">{step.title}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
             </li>
@@ -461,7 +461,7 @@ export function TeachingCommunitySection() {
 
 export function SchoolPartnershipSection() {
   return (
-    <section className="bg-[#0b3040] px-4 py-16 text-white sm:px-6 sm:py-20 lg:px-8">
+    <section className="bg-[#102A43] px-4 py-16 text-white sm:px-6 sm:py-20 lg:px-8">
       <div className="mx-auto grid max-w-7xl items-center gap-8 lg:grid-cols-[1fr_auto] lg:gap-16">
         <div className="max-w-4xl">
           <Eyebrow inverse>For schools</Eyebrow>
@@ -483,8 +483,8 @@ export function SchoolPartnershipSection() {
 
 export function FinalAssessmentSection() {
   return (
-    <section className="bg-[#f3f7fb] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
-      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[30px] bg-[#10243e] px-5 py-14 text-center text-white shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:px-10 sm:py-16">
+    <section className="bg-gradient-to-r from-[#E7F3FF] via-[#F5F0FF] to-[#FFF4DC] px-4 py-20 sm:px-6 sm:py-24 lg:px-8">
+      <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[30px] bg-[#102A43] px-5 py-14 text-center text-white shadow-[0_28px_80px_rgba(15,23,42,0.2)] sm:px-10 sm:py-16">
         <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-blue-500/20 blur-3xl" aria-hidden="true" />
         <div className="absolute -bottom-24 -right-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" aria-hidden="true" />
         <div className="relative mx-auto max-w-3xl">
@@ -508,7 +508,7 @@ export function FinalAssessmentSection() {
 
 export function TeamFaqSection() {
   return (
-    <section className="bg-white px-4 py-20 sm:px-6 sm:py-24 lg:px-8" id="team-faq">
+    <section className="bg-[#F6FBFF] px-4 py-20 sm:px-6 sm:py-24 lg:px-8" id="team-faq">
       <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
         <SectionHeading eyebrow="Frequently asked questions" title="Direct answers about the people and system behind each class" />
         <div className="divide-y divide-slate-200 border-y border-slate-200">
