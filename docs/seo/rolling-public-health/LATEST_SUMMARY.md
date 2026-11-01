@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
 
+## Slot 12 — 1 November 2026, approximately 11:14 IST (origin probes 2026-11-01T05:44:00.599154Z–05:44:09.682543Z UTC)
+
+**Preflight and coverage:** Re-fetched and validated exactly 202 sequential unique selected URLs and 22 CSV columns, Slots 1–19 at ten each and Slot 20 at twelve. Before Slot 12, 110 distinct current-day UTC check timestamps were present. Audited only ten previously unchecked Slot 12 URLs (rows 111–120) with ten distinct actual UTC origin-probe start times; no prior-day observations counted and no earlier checked or future-slot URL probed. **Today's attempted coverage: 120/202 (59.41%); 82 awaiting scheduled checks; zero fully origin-verified; all 120 current-day technical-readiness statuses UNVERIFIED.** Historical PASS values, if any, do not establish current origin health.
+
+**Provider text retrieval:** All ten exact public URLs yielded substantive page-specific provider-extracted text, each snapshot labelled **Crawled yesterday** (precise provider crawl times unknown): 111 grammar-rule transfer (turn669980view0); 112 reading in class vs at home (turn669980view1); 113 understanding English but not speaking (turn669980view2); 114 conversation skills (turn669980view3); 115 CVC decoding (turn669980view4); 116 digraphs and tricky words (turn669980view5); 117 CBSE/NCF phonics (turn669980view6); 118 grammar assessment (turn669980view7); 119 conjunctions (turn669980view8); 120 creative-writing scaffolds (turn669980view9). The extracted pages have distinct titles, author/dated article information, article content and internal navigation. This is provider-text evidence only, **not** proof of live-origin initial HTML, indexability, or working interactive elements.
+
+**Independent origin HTTPS:** Ten distinct read-only `curl --noproxy '*' -L` HTTPS GET attempts failed before receiving origin HTTP: five exit 6 with exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`; five exit 28 with exact stderr `curl: (28) Resolving timed out after 9000 milliseconds` (four) or `9001 milliseconds` (one). Per-URL actual UTC start/end timestamps and exact stderr are in the tracker. No origin HTTP response, headers or raw HTML obtained. `HTTP_CODE:000` is a curl placeholder, not an HTTP status; echoed effective URL and zero redirects do not establish final redirect destinations. Origin HTTP status, redirect chain, canonical, noindex/meta/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain **UNVERIFIED**. Audit-environment DNS failures do not establish a production outage. Direct robots.txt web retrieval inaccessible (turn208303view0). No first-party Google/Bing indexing, ranking or AI citation evidence obtained.
+
+**Workflow safety:** GitHub Actions repository run API reported zero in-progress and zero queued runs; no rolling SEO audit matched among the latest 100 repository runs. Administrative workflow enabled/disabled state endpoint was rejected, so the user's confirmed 25 October UI disablement remains the operating assumption. No GitHub workflow was run or enabled.
+
+**Change control:** No independently verified dated production regression or improvement, so `CHANGES.md` remains unchanged. No source, workflow, Firebase, Hosting or production settings modified. **Next: Slot 13, rows 121–130.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-01 IST)
+
 ## Slot 11 — 1 November 2026, approximately 10:10 IST (origin probes 2026-11-01T04:40:20.999818Z–04:40:29.051535Z UTC)
 
 **Preflight and coverage:** Validated exactly 202 sequential unique selected URLs, 22-column CSV semantics, Slots 1–19 at ten each and Slot 20 at twelve. Before this run, 100 distinct 1 November IST attempts were recorded. Only previously unchecked Slot 11 URLs (rows 101–110) were audited, with ten distinct actual UTC probe start times. **Today's attempted coverage: 110/202 (54.46%); 92 awaiting scheduled checks; zero fully origin-verified; all 110 current-day origin technical-readiness statuses UNVERIFIED.** Prior-day observations excluded; no previously checked or future-slot URL probed.
