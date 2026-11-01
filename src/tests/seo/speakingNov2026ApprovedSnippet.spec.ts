@@ -15,7 +15,7 @@ describe('Approved age-neutral Speaking meta description, 2026-11-01', () => {
     const previous = 'Live 1:1 online public speaking & communication classes for kids ages 4–12. Structured answers, storytelling and presentations. ₹400/class; free assessment.';
     expect(SPEAKING_META_DESCRIPTION_EXPERIMENT.controlDescription).toBe(previous);
     expect(COMMERCIAL_C4_AUTHORIZED_OWNER_OVERRIDES['/speaking'].description).toBe(previous);
-    expect(COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS['/speaking'].description).toBe(previous);
+    expect(COMMERCIAL_C4_ACTIVE_CONTROL_SNIPPETS['/speaking'].description).toBe('Live 1:1 public speaking and communication classes for kids in India and worldwide. Build structured answers, storytelling, presentations and communication confidence in 35-minute classes.');
   });
 
   it('publishes the approved description on the same canonical Speaking owner only', () => {
