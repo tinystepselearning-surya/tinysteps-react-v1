@@ -72,3 +72,17 @@ The private reviewed JSON is **not committed**. Never commit customer-level data
 - [ ] PR-head checks, owner review and approval.
 - [ ] External India commercial search-volume export across all five markets — **still required**, not claimed complete.
 - [ ] Live **new-parent** admin cohort read model — separate security/access design; existing lead-record admin panel is not equivalent.
+
+## Five programme owner search visibility — separate first-party GSC extraction
+
+An earlier directly connected Windsor.ai Search Console India-country extraction (1 July–30 October 2026) produced the following **page-level** snapshots. These are a **separate extraction** from the subsequently reviewed Codex aggregate and must not be silently substituted into its reconciliation. Numbers are **clicks / impressions**, not buyer-only clicks, not unique parents, and not Google Keyword Planner national volume.
+
+| Programme owner | July | August | September | October 1–30 |
+|---|---:|---:|---:|---:|
+| `/phonics` | 46 / 2,575 | 59 / 3,435 | 26 / 2,259 | 21 / 1,765 |
+| `/reading-classes-for-kids` | No returned page row | 0 / 8 | 0 / 13 | 0 / 3 |
+| `/grammar` | 1 / 26 | 0 / 25 | 0 / 8 | 0 / 18 |
+| `/speaking` | 0 / 236 | 5 / 367 | 1 / 422 | 6 / 531 |
+| `/online-english-classes-for-kids` | 0 / 1 | 0 / 46 | 1 / 292 | 2 / 408 |
+
+**Interpretation:** the reported discovery of Reading and Grammar is very limited; Phonics is the principal historically productive search owner. The Phonics page-level July–October totals differ slightly from the reviewed Firebase/GSC aggregate table because export timing/query dimensions differ. **Neither table is a joined query-to-parent funnel.** Before changing titles/canonicals, verify current indexed state and directly compare the relevant India buying-intent queries. A missing GSC row does not prove no indexing or no market demand.
