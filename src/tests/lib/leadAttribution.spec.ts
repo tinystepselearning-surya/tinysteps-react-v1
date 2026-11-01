@@ -2,6 +2,7 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { captureLeadAttribution } from '../../lib/leadAttribution';
+import { buildLeadAttributionEnrichment, buildPublicLeadPayload, getPublicLeadAttribution } from '../../lib/publicLeadForm';
 
 describe('leadAttribution helper', () => {
   beforeEach(() => {
@@ -68,6 +69,80 @@ describe('leadAttribution helper', () => {
       firstSeenAt: firstCapture.firstSeenAt,
     });
   });
+
+
+  it.each([
+    {
+      landingPage: '/reading-classes-for-kids',
+      mainConcern: 'Reading speed and word accuracy' as const,
+      expectedProgram: 'Reading',
+    },
+    {
+      landingPage: '/grammar',
+      mainConcern: 'Grammar while speaking or writing' as const,
+      expectedProgram: 'Grammar',
+    },
+  ])(
+    'preserves $landingPage first-touch attribution through /book-demo without expanding the anonymous lead schema',
+    ({ landingPage, mainConcern, expectedProgram }) => {
+      window.history.replaceState({}, '', `${landingPage}?utm_source=google&utm_medium=organic`);
+      Object.defineProperty(document, 'referrer', {
+        configurable: true,
+        value: 'https://www.google.co.in/search?q=online+classes+for+kids',
+      });
+
+      const firstTouch = captureLeadAttribution();
+      expect(firstTouch.landingPage).toBe(landingPage);
+      expect(firstTouch.utmSource).toBe('google');
+
+      window.history.replaceState({}, '', '/book-demo');
+      const bookingAttribution = getPublicLeadAttribution();
+
+      expect(bookingAttribution).toMatchObject({
+        landingPage,
+        sourcePath: '/book-demo',
+        submittedFromPath: '/book-demo',
+        referrerDomain: 'google.co.in',
+        utm_source: 'google',
+        utm_medium: 'organic',
+        acquisitionChannel: 'google_organic',
+      });
+
+      const payload = buildPublicLeadPayload(
+        {
+          parentName: 'Test Parent',
+          childName: 'Test Child',
+          whatsapp: '+919999999999',
+          childAge: '7',
+          mainConcern,
+          classFormatPreference: 'one_to_one',
+          urgency: '',
+        },
+        { source: 'book_demo_page', attribution: bookingAttribution },
+      );
+
+      expect(payload).toMatchObject({
+        source: 'website',
+        sourceDetail: 'book_demo_page',
+        sourcePath: '/book-demo',
+        programInterest: expectedProgram,
+        mainConcern,
+        classFormatPreference: 'one_to_one',
+      });
+      // First touch goes to the guarded server enrichment, not the
+      // anonymously writable Firestore create document.
+      expect(payload).not.toHaveProperty('landingPage');
+      expect(payload).not.toHaveProperty('acquisitionChannel');
+
+      expect(buildLeadAttributionEnrichment(bookingAttribution)).toMatchObject({
+        landingPage,
+        conversionPage: '/book-demo',
+        referrerDomain: 'google.co.in',
+        utm_source: 'google',
+        utm_medium: 'organic',
+      });
+    },
+  );
 
   it('ignores same-origin referrers as acquisition sources', () => {
     Object.defineProperty(document, 'referrer', {
