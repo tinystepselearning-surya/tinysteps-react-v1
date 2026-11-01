@@ -137,7 +137,7 @@ export const teamFaqItems = [
   {
     question: 'Are Tiny Steps teachers graduates?',
     answer:
-      'Yes. Our teachers are graduate-qualified educators with school-classroom teaching experience. They teach with a shared English curriculum, prepared lesson resources and ongoing academic guidance and feedback.',
+      'Yes. All Tiny Steps teachers are graduates with professional school-classroom teaching experience. They combine classroom expertise with a structured English curriculum, prepared lessons and ongoing academic guidance and feedback.',
   },
   {
     question: 'Are live classes and teacher standards reviewed?',
