@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { OfficialProfilesSection } from '../components/entity/OfficialProfilesSection';
+import { TeacherPortraitsSection } from './team/TeacherPortraitsSection';
+import { TeachingAssuranceSection } from './team/TeachingAssuranceSection';
 import { applySeo, getRouteConfig } from '../lib/seo';
 import {
   FOUNDER_ID,
@@ -20,7 +22,6 @@ import {
   ResearchToClassroomSection,
   SchoolPartnershipSection,
   TeacherDevelopmentSection,
-  TeachingCommunitySection,
   TeamFaqSection,
   TeamHero,
   TrustMetrics,
@@ -109,12 +110,13 @@ export default function TeamPage() {
           </Link>
         </div>
       </section>
+      <TeacherPortraitsSection />
+      <TeacherDevelopmentSection />
+      <TeachingAssuranceSection />
       <OfficialProfilesSection />
       <AcademicSystemSection />
       <ResearchToClassroomSection />
-      <TeacherDevelopmentSection />
       <QualitySystemSection />
-      <TeachingCommunitySection />
       <SchoolPartnershipSection />
       <FinalAssessmentSection />
       <TeamFaqSection />
