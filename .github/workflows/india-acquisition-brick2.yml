@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/pages/grammar.tsx'
       - 'src/pages/public/OnlineEnglishClassesForKidsPage.tsx'
+      - 'src/pages/public/OnlineEnglishClassesHyderabadPage.tsx'
       - 'scripts/test/india-acquisition-brick2-intent.node-test.mjs'
       - 'docs/seo/india-acquisition/BRICK_02_*'
       - '.github/workflows/india-acquisition-brick2.yml'
@@ -34,3 +35,21 @@ jobs:
         run: npm run typecheck
       - name: Build and verify prerendered SEO surfaces
         run: npm run build
+
+      - name: Confirm high-intent spoken-English links render on national and Hyderabad owners
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          for (const [path,canonical] of [
+            ['online-english-classes-for-kids', '/online-english-classes-for-kids'],
+            ['online-english-classes-hyderabad', '/online-english-classes-hyderabad'],
+          ]) {
+            const html=fs.readFileSync('dist/'+path+'/index.html','utf8');
+            assert.match(html,/<a\b[^>]*href="\/spoken-english-classes-for-kids-online"[^>]*>[\s\S]{0,150}Explore English Speaking Classes for Kids[\s\S]{0,150}<\/a>/);
+            assert.match(html,/<a\b[^>]*href="\/speaking"/);
+            assert.match(html,new RegExp('rel="canonical"[^>]*href="https:\\/\\/tinystepslearning\\.com'+canonical+'"'));
+            assert.doesNotMatch(html,/<meta[^>]*name="robots"[^>]*content="noindex/);
+          }
+          console.log('Research-backed specialist handoff and canonical guard passed.');
+          NODE
