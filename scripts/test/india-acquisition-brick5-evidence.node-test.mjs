@@ -32,7 +32,7 @@ test('each referenced evidence page exists and is statically public', () => {
     assert.ok(routes.includes(`route('${path}', '${group}')`), path + ' public route');
     assert.match(read(source), indicator, source + ' has appropriate evidence');
   }
-  // Team quality proof now lives in the explicitly rendered component.
+  // The public Team page now delegates its teaching-quality evidence to this module.
   assert.match(read('src/pages/team/TeachingAssuranceSection.tsx'), /id="teaching-quality"/, 'teacher-quality evidence section remains public');
 });
 
