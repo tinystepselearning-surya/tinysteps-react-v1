@@ -309,7 +309,7 @@ export default function HistoricalAttendanceMissingSessionPanel() {
   };
 
   return (
-    <details className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <details open className="rounded-lg border border-slate-200 bg-slate-50 p-3">
       <summary className="cursor-pointer text-sm font-semibold text-slate-900">
         Historical / Previous Course — Missing Session
       </summary>
