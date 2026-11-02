@@ -1,5 +1,25 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
 
+## Slot 3 — 3 November 2026 IST, executed approximately 02:15 IST
+
+**Tracker preflight:** Read blob `75012fbe213680adf68f31c4c728a80e208c9f09`; verified 202 sequential selected rows, 202 unique URLs, 22 CSV columns, valid observation UTC-to-IST dates, slots 1–19 containing 10 URLs each and slot 20 containing 12. Exactly 20 distinct 3 November IST rows (slots 1–2) had already been attempted; rows 21–30 were unchecked for the current day. No future-slot checks or duplicate checks.
+
+**Executed batch:** Retrieved all ten selected phonics guides (rows 21–30) through ChatGPT web retrieval. Three exact URL opens returned provider text directly (rows 21, 28, 30: `turn157345view0`, `turn157345view7`, `turn157345view9`). Seven exact URL opens were inaccessible in that mode but page-specific text was retrieved via search-result or internal-link navigation (rows 22–27 and 29: `turn551761view2`, `turn551761view1`, `turn436199view1`, `turn551761view0`, `turn436199view0`, `turn436199view2`, `turn551761view3`). All ten provider-extracted H1s matched the previous dated observations; three-day-old or today-labelled provider snapshots have unknown exact crawl times. These are provider text observations only, **not independently verified raw origin HTML**. No verified meaningful regression or improvement.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*' -L` attempts started at unique UTC times from **2026-11-02T20:44:54.352983Z through 2026-11-02T20:45:09.395900Z**, ending by **20:45:14.403825Z** (3 November IST). Three failed DNS resolution (exit 6, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`) and seven timed out resolving DNS (exit 28, `curl: (28) Resolving timed out after 5000 milliseconds`). Unrelated `https://example.com/` control also failed DNS (exit 6, 20:44:54.323152Z–20:44:54.351894Z). No origin HTTP response or headers were obtained; `HTTP_CODE:000` is not a real HTTP status. This is an audit-environment DNS limitation, not evidence of a production outage. Direct `robots.txt` web retrieval was inaccessible (`turn157345view10`). Individual URLs, H1s, retrieval references, stderr and exact check times are recorded in the tracker.
+
+**Verification boundary:** All ten remain **UNVERIFIED** for origin HTTP status, redirects, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD. No verified search indexing, rankings or AI mentions/citations. Historical PASS values were not counted as current checks.
+
+**Daily coverage:** **30/202 distinct selected URLs attempted on 3 November IST (14.85%)**, 172 awaiting later slots, **zero fully origin-verified**. Previous-day timestamps excluded.
+
+**Workflow safety:** This run could not independently retrieve current GitHub Actions workflow administrative state or repository-wide queued/in-progress runs. Public API reads were inaccessible; connected GitHub tools exposed no suitable repository-wide Actions listing. Proceeded under user's explicit 25 October GitHub UI disable confirmation. Cron YAML presence is not evidence of enablement. No GitHub Actions workflow was run, enabled or modified.
+
+**Persistence:** SHA-checked tracker write from blob `75012fbe213680adf68f31c4c728a80e208c9f09`, followed by readback verifying blob `869873d51718ab5d0592c1fad9c6acea8203a916`. No meaningful verified before/after transition warrants changing `CHANGES.md`. No repository source, workflows, Firebase, Hosting or production settings modified. **Next eligible batch: Slot 4, rows 31–40.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
+
 ## Slot 2 — 3 November 2026 IST, executed approximately 01:16 IST
 
 **Tracker preflight:** Read current tracker blob `327c3c44211b380c1d2a7b139bff9b4ab2c04637`; verified 202 sequential selected rows, 202 unique URLs, 22 columns, valid UTC timestamps matching recorded IST dates, and slots 1–19 with 10 URLs each / slot 20 with 12. Only slot 1 rows 1–10 were previously attempted on 3 November IST; rows 11–20 were eligible and unchecked. No future-slot or duplicate checks.
