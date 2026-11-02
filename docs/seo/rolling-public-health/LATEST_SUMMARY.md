@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 18 — 2 November 2026 IST, recovered at 18:14 IST
+
+**Tracker preflight:** Read current `MASTER_URL_TRACKER.csv` from `seo-url-health-tracker` (pre-write blob `31f630f8d4d052b0c89fbfd7ac88e4dc91ee76f0`). Verified **202 sequential records, 202 unique selected URLs, 22 CSV columns**, slots **1–19 with 10 each** and slot **20 with 12**, and **170 distinct valid 2 November IST check timestamps** across slots 1–17. Slot 18 rows 171–180 retained only 1 November observations. At the 18:13 IST scheduled run (slot 19 current), recovered the earliest eligible missed slot 18 without prematurely checking slot 19. Previous-day timestamps were excluded; no previously checked current-day URL was rechecked.
+
+**Executed batch:** All ten exact Slot 18 URLs (rows 171–180) returned substantive page-specific text through ChatGPT exact-URL `web.open` (`turn762147view0`–`turn762147view9`). Topics included public-speaking competition preparation, confidence, debate, family showcase, speech structure, video feedback, visual aids, synthetic phonics, systematic/cumulative phonics, and starting-age readiness. All provider snapshots were labelled **Crawled yesterday**, precise provider crawl times unknown. Each H1 matched its dated 1 November provider observation; no verified meaningful text transition. Provider-extracted text does **not** establish live origin HTTP, initial HTML, canonical, robots, or structured-data health.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*'` HTTPS GET attempts started at ten unique actual UTC times **2026-11-02T12:44:01.498570Z–2026-11-02T12:44:01.509085Z**, finishing by **12:44:10.529318Z**. Five failed DNS resolution (exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`); five timed out during DNS resolution (exit **28**, exact stderr `curl: (28) Resolving timed out after 9000/9001 milliseconds`). Unrelated `https://example.com/` also failed DNS exit 6 at **12:44:10.531858Z–12:44:10.547142Z**. Direct provider `robots.txt` retrieval was inaccessible (`turn469821view0`). No origin HTTP response or headers were received. Curl `HTTP_CODE:000` is not an HTTP status; echoed effective URLs and redirect counts cannot establish redirects. This is an **audit-environment DNS limitation, not a verified Tiny Steps production outage**. Exact per-URL observations, start/end times, errors, and provider refs are in the tracker.
+
+**Coverage:** **180/202 distinct URLs attempted on 2 November IST (89.11%)**, **0/202 fully origin-verified**, **22 awaiting eligible slots**. HTTP status, redirects, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML, and JSON-LD remain **UNVERIFIED** for the new ten rows. Historical verification fields remain historical. No verified production regression/improvement, Google/Bing indexing/ranking, or AI citation transition; `CHANGES.md` unchanged.
+
+**Workflow safety:** Connected GitHub Actions run queries returned **zero queued and zero in-progress repository runs**. The workflow administrative-state endpoint was rejected by the connector, so disabled state could not be independently verified; continued under the user's 25 October UI disable confirmation. Cron YAML alone does not prove enablement. No workflow was run, enabled, or modified.
+
+**Persistence:** `MASTER_URL_TRACKER.csv` updated by SHA-checked write in commit `c998dc71925cdbf0fc7bff0d0e2cf87a1f7adb8b` (blob `03198400352b714d0cd73b2359c5b30d664e0601`), independently read back and validated at 180 distinct current-day IST observations. This summary is updated separately with its own blob SHA. No source, workflows, Firebase, Hosting, or production settings changed. **Next eligible batch: Slot 19, rows 181–190.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 17 — 2 November 2026 IST, catch-up observed 17:19 IST
 
 **Tracker preflight:** Read current `MASTER_URL_TRACKER.csv` from `seo-url-health-tracker` (pre-write blob `43b1249e57074939d2a8000225ddb1eaeb8e8600`). Verified exactly **202 sequential rows, 202 unique selected URLs, 22 valid CSV columns**, slots **1–19 with 10 URLs each** and slot **20 with 12**, and **160 distinct 2 November IST UTC observation timestamps** in slots 1–16. Slot 17 rows 161–170 still held only 1 November observations. As slot 17 had been missed and slot 18 was current, this run recovered the earliest eligible ten URLs without checking slot 18 prematurely.
