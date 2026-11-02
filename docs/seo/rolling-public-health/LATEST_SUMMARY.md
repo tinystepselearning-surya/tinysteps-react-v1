@@ -1,5 +1,25 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
 
+## Slot 4 — 3 November 2026 IST, executed approximately 03:16 IST
+
+**Tracker preflight:** Read current tracker blob `869873d51718ab5d0592c1fad9c6acea8203a916`; verified 202 sequential selected rows, 202 unique URLs, 22 CSV columns, valid UTC-to-IST observation dates, slots 1–19 containing 10 URLs each and slot 20 containing 12. Exactly 30 distinct 3 November IST rows (slots 1–3) had already been attempted; rows 31–40 were unchecked for today. No future-slot checks or duplicate checks.
+
+**Executed batch:** Inspected all ten assigned URLs (rows 31–40) through ChatGPT web retrieval. Nine exact URL opens returned substantive page-specific provider text (`turn468287view1`–`turn468287view9`). Row 31's exact URL open was inaccessible (`turn468287view0`), but the exact guide was retrieved by following the OU/OW link from the phonics hub (`turn358189view0` link 55 to `turn837017view0`). All ten H1s matched the prior 2 November provider observations. Provider snapshots were labelled *Crawled yesterday* except Pricing (*Crawled today*); exact provider crawl times unknown. These are provider-extracted text observations, **not independently verified current raw origin HTML**. No meaningful verified regression or improvement.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*' -L` GET attempts began at unique UTC timestamps from **2026-11-02T21:46:58.957904Z through 2026-11-02T21:46:59.148429Z**, ending by **21:47:04.222812Z** (3 November IST). One failed DNS resolution (exit 6, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`) and nine timed out resolving DNS (exit 28, exact stderr `curl: (28) Resolving timed out after 5000/5001 milliseconds`). Unrelated `https://example.com/` control also failed DNS (exit 6, 21:46:45.690297Z–21:46:45.733941Z). No origin HTTP response or headers were obtained. `HTTP_CODE:000` is a curl placeholder, not a real HTTP status. This is an audit-environment DNS limitation, **not a confirmed production outage**. Direct `robots.txt` web retrieval was inaccessible (`turn468287view10`). Exact URL evidence, provider H1, stderr and UTC start/end times are in the tracker.
+
+**Verification boundary:** All ten remain **UNVERIFIED** for origin HTTP status, redirects, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD. No verified Google/Bing indexing, rankings or AI mentions/citations. Historical PASS values were not counted as current checks.
+
+**Daily coverage:** **40/202 distinct selected URLs attempted on 3 November IST (19.80%)**, 162 awaiting later slots, **zero fully origin-verified**. Previous-day timestamps excluded.
+
+**Workflow safety:** Current GitHub Actions workflow administrative state and queued/in-progress runs could not be independently retrieved. Public GitHub API web reads were inaccessible (`turn694362view0`–`turn694362view2`); connected GitHub tools did not expose a suitable repository-wide Actions listing. Continued under the user's explicit 25 October GitHub UI disable confirmation. Cron YAML presence is not proof of enablement. No GitHub Actions workflow was run, enabled or modified.
+
+**Persistence:** SHA-checked tracker update from blob `869873d51718ab5d0592c1fad9c6acea8203a916`, followed by independent readback of new blob `ece3c45654fdc5e7769ef34a9fd652205d57a83f`. No meaningful verified before/after transition warrants changing `CHANGES.md`. No repository source, workflows, Firebase, Hosting or production settings modified. **Next eligible batch: Slot 5, rows 41–50.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
+
 ## Slot 3 — 3 November 2026 IST, executed approximately 02:15 IST
 
 **Tracker preflight:** Read blob `75012fbe213680adf68f31c4c728a80e208c9f09`; verified 202 sequential selected rows, 202 unique URLs, 22 CSV columns, valid observation UTC-to-IST dates, slots 1–19 containing 10 URLs each and slot 20 containing 12. Exactly 20 distinct 3 November IST rows (slots 1–2) had already been attempted; rows 21–30 were unchecked for the current day. No future-slot checks or duplicate checks.
