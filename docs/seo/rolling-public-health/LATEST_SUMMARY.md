@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 8 — 2 November 2026 IST, observed 07:10–07:11 IST
+
+**Tracker preflight:** Read current `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker` (initial blob `2d8951183d01535d8d313a7d88a76b84c0b49f05`). Verified exactly 202 sequential rows, 202 unique URLs, 22 columns, Slots 1–19 at 10 URLs each and Slot 20 at 12 URLs. Exactly 70 distinct valid 2 November IST observations existed in Slots 1–7; none of the Slot 8 rows had been checked on 2 November. All prior-day timestamps were excluded from daily coverage.
+
+**Executed Slot 8:** Audited 10 URLs (rows 71–80). Nine exact-URL ChatGPT web.open retrievals returned substantive page-specific provider-extracted text: letter tracing with sounds (`turn496375view0`), balloon pop (`turn496375view1`), vocabulary adventure (`turn496375view2`), Phonics (`turn496375view3`), Grammar (`turn496375view4`), Speaking (`turn496375view5`), For Schools (`turn496375view7`), Book Demo (`turn496375view8`) and Reading Classes (`turn496375view9`). Row 77's direct web.open was inaccessible (`turn496375view6`), but internal-link retrieval from the Book Demo page returned its full speaking progress framework page text and H1 "How Tiny Steps Measures Speaking Progress" (`turn351261view1`). These are **provider-extracted text observations**, not verified initial origin HTML or proof of current deployment. Provider crawl labels were today/yesterday; precise crawl timestamps were unavailable.
+
+**Independent HTTPS attempts:** Ten read-only `curl --noproxy '*'` HTTPS GETs began at **10 distinct real UTC timestamps between 2026-11-02T01:40:59.593453Z and 2026-11-02T01:41:09.635419Z**, ending by **2026-11-02T01:41:14.648026Z**. All ten timed out during DNS resolution (exit **28**, stderr `curl: (28) Resolving timed out after 5000 milliseconds`, with some 5001–5002 ms). Independent `https://example.com/` control failed DNS (exit **6**, `curl: (6) Could not resolve host: example.com`). Direct provider retrieval of `https://tinystepslearning.com/robots.txt` was inaccessible (`turn351261view0`). This supports an **audit-environment DNS limitation**, not a confirmed Tiny Steps production outage. No origin HTTP response or headers were received; `HTTP:000` is a curl placeholder, not an HTTP response status.
+
+**Current-day coverage:** **80/202 distinct URLs attempted (39.60%)**, **0/202 fully origin-verified**, **122 awaiting scheduled slots**. All 80 current-day readiness statuses remain **UNVERIFIED** for origin technical health. HTTP status, redirect chain/final URL, canonical, meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot permissions, raw initial HTML, JSON-LD and conversion functionality remain unverified. Historical last-verified statuses do not establish current production state. No dated verified before/after production regression or improvement, indexing, ranking or AI citation change was established; `CHANGES.md` remains unchanged.
+
+**Workflow safety:** Connected GitHub repository-wide Actions queries returned **zero in-progress and zero queued runs**. The latest 100 runs did not reveal an active rolling SEO audit. The workflow administrative state endpoint was not accessible through the connected GitHub fetch tool; the user's **25 October 2026** confirmation of disablement remains the operating assumption. Cron YAML presence is not evidence of enabled workflow state. No GitHub Actions workflow was started or enabled.
+
+**Persistence:** Updated and independently verified `MASTER_URL_TRACKER.csv` (commit `539bc18099ebfba4e7f4adc6bb58851543b7730d`, blob `672fbebf0e85d1e11f9e8ef667dfc50778ed2fe6`) on `seo-url-health-tracker`. No repository source, workflows, Firebase, Hosting or production settings were changed. **Next eligible batch: Slot 9, rows 81–90.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 7 — 2 November 2026 IST, observed 06:13–06:14 IST
 
 **Tracker preflight:** Read `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker`, initial blob `3353ff068b99568b3e7c9cbf1d83214cc04f6fbb`. Verified 202 sequential rows and 202 unique URLs, all 22 CSV columns, Slots 1–19 assigned 10 each and Slot 20 assigned 12. Exactly 60 distinct valid current-day observations were present for Slots 1–6; no Slot 7 URL was checked on 2 November before this batch. Older timestamps were excluded from today's coverage.
