@@ -1,5 +1,25 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
 
+## Slot 6 — 3 November 2026 IST, executed approximately 05:12 IST
+
+**Tracker preflight:** Read blob `91e2e8ec4b29477a2db23018453422e5be2fdbe3`; verified 202 sequential selected rows, 202 unique URLs, 22 CSV columns, correct UTC-to-IST dates and slot allocation (slots 1–19: 10 each; slot 20: 12). Exactly 50 distinct URLs from slots 1–5 were attempted on 3 November IST. Rows 51–60 were unchecked and eligible; no future-slot or duplicate checks.
+
+**Executed batch:** All ten exact URLs (rows 51–60) returned substantive, page-specific provider-extracted text through ChatGPT web.open (`turn259886view0`–`turn259886view9`). All ten H1s matched previous 2 November provider observations. Provider snapshots labelled *Crawled today*; precise provider crawl times unknown. This is not independent current raw-origin HTML verification. No meaningful verified regression or improvement.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*' -L` GETs started at unique UTC times **2026-11-02T23:42:00.800233Z–2026-11-02T23:42:00.808316Z**, ending by **23:42:05.818601Z** (3 November IST). One DNS resolution failure (exit 6, `curl: (6) Could not resolve host: tinystepslearning.com`) and nine DNS timeouts (exit 28, `curl: (28) Resolving timed out after 5001 milliseconds` or `5002 milliseconds`). Unrelated `https://example.com/` control also failed DNS at 23:41:55Z (exit 6). No origin HTTP response or headers obtained. `HTTP_CODE:000` is not a real HTTP status. This is an audit-environment limitation, not a confirmed production outage. Direct `robots.txt` web.open inaccessible (`turn259886view10`). Exact per-URL timestamps and stderr are in tracker.
+
+**Verification boundary:** All ten remain **UNVERIFIED** for origin HTTP status, redirects/final destination, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD. No verified Google/Bing indexing, rankings or AI citations. Historical PASS values excluded from current readiness.
+
+**Daily coverage:** **60/202 distinct selected URLs attempted on 3 November IST (29.70%)**, 142 awaiting scheduled slots, **zero fully origin-verified URLs**. Previous-day timestamps excluded.
+
+**Workflow safety:** Connected GitHub API returned zero repository-wide queued and zero in-progress Actions runs. Administrative workflow disablement could not be independently read (endpoint unsupported); continued under the user's explicit 25 October disable confirmation. Cron YAML is not evidence of enablement. No workflow was run, enabled or modified.
+
+**Persistence:** SHA-checked tracker write from `91e2e8ec4b29477a2db23018453422e5be2fdbe3` and independently verified readback blob `5cfd9173b5e44e9fc8eda00c1206ff39b8ba4dbf`. No meaningful verified transition for `CHANGES.md` (blob `92131570142bfd89e3a6e0fb820d59311cc44b72` unchanged). No repository source, workflows, Firebase, Hosting or production settings modified. **Next eligible batch: Slot 7, rows 61–70.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
+
 ## Slot 5 — 3 November 2026 IST, executed approximately 04:16 IST
 
 **Tracker preflight:** Read current tracker blob `ece3c45654fdc5e7769ef34a9fd652205d57a83f`; validated 202 sequential selected rows, 202 unique URLs, 22 CSV columns and valid 3 November IST UTC timestamp alignment. Slots 1–19 each contain 10 URLs; slot 20 contains 12. Exactly 40 distinct rows (slots 1–4) had been attempted today. Rows 41–50 were unchecked and eligible; no future-slot or duplicate checks.
