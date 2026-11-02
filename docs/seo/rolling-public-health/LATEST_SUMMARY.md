@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 17 — 2 November 2026 IST, catch-up observed 17:19 IST
+
+**Tracker preflight:** Read current `MASTER_URL_TRACKER.csv` from `seo-url-health-tracker` (pre-write blob `43b1249e57074939d2a8000225ddb1eaeb8e8600`). Verified exactly **202 sequential rows, 202 unique selected URLs, 22 valid CSV columns**, slots **1–19 with 10 URLs each** and slot **20 with 12**, and **160 distinct 2 November IST UTC observation timestamps** in slots 1–16. Slot 17 rows 161–170 still held only 1 November observations. As slot 17 had been missed and slot 18 was current, this run recovered the earliest eligible ten URLs without checking slot 18 prematurely.
+
+**Executed batch:** All ten Slot 17 URLs (rows 161–170) were independently attempted through read-only HTTPS curl and inspected using ChatGPT web retrieval. Nine exact-URL `web.open` calls returned substantive page-specific provider-extracted article text with H1 headings (`turn790808view0`, `turn790808view2`–`turn790808view9`). Row 162's direct `web.open` was inaccessible, but an exact-URL search result recovered page-specific content (`turn224907search0`). Topics included tricky words, phonological/phonemic awareness, summer reading loss, speaking delivery, punctuation, r-controlled vowels, SATPIN, phonics versus sight words, screen-smart routines and sight-word teaching. Provider snapshots were labelled **Crawled yesterday** for nine URLs and **Crawled last month** for row 162; precise crawl times unknown. All H1 headings matched the dated 1 November provider observations, establishing **no meaningful verified content transition**. Provider-extracted text is not independent initial-origin-HTML verification.
+
+**Independent HTTPS:** Ten distinct `curl --noproxy '*'` HTTPS GET attempts began at ten unique actual UTC timestamps **2026-11-02T11:49:06.663380Z–2026-11-02T11:49:06.671410Z**, ending by **2026-11-02T11:49:15.691292Z**. Six failed DNS resolution (exit **6**, exact stderr `curl: (6) Could not resolve host: tinystepslearning.com`) and four timed out resolving DNS (exit **28**, 9000–9001 ms). Unrelated `https://example.com/` control also failed DNS exit 6 at **11:49:15.692075Z–11:49:15.705545Z UTC**. Direct provider retrieval of `robots.txt` was inaccessible (`turn790808view10`). No origin HTTP response or headers were received. Curl `HTTP:000` is not an HTTP response status; echoed effective URLs and `REDIRECTS:0` cannot establish redirect behavior. This is an **audit-environment DNS limitation, not a confirmed production outage**. Exact per-URL starts, ends, exit codes, errors and provider refs are in the tracker.
+
+**Coverage:** **170/202 distinct URLs attempted on 2 November IST (84.16%)**, **0/202 fully origin-verified**, **32 awaiting scheduled checks**. HTTP status, redirect destination, canonical, robots/noindex/X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED** for the ten new rows. Historical verification fields remain historical. No verified production regression/improvement, Google/Bing indexing/ranking or AI citation transition. `CHANGES.md` unchanged.
+
+**Workflow safety:** Connected GitHub Actions run queries showed **zero queued and zero in-progress repository runs**. Administrative workflow-state endpoint was rejected by the connector, so the disabled state remains independently unverified; continued under the user's 25 October GitHub UI disable confirmation. Cron YAML alone does not prove enablement. No workflow was run, enabled or modified.
+
+**Persistence:** `MASTER_URL_TRACKER.csv` updated with SHA check in commit `a6fc002166d2df759fc2ec3690ff9951b86e5dab` (new blob `31f630f8d4d052b0c89fbfd7ac88e4dc91ee76f0`), independently read back and validated at 170 distinct valid current-day timestamps. This summary is updated separately with its own blob SHA. No source, workflows, Firebase, Hosting or production settings changed. **Next eligible batch: Slot 18, rows 171–180.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 16 — 2 November 2026 IST, observed 16:11 IST
 
 **Tracker preflight:** Fetched latest `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker` (prior blob `c619cf294e7b47b35c63bb07a9eb876ba4be70c1`). Validated **202 sequential rows, 202 unique selected URLs, 22 CSV columns**, Slots **1–19 with 10 each** and Slot **20 with 12**. Exactly **150 distinct current-day IST observations with unique valid UTC timestamps** existed in Slots 1–15. Slot 16 rows 151–160 had 1 November timestamps only, were eligible, and were not previously checked on 2 November. No future slots were scanned and yesterday's timestamps were excluded.
