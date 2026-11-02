@@ -282,28 +282,36 @@ describe('homepage premium gateway', () => {
     expect(final.match(/to="\/book-demo"/g)).toHaveLength(1);
   });
 
-  it('scopes concise programme and resource footer navigation to the homepage', () => {
-    expect(footer).toContain("const isHomePage = location.pathname === '/'");
-    expect(footer).toContain('isHomePage ? homeCourseLinks : courseLinks');
-    expect(footer).toContain('isHomePage ? homeExploreLinks : exploreLinks');
-    for (const route of ['/phonics', '/reading-classes-for-kids', '/grammar', '/spoken-english-classes-for-kids-online', '/speaking']) {
+  it('uses one consistent programme and Explore footer across all public pages', () => {
+    expect(footer).not.toContain('isHomePage');
+    expect(footer).not.toContain('homeCourseLinks');
+    expect(footer).not.toContain('homeExploreLinks');
+    expect(footer).toContain('{courseLinks.map((link) => (');
+    expect(footer).toContain('{exploreLinks.map((link) => (');
+    for (const route of [
+      '/courses', '/phonics', '/reading-classes-for-kids', '/grammar',
+      '/spoken-english-classes-for-kids-online', '/speaking',
+      '/why-tiny-steps', '/for-schools', '/class-samples', '/curriculum',
+      '/resources', '/blog', '/pricing', '/team', '/careers',
+      '/summer-camps', '/contact', '/learning-partner',
+      '/privacy-policy', '/terms-and-conditions', '/refund-guarantee',
+    ]) {
       expect(footer).toContain("href: '" + route + "'");
     }
-    expect(footer).toContain("isHomePage ? <span className=\"text-xs font-semibold\">{link.label}</span> : link.icon");
-    expect(footer).toContain("label: 'Privacy Policy'");
-    expect(footer).toContain("label: 'Terms & Conditions'");
-    expect(footer).toContain("label: 'Refund & Guarantee'");
+    expect(footer).toContain("label: 'Team', href: '/team'");
+    expect(footer).toContain('{socialLinks.map((link) => (');
+    expect(footer).toContain('<span className="text-xs font-semibold">{link.label}</span>');
   });
 
-  it('keeps the homepage footer concise while preserving the original Surya credit', () => {
-    expect(footer).toContain("!isHomePage ? (");
-    expect(footer).toContain('SSL Secure');
-    expect(footer).toContain('UPI / Cards / Netbanking');
-    expect(footer).toContain("link.label !== 'Pinterest'");
+  it('preserves one consistent footer contact area, legal links and the Surya credit', () => {
+    expect(footer).not.toContain('!isHomePage');
+    expect(footer).not.toContain('SSL Secure');
+    expect(footer).not.toContain('UPI / Cards / Netbanking');
+    expect(footer).toContain('handleGetInTouch');
+    expect(footer).toContain('PUBLIC_CONTACT_EMAIL');
+    expect(footer).toContain('PUBLIC_CONTACT_TELEPHONE');
+    expect(footer).toContain('OFFICIAL_PUBLIC_PROFILES');
     expect(footer).toContain('© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.');
-    expect(footer).toContain("label: 'Privacy Policy'");
-    expect(footer).toContain("label: 'Terms & Conditions'");
-    expect(footer).toContain("label: 'Refund & Guarantee'");
   });
 
   it('spaces the two supporting programme pathways for readable mobile navigation', () => {

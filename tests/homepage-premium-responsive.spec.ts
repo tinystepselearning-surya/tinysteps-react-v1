@@ -252,8 +252,27 @@ test('homepage footer keeps programme and legal links without changing the lead 
   for (const genericClaim of ['SSL Secure', 'UPI / Cards / Netbanking', 'Data protection aware', 'Family-first support']) {
     await expect(footer.getByText(genericClaim, { exact: true })).toHaveCount(0);
   }
-  await expect(footer.getByRole('link', { name: 'Pinterest' })).toHaveCount(0);
+  await expect(footer.getByRole('link', { name: 'Pinterest' })).toHaveCount(1);
+  await expect(footer.locator('a[href="/team"]')).toHaveCount(1);
+  await expect(footer.getByRole('link', { name: 'Team', exact: true })).toBeVisible();
   await expect(footer.getByText('© 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.')).toBeVisible();
+});
+
+test('shared public footer links match on home, Why Tiny Steps, Team, and Phonics', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 850 });
+  const routeLinks: Record<string, string[]> = {};
+  for (const path of ['/', '/why-tiny-steps', '/team', '/phonics']) {
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    const footer = page.locator('footer');
+    await expect(footer).toBeVisible({ timeout: 25000 });
+    routeLinks[path] = await footer.locator('a[href^="/"]').evaluateAll((anchors) =>
+      anchors.map((link) => link.getAttribute('href') || '').sort(),
+    );
+    expect(routeLinks[path]).toContain('/team');
+  }
+  for (const path of ['/why-tiny-steps', '/team', '/phonics']) {
+    expect(routeLinks[path], path + ' should use the shared public footer links').toEqual(routeLinks['/']);
+  }
 });
 
 test('compact mobile header keeps booking and menu accessible without horizontal overflow', async ({ page }) => {

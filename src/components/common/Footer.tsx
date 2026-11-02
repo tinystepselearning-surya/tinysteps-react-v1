@@ -7,35 +7,23 @@ import {
   PUBLIC_CONTACT_TELEPHONE,
   PUBLIC_WHATSAPP_NUMBER,
 } from '../../constants/publicContact';
-import {
-  OFFICIAL_PUBLIC_PROFILES,
-  type OfficialProfilePlatform,
-} from '../../lib/officialProfiles';
+import { OFFICIAL_PUBLIC_PROFILES } from '../../lib/officialProfiles';
 
-const SOCIAL_ICONS: Record<OfficialProfilePlatform, string> = {
-  Facebook: '📘',
-  Instagram: '📸',
-  YouTube: '▶️',
-  LinkedIn: '💼',
-  Pinterest: '📌',
-  Quora: 'Q',
-};
-
-// Preserve the compact footer set while sourcing every URL from semanticFacts.ts.
-// Quora remains visible in the dedicated official-identity section rather than the footer.
+// All public pages share the same footer destinations and visible social identities.
 const socialLinks = OFFICIAL_PUBLIC_PROFILES
   .filter((profile) => profile.platform !== 'Quora')
   .map((profile) => ({
     label: profile.platform,
     href: profile.url,
-    icon: SOCIAL_ICONS[profile.platform],
   }));
 
 const courseLinks = [
-  { label: 'Courses overview', href: '/courses' },
-  { label: 'Phonics classes', href: '/phonics' },
-  { label: 'Grammar classes', href: '/grammar' },
-  { label: 'Public speaking', href: '/speaking' },
+  { label: 'All English programmes', href: '/courses' },
+  { label: 'Phonics', href: '/phonics' },
+  { label: 'Reading', href: '/reading-classes-for-kids' },
+  { label: 'Grammar', href: '/grammar' },
+  { label: 'Spoken English', href: '/spoken-english-classes-for-kids-online' },
+  { label: 'Public Speaking', href: '/speaking' },
 ];
 
 const exploreLinks = [
@@ -59,29 +47,10 @@ const legalLinks = [
   { label: 'Refund & Guarantee', href: '/refund-guarantee' },
 ];
 
-// Keep the full shared footer on specialist pages; the homepage is a concise gateway.
-const homeCourseLinks = [
-  { label: 'All English programmes', href: '/courses' },
-  { label: 'Phonics', href: '/phonics' },
-  { label: 'Reading', href: '/reading-classes-for-kids' },
-  { label: 'Grammar', href: '/grammar' },
-  { label: 'Spoken English', href: '/spoken-english-classes-for-kids-online' },
-  { label: 'Public Speaking', href: '/speaking' },
-];
-const homeExploreLinks = exploreLinks.filter((link) =>
-  ['/why-tiny-steps', '/class-samples', '/curriculum', '/resources', '/blog', '/pricing', '/contact'].includes(link.href),
-);
-
 function Footer() {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const isHomePage = location.pathname === '/';
-  const visibleCourseLinks = isHomePage ? homeCourseLinks : courseLinks;
-  // Keep the homepage social cluster short; all official networks remain available elsewhere.
-  const visibleSocialLinks = isHomePage ? socialLinks.filter((link) => link.label !== 'Pinterest') : socialLinks;
-  const visibleExploreLinks = isHomePage ? homeExploreLinks : exploreLinks;
-
   const handleGetInTouch = () => {
     const params = new URLSearchParams(location.search);
     params.set('book', '1');
@@ -118,12 +87,10 @@ function Footer() {
               </div>
             </div>
             <p className="max-w-sm text-sm leading-6 text-white/80">
-              {isHomePage
-                ? 'Personalised live English learning across phonics, reading, grammar, spoken English and public speaking.'
-                : 'Structured phonics, grammar, and public speaking with live mentors, steady routines, and clear parent updates.'}
+              Personalised live English learning across phonics, reading, grammar, spoken English and public speaking.
             </p>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {visibleSocialLinks.map((link) => (
+              {socialLinks.map((link) => (
                 <a
                   key={link.label}
                   href={link.href}
@@ -132,7 +99,7 @@ function Footer() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  {isHomePage ? <span className="text-xs font-semibold">{link.label}</span> : link.icon}
+                  <span className="text-xs font-semibold">{link.label}</span>
                 </a>
               ))}
             </div>
@@ -142,7 +109,7 @@ function Footer() {
             <div>
               <h3 className="mb-3 font-semibold text-white">Programs</h3>
               <ul className="space-y-2 text-sm">
-                {visibleCourseLinks.map((link) => (
+                {courseLinks.map((link) => (
                   <li key={link.href}>
                     <Link to={link.href} className="transition hover:text-tiny-blue-300">
                       {link.label}
@@ -168,7 +135,7 @@ function Footer() {
           <div className="space-y-4">
             <h3 className="font-semibold text-white">Explore</h3>
             <ul className="space-y-2 text-sm">
-              {visibleExploreLinks.map((link) => (
+              {exploreLinks.map((link) => (
                 <li key={link.href}>
                   <Link to={link.href} className="transition hover:text-tiny-blue-300">
                     {link.label}
@@ -221,15 +188,6 @@ function Footer() {
         </div>
 
         <div className="space-y-4 border-t border-white/10 pt-6">
-          {!isHomePage ? (
-            <div className="flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/80">
-              <span>SSL Secure</span>
-              <span>UPI / Cards / Netbanking</span>
-              <span>Data protection aware</span>
-              <span>Family-first support</span>
-            </div>
-          ) : null}
-
           <div className="text-center text-xs text-white/70">
             © 2026 Tiny Steps Learning™. Foundations Forever for joyful, confident learning — built with ❤️ by Surya. All rights reserved.
           </div>
