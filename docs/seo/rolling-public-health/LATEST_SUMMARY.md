@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 10 — 2 November 2026 IST, observed 09:11 IST
+
+**Tracker preflight:** Read current `MASTER_URL_TRACKER.csv` (blob `30a792dca21f1ea894ebbe02b02b3d148d7c4c32`) on `seo-url-health-tracker`. Validated 202 sequential rows, 202 unique selected URLs, 22 columns, Slots 1–19 at 10 URLs each and Slot 20 at 12 URLs. Found 90 distinct valid 2 November IST observations in rows 1–90; no Slot 10 URL had been checked today. Previous-day observations were excluded.
+
+**Executed batch:** Inspected all 10 Slot 10 URLs, rows 91–100: child not reading, slow reader help, shy-child speaking confidence, reading fluency, confidence building, English foundation, summer-camps archive, India summer-camp guide, summer reading and summer speaking. All ten exact-URL ChatGPT web.open requests returned substantive page-specific provider-extracted text and distinct H1 headings (turn171333view0–turn171333view9). Provider snapshots were labelled Crawled today; exact crawl times unknown. This is scoped provider-text accessibility, not proof of current origin initial HTML or production deployment.
+
+**Independent HTTPS:** Ten read-only `curl --noproxy '*'` HTTPS GET attempts began at distinct actual UTC times `2026-11-02T03:41:28.275026Z`–`2026-11-02T03:41:28.315575Z`, finishing by `2026-11-02T03:41:38.625496Z`. Five failed DNS resolution (exit 6; `curl: (6) Could not resolve host: tinystepslearning.com`) and five timed out during resolution (exit 28; `curl: (28) Resolving timed out after 10000/10001 milliseconds`). Independent `https://example.com/` control failed DNS exit 6 at `2026-11-02T03:41:38.651882Z`–`2026-11-02T03:41:43.667224Z`. Direct provider `robots.txt` retrieval was inaccessible (turn171333view10); independent curl of robots.txt failed DNS exit 6. This indicates an audit-environment DNS limitation, **not a verified production outage**. No origin HTTP response or headers; curl HTTP:000 is not a server response.
+
+**Coverage:** **100/202 distinct URLs attempted today (49.50%)**, **0/202 fully origin-verified**, **102 awaiting their scheduled slots**. All current-day origin technical readiness remains **UNVERIFIED** for HTTP status, redirect/final URL, canonical, robots/noindex, Googlebot/Bingbot/OAI-SearchBot permissions, initial HTML and JSON-LD. Historical verified states are not current proof. No dated verified production regression/improvement or first-party indexing/ranking/AI citation evidence established. No meaningful change warranting a CHANGES.md entry.
+
+**Workflow safety:** GitHub administrative workflow state and repository-wide in-progress/queued runs could not be independently retrieved this batch (connected GitHub tool does not expose repository-wide Actions listing; public GitHub API web retrieval inaccessible). Proceeded under the user's confirmed 25 October GitHub workflow disablement. No workflow was run, enabled or changed; absence of concurrent runs is **not** independently established.
+
+**Persistence:** MASTER_URL_TRACKER.csv and LATEST_SUMMARY.md updated using current blob SHAs and independently read back after sequential writes. CHANGES.md remains unchanged. No repository source, workflows, Firebase, Hosting or production settings changed. **Next eligible batch: Slot 11, rows 101–110.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 9 — 2 November 2026 IST, observed 08:15 IST
 
 **Tracker preflight:** Read current MASTER_URL_TRACKER.csv on seo-url-health-tracker (blob 672fbebf0e85d1e11f9e8ef667dfc50778ed2fe6); verified 202 sequential records, 202 unique URLs, 22 columns, slots 1–19 at 10 URLs each and slot 20 at 12. Exactly 80 distinct valid 2 November IST observations existed in slots 1–8, and none of rows 81–90 had been checked today. Yesterday's observations excluded.
