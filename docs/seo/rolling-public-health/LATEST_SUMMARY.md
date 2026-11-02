@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 14 — 2 November 2026 IST, observed 14:49–14:52 IST
+
+**Tracker preflight:** Read latest `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker` (preflight blob `947c842b016435e2cc7f0fed4991cd6f99017c0b`). Verified exactly 202 sequential records, 202 unique selected URLs, 22 valid CSV columns, Slots 1–19 at 10 URLs and Slot 20 at 12. Exactly 130 distinct valid 2 November IST observations existed in Slots 1–13. Rows 131–140 contained 1 November observations only and were eligible. No current-day checked URL was rechecked; prior-day timestamps were excluded from today's coverage.
+
+**Executed batch:** Inspected all ten exact Slot 14 URLs (rows 131–140) through ChatGPT web.open, returning substantive page-specific provider-extracted text and H1 headings (refs `turn813299view0`–`turn813299view9`). Topics: integrated phonics/grammar/communication, phonics and spelling, school decoding assessment, home English engagement, reading fluency, sentence formation, paragraph writing, storytelling, vocabulary/comprehension and international phonics benchmarks. All provider snapshots were labelled **Crawled yesterday**, precise provider crawl times unknown. The H1s match the dated 1 November provider observations; no verified meaningful content transition was established. Provider-extracted text is not independent origin initial HTML verification.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*'` HTTPS GET attempts started at actual UTC timestamps **2026-11-02T09:19:09.572783Z–2026-11-02T09:19:09.577853Z**, completing by **2026-11-02T09:19:18.605032Z**. Five failed DNS resolution (exit **6**, `curl: (6) Could not resolve host: tinystepslearning.com`); five timed out resolving DNS (exit **28**, 9001–9002 milliseconds). Independent `https://example.com/` control also failed DNS exit **6** at 2026-11-02T09:18:57.210043Z. Direct provider `robots.txt` retrieval was inaccessible (`turn813299view10`), and independent robots.txt curl failed DNS exit **6**. No origin HTTP response or headers were obtained. Curl `HTTP:000` is not a server status; echoed effective URL and redirect count cannot establish redirect behavior. This is an **audit-environment DNS limitation, not a verified Tiny Steps production outage**. Per-URL actual UTC start/end and exact errors are recorded in the tracker.
+
+**Coverage:** **140/202 distinct URLs attempted today (69.31%)**, **0/202 fully origin-verified**, **62 awaiting scheduled slots**. Origin HTTP status, final redirect, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED** for all ten new rows. Historical verified states remain historical. No verified production regression, improvement, indexing/ranking or AI citation change. `CHANGES.md` unchanged.
+
+**Workflow safety:** Connected GitHub Actions repository active-run queries returned **zero in-progress and zero queued runs**. Workflow administrative disablement could not be independently read because the workflow-state endpoint was rejected by the connector; proceeded under the user's 25 October confirmation. No GitHub workflow was run, enabled or modified.
+
+**Persistence:** Tracker updated through SHA-checked write and independently read back at blob `1c1275306dbc51a854c11c83ad98c151b3eddd50` with 140 distinct current-day UTC timestamps. Summary updated separately via SHA-checked write. No source, workflows, Firebase, Hosting or production settings changed. **Next eligible batch: Slot 15, rows 141–150.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 13 — 2 November 2026 IST, observed 12:19 IST
 
 **Tracker preflight:** Read latest `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker` (blob `667cf240d4bdd2d819f44c17f0d6636f52b95723`). Verified 202 sequential records, 202 unique URLs, 22 columns, Slots 1–19 with 10 URLs and Slot 20 with 12. Exactly 120 distinct valid 2 November IST UTC observation timestamps were already recorded in Slots 1–12. Rows 121–130 carried 1 November observations only and were eligible; no current-day checked URL was rechecked.
