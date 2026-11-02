@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
 
+## Slot 13 — 2 November 2026 IST, observed 12:19 IST
+
+**Tracker preflight:** Read latest `MASTER_URL_TRACKER.csv` on `seo-url-health-tracker` (blob `667cf240d4bdd2d819f44c17f0d6636f52b95723`). Verified 202 sequential records, 202 unique URLs, 22 columns, Slots 1–19 with 10 URLs and Slot 20 with 12. Exactly 120 distinct valid 2 November IST UTC observation timestamps were already recorded in Slots 1–12. Rows 121–130 carried 1 November observations only and were eligible; no current-day checked URL was rechecked.
+
+**Executed batch:** Inspected all ten exact Slot 13 URLs (rows 121–130), covering grammar editing, grammar progression, story cards, subject-verb agreement, tenses, orthographic mapping, blending, phonics timelines, reading confidence and phonics class outcomes. Nine exact URL web.open requests returned substantive page-specific provider-extracted text with H1 headings (refs `turn272038view0`–`turn272038view4`, `turn272038view6`–`turn272038view9`). Row 126 initially failed exact-URL web.open but was recovered through an exact-URL search result, `turn370807view0`. Provider snapshots were labelled **Crawled yesterday** for nine pages and **Crawled 3 days ago** for row 126; exact provider crawl times are unknown. H1s match the dated 1 November observations; no verified meaningful content transition was established. Provider-extracted text does **not** independently verify current origin initial HTML.
+
+**Independent HTTPS:** Ten distinct read-only `curl --noproxy '*'` HTTPS GETs began at actual UTC timestamps **2026-11-02T06:49:20.937985Z–2026-11-02T06:49:20.953882Z**, ending by **2026-11-02T06:49:28.976017Z**. Five failed DNS resolution (exit **6**, `curl: (6) Could not resolve host: tinystepslearning.com`), and five timed out resolving DNS (exit **28**, 8001–8002 ms). Unrelated `https://example.com/` control failed DNS exit **6** at 2026-11-02T06:49:15.000469Z–06:49:15.040191Z. Direct provider retrieval of `robots.txt` was inaccessible (`turn272038view10`). No origin HTTP response or headers were received. Curl `HTTP:000` is not a server HTTP status; echoed final URL and redirect count cannot establish redirects. This is an **audit-environment DNS limitation, not a confirmed Tiny Steps outage**. Per-URL start/end UTC, exact error and provider evidence are preserved in the tracker.
+
+**Coverage:** **130/202 distinct URLs attempted today (64.36%)**, **0/202 fully origin-verified**, **72 awaiting scheduled slots**. Origin HTTP status, final redirect, canonical, robots/noindex, X-Robots-Tag, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED** for all ten new rows. Historical verified states remain historical. No verified production regression, improvement, indexing/ranking or AI citation change; `CHANGES.md` unchanged.
+
+**Workflow safety:** Live GitHub Actions run queries showed **zero in-progress and zero queued repository runs**. Workflow administrative state could not be independently retrieved (endpoint rejected by connector); continued under the user's 25 October disablement confirmation. No GitHub workflow was run, enabled or modified.
+
+**Persistence:** Tracker updated through blob-SHA-checked write and independently read back at blob `947c842b016435e2cc7f0fed4991cd6f99017c0b` with 130 distinct current-day timestamps. Summary updated separately through a SHA-checked write. No source, workflows, Firebase, Hosting or production settings changed. **Next eligible batch: Slot 14, rows 131–140.**
+
+---
+
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-02 IST)
+
 ## Slot 12 — 2 November 2026 IST, observed 11:14 IST
 
 **Tracker preflight:** Read latest tracker blob `404e626c4f15e5df29f243173a2e6add4c637c7c` on `seo-url-health-tracker`. Verified exactly **202 sequential records, 202 unique URLs, 22 CSV columns**, Slots 1–19 at ten URLs and Slot 20 at twelve, and **110 distinct valid 2 November IST observation timestamps** before this batch. Slot 12 rows 111–120 had only 1 November observations and were eligible; no previously checked current-day URL was rechecked.
