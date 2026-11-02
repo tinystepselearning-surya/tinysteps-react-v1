@@ -19,7 +19,7 @@ import {
 import { Link } from 'react-router-dom';
 import { trackEvent } from '../../lib/analytics';
 import { PUBLIC_FACTS } from '../../lib/schemas';
-import { founderPhotoSrc, publicTeacherPhotos } from 'virtual:tiny-steps-team-photos';
+import { founderPhotoSrc } from 'virtual:tiny-steps-team-photos';
 import {
   academicSystemCards,
   founderResponsibilities,
@@ -100,7 +100,26 @@ function SectionHeading({
 }
 
 export function TeamHero() {
-  const featuredEducators = publicTeacherPhotos.slice(0, 4);
+  const lessonStages = [
+    {
+      title: 'Model',
+      description: 'See and understand the skill',
+      Icon: BookOpenCheck,
+      tone: 'border-[#D6E6F7] bg-[#EAF6FF] text-[#245C88]',
+    },
+    {
+      title: 'Practise',
+      description: 'Try it with teacher guidance',
+      Icon: UsersRound,
+      tone: 'border-[#E4DCF8] bg-[#F5F0FF] text-[#604577]',
+    },
+    {
+      title: 'Apply',
+      description: 'Use it more independently',
+      Icon: Sparkles,
+      tone: 'border-[#F5DAB7] bg-[#FFF7EC] text-[#9A4A16]',
+    },
+  ];
 
   return (
     <section className="relative isolate overflow-hidden border-b border-[#D6E6F7] bg-gradient-to-br from-[#D9EEFF] via-[#F4FAFF] to-[#FFF4DC] px-4 py-14 sm:px-6 sm:py-16 lg:px-8 lg:py-20">
@@ -137,57 +156,47 @@ export function TeamHero() {
           </p>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[590px]">
-          <div className="pointer-events-none absolute inset-x-4 inset-y-4 rotate-[2deg] rounded-[32px] bg-[#D3B9E1]/30" aria-hidden="true" />
-          <div className="relative isolate overflow-hidden rounded-[30px] border border-white/90 bg-white/95 px-4 pb-5 pt-6 shadow-[0_24px_65px_rgba(16,36,62,0.10)] sm:px-7 sm:pb-7 sm:pt-7">
-            <div className="pointer-events-none absolute -left-12 top-0 h-40 w-40 rounded-full bg-[#EAF6FF] blur-3xl" aria-hidden="true" />
-            <div className="pointer-events-none absolute -right-12 bottom-2 h-44 w-44 rounded-full bg-[#F5F0FF] blur-3xl" aria-hidden="true" />
-            <p className="relative z-10 text-center text-xs font-bold uppercase tracking-[0.18em] text-[#604577]">
-              The educators behind Tiny Steps
-            </p>
-            {featuredEducators.length > 0 ? (
-              <div className="relative mt-4">
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 z-0 overflow-hidden text-center" aria-hidden="true">
-                  <span className="select-none whitespace-nowrap font-heading text-[clamp(3.5rem,9vw,7rem)] font-black leading-none tracking-[-0.09em] text-[#E9E9F8]/70">
-                    tiny steps
-                  </span>
+        <div className="relative mx-auto w-full max-w-[580px]">
+          <div className="pointer-events-none absolute inset-x-5 inset-y-3 rotate-[2deg] rounded-[32px] bg-[#D3B9E1]/35" aria-hidden="true" />
+          <div className="relative overflow-hidden rounded-[30px] border border-white/90 bg-white shadow-[0_24px_65px_rgba(16,36,62,0.11)]">
+            <div className="bg-gradient-to-br from-[#EAF6FF] via-[#F5F0FF] to-[#FFF7EC] px-5 pb-6 pt-6 sm:px-7 sm:pt-7">
+              <p className="inline-flex items-center gap-2 rounded-full border border-[#D6E6F7] bg-white/90 px-3 py-1.5 text-xs font-bold text-[#102A43]">
+                <GraduationCap className="h-4 w-4 shrink-0 text-[#245C88]" aria-hidden="true" />
+                Graduate educators with classroom experience
+              </p>
+              <h2 className="mt-5 max-w-lg font-heading text-2xl font-bold leading-tight tracking-[-0.025em] text-[#102A43] sm:text-[1.85rem]">
+                Thoughtful teaching. More confident learning.
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-6 text-[#29425B] sm:text-base sm:leading-7">
+                Our lessons are designed for children to understand a skill, practise it with support and gradually use it independently.
+              </p>
+            </div>
+            <div className="px-4 pb-5 pt-5 sm:px-6 sm:pb-6">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#604577]">
+                How we guide learning
+              </p>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                {lessonStages.map(({ title, description, Icon, tone }) => (
+                  <div key={title} className={`min-w-0 rounded-[18px] border p-3 sm:p-4 ${tone}`}>
+                    <Icon className="h-5 w-5" aria-hidden="true" />
+                    <h3 className="mt-3 font-heading text-sm font-bold text-[#102A43] sm:text-base">{title}</h3>
+                    <p className="mt-1 text-xs leading-5 text-[#29425B]">{description}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 flex flex-col gap-3 rounded-[18px] bg-[#102A43] px-4 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start gap-3">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#F6CF7E]" aria-hidden="true" />
+                  <div>
+                    <p className="text-sm font-bold">Prepared, observed and supported</p>
+                    <p className="mt-1 text-xs leading-5 text-[#EAF6FF]">Shared resources and targeted academic feedback</p>
+                  </div>
                 </div>
-                <div className="relative z-10 grid grid-cols-4 items-center gap-2 px-1 pb-7 pt-5 sm:gap-3 sm:px-2 sm:pb-10 sm:pt-7">
-                  {featuredEducators.map((teacher, index) => (
-                    <div
-                      key={teacher.src}
-                      className={`min-w-0 ${index === 0 ? 'translate-y-5 sm:translate-y-8' : index === 1 ? '-translate-y-4 sm:-translate-y-6' : index === 2 ? 'translate-y-5 sm:translate-y-8' : '-translate-y-4 sm:-translate-y-6'}`}
-                    >
-                      <div className={`aspect-[3/5] overflow-hidden rounded-[50%] border-[3px] border-white shadow-[0_12px_26px_rgba(16,36,62,0.13)] ring-1 sm:border-4 ${index % 2 === 0 ? 'bg-[#EAF6FF] ring-[#D6E6F7]' : 'bg-[#F5F0FF] ring-[#E4DCF8]'}`}>
-                        <img
-                          src={teacher.src}
-                          alt={teacher.name + ', Tiny Steps educator preview'}
-                          width={960}
-                          height={1200}
-                          loading="eager"
-                          decoding="async"
-                          className="h-full w-full object-cover object-top"
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <Link to="/class-samples" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 self-start rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#102A43] transition hover:bg-[#EAF6FF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:self-center">
+                  See class samples
+                  <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
               </div>
-            ) : (
-              <div className="relative z-10 mt-6 rounded-[22px] border border-[#D6E6F7] bg-gradient-to-br from-[#EAF6FF] via-[#FBF8FF] to-[#FFF7EC] px-5 py-10 text-center">
-                <p className="font-heading text-xl font-bold text-[#102A43]">Thoughtful teaching. More confident learning.</p>
-                <p className="mt-3 text-sm leading-6 text-[#29425B]">Prepared lessons, guided practice and ongoing academic support.</p>
-              </div>
-            )}
-            <div className="relative z-10 mt-1 flex flex-col items-center justify-between gap-3 border-t border-[#E4DCF8] pt-4 text-center sm:flex-row sm:text-left">
-              <div>
-                <p className="font-heading text-base font-bold text-[#102A43]">Thoughtful teaching. More confident learning.</p>
-                <p className="mt-1 text-xs leading-5 text-[#29425B]">How we guide learning: model, practise, apply.</p>
-              </div>
-              <Link to="/class-samples" className="inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-full border border-[#D6E6F7] bg-[#EAF6FF] px-4 py-2 text-xs font-bold text-[#102A43] transition hover:bg-[#D9EEFF] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#102A43]">
-                See class samples
-                <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
             </div>
           </div>
         </div>
