@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 6 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs, 22 valid CSV columns, correct slot allocations (slots 1–19: ten each; slot 20: twelve). Before batch, 50 distinct current-day URLs checked; rows 51–60 not yet checked today.
+
+**Observed:** Ten exact public URLs (rows 51–60) returned page-specific provider-extracted text (turn607505view0–turn607505view9; provider labelled Crawled yesterday, precise crawl time unknown). Independent HTTPS curl GET attempts started at ten distinct UTC times 2026-11-03T23:44:59.768890Z through 2026-11-03T23:45:11.909252Z. Five failed DNS resolution (exit 6, `curl: (6) Could not resolve host: tinystepslearning.com`); five timed out during DNS resolution (exit 28, `curl: (28) Resolving timed out after 3000 milliseconds`). HTTP_CODE 000 is not an HTTP response.
+
+**Verification boundary:** HTTP status, redirects, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence only. DNS errors in the audit environment do not prove production downtime. No verified regression, improvement, indexing, ranking or AI citation.
+
+**Daily attempted coverage:** 60/202 distinct URLs (29.70%); 142 awaiting scheduled attempts; 0 fully origin-verified. Next eligible slot 7, rows 61–70.
+
+**GitHub Actions:** Repository API returned zero in-progress runs. Workflow administrative disablement not independently established; user's 25 October confirmation remains operating basis. No workflow enabled or executed.
+
+**Persistence:** Tracker and summary updated on tracker branch; CHANGES.md unchanged because no meaningful production transition verified.
+
+---
+
 ## Slot 5 — 4 November 2026 IST
 
 **Preflight:** Exactly 202 unique selected URLs, 22 valid CSV columns, correct allocations (slots 1–19: ten each; slot 20: twelve). Before this batch 40 distinct URLs had current-day check timestamps; rows 41–50 were unchecked for 4 November IST.
