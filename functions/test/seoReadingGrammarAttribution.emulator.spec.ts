@@ -99,6 +99,51 @@ describe('Reading/Grammar search-to-enquiry server enrichment (demo Firestore em
     expect((await ref.get()).data()?.landingPage).toBe(landingPage);
   });
 
+  it.each([
+    { id: 'DDDDDDDDDDDDDDDDDDDD', label: 'gclid with CPC UTM', gclid: 'synthetic-click' },
+    { id: 'EEEEEEEEEEEEEEEEEEEE', label: 'CPC UTM only', gclid: undefined },
+  ])('preserves paid Grammar attribution in Firestore: $label', async ({ id, gclid }) => {
+    const ref = await seedWebsiteEnquiry(id, 'Grammar');
+    const result = await enrichPublicLeadAttribution.run({
+      data: {
+        leadId: id,
+        attribution: {
+          landingPage: '/grammar',
+          conversionPage: '/book-demo',
+          utm_source: 'google',
+          utm_medium: 'cpc',
+          utm_campaign: 'ts_grammar_search_pilot_202611',
+          ...(gclid ? { gclid } : {}),
+        },
+      },
+    } as never);
+    expect(result).toMatchObject({
+      ok: true,
+      acquisitionChannel: 'google_ads',
+      canonicalLeadId: id,
+    });
+
+    const saved = (await ref.get()).data();
+    expect(saved).toMatchObject({
+      sourcePath: '/book-demo',
+      landingPage: '/grammar',
+      conversionPage: '/book-demo',
+      acquisitionChannel: 'google_ads',
+      attribution: {
+        utm_source: 'google',
+        utm_medium: 'cpc',
+        utm_campaign: 'ts_grammar_search_pilot_202611',
+      },
+    });
+    expect(saved?.attribution?.gclid ?? null).toBe(gclid ?? null);
+    expect((await ref.collection('inquiries').doc(id).get()).data()).toMatchObject({
+      sourceLeadId: id,
+      landingPage: '/grammar',
+      conversionPage: '/book-demo',
+      acquisitionChannel: 'google_ads',
+    });
+  });
+
   it('refuses to enrich non-website leads', async () => {
     const id = 'CCCCCCCCCCCCCCCCCCCC';
     const ref = await seedWebsiteEnquiry(id, 'Reading');
