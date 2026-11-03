@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 3 — 4 November 2026 IST
+
+**Preflight:** 202 unique selected URLs, 22 CSV columns, correct slot allocations (slots 1–19: 10 each; slot 20: 12). Before this batch, 20 distinct URLs had 4 November IST check timestamps; rows 21–30 were unchecked today.
+
+**Observed:** Rows 21–30 attempted with ten distinct UTC timestamps between 2026-11-03T20:41:02.678745Z and 2026-11-03T20:41:18.761536Z. Exact public URL retrieval yielded page-specific extracted text for rows 21, 28 and 30; seven other exact URL retrievals returned tool Internal Error. Direct HTTPS curl GETs failed before HTTP: five DNS failures (exit 6) and five DNS timeouts (exit 28). HTTP_CODE 000 is not an origin response.
+
+**Verification boundary:** All ten technical statuses UNVERIFIED for origin HTTP status, redirects/final destination, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD. Extracted provider text is partial evidence only; retrieval errors do not establish production failures. No verified production regression or improvement.
+
+**Daily attempted coverage:** 30/202 distinct URLs (14.85%) on 4 November IST; 172 awaiting scheduled attempts; 0 fully origin-verified. Next eligible slot 4, rows 31–40.
+
+**GitHub Actions:** Administrative workflow disablement could not independently be checked in this run (workflow API rejected). The user's 25 October disablement confirmation remains the operating basis; no workflow was enabled or run. Concurrent workflow activity could not be independently ruled out this run.
+
+**Persistence:** Master tracker and summary updated on tracker branch; CHANGES.md unchanged because no meaningful verified transition.
+
+---
+
 ## Slot 2 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 valid CSV columns, 10 URLs in each slot 1–19 and 12 in slot 20. Before this run only slot 1 (rows 1–10) had current-day attempts; no slot 2 URL was previously checked.
