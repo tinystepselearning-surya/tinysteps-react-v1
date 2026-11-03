@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 5 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs, 22 valid CSV columns, correct allocations (slots 1–19: ten each; slot 20: twelve). Before this batch 40 distinct URLs had current-day check timestamps; rows 41–50 were unchecked for 4 November IST.
+
+**Observed:** Ten exact public URLs (rows 41–50) probed with distinct UTC start times from 2026-11-03T22:47:10.723210Z to 2026-11-03T22:47:30.854903Z. Public web retrieval yielded page-specific extracted text for all ten. Independent direct HTTPS curl GET failed before receiving an HTTP response for all ten: DNS resolution failure (exit 6), exact stderr: `curl: (6) Could not resolve host: tinystepslearning.com`. HTTP_CODE 000 is not an HTTP response.
+
+**Verification boundary:** HTTP status, final redirect destination, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence only. No verified production regression or improvement; no Google/Bing indexing or AI citation claims.
+
+**Daily attempted coverage:** 50/202 distinct URLs (24.75%); 152 awaiting scheduled attempts; 0 fully origin-verified. Next eligible slot 6, rows 51–60.
+
+**GitHub Actions:** Repository API returned zero in-progress runs. Workflow administrative disablement not independently established; user's 25 October disablement confirmation remains operating basis. No workflow enabled or executed.
+
+**Persistence:** Tracker and summary updated on tracker branch. CHANGES.md unchanged because no verified meaningful production transition.
+
+---
+
 ## Slot 4 — 4 November 2026 IST
 
 **Preflight:** Exactly 202 unique URLs, 22 columns, correct allocations (slots 1–19 ten each; slot 20 twelve). Before this batch 30 distinct URLs had current-day check timestamps; rows 31–40 were unchecked for 4 November IST.
