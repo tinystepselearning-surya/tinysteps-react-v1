@@ -1,15 +1,15 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-03 IST)
 
-## Slot 17 — 3 November 2026 IST, approximately 16:10 IST
+## Slot 18 — 3 November 2026 IST, approximately 17:10 IST
 
-**Preflight:** Current 22-column CSV tracker had exactly 202 unique selected URLs, with slots 1–19 containing 10 URLs each and slot 20 containing 12. Prior to this batch, 160 distinct URLs had 3 November IST check dates. Rows 161–170 were eligible and had only previous-day timestamps.
+**Preflight:** Validated 202 unique URLs and 22 columns, slots 1–19 at 10 URLs and slot 20 at 12. Before this run 170 distinct URLs had 3 November IST observations. Rows 171–180 were unchecked today.
 
-**Observed:** Exact-URL web.open returned substantive, page-specific extracted content for nine of ten blog pages (refs turn733183view0, view2–view9). Row 162 (phonological awareness vs phonemic awareness vs phonics) returned an internal retrieval error (turn733183view1), so no current page text was verified for that URL. Provider snapshots for nine pages were labelled “Crawled today,” but precise provider crawl times are unknown. Direct read-only curl HTTPS attempts started at ten distinct actual UTC timestamps between **2026-11-03T10:40:20.862797Z** and **2026-11-03T10:40:40.982441Z**. Five attempts failed with exit 6 (`Could not resolve host: tinystepslearning.com`) and five with exit 28 (`Resolving timed out after 5000 milliseconds`, one 5001 milliseconds). No origin HTTP response was obtained.
+**Observed:** Exact-URL public web.open returned page-specific extracted text for all ten URLs (turn676370view0–turn676370view9), including seven speaking guides and three phonics/reading guides. All provider snapshots were labelled Crawled today, with no exact provider crawl timestamp. Ten direct read-only HTTPS attempts started at distinct UTC timestamps from **2026-11-03T11:40:20.403183Z** to **2026-11-03T11:40:30.420493Z**. All failed before HTTP with underlying DNS error `[Errno -3] Temporary failure in name resolution` in the audit container. No origin response or headers were obtained.
 
-**Verification boundary:** HTTP status, redirect destination, canonical, robots/meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, initial HTML and JSON-LD remain **UNVERIFIED**. Curl HTTP_CODE:000 is not a server status; DNS failures in this audit environment do not establish production downtime. No verified production regression, improvement, indexing, ranking or AI citation change.
+**Verification boundary:** HTTP status, redirect destination, canonical, robots/meta/X-Robots-Tag/noindex, Googlebot/Bingbot/OAI-SearchBot access, raw initial HTML and JSON-LD remain **UNVERIFIED**. Provider text is partial retrieval evidence, not origin health. DNS failures here are not proof of production downtime. No verified production regression, improvement, indexing, ranking or AI citation change.
 
-**Daily coverage:** **170/202 distinct URLs attempted (84.16%)**, **32 awaiting scheduled slots**, **0 fully origin-verified**. Previous-day observations excluded. Next eligible Slot 18: rows 171–180.
+**Daily coverage:** **180/202 distinct URLs attempted (89.11%)**, **22 awaiting scheduled slots**, **0 fully origin-verified**. No previous-day carryover. Next eligible Slot 19: rows 181–190.
 
-**GitHub Actions:** The repository Actions in-progress runs endpoint returned `total_count: 0` during this run. Administrative workflow disablement could not be independently confirmed; proceeded under user's 25 October GitHub UI disablement confirmation. Cron YAML presence alone does not prove enabled state. No workflow execution or enabling performed.
+**GitHub Actions:** Repository in-progress workflow runs API returned `total_count: 0`. Administrative workflow-state endpoint was rejected by connected GitHub fetch, so disablement cannot independently be confirmed. Proceeded under user's 25 October UI disablement confirmation. No workflow was enabled or executed.
 
-**Persistence:** MASTER_URL_TRACKER.csv updated with actual distinct UTC attempt timestamps and scoped UNVERIFIED findings (commit `abd92823ab4194d0c9ce56acba2c84c44d6b6f1a`). CHANGES.md unchanged: no meaningful verified production transition. Only tracker and summary updated.
+**Persistence:** Tracker updated in commit `354ec8c5dc84aeb54c81a586548ed19e01b1dbb7`. CHANGES.md unchanged because no verified meaningful transition. Only tracker and summary updated.
