@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 4 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique URLs, 22 columns, correct allocations (slots 1–19 ten each; slot 20 twelve). Before this batch 30 distinct URLs had current-day check timestamps; rows 31–40 were unchecked for 4 November IST.
+
+**Observed:** Ten exact URLs probed at distinct UTC start times 2026-11-03T21:40:06.008425Z through 2026-11-03T21:40:26.121022Z. Public web retrieval returned substantive page-specific extracted text for nine URLs (rows 32–40); row 31 returned an access/tool error. Direct independent HTTPS curl GET failed before HTTP for all ten: five DNS resolution failures (exit 6) and five DNS timeouts (exit 28). HTTP_CODE 000 is not an HTTP response.
+
+**Verification boundary:** Origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED for all ten. Provider text is partial evidence only. No verified production regression or improvement. No verified Google/Bing indexing or AI citations.
+
+**Daily attempted coverage:** 40/202 distinct URLs (19.80%); 162 awaiting scheduled attempts; 0 fully origin-verified. Next eligible slot 5, rows 41–50.
+
+**GitHub Actions:** GitHub API returned zero in-progress repository runs. Workflow administrative state endpoint rejected; user-confirmed disablement remains operating basis. No workflow enabled or executed.
+
+**Persistence:** Master tracker and summary updated on tracker branch. CHANGES.md unchanged because no verified meaningful production transition.
+
+---
+
 ## Slot 3 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 CSV columns, correct slot allocations (slots 1–19: 10 each; slot 20: 12). Before this batch, 20 distinct URLs had 4 November IST check timestamps; rows 21–30 were unchecked today.
