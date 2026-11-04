@@ -1,3 +1,19 @@
+## Slot 15 — 4 November 2026 IST
+
+**Preflight:** 202 unique selected URLs; 22 valid columns; slots 1–19: ten URLs each, slot 20: twelve. Previously 140 distinct current-day attempts; rows 141–150 were unchecked today.
+
+**Observed:** All ten exact public URLs returned substantive provider-extracted page text (turn540447view0–turn540447view9), with individual H1 evidence in tracker. Independent direct HTTPS GETs started at ten distinct UTC timestamps from 2026-11-04T08:40:58.209585Z to 2026-11-04T08:41:18.326285Z. Five curl DNS resolution failures (exit 6), five DNS timeouts (exit 28); no HTTP response.
+
+**Verification boundary:** Origin HTTP, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence only. DNS errors in this audit environment do not prove site downtime. No verified production regression/improvement or search indexing/ranking/AI citation evidence.
+
+**Daily attempted coverage:** 150/202 (74.26%); 52 remaining, 0 fully origin-verified. Next eligible slot 16, rows 151–160.
+
+**GitHub Actions:** Zero in-progress repository runs. Administrative disablement not independently confirmed; user's disable confirmation relied upon. No workflow run or enablement initiated.
+
+**Persistence:** Tracker and summary updated on tracker branch; CHANGES.md unchanged (no verified production transition).
+
+---
+
 ## Slot 14 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs; 22 valid CSV columns; slots 1–19 contain 10 each, slot 20 contains 12. Before batch, 130 distinct current-day URLs attempted; rows 131–140 had only prior-day timestamps.
