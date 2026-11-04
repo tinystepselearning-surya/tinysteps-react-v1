@@ -1,3 +1,19 @@
+## Slot 17 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs and 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before batch 160 distinct URLs had 4 November IST attempts; rows 161–170 were not checked today.
+
+**Observed:** Ten exact public blog URLs were retrieved through public web access. Nine yielded substantive page-specific extracted text (turn102864view0, turn102864view2–9); row 162 yielded retrieval Internal Error (turn102864view1). Provider snapshots labelled Crawled yesterday; precise crawl times unavailable. Independent direct HTTPS requests were attempted at ten distinct UTC timestamps between 2026-11-04T10:48:51.254148Z and 2026-11-04T10:49:11.304284Z. All failed before HTTP with ConnectionError / NameResolutionError in the audit environment.
+
+**Verification boundary:** Origin HTTP status, redirects, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence only. DNS errors here do not establish production downtime. No verified regression, improvement, indexing, rankings or AI citations.
+
+**Daily attempted coverage:** 170/202 (84.16%); 32 remaining, 0 fully origin-verified. Next eligible slot 18, rows 171–180.
+
+**GitHub Actions:** Recent repository runs inspected; no concurrently running rolling SEO audit in returned runs. Administrative disabled state not independently confirmed; user's prior disable confirmation remains the operating basis. No workflow started or enabled.
+
+**Persistence:** Tracker and summary updated on tracker branch; CHANGES.md unchanged because no verified meaningful production transition.
+
+---
+
 ## Slot 16 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs; 22 valid CSV columns; slots 1–19 contain 10 each and slot 20 contains 12. Previously 150 distinct current-day attempts; rows 151–160 were unchecked today.
