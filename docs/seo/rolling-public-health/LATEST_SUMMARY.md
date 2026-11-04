@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 6 — 5 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs, 22 CSV columns, correct slot allocations (slots 1–19: ten each; slot 20: twelve). Before this batch, 50 distinct URLs had 5 November IST attempts; rows 51–60 were still dated 4 November.
+
+**Actual observations:** All ten exact public URLs returned page-specific extracted content through public web retrieval (provider references turn969646view0–9). These covered phonics apps, phonics games, digital phonics practice, and free English, phonics, letter-sound, word-building, sentence-building, reading and grammar game pages. Provider labelled snapshots “Crawled: today” without precise crawl times. Ten independent Python HTTPS GET attempts began at distinct UTC times from 2026-11-04T23:40:07.309030Z to 2026-11-04T23:40:27.348572Z. Every direct request failed before HTTP with requests/urllib3 DNS NameResolutionError in the audit environment.
+
+**Verification boundary:** Provider-extracted content is partial evidence, not origin initial HTML. Origin HTTP status, final redirect, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. No verified production regression or improvement; no indexing, ranking or AI citation assertion.
+
+**Daily attempted coverage:** 60/202 distinct URLs (29.70%); 142 remain for assigned later slots. Fully origin-verified: 0/202. Next eligible slot 7, rows 61–70.
+
+**GitHub Actions:** In-progress repository runs API returned zero running jobs. Administrative disabled state not independently verified; user-confirmed disablement remains operating basis. No workflow enabled or started.
+
+**Persistence:** Master tracker and summary updated on tracker branch. CHANGES.md unchanged; no verified meaningful production transition.
+
+---
+
 ## Slot 5 — 5 November 2026 IST
 
 **Preflight:** Exactly 202 unique selected URLs, 22 CSV columns and correct allocations (10 URLs in slots 1–19; 12 in slot 20). Before this batch, 40 distinct URLs had 5 November IST attempts; rows 41–50 were dated 4 November.
