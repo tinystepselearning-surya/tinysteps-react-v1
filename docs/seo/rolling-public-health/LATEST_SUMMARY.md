@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 5 — 5 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs, 22 CSV columns and correct allocations (10 URLs in slots 1–19; 12 in slot 20). Before this batch, 40 distinct URLs had 5 November IST attempts; rows 41–50 were dated 4 November.
+
+**Actual observations:** All ten exact public URLs yielded page-specific extracted text via public web retrieval (provider references turn350826view0–9): Why Tiny Steps, Team, Founder profile, Class Samples, Testimonials, Careers, Courses, Curriculum, FAQ and the India phonics comparison guide. Provider indicated “Crawled: today” without precise crawl timestamps. Independent Python HTTPS GET requests were actually attempted for all ten URLs at distinct UTC start timestamps from 2026-11-04T22:44:28.974130Z to 2026-11-04T22:44:49.009665Z. All failed before receiving HTTP with requests/urllib3 DNS NameResolutionError in the audit environment.
+
+**Verification boundary:** Origin HTTP status, redirect destination, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider-extracted page text is partial evidence only, not successful origin verification. No verified production regression or improvement, search indexing, ranking or AI citation change.
+
+**Daily attempted coverage:** 50/202 distinct URLs (24.75%); 152 remain for later assigned slots. Fully origin-verified 0/202. Next eligible slot 6, rows 51–60.
+
+**GitHub Actions:** Recent repository workflow runs listing showed no in-progress/queued run or rolling SEO audit run in the returned page. Administrative disabled state not independently verified; user-confirmed disablement remains operating basis. No workflow started or enabled.
+
+**Persistence:** Master tracker and summary updated on tracker branch; CHANGES.md unchanged because no verified before/after production transition.
+
+---
+
 ## Slot 4 — 5 November 2026 IST
 
 **Preflight:** Exactly 202 unique selected URLs and 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 30 distinct URLs had 5 November IST attempts; rows 31–40 still carried 4 November dates.
