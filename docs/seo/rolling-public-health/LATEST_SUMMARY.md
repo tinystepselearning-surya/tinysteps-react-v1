@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 3 — 5 November 2026 IST
+
+**Preflight:** 202 unique selected URLs, 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 20 distinct URLs had current-day attempts; rows 21–30 were dated 4 November.
+
+**Actual observations:** Exact public URL retrieval yielded page-specific text for 3/10 pages: Rabbit Rule (H1: "What is the Rabbit Rule in phonics?", turn896430view0), AU/AW (H1: "How do children choose between au and aw?", turn896430view7), and OO sounds (H1: "Why does oo sound different in moon and book?", turn896430view9). The remaining seven exact URL retrievals returned provider Internal Error/not accessible (turn896430view1–6, turn896430view8); this is not evidence of website failure. Provider text snapshots labelled "Crawled: yesterday" without precise crawl timestamps. Independent HTTPS GET requests were actually attempted for all ten URLs at distinct UTC timestamps between 2026-11-04T20:46:24.954702Z and 2026-11-04T20:46:44.990871Z. All failed before HTTP with requests/urllib3 NameResolutionError in the audit environment.
+
+**Verification boundary:** Origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider-extracted text is partial evidence only. DNS failures do not prove production downtime. No verified regression, improvement, indexing, ranking or AI citation change.
+
+**Daily attempted coverage:** 30/202 distinct URLs (14.85%); 172 await assigned slots. Fully origin-verified 0/202. Next eligible slot 4, rows 31–40.
+
+**GitHub Actions:** In-progress repository runs API returned one unrelated workflow, "TSSA-SCQ Phase 0 Semantic Content Gate" (run 41909509576, .github/workflows/tssa-scq-phase0-content-gate.yml). No concurrently running rolling SEO audit observed in returned in-progress runs. Administrative disabled state of rolling workflow not independently confirmed; user's 25 October disable confirmation remains operating basis. No workflow started or enabled.
+
+**Persistence:** Master tracker and summary updated on tracker branch. CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 2 — 5 November 2026 IST
 
 **Preflight:** 202 unique selected URLs; 22 CSV columns; slots 1–19 contain 10 each, slot 20 contains 12. Before batch 10 distinct URLs had current-day attempts; rows 11–20 carried 4 November timestamps.
