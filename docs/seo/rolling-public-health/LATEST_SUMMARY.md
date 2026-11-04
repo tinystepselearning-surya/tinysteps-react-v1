@@ -1,3 +1,19 @@
+## Slot 20 — 4 November 2026 IST
+
+**Preflight:** 202 unique selected URLs, 22 valid CSV columns; slots 1–19 have 10 URLs each, slot 20 has 12. Before this batch, 190 distinct URLs had 4 November IST attempts; rows 191–202 had only 3 November checks.
+
+**Observed:** All 12 exact public URLs returned page-specific provider-extracted text (turn140741view0–11), including three course pages and nine parent hub/guides. Provider snapshots labelled Crawled yesterday; precise provider crawl times unknown. Independent direct HTTPS GET attempts began at 12 distinct UTC timestamps between 2026-11-04T13:45:05.077828Z and 2026-11-04T13:45:30.259777Z. Six failed with curl exit 6 (Could not resolve host), six with curl exit 28 (Resolving timed out after 5000–5001 milliseconds). HTTP_CODE:000 was not an origin HTTP response.
+
+**Verification boundary:** Origin HTTP status, redirect destination, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text demonstrates partial page-content retrieval only. Audit-environment DNS failures do not establish production downtime. No verified regression, improvement, indexing, ranking or AI citation.
+
+**Daily attempted coverage:** 202/202 distinct URLs (100% attempted); zero fully origin-verified. No unattempted rows remain for 4 November; reconciliation slots 21–22 and catch-up slots 23–24 should not recheck already attempted rows. Full production-readiness verification remains blocked by origin DNS access from this audit environment.
+
+**Workflow:** GitHub Actions in-progress repository runs API returned zero. Administrative workflow disablement could not be independently confirmed; the user's explicit prior confirmation remains the operating basis. No GitHub workflow executed or enabled.
+
+**Persistence:** Tracker updated on seo-url-health-tracker; CHANGES.md unchanged because no verified meaningful production transition.
+
+---
+
 ## Slot 19 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 180 distinct URLs had current-day attempts; rows 181–190 had not been checked on 4 November IST.
