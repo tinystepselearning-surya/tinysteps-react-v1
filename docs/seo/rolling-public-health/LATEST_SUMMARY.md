@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 12 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 distinct selected URLs, 22 CSV columns and correct allocation (slots 1–19: 10 each; slot 20: 12). Before this batch, 110 distinct URLs had 4 November IST timestamps. Rows 111–120 were not checked today.
+
+**Actual observations:** Ten exact blog URLs (rows 111–120) retrieved page-specific extracted text, with H1 titles recorded per URL in tracker evidence (turn878176view0–turn878176view9). Provider snapshots stated "Crawled: yesterday", with no precise provider crawl times. Ten independent Python requests HTTPS GETs began at distinct UTC times 2026-11-04T05:48:52.349906Z through 2026-11-04T05:49:12.442455Z. All failed before HTTP due to requests ConnectionError / urllib3 NameResolutionError in the audit environment.
+
+**Verification boundary:** Origin HTTP statuses, redirects, canonical, robots/noindex, bot access, initial HTML and JSON-LD are UNVERIFIED for all ten. Provider-extracted content is partial evidence, not origin-health certification. DNS failure here does not establish production downtime. No verified production regression, improvement, indexing, ranking or AI citation change.
+
+**Daily attempted coverage:** 120/202 distinct URLs (59.41%); 82 await scheduled checks; 0 fully origin-verified. Next eligible slot 13, rows 121–130.
+
+**GitHub Actions:** In-progress repository workflow runs API returned total_count=0. Administrative workflow disabled state not independently verified; the user's 25 October disable confirmation remains the operating basis. No workflow run started or enabled.
+
+**Persistence:** Tracker and summary updated on seo-url-health-tracker; CHANGES.md unchanged because no meaningful production transition was verified.
+
+---
+
 ## Slot 11 — 4 November 2026 IST
 
 **Preflight:** 202 distinct selected URLs, 22 CSV columns, slots 1–19 each have 10 URLs and slot 20 has 12. Before this batch, 100 distinct URLs had current-day timestamps. Rows 101–110 carried only 3 November timestamps.
