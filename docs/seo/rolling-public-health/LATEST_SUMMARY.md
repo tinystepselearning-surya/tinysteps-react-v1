@@ -1,3 +1,19 @@
+## Slot 1 — 5 November 2026 IST
+
+**Preflight:** 202 unique selected URLs, 22 valid CSV columns, slots 1–19 contain 10 each and slot 20 contains 12. Before batch, zero URLs had 5 November IST attempts. Previous-day timestamps were not counted.
+
+**Observed:** Exact public web retrieval returned page-specific extracted HTML text for all ten URLs (turn917303view0–9), with unchanged H1 headings compared with 4 November tracker evidence. Provider snapshots labelled Crawled today; precise provider crawl times unknown. Independent HTTPS GET attempts began at ten distinct UTC times between 2026-11-04T18:40:21.713516Z and 2026-11-04T18:40:41.780492Z. All ten failed before HTTP with requests/urllib3 NameResolutionError in this audit environment.
+
+**Verification boundary:** Origin HTTP status, redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial content evidence only. Audit DNS failure does not prove production downtime. No verified regression, improvement, indexing, ranking or AI citation change.
+
+**Daily attempted coverage:** 10/202 distinct URLs (4.95%); 192 await their scheduled slots; zero fully origin-verified. Next eligible slot 2, rows 11–20.
+
+**Workflow:** GitHub Actions in-progress repository runs API returned total_count=0. Administrative disabled state could not independently be confirmed; user's prior disable confirmation remains operating basis. No workflow run or enablement initiated.
+
+**Persistence:** Master tracker updated on seo-url-health-tracker; CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 20 — 4 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 valid CSV columns; slots 1–19 have 10 URLs each, slot 20 has 12. Before this batch, 190 distinct URLs had 4 November IST attempts; rows 191–202 had only 3 November checks.
