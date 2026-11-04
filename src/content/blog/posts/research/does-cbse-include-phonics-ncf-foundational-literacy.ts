@@ -158,7 +158,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This is why [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) is a separate implementation article. This article establishes the curriculum evidence; [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) explains the next teaching steps.',
+        'This article establishes the official curriculum evidence; [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) explains the next teaching steps.',
     },
 
     {

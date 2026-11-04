@@ -77,15 +77,15 @@ const post: BlogPost = {
     { type: 'li', content: '**The word contains an untaught pattern:** decide whether it needs brief explicit support now or belongs later in the programme sequence.' },
     { type: 'li', content: '**Child can read the flashcard but not a fresh regular word:** check decoding and blending transfer before adding more memorized cards.' },
 
-    { type: 'h2', content: 'Where this article stops: Blogs #21 and #47 answer different questions' },
-    { type: 'p', content: 'This Blog #20 is the **evidence and terminology owner** for phonics versus “sight words”: what each term means, what research supports, and how regular, high-frequency and irregular words should be interpreted.' },
-    { type: 'p', content: 'Blog #21, [Synthetic Phonics vs Traditional Reading](/blog/synthetic-phonics-vs-traditional-reading), owns the broader **teaching-method comparison** between systematic synthetic phonics and traditional/mixed cue-based approaches.' },
-    { type: 'p', content: 'Blog #47, [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first), owns the narrower **parent sequencing decision** about what to start with and how to combine early phonics with selected common-exception words at home.' },
-    { type: 'p', content: 'Blog #4, [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words), owns the conceptual distinction between digraphs, blends, high-frequency words, sight words and tricky/common-exception words. Blog #28 owns the hands-on tricky-word practice routine.' },
+    { type: 'h2', content: 'Related guides: comparing reading methods and choosing first steps' },
+    { type: 'p', content: 'This guide explains the evidence and terminology around phonics versus “sight words”: what each term means, what research supports, and how regular, high-frequency and irregular words should be interpreted.' },
+    { type: 'p', content: '[Synthetic Phonics vs Traditional Reading](/blog/synthetic-phonics-vs-traditional-reading) provides the broader **teaching-method comparison** between systematic synthetic phonics and traditional/mixed cue-based approaches.' },
+    { type: 'p', content: '[Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first) addresses the narrower **parent sequencing decision** about what to start with and how to combine early phonics with selected common-exception words at home.' },
+    { type: 'p', content: '[Digraphs and Tricky Words](/blog/digraphs-and-tricky-words) explains the conceptual distinction between digraphs, blends, high-frequency words, sight words and tricky/common-exception words. [How to Teach Tricky Words](/blog/phonics-tricky-words) offers hands-on tricky-word activities.' },
 
     { type: 'h2', content: 'What about fluency and comprehension?' },
     { type: 'p', content: 'Phonics is crucial for word reading, but **reading is larger than decoding**. EEF explicitly notes that phonics improves reading accuracy but does not automatically guarantee comprehension. Vocabulary, oral language, background knowledge, fluency and comprehension also need attention.' },
-    { type: 'p', content: 'Once decoding is workable, Blog #43, [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children), owns accuracy, phrasing and meaning during fluent reading. Blog #31 owns the decoding-to-comprehension bridge.' },
+    { type: 'p', content: 'Once decoding is workable, [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children) covers accuracy, phrasing and meaning during fluent reading. [From Decoding to Comprehension](/blog/phonics-comprehension) explains the bridge from decoding to understanding.' },
 
     { type: 'h2', content: 'What should parents avoid?' },
     { type: 'li', content: '**Do not turn every common word into a visual-memory card.** First ask whether the word is already decodable.' },

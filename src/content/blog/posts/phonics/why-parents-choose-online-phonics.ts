@@ -16,8 +16,8 @@ const post: BlogPost = {
     { type: 'p', content: 'Families may choose online phonics because live teaching is easier to access from home, a child needs more individual response opportunities, the family wants a clearer assessment and feedback loop, or local specialist options are limited. Those are legitimate practical advantages. They do not prove that an online class will be effective.' },
     { type: 'p', content: 'The central Tiny Steps principle is: **online is a delivery format, not a teaching method**. A good online phonics lesson still needs explicit sound–print teaching, active child responses, blending, spelling, corrective feedback, cumulative review and transfer into fresh words and matched text.' },
 
-    { type: 'h2', content: 'This article owns the “why online?” question' },
-    { type: 'p', content: 'Blog #34 explains the reasons families consider live online phonics, the benefits the format can offer, its limitations and the signs that it fits the child. It does **not** rank online against school: Blog #12, [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school), owns that decision. It does **not** rank providers: Blog #10, [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes), owns provider comparison. Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), owns the instructional mechanism inside a strong class.' },
+    { type: 'h2', content: 'Why parents consider online phonics—and how to judge fit' },
+    { type: 'p', content: 'This guide explains the reasons families consider live online phonics, the benefits the format can offer, its limitations and the signs that it fits the child. It does **not** rank online against school: [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school) compares the two settings. It does **not** rank providers: [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes) supports provider comparison. [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) explains the teaching process inside a strong class.' },
 
     { type: 'h2', content: 'The Tiny Steps five-part online-fit filter' },
     { type: 'p', content: 'Use **need → access → interaction → teaching → transfer**. This is editorial decision guidance, not a validated provider rating.' },
@@ -50,7 +50,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Reason 5: home can feel calmer for some hesitant children' },
     { type: 'p', content: 'Some children respond more freely in a familiar home environment or with one teacher rather than a larger unfamiliar group. Other children focus better away from home. Treat this as an individual fit factor, not a promise that online classes automatically build confidence.' },
-    { type: 'p', content: 'Confidence is more useful when tied to observable reading behaviour: the child attempts a word, accepts correction, retries and increasingly works with less prompting. Blog #7, [How Phonics Builds Reading Confidence](/blog/how-phonics-builds-reading-confidence), owns that topic in depth.' },
+    { type: 'p', content: 'Confidence is more useful when tied to observable reading behaviour: the child attempts a word, accepts correction, retries and increasingly works with less prompting. [How Phonics Builds Reading Confidence](/blog/how-phonics-builds-reading-confidence) explores that topic in detail.' },
 
     { type: 'h2', content: 'What a strong live online phonics class should still contain' },
     { type: 'li', content: 'Placement based on current phonics and reading behaviour rather than age alone.' },
@@ -65,7 +65,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Online phonics should not become passive screen time' },
     { type: 'p', content: 'Screen use is not automatically educational because a teacher is visible. Phonics is response-heavy. The child needs to say, point, blend, build, write, read and retry. If most of the lesson is an adult talking through slides while the child watches animations, the format is not using live online interaction well.' },
-    { type: 'p', content: 'Digital tools can support the teaching target, but game scores and screen engagement are not substitutes for reading transfer. Blog #13, [Online Phonics Games for Kids](/blog/online-phonics-games), owns the game-quality question.' },
+    { type: 'p', content: 'Digital tools can support the teaching target, but game scores and screen engagement are not substitutes for reading transfer. [Online Phonics Games for Kids](/blog/online-phonics-games) explains how to evaluate game quality.' },
 
     { type: 'h2', content: 'When online phonics may be a poor fit' },
     { type: 'li', content: 'Audio quality is poor enough that speech sounds are not heard clearly.' },
@@ -82,7 +82,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Online live classes vs phonics apps' },
     { type: 'p', content: 'A live class and an app do different jobs. A live teacher can observe the child’s response, interpret an error, change the prompt and decide what to teach next. An app can provide repeatable practice within the interactions it was designed to handle.' },
-    { type: 'p', content: 'That does not mean every live class is better than every app. A poorly taught live class can be weak; a well-designed app can be useful practice. Blog #35 later in the authoritative sequence owns the full question: **Are phonics apps enough, or does a child still need a teacher?**' },
+    { type: 'p', content: 'That does not mean every live class is better than every app. A poorly taught live class can be weak; a well-designed app can be useful practice. [Are Phonics Apps Enough?](/blog/are-phonics-apps-enough-for-kids) examines whether app practice needs additional teacher support.' },
 
     { type: 'h2', content: 'What online phonics cannot replace' },
     { type: 'p', content: 'A supplemental phonics class has a narrow instructional job. It does not replace the child’s wider language and literacy environment.' },
