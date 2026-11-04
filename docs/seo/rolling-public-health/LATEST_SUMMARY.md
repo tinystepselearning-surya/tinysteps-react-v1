@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 9 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique URLs, 22 valid CSV columns, slots 1–19 contain 10 URLs each and slot 20 contains 12. Before batch, 80 distinct 4 November IST checks; rows 81–90 unchecked today.
+
+**Observed:** Ten exact commercial/age-band URLs attempted at distinct UTC times 2026-11-04T02:46:02.738551Z–2026-11-04T02:46:22.790913Z. Public web retrieval returned page-specific extracted text for all ten (turn884541view0–turn884541view9); provider crawl time not precisely known. Independent direct HTTPS Python requests GET attempts all failed before HTTP with ConnectionError / NameResolutionError (DNS failure in audit environment). No HTTP response obtained.
+
+**Verification boundary:** All ten origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Extracted provider text is partial evidence only; audit DNS errors do not establish production downtime. No verified regression, improvement, indexing, ranking or AI citation.
+
+**Daily attempted coverage:** 90/202 distinct URLs (44.55%); 112 await scheduled attempts; 0 fully origin-verified. Next eligible slot 10, rows 91–100.
+
+**GitHub Actions:** Repository API returned zero in-progress runs. Workflow administrative state endpoint unavailable; user's 25 October confirmation remains operating basis. No GitHub workflow enabled or executed.
+
+**Persistence:** Master tracker and summary updated on tracker branch; CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 8 — 4 November 2026 IST
 
 **Preflight:** 202 unique URLs, 22 CSV columns, correct allocations (slots 1–19: 10; slot 20: 12). Before batch: 70 distinct 4 November IST checks; rows 71–80 unchecked.
