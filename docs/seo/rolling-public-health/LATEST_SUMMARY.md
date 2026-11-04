@@ -1,5 +1,23 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 4 — 5 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs and 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 30 distinct URLs had 5 November IST attempts; rows 31–40 still carried 4 November dates.
+
+**Actual observations:** Ten exact public URL retrievals were attempted. Nine yielded page-specific extracted text (J sound, SHUN, UI, Schwa, Grammar resources, Speaking resources, Jolly Phonics, Pricing and Contact; provider references turn352317view1–9). The OU/OW phonics URL returned a provider Internal Error (turn352317view0); this does not prove website failure. Independent HTTPS GET attempts for all ten URLs started at distinct UTC timestamps from 2026-11-04T21:41:44.848324Z to 2026-11-04T21:42:04.887306Z; all failed before receiving HTTP with requests/urllib3 DNS NameResolutionError in the audit environment.
+
+**Verification boundary:** Origin HTTP status, redirect destination, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text snapshots are partial evidence only. No verified production regression, improvement, search indexing, ranking or AI citation change.
+
+**Content warning (provider-extracted, not origin-verified):** Pricing page extracted text says “Group Classes cost ₹250 per child for 50 minutes” (turn352317view8, lines 12–15) and repeats “50 minutes” in the fee table (lines 78–85). Earlier user instruction requested a 50-minute group wording correction; exact desired replacement requires business confirmation. This is a content consistency review item, not a verified newly introduced regression.
+
+**Daily attempted coverage:** 40/202 distinct URLs (19.80%); 162 remain for later assigned slots. Fully origin-verified 0/202. Next eligible slot 5, rows 41–50.
+
+**GitHub Actions:** In-progress repository runs API returned total_count=0 during preflight. Administrative disabled state of rolling audit workflow not independently verified; user-confirmed disablement remains operating basis. No workflow started or enabled.
+
+**Persistence:** Master tracker and summary updated on tracker branch; CHANGES.md unchanged because no verified before/after production transition.
+
+---
+
 ## Slot 3 — 5 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 20 distinct URLs had current-day attempts; rows 21–30 were dated 4 November.
