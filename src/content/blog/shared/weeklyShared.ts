@@ -5,13 +5,13 @@ const WEEKLY_PARENT_GUIDE_BLOCKS: BlogBlock[] = [{
   content: 'Parent guide: how to use this weekly plan in real life'
 }, {
   type: 'p',
-  content: 'Use this weekly post as a practical checklist, not a one-time read. Keep routines short, repeat the same target for 5-7 days, and track one visible win.'
+  content: 'Use this weekly post as a practical checklist, not a one-time read. Keep routines short, revisit the target as needed, and track one visible win.'
 }, {
   type: 'li',
-  content: 'Choose one daily slot and keep it fixed (same time, same place).'
+  content: 'Choose a convenient time, moving or skipping a session when needed.'
 }, {
   type: 'li',
-  content: 'Do 10-15 focused minutes only; stop while your child still feels successful.'
+  content: 'Keep sessions flexible, stopping while the child is engaged; there is no universal minimum number of minutes.'
 }, {
   type: 'li',
   content: 'Use one correction script: "Let us try slowly, then fast."'
@@ -45,10 +45,10 @@ const WEEKLY_TINY_STEPS_STANDARD_BLOCKS: BlogBlock[] = [{
   content: 'Every Tiny Steps weekly blog should give parents a usable routine, measurable progress signal, and practical fallback when the child gets stuck. Use this page as a field guide, not theory-only reading.'
 }, {
   type: 'li',
-  content: 'One concrete routine parents can run in 10-15 minutes.'
+  content: 'One flexible routine that parents can shorten or extend to suit the child.'
 }, {
   type: 'li',
-  content: 'One measurable checkpoint (accuracy, fluency, or confidence) by week-end.'
+  content: 'One observable progress signal (accuracy, fluency or independence) without a fixed weekly deadline.'
 }, {
   type: 'li',
   content: 'One rescue strategy for low-motivation days so consistency does not break.'
@@ -59,30 +59,30 @@ const WEEKLY_DEFAULT_FAQ: {
   answer: string;
 }[] = [{
   question: 'How long should this weekly plan take each day?',
-  answer: 'Keep it to 10-15 focused minutes. Consistency across 5-6 days is more effective than a single long session.'
+  answer: 'Choose brief, productive sessions that fit the child; no universal daily duration or weekly frequency is established.'
 }, {
   question: 'What if my child resists practice on school days?',
-  answer: 'Use a 5-minute minimum routine and keep one easy success at the end. Resume the full 10-15 minute flow the next day.'
+  answer: 'Reduce to one achievable step or take a break, then resume when the child is receptive.'
 }, {
   question: 'How do I know if this week worked?',
-  answer: 'Track one simple metric from Day 1 to Day 7: accuracy, fluency smoothness, or speaking confidence. Improvement on one metric is a valid week win.'
+  answer: 'Observe improvement in accuracy, independence or ease across comparable attempts, without a required seven-day milestone.'
 }];
 
 const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-1-phonics-satpin-launch': {
     heading: 'Real-world action plan: SATPIN without overwhelm',
     context: 'Do not start with heavy worksheets. Start with clear sound production, oral blending, and short decodable lines children can actually read.',
-    routine: ['Day 1-2: Teach s, a, t with pure sounds. Ask for sound in under 2 seconds using flash cards.', 'Day 3-4: Add p, i, n and blend sat, pin, tap, tin with finger taps.', 'Day 5-7: Read 4 tiny lines like "Sam sat." and "Pat taps." Keep each session to 10 minutes.'],
+    routine: ['Day 1-2: Teach s, a, t with pure sounds. Notice whether the child can recall a taught sound without rushing.', 'Day 3-4: Add p, i, n and blend sat, pin, tap, tin with finger taps.', 'When the taught code is secure, read a short line such as "Pat sat." or "Pat taps."; keep the session length flexible.'],
     rescue: 'If your child says letter names instead of sounds, model once, ask for echo twice, then return to one simple blend. If frustration rises, switch to oral-only blending for 2 minutes.',
-    outcomes: ['Child recalls all six SATPIN sounds quickly.', 'Child blends at least five CVC words without picture guessing.', 'Child reads one short decodable sentence with support.'],
+    outcomes: ['Child recalls all six SATPIN sounds quickly.', 'Child blends fresh CVC words built from taught sounds without picture guessing.', 'Child reads one short decodable sentence with support.'],
     parentQuestions: ['My child forgets sounds the next day. Start every session with a 90-second sound review before new words.', 'My child mixes b and d. Delay these letters for now and return after sound confidence is stable.']
   },
   'week-2-phonics-blending-club': {
     heading: 'Real-world action plan: blending that works on school nights',
     context: 'Blending becomes automatic with short daily repetition. Use a fixed ladder from oral sounds to print to sentence.',
-    routine: ['Start with 3 oral blends: c-a-t, m-a-p, s-i-t before opening a book.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap and discuss the changed middle sound.', 'Finish with one decodable line: "The cat sat." "I tap the map."'],
+    routine: ['Start with 3 oral blends: c-a-t, m-a-p, s-i-t before opening a book.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap. Identify the changed sound in each step: middle, final, initial, middle.', 'If ready, read a line using only known spellings, such as "Pat sat." after SATPIN is taught.'],
     rescue: 'If your child guesses whole words, cover the word, reveal one sound at a time, and blend again slowly. Keep correction neutral and quick.',
-    outcomes: ['Child blends 6-8 CVC words with less pausing.', 'Child notices vowel changes between similar words.', 'Child reads one short sentence by tracking each word left to right.'],
+    outcomes: ['Child blends new CVC words from known patterns with less adult prompting.', 'Child notices vowel changes between similar words.', 'Child reads one short sentence by tracking each word left to right.'],
     parentQuestions: ['How long should blending practice be? Ten focused minutes daily beats one long weekend session.', 'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.']
   },
   'week-3-phonics-tricky-words': {
@@ -96,7 +96,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-4-phonics-long-vowels': {
     heading: 'Real-world action plan: long vowels with clear contrasts',
     context: 'Parents get faster results when children compare short and long vowel pairs directly instead of learning patterns in isolation.',
-    routine: ['Use pair cards: cap/cape, pin/pine, tub/tube. Read short first, then long.', 'Teach one pattern per day: a_e Monday, i_e Tuesday, o_e Wednesday, mixed review Thursday-Friday.', 'Write one sentence per day using a long vowel word: "I ride the bike."'],
+    routine: ['Use pair cards: cap/cape, pin/pine, tub/tube. Read short first, then long.', 'Introduce a new VCe pattern only when the previously taught pattern is sufficiently usable in reading and spelling.', 'Write one sentence per day using a long vowel word: "I ride the bike."'],
     rescue: 'If child reads every vowel as short, exaggerate mouth shape and stretch the long sound once before blending the whole word.',
     outcomes: ['Child can read at least six long-vowel words with magic-e patterns.', 'Child can explain that final e is silent but changes the vowel.', 'Child can read mixed short and long vowel lines with fewer errors.'],
     parentQuestions: ['Do I teach all long vowel patterns in one week? No, one pattern at a time is more realistic.', 'My child says the final e. Remind: "Final e is quiet, vowel speaks."']
@@ -104,15 +104,15 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-5-phonics-r-controlled': {
     heading: 'Real-world action plan: bossy-r practice that sticks',
     context: 'R-controlled vowels are easier when grouped by sound families and revisited through sentence reading and dictation.',
-    routine: ['Day 1-2: AR family (car, star, farm, park) with a 2-minute picture sort.', 'Day 3-4: OR family (fork, corn, storm, short) in quick read-and-point games.', 'Day 5-7: ER/IR/UR mixed set (her, bird, turn, fur) plus one dictation sentence daily.'],
+    routine: ['Day 1-2: AR family (car, star, farm, park) with a 2-minute picture sort.', 'Day 3-4: OR family (fork, corn, storm, short) in quick read-and-point games.', 'Introduce ER/IR/UR in the programme's sequence; contrast spellings after each has been taught and practised.'],
     rescue: 'If your child collapses all r-vowels into one sound, split practice by family and avoid mixed lists for two days.',
     outcomes: ['Child correctly sorts words into AR, OR, and ER/IR/UR groups.', 'Child reads one sentence per r-controlled family.', 'Child spells at least four r-controlled words correctly in dictation.'],
-    parentQuestions: ['Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.', 'My child reads car as cah. Model slowly: /c/ /ar/ and repeat in short phrases.']
+    parentQuestions: ['Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.', 'My child does not pronounce a strong r in car. This may reflect a normal non-rhotic accent; follow the child's coherent teaching pronunciation model.']
   },
   'week-6-phonics-comprehension': {
     heading: 'Real-world action plan: connect decoding to understanding',
-    context: 'Children must decode and comprehend together. Keep text decodable but always ask one meaning question after each line.',
-    routine: ['Read 4-6 decodable sentences and ask one who/what question after each.', 'Use "retell in 10 words" challenge to keep recall simple.', 'End with one sentence drawing: child draws and labels the key event.'],
+    context: 'Children must decode and comprehend together. Use decodable text and ask purposeful meaning questions at natural points, not after every line.',
+    routine: ['Read 4-6 decodable sentences and ask one who/what question after each.', 'Invite a natural retell suited to the child, without a fixed word count.', 'End with one sentence drawing: child draws and labels the key event.'],
     rescue: 'If your child reads accurately but cannot answer, shorten text and ask questions immediately after each sentence, not at the end.',
     outcomes: ['Child answers who/what questions from short decodable text.', 'Child gives a simple beginning-middle-end retell for a tiny passage.', 'Child connects at least one decoded word to meaning in context.'],
     parentQuestions: ['Should comprehension wait until fluent reading? No, comprehension starts from first decodable texts.', 'What if my child answers in one word? Accept one word first, then model a full-sentence answer.']
@@ -194,8 +194,8 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     context: 'A light, repeatable summer routine protects reading accuracy and confidence better than irregular intensive sessions.',
     routine: ['Follow 4-day cycle: sound review, blending, decodable reading, spelling dictation.', 'Use travel-friendly materials: 20 word cards, one notebook, one timer.', 'Keep a weekly scorecard: words read correctly, words spelled correctly, confidence level.'],
     rescue: 'If routine breaks during travel, run a 5-minute oral-only session in car or at bedtime and resume full practice next day.',
-    outcomes: ['Child maintains reading level across holiday weeks.', 'Child retains core phonics patterns already taught.', 'Parent can identify exactly which pattern needs revision after breaks.'],
-    parentQuestions: ['Can I skip practice on vacation? Skip occasionally, but keep at least 4 sessions per week.', 'What is minimum summer workload? Ten minutes daily or 40-50 minutes spread across the week.']
+    outcomes: ['Child continues practising relevant reading skills, while individual progress is observed.', 'Child retains core phonics patterns already taught.', 'Parent can identify exactly which pattern needs revision after breaks.'],
+    parentQuestions: ['Can I skip practice on vacation? Yes. Resume manageable activities when practical; no universal minimum frequency applies.', 'What is the minimum summer workload? There is no universal required dose; use flexible, purposeful practice.']
   },
   'week-17-grammar-assessment': {
     heading: 'Real-world action plan: low-stress grammar assessment at home',
@@ -216,7 +216,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-19-phonics-multisyllabic': {
     heading: 'Real-world action plan: multisyllabic decoding step by step',
     context: 'Long-word reading improves when children learn syllable chunking and stress patterns before speed.',
-    routine: ['Teach clap-and-chunk with words like sunset, rabbit, picnic, market.', 'Mark syllable splits visually and blend chunks: sun-set, pic-nic, mar-ket.', 'Add one 2-3 syllable word to each decodable reading session.'],
+    routine: ['Teach clap-and-chunk with words like sunset, rabbit, picnic, market.', 'Mark syllable splits visually and blend chunks: sun-set, pic-nic, mar-ket.', 'Use a longer word when the child has the required taught patterns; it is not compulsory in every session.'],
     rescue: 'If child guesses long words, cover ending, decode first chunk, then reveal next chunk and blend.',
     outcomes: ['Child decodes familiar two-syllable words without panic.', 'Child uses chunking strategy independently on new words.', 'Child reads short passages with fewer breakdowns on longer words.'],
     parentQuestions: ['Should I teach syllable rules all at once? No, start with closed syllables and compound words first.', 'My child reads chunks but misses meaning. Ask for quick meaning check after decoding.']
@@ -240,10 +240,10 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-22-phonics-diagnostics': {
     heading: 'Real-world action plan: diagnostics that lead to targeted fixes',
     context: 'Diagnostics are useful only when they produce a specific reteach plan with measurable goals.',
-    routine: ['Check 5 domains: sound recall, blending, decoding, spelling, and connected reading.', 'Log error patterns by type, such as vowel confusion or skipped blends.', 'Create 7-day reteach plan focused on top two error patterns only.'],
+    routine: ['Check 5 domains: sound recall, blending, decoding, spelling, and connected reading.', 'Log error patterns by type, such as vowel confusion or skipped blends.', 'Plan a flexible reteaching response based on the earliest insecure prerequisite and adjust it from learner evidence.'],
     rescue: 'If too many gaps appear, start with foundation errors first because advanced errors usually improve after base repair.',
-    outcomes: ['Parent can name exact weak patterns, not just "reading is weak."', 'Child receives focused reteach tasks matched to real errors.', 'Progress can be rechecked after one week with clear metrics.'],
-    parentQuestions: ['Should diagnostics be timed? Start untimed, then add light timing only after accuracy stabilizes.', 'Can I diagnose through homework only? No, include oral reading to catch hidden decoding issues.']
+    outcomes: ['Parent can name exact weak patterns, not just "reading is weak."', 'Child receives focused reteach tasks matched to real errors.', 'Recheck after sufficient appropriate teaching opportunities; one week is not a required deadline.'],
+    parentQuestions: ['Should informal home checks be timed? No; accuracy, independence and error patterns matter more than timing.', 'Can I diagnose through homework only? No, include oral reading to catch hidden decoding issues.']
   },
   'week-23-grammar-speaking-bridge': {
     heading: 'Real-world action plan: turn grammar knowledge into spoken fluency',
@@ -278,12 +278,12 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     parentQuestions: ['Should I ban all screens to reset habits? No, replace passive time gradually with structured active blocks.', 'What if both parents are busy? Keep one non-negotiable 10-minute learning touchpoint and protect it daily.']
   },
   'week-27-prevent-summer-slide-reading': {
-    heading: 'Real-world action plan: stop summer slide with a 10-minute reading loop',
+    heading: 'Real-world action plan: support summer reading practice',
     context: 'Children hold reading gains when decoding and comprehension are revisited in short, consistent daily sessions.',
     routine: ['Do 2 minutes of phonics or word-pattern review before reading.', 'Read one short passage aloud and ask one meaning question immediately.', 'Close with a one-sentence write or 30-second spoken summary to reinforce transfer.'],
     rescue: 'If reading breaks down, reduce text level, reread easier lines for success, and rebuild difficulty gradually over 3-4 days.',
-    outcomes: ['Child maintains reading fluency through April-June.', 'Child shows stronger decoding confidence on unfamiliar words.', 'Parent can spot progress early with a simple weekly check.'],
-    parentQuestions: ['Is 10 minutes really enough? Yes, when done daily with a clear structure.', 'Should we do only reading in summer? No, include brief grammar and speaking transfer for stronger retention.']
+    outcomes: ['Child has suitable fluency practice opportunities; observe progress without assuming maintenance.', 'Child shows stronger decoding confidence on unfamiliar words.', 'Parent can spot progress early with a simple weekly check.'],
+    parentQuestions: ['Does ten minutes prevent summer reading loss? No fixed duration guarantees that outcome; short purposeful practice may still be valuable.', 'Should we do only reading in summer? No, include brief grammar and speaking transfer for stronger retention.']
   }
 };
 
@@ -308,7 +308,7 @@ function buildWeeklyPlaybookBlocks(playbook: WeeklyPlaybook): BlogBlock[] {
     content: playbook.context
   }, {
     type: 'h3',
-    content: '10-minute at-home routine (realistic for busy parents)'
+    content: 'Optional at-home routine (adapt to the learner)'
   }, ...routineBlocks, {
     type: 'h3',
     content: 'If your child gets stuck'
@@ -317,7 +317,7 @@ function buildWeeklyPlaybookBlocks(playbook: WeeklyPlaybook): BlogBlock[] {
     content: playbook.rescue
   }, {
     type: 'h3',
-    content: 'End-of-week success signs'
+    content: 'Signs to look for over time'
   }, ...outcomeBlocks, {
     type: 'h3',
     content: 'Parents also ask this week'

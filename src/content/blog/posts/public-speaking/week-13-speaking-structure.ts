@@ -268,7 +268,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Before writing a full script, ask the child to make a small planning card with five boxes: **Hook | Purpose | Point 1 | Point 2 | Point 3 | Close**. If only two points are needed, leave the third blank. Use keywords rather than complete paragraphs at first.',
+        'Before writing a full script, ask the child to make a small planning card with six boxes: **Hook | Purpose | Point 1 | Point 2 | Point 3 | Close**. If only two points are needed, leave the third blank. Use keywords rather than complete paragraphs at first.',
     },
     {
       type: 'p',

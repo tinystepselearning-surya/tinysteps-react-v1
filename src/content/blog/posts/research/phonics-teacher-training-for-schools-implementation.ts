@@ -224,7 +224,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Programme fidelity matters because children need a coherent sequence, but fidelity is not the final outcome. Schools also need evidence that learners can retrieve taught correspondences, decode fresh words, segment for spelling and transfer into connected reading. Blog 54 owns the detailed fresh-transfer assessment framework.',
+        'Programme fidelity matters because children need a coherent sequence, but fidelity is not the final outcome. Schools also need evidence that learners can retrieve taught correspondences, decode fresh words, segment for spelling and transfer into connected reading. [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation) explains the fresh-transfer assessment framework.',
     },
     {
       type: 'h3',
@@ -256,7 +256,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Teachers need to know what has already been taught, what is being taught now and what depends on it later. Without that map, a teacher may introduce an advanced spelling too early, mix incompatible word lists or accidentally assess knowledge that has not yet been taught. Blog 57 provides the larger progression framework.',
+        'Teachers need to know what has already been taught, what is being taught now and what depends on it later. Without that map, a teacher may introduce an advanced spelling too early, mix incompatible word lists or accidentally assess knowledge that has not yet been taught. [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools) provides the progression framework.',
     },
     {
       type: 'h3',

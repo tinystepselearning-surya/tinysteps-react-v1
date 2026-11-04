@@ -53,7 +53,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Use a picture sequence as temporary planning support' },
     { type: 'p', content: 'Three to five pictures can make the story structure visible. First, let the child arrange the sequence. Then tell the story with the pictures visible. On the next attempt, turn one or more cards face down. The key question is whether the story remains organised when the visual prompt is reduced.' },
-    { type: 'p', content: 'The existing [Story Cards for Kids](/blog/grammar-speaking-bridge) activity is useful here because it supports oral sentence building, sequence and retelling. R21 does not replace that activity; it gives parents the broader teaching pathway.' },
+    { type: 'p', content: 'The existing [Story Cards for Kids](/blog/grammar-speaking-bridge) activity is useful here because it supports oral sentence building, sequence and retelling. This guide builds on that activity by explaining a broader storytelling pathway.' },
 
     { type: 'h2', content: 'Oral rehearsal should come before word-for-word scripting' },
     { type: 'p', content: 'For speaking development, let the child rehearse the **idea sequence** rather than memorising every sentence. A useful support progression is **pictures → keywords → mental outline → independent retell**. If a school task specifically requires a script, the child can write one later, but the oral structure should still make sense without reading it aloud.' },

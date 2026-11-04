@@ -101,7 +101,6 @@ const post: BlogPost = {
     { type: 'li', content: 'UK Department for Education — The Reading Framework: evidence-informed guidance on systematic synthetic phonics, cumulative progression, decoding, spelling and matched reading practice. https://www.gov.uk/government/publications/the-reading-framework-teaching-the-foundations-of-literacy' },
     { type: 'li', content: 'Education Endowment Foundation — Phonics: evidence summary emphasizing explicit, systematic phonics teaching and matching instruction to pupils’ current phonemic awareness and grapheme knowledge. https://educationendowmentfoundation.org.uk/education-evidence/teaching-learning-toolkit/phonics' },
 
-    { type: 'h2', content: 'FAQs' }
   ],
   faq: [
     {

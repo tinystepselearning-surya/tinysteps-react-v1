@@ -158,7 +158,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This is why [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) is a separate implementation article. Blog 53 establishes the official curriculum evidence; Blog 60 explains the teaching sequence that must follow initial sound knowledge.',
+        'This is why [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) is a separate implementation article. This article establishes the curriculum evidence; [Why Letter Sounds Alone Are Not Enough for Reading](/blog/why-letter-sounds-are-not-enough-to-read) explains the next teaching steps.',
     },
 
     {
@@ -296,7 +296,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'If the school cannot answer these questions consistently across classrooms, the issue is no longer whether CBSE “includes phonics.” The issue is implementation. Blog 52 explains the curriculum-versus-programme distinction; Blog 58 will address why a teacher workshop alone is not implementation.',
+        'If the school cannot answer these questions consistently across classrooms, the issue is no longer whether CBSE “includes phonics.” The issue is implementation. [CBSE Phonics Curriculum vs a Systematic Phonics Programme](/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme) explains the first distinction; [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation) explains how workshop learning becomes implementation.',
     },
 
     {
