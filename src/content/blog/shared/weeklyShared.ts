@@ -83,12 +83,12 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     routine: ['Start with a few oral blends built from sounds already taught, such as s-a-t, p-i-n and t-a-p once SATPIN is secure.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap. Identify the changed sound in each step: middle, final, initial, middle.', 'If ready, read a line using only known spellings, such as "Pat sat." after SATPIN is taught.'],
     rescue: 'If your child guesses whole words, cover the word, reveal one sound at a time, and blend again slowly. Keep correction neutral and quick.',
     outcomes: ['Child blends new CVC words from known patterns with less adult prompting.', 'Child notices vowel changes between similar words.', 'Child reads one short sentence by tracking each word left to right.'],
-    parentQuestions: ['How long should blending practice be? Short, well-matched practice can help; adjust frequency and duration to the child's response.', 'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.']
+    parentQuestions: ['How long should blending practice be? Short, well-matched practice can help; adjust frequency and duration to the child’s response.', 'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.']
   },
   'week-3-phonics-tricky-words': {
     heading: 'Real-world action plan: teach tricky words without rote pressure',
     context: 'Use a "sound part + heart part" method so children understand what is decodable and what must be remembered.',
-    routine: ['Choose a manageable set of common-exception words from the child's programme, such as said, was or the; identify both the regular and unusual parts.', 'Read each tricky word in a tiny sentence: "He said hi." "It was fun." "The dog ran."', 'Play snap game with word cards for 2 minutes before bed.'],
+    routine: ['Choose a manageable set of common-exception words from the child’s programme, such as said, was or the; identify both the regular and unusual parts.', 'Read each tricky word in a tiny sentence: "He said hi." "It was fun." "The dog ran."', 'Play snap game with word cards for 2 minutes before bed.'],
     rescue: 'If a tricky word keeps failing, reduce to one word for two days. Use tracing in sand or air writing, then read it in a sentence.',
     outcomes: ['Child reads 2-3 target tricky words automatically.', 'Child can use at least one target word while reading a sentence.', 'Child can spell one target tricky word from memory.'],
     parentQuestions: ['How many tricky words per week? There is no universal quota; choose words matched to the current teaching sequence.', 'Should I test spelling daily? No, test lightly twice a week and prioritize reading use.']
@@ -104,10 +104,10 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-5-phonics-r-controlled': {
     heading: 'Real-world action plan: bossy-r practice that sticks',
     context: 'R-controlled vowels are easier when grouped by sound families and revisited through sentence reading and dictation.',
-    routine: ['When ready, introduce the AR family (car, star, farm, park) with a simple sorting activity.', 'After the first family is secure, introduce the OR family (fork, corn, storm, short) with a brief reading task.', 'Introduce ER/IR/UR in the programme's sequence; contrast spellings after each has been taught and practised.'],
+    routine: ['When ready, introduce the AR family (car, star, farm, park) with a simple sorting activity.', 'After the first family is secure, introduce the OR family (fork, corn, storm, short) with a brief reading task.', 'Introduce ER/IR/UR in the programme’s sequence; contrast spellings after each has been taught and practised.'],
     rescue: 'If your child collapses all r-vowels into one sound, split practice by family and avoid mixed lists for two days.',
     outcomes: ['Child correctly sorts words into AR, OR, and ER/IR/UR groups.', 'Child reads one sentence per r-controlled family.', 'Child spells at least four r-controlled words correctly in dictation.'],
-    parentQuestions: ['Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.', 'My child does not pronounce a strong r in car. This may reflect a normal non-rhotic accent; follow the child's coherent teaching pronunciation model.']
+    parentQuestions: ['Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.', 'My child does not pronounce a strong r in car. This may reflect a normal non-rhotic accent; follow the child’s coherent teaching pronunciation model.']
   },
   'week-6-phonics-comprehension': {
     heading: 'Real-world action plan: connect decoding to understanding',
@@ -192,7 +192,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-16-phonics-summer-plan': {
     heading: 'Real-world action plan: summer phonics without learning loss',
     context: 'A light, repeatable summer routine protects reading accuracy and confidence better than irregular intensive sessions.',
-    routine: ['Use an optional rotation of sound review, blending, decodable reading and spelling, adjusting the sequence to the child's needs.', 'Use travel-friendly materials: 20 word cards, one notebook, one timer.', 'Keep a weekly scorecard: words read correctly, words spelled correctly, confidence level.'],
+    routine: ['Use an optional rotation of sound review, blending, decodable reading and spelling, adjusting the sequence to the child’s needs.', 'Use travel-friendly materials: 20 word cards, one notebook, one timer.', 'Keep a weekly scorecard: words read correctly, words spelled correctly, confidence level.'],
     rescue: 'If routine breaks during travel, run a 5-minute oral-only session in car or at bedtime and resume full practice next day.',
     outcomes: ['Child continues practising relevant reading skills, while individual progress is observed.', 'Child retains core phonics patterns already taught.', 'Parent can identify exactly which pattern needs revision after breaks.'],
     parentQuestions: ['Can I skip practice on vacation? Yes. Resume manageable activities when practical; no universal minimum frequency applies.', 'What is the minimum summer workload? There is no universal required dose; use flexible, purposeful practice.']
@@ -280,7 +280,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-27-prevent-summer-slide-reading': {
     heading: 'Real-world action plan: support summer reading practice',
     context: 'Brief reading practice can support continued learning; no fixed routine guarantees that reading level will be maintained.',
-    routine: ['If decoding is the current need, briefly revisit one taught spelling pattern before reading.', 'Read or listen to a suitable passage and discuss meaning at a natural point.', 'Invite an optional spoken or written response suited to the child's age and language level.'],
+    routine: ['If decoding is the current need, briefly revisit one taught spelling pattern before reading.', 'Read or listen to a suitable passage and discuss meaning at a natural point.', 'Invite an optional spoken or written response suited to the child’s age and language level.'],
     rescue: 'If reading breaks down, reduce text level, reread easier lines for success, and rebuild difficulty gradually over 3-4 days.',
     outcomes: ['Child has suitable fluency practice opportunities; observe progress without assuming maintenance.', 'Child shows stronger decoding confidence on unfamiliar words.', 'Parent can spot progress early with a simple weekly check.'],
     parentQuestions: ['Does ten minutes prevent summer reading loss? No fixed duration guarantees that outcome; short purposeful practice may still be valuable.', 'Should we do only reading in summer? No, include brief grammar and speaking transfer for stronger retention.']
