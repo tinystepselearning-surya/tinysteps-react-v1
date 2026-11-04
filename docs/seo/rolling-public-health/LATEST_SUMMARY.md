@@ -1,3 +1,17 @@
+## Slot 18 — 4 November 2026 IST
+
+**Preflight:** Exactly 202 unique selected URLs and 22 CSV columns; slots 1–19 contain 10 URLs each, slot 20 contains 12. Before batch, 170 distinct URLs had 4 November IST attempts; rows 171–180 were not checked today.
+
+**Observed:** All ten exact public URLs yielded page-specific extracted text via ChatGPT public web retrieval (turn143370view0–9). Provider snapshots labelled Crawled yesterday, without precise crawl timestamps. Independent direct HTTPS GET requests were attempted at ten distinct UTC timestamps between 2026-11-04T11:49:36.898867Z and 2026-11-04T11:49:57.735306Z. All failed before HTTP with audit-environment DNS NameResolutionError / ConnectionError.
+
+**Verification boundary:** HTTP status, redirects, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider-extracted content is partial evidence only. DNS failures here are not evidence of production downtime. No verified regression, improvement, indexing, ranking or AI citations.
+
+**Daily attempted coverage:** 180/202 (89.11%); 22 remaining, 0 fully origin-verified. Next eligible slot 19, rows 181–190.
+
+**Workflow:** GitHub Actions in-progress repository runs API returned zero. Administrative disablement could not be independently read; the user's explicit prior disable confirmation remains the operating basis. No workflow was run or enabled.
+
+---
+
 ## Slot 17 — 4 November 2026 IST
 
 **Preflight:** Exactly 202 unique selected URLs and 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Before batch 160 distinct URLs had 4 November IST attempts; rows 161–170 were not checked today.
