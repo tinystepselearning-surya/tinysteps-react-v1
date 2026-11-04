@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { JSDOM } from 'jsdom';
+import { PHONICS_AGE_PROGRAMME_PATHS } from '../src/lib/phonicsAgeProgrammeRegistry.js';
 const base=process.cwd(), out=path.join(base,'artifacts/tssa-scq-phase2'), origin='https://tinystepslearning.com';
 fs.mkdirSync(out,{recursive:true});
 const read=p=>fs.readFileSync(path.join(base,p),'utf8');
@@ -23,7 +24,17 @@ function parseCsv(src){
 }
 const idx=JSON.parse(read('dist/ai-resource-index.json'));
 const owners=new Map(Object.values(idx.corpus).flat().map(v=>[v.canonical_url,v]));
-if(owners.size!==279)die('Corpus baseline changed: '+owners.size);
+// Preserve the historical 279-owner baseline and verify all seven approved additions.
+const approvedAdditionalPaths=[
+  ...PHONICS_AGE_PROGRAMME_PATHS,
+  '/group-phonics-classes-for-kids',
+  '/group-grammar-classes-for-kids',
+  '/group-public-speaking-classes-for-kids',
+];
+if(new Set(approvedAdditionalPaths).size!==7 || owners.size!==279+approvedAdditionalPaths.length)
+  die('Corpus baseline changed: '+owners.size);
+for(const route of approvedAdditionalPaths)
+  if(!owners.has(origin+route))die('Missing approved owner: '+route);
 const parentLayer=new Map((idx.layers.find(x=>Number(x.layer)===1)?.items||[]).map(x=>[x.id,x]));
 const parents=parseCsv(read('artifacts/tssa7-b3/PARENT_INTENT_28.csv'));
 const benchmark=parseCsv(read('artifacts/tssa7-b3/BENCHMARK_12.csv'));
