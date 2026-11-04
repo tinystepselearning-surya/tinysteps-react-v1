@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-04 IST)
 
+## Slot 8 — 4 November 2026 IST
+
+**Preflight:** 202 unique URLs, 22 CSV columns, correct allocations (slots 1–19: 10; slot 20: 12). Before batch: 70 distinct 4 November IST checks; rows 71–80 unchecked.
+
+**Observed:** Ten exact URLs attempted at distinct UTC times 2026-11-04T01:47:27.683925Z–2026-11-04T01:47:43.836441Z. Public web retrieval returned page-specific text for nine URLs (turn152968view0–5, turn152968view7–9); /speaking-progress-framework returned a retrieval Internal Error (turn152968view6). Provider crawl timestamps are not exact live check times. Direct HTTPS curl GET attempts failed before HTTP: five exit 6 DNS resolution failures, five exit 28 DNS timeouts (4,000–4,001 ms). Exact stderr recorded per row in master tracker. HTTP_CODE 000 is not an origin HTTP response.
+
+**Verification boundary:** All ten remain UNVERIFIED for origin HTTP status, redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD. Provider-extracted text is partial evidence only; DNS errors in the audit environment do not establish production downtime. No verified regression, improvement, indexing, ranking or AI citation.
+
+**Daily attempted coverage:** 80/202 distinct URLs (39.60%); 122 await scheduled attempts; 0 fully origin-verified. Next eligible slot 9, rows 81–90.
+
+**GitHub Actions:** Repository API returned zero in-progress runs. Workflow administrative disabled state endpoint unavailable; user's 25 October confirmation remains operating basis. No GitHub workflow enabled or executed.
+
+**Persistence:** Master tracker and summary updated on tracker branch; CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 7 — 4 November 2026 IST
 
 **Preflight:** Exactly 202 unique URLs, 22 CSV columns, correct slot allocations. Before this batch 60 distinct URLs checked for 4 November IST; rows 61–70 unchecked today.
