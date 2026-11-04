@@ -1,3 +1,21 @@
+# Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
+
+## Slot 2 — 5 November 2026 IST
+
+**Preflight:** 202 unique selected URLs; 22 CSV columns; slots 1–19 contain 10 each, slot 20 contains 12. Before batch 10 distinct URLs had current-day attempts; rows 11–20 carried 4 November timestamps.
+
+**Actual observations:** Rows 11–20 were inspected via exact public URL retrieval, returning substantive page-specific text for all ten phonics guides (turn498700view0–turn498700view9). Provider snapshots were labelled “Crawled: yesterday”; exact crawl times unknown. Independent HTTPS GET attempts started at ten distinct UTC times between 2026-11-04T19:44:22.511963Z and 2026-11-04T19:44:42.554130Z. All failed before receiving HTTP responses with ConnectionError / DNS-resolution failures in the audit environment.
+
+**Verification boundary:** Origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence, not origin verification; audit-environment DNS failure does not prove downtime. No verified production transition or search-platform indexing/ranking/AI citation change.
+
+**Daily attempted coverage:** 20/202 (9.90%); 182 await assigned slots. Fully origin-verified 0/202. Next eligible slot 3, rows 21–30.
+
+**GitHub Actions:** In-progress repository runs API returned total_count=0. Workflow administrative state endpoint unavailable; proceeding under user's 25 October disable confirmation. No workflow started or enabled.
+
+**Persistence:** Master tracker and summary updated on tracker branch. CHANGES.md unchanged (no verified meaningful transition).
+
+---
+
 ## Slot 1 — 5 November 2026 IST
 
 **Preflight:** 202 unique selected URLs, 22 valid CSV columns, slots 1–19 contain 10 each and slot 20 contains 12. Before batch, zero URLs had 5 November IST attempts. Previous-day timestamps were not counted.
