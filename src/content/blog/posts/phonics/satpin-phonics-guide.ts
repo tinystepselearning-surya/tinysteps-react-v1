@@ -65,7 +65,7 @@ const post: BlogPost = {
     { type: 'p', content: '**No.** Blending can begin as soon as the child knows enough taught correspondences to build a simple word. Waiting for perfect recall of all six letters can accidentally turn phonics into a long isolated-sound course.' },
     { type: 'p', content: 'For example, if a programme has already introduced the correspondences needed for **sat**, the teacher can model blending that word while continuing to teach and review the rest of the starter set. UFLI similarly states that children can begin decoding and encoding once they have learned **some** phoneme–grapheme correspondences.' },
     { type: 'p', content: 'Three simple SATPIN blending examples are **s-a-t → sat**, **p-i-n → pin** and **t-a-p → tap**. The hyphens show the teaching steps, not how the child should eventually read. As blending becomes secure, reduce the pauses so the phonemes merge smoothly into the spoken word.' },
-    { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the broader beginner sequence. This SATPIN guide owns the narrower question of how to understand and use this particular starter set.' },
+    { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the broader beginner sequence. This SATPIN guide explains how to understand and use this particular starter set.' },
 
     { type: 'h2', content: 'Letter sounds, letter names and “pure sounds”: what parents actually need to know' },
     { type: 'h3', content: 'Letter names and sounds both belong in alphabet knowledge' },
@@ -136,8 +136,8 @@ const post: BlogPost = {
     { type: 'p', content: '[CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) covers the broader first simple-word decoding milestone, while [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the wider sequence beyond the starter set.' },
 
     { type: 'h2', content: 'SATPIN at home: guide versus routine' },
-    { type: 'p', content: 'This article is the **SATPIN explanation and progression owner**: what SATPIN is, its sounds and order, why a useful early set matters, how words and blending develop, how to interpret progress and what comes next.' },
-    { type: 'p', content: 'If you want a session-by-session home practice plan with word banks and activity examples, use [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch). That page owns the practical home routine so this guide does not duplicate it.' },
+    { type: 'p', content: 'This article offers a **SATPIN explanation and progression guide**: what SATPIN is, its sounds and order, why a useful early set matters, how words and blending develop, how to interpret progress and what comes next.' },
+    { type: 'p', content: 'If you want a session-by-session home practice plan with word banks and activity examples, use [SATPIN at Home: A Parent Launch Plan for Early Blending and Reading](/blog/week-1-phonics-satpin-launch). That page offers a practical home routine with worked activities; this guide explains the underlying starter set and progression.' },
 
     { type: 'h2', content: 'Where Tiny Steps free games fit' },
     { type: 'p', content: '[Tiny Steps Balloon Pop](/free-balloon-pop-phonics-game-for-kids?level=1) can rehearse **hearing a target sound and identifying its printed letter**. [Letter Tracing With Sounds](/letter-tracing-with-sounds-game) can support letter-form and sound familiarity. Neither game, by itself, proves that a child can blend SATPIN into words.' },
