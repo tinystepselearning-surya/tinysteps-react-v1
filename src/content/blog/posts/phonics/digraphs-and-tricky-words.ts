@@ -133,7 +133,7 @@ const post: BlogPost = {
     content: 'Start with the spoken word, then map the sounds to the letters. Identify the correspondences that behave as expected and mark only the exceptional or not-yet-taught part. Read the complete word, spell or build it, and then meet it again in a sentence. This keeps the word connected to the alphabetic system instead of teaching it as an unrelated visual symbol.'
   }, {
     type: 'p',
-    content: 'Blog #28, [How to Teach Tricky Words to Kids Without Encouraging Guessing](/blog/phonics-tricky-words), is the dedicated teaching-routine owner later in this series. This Blog #4 explains the conceptual difference between digraph decoding and exception-word learning so parents know what kind of task they are dealing with.'
+    content: '[How to Teach Tricky Words to Kids Without Encouraging Guessing](/blog/phonics-tricky-words) offers a detailed teaching routine. This guide explains the conceptual difference between digraph decoding and exception-word learning so parents know what kind of task they are dealing with.'
   }, {
     type: 'h2',
     content: 'What parents should avoid'
