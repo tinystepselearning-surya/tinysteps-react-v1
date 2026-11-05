@@ -16,7 +16,7 @@ const post: BlogPost = {
     { type: 'p', content: 'Many children are ready for more structured phonics around ages **4–5**, when teaching can explicitly connect speech sounds with print and begin systematic blending and word reading. Younger children can build useful foundations earlier through talk, rhyme, sound awareness, shared books and simple sound–letter links when they are interested and ready. An older beginner should not be held back by age: start directly at the first meaningful decoding gap with age-respectful material.' },
     { type: 'p', content: 'Age can help adults choose an appropriate style of teaching, but it should not be used as a phonics placement test. Tiny Steps uses a simple principle: **age shapes the presentation; evidence shapes the starting point**. This is editorial guidance for parent decisions, not a standardized readiness scale.' },
 
-    { type: 'h2', content: 'This article owns the readiness question — not the whole phonics sequence' },
+    { type: 'h2', content: 'When is a child ready to begin phonics?' },
     { type: 'p', content: 'This guide answers: **When is my child ready to begin phonics, and what should the starting level look like?** If you need the full sequence after starting, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners). If you want realistic expectations about how long progress can take, use [How Long Does Phonics Take?](/blog/how-long-does-phonics-take). If you are new to the subject itself, start with [What Is Phonics for Kids?](/blog/what-is-phonics-for-kids).' },
 
     { type: 'h2', content: 'The Tiny Steps five-part readiness lens' },
@@ -66,7 +66,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'What about letter names?' },
     { type: 'p', content: 'Letter names and phoneme–grapheme correspondences are related but different knowledge. Children can know the alphabet names and still be unable to decode a word. For early reading, the crucial question is whether printed letters or graphemes can activate useful speech sounds and whether those sounds can be blended through a word.' },
-    { type: 'p', content: 'If your child knows ABC but cannot read words, use [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). That article owns the alphabet-knowledge-versus-decoding diagnostic intent.' },
+    { type: 'p', content: 'If your child knows ABC but cannot read words, use [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). That article explains how to distinguish alphabet knowledge from early decoding.' },
 
     { type: 'h2', content: 'What if my child is multilingual?' },
     { type: 'p', content: 'Growing up with more than one language is not, by itself, a reason to delay phonics. English phonics teaches relationships within English print and speech. Continue rich conversation, stories and vocabulary in the languages your family uses while making the English sound–spelling target clear during phonics instruction.' },
