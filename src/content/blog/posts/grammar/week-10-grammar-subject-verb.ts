@@ -47,7 +47,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This article owns the **subject-verb agreement skill itself**. For the broad grammar sequence, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If a child can explain the rule but still loses it in spontaneous speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes).',
+        'This article explains **subject–verb agreement**. For the broad grammar sequence, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If a child can explain the rule but still loses it in spontaneous speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes).',
     },
 
     {
@@ -404,7 +404,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'When a child says “Yesterday he go,” two systems may be involved: time/tense and agreement. Identify which pattern is actually being taught before correcting. [English Tenses for Kids](/blog/grammar-tenses) owns the time-and-tense explanation.',
+        'When a child says “Yesterday he go,” two systems may be involved: time/tense and agreement. Identify which pattern is actually being taught before correcting. [English Tenses for Kids](/blog/grammar-tenses) explains how verb forms express time.',
     },
 
     {
