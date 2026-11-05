@@ -58,7 +58,7 @@ const post: BlogPost = {
     content: 'Left-to-right attention — the child can look across the printed word rather than using only the first letter or a picture clue.'
   }, {
     type: 'p',
-    content: 'If your child is still at the alphabet-to-sounds stage, use [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). If sound recall is already secure but combining sounds is the problem, use [How Kids Learn Blending](/blog/how-kids-learn-blending). Blog #3 starts at the point where those component skills begin to work together on simple printed words.'
+    content: 'If your child is still at the alphabet-to-sounds stage, use [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read). If sound recall is already secure but combining sounds is the problem, use [How Kids Learn Blending](/blog/how-kids-learn-blending). This guide starts at the point where those component skills begin to work together on simple printed words.'
   }, {
     type: 'h2',
     content: 'The Tiny Steps six-step CVC decoding ladder'
@@ -181,7 +181,7 @@ const post: BlogPost = {
     content: 'The child says every sound correctly but cannot produce the word'
   }, {
     type: 'p',
-    content: 'This points more toward a blending bottleneck than a sound-recall problem. Return briefly to oral and continuous blending. The [stage-by-stage blending guide](/blog/how-kids-learn-blending) owns that skill in more depth.'
+    content: 'This points more toward a blending bottleneck than a sound-recall problem. Return briefly to oral and continuous blending. The [stage-by-stage blending guide](/blog/how-kids-learn-blending) explains that skill in more depth.'
   }, {
     type: 'h3',
     content: 'The child reads familiar cards but misses a new word'

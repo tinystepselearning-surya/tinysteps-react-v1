@@ -16,7 +16,7 @@ const post: BlogPost = {
   body: [
     { type: 'h2', content: 'Quick answer: good delivery makes the message easier to understand' },
     { type: 'p', content: 'Public speaking delivery is the way a child uses **pace, audible volume, pausing, emphasis, intelligibility, posture and audience awareness** to help listeners follow the message. The goal is not to sound theatrical, erase an accent or maintain constant eye contact. Delivery should support meaning.' },
-    { type: 'p', content: 'This page owns speaking delivery. If the message itself is disorganised, start with [How to Structure a Speech for Kids](/blog/speaking-structure). If confidence across situations is the main concern, use [How to Build Speaking Confidence in Kids](/blog/speaking-confidence-seeds). For one-target video rehearsal, use [How Video Feedback Helps Kids Improve Public Speaking](/blog/speaking-video-feedback).' },
+    { type: 'p', content: 'This page discusses how children can improve speech delivery. If the message itself is disorganised, start with [How to Structure a Speech for Kids](/blog/speaking-structure). If confidence across situations is the main concern, use [How to Build Speaking Confidence in Kids](/blog/speaking-confidence-seeds). For one-target video rehearsal, use [How Video Feedback Helps Kids Improve Public Speaking](/blog/speaking-video-feedback).' },
 
     { type: 'h2', content: 'The Tiny Steps delivery check: HEAR → FOLLOW → FEEL → CONNECT → ADJUST' },
     { type: 'li', content: '**HEAR:** can the audience hear the words comfortably?' },

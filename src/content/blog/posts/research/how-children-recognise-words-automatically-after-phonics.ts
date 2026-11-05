@@ -46,7 +46,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Does this mean children should never memorise anything?' },
     { type: 'p', content: 'Reading necessarily involves memory. The question is **what information is being stored and how it was learned**. A child who accurately maps spelling, pronunciation and meaning is using memory; that is very different from being asked to remember hundreds of printed shapes without analysing their sound structure.' },
-    { type: 'p', content: 'For common words with an unusual or not-yet-taught spelling, map the regular parts and draw attention to the unexpected part. The [Sight Words or Phonics First?](/blog/sight-words-or-phonics-first) guide owns that decision in detail.' },
+    { type: 'p', content: 'For common words with an unusual or not-yet-taught spelling, map the regular parts and draw attention to the unexpected part. The [Sight Words or Phonics First?](/blog/sight-words-or-phonics-first) guide explains that decision in detail.' },
 
     { type: 'h2', content: 'Why repeated reading can help — and why repetition alone is not enough' },
     { type: 'p', content: 'Repeated accurate encounters give the reader additional opportunities to strengthen word knowledge. Rereading appropriately matched books can also support fluency because fewer words require effortful decoding on each pass.' },

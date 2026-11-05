@@ -150,7 +150,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'A systematic sequence manages prerequisites. Children should not be asked to read words that depend heavily on patterns they have never been taught unless the instructional purpose is explicitly different. For the detailed progression question, use Blog 57 rather than turning this comparison article into a second scope-and-sequence page.',
+        'A systematic sequence manages prerequisites. Children should not be asked to read words that depend heavily on patterns they have never been taught unless the instructional purpose is explicitly different. For the detailed progression question, use [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools) rather than turning this comparison article into a second scope-and-sequence page.',
     },
     {
       type: 'h3',
@@ -177,7 +177,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'A programme is not implemented because teachers attended one presentation. Leaders need shared language, modelling, opportunities to practise, classroom observation, feedback, refresher support and a way to induct new teachers. This is the core distinction developed further in Blog 58.',
+        'A programme is not implemented because teachers attended one presentation. Leaders need shared language, modelling, opportunities to practise, classroom observation, feedback, refresher support and a way to induct new teachers. This distinction is explored further in [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation).',
     },
     {
       type: 'h3',

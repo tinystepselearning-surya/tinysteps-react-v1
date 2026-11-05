@@ -22,7 +22,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Do not wait for all 26 letters before blending begins' },
     { type: 'p', content: 'A common home-practice mistake is treating letter sounds as a long prerequisite course that must be finished before words appear. IES foundational-reading guidance recommends working with a few phonemes at a time and continuing practice as children learn them. UFLI similarly notes that once children know some phoneme–grapheme correspondences, they can begin applying them to decoding and encoding.' },
-    { type: 'p', content: 'That means a small taught set can serve two jobs: strengthen recall and create early words for blending. Blog #19, [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide), owns the full early-set launch decision. Blog #5, [How Kids Learn Blending](/blog/how-kids-learn-blending), owns the developmental blending pathway.' },
+    { type: 'p', content: 'That means a small taught set can serve two jobs: strengthen recall and create early words for blending. [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide) explains how to start with one useful early sound set. [How Kids Learn Blending](/blog/how-kids-learn-blending) explains the developmental blending pathway.' },
 
     { type: 'h2', content: 'The Tiny Steps five-part letter-sound practice loop' },
     { type: 'h3', content: '1. See it — recognise the grapheme' },
@@ -49,22 +49,22 @@ const post: BlogPost = {
     { type: 'h3', content: 'Game 5 — Make one tiny word' },
     { type: 'p', content: 'Choose two or three taught letters that can form a decodable word. Let the child say the sounds and blend them. This prevents letter-sound practice from becoming permanently isolated from reading.' },
     { type: 'h3', content: 'Game 6 — Say it, then spell it' },
-    { type: 'p', content: 'Say a simple word using taught correspondences and ask the child to identify its phonemes and select or write the graphemes. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'p', content: 'Say a simple word using taught correspondences and ask the child to identify its phonemes and select or write the graphemes. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the reading-to-spelling progression.' },
 
     { type: 'h2', content: 'How many sounds should parents practise at once?' },
     { type: 'p', content: 'There is no research-defined universal number such as “three to five sounds” that is best for every child. Use a small enough taught set that the child can respond accurately, receive correction and still apply some of those correspondences in words. The appropriate set depends on what has already been taught and which items remain uncertain.' },
-    { type: 'p', content: 'If one sound is repeatedly confused, narrow the set temporarily and contrast it with the most relevant alternative. If recall is secure, keep old knowledge in cumulative review while adding the next correspondence from the child’s teaching sequence. Blog #17, [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners), owns the broader sequencing decision.' },
+    { type: 'p', content: 'If one sound is repeatedly confused, narrow the set temporarily and contrast it with the most relevant alternative. If recall is secure, keep old knowledge in cumulative review while adding the next correspondence from the child’s teaching sequence. [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the broader teaching sequence.' },
 
     { type: 'h2', content: 'How long should a letter-sound game last?' },
     { type: 'p', content: 'This article does not prescribe a universal 10-minute routine, a fixed number of days per week or a research-defined home dosage. The practical aim is enough accurate retrieval and application to make the target useful without letting fatigue or frustration turn the activity into random guessing.' },
-    { type: 'p', content: 'Blog #14, [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home), owns the wider routine-design question. This page owns the content of letter-sound games themselves.' },
+    { type: 'p', content: '[Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home) explains the wider home-practice routine. This page focuses on letter-sound games themselves.' },
 
     { type: 'h2', content: 'How Tiny Steps free games fit this skill—and where they stop' },
     { type: 'h3', content: 'Balloon Pop: sound-to-letter recognition' },
     { type: 'p', content: 'In the free [Tiny Steps Phonics Balloon Pop game](/free-balloon-pop-phonics-game-for-kids), the child hears a target letter sound, identifies the matching printed letter and pops the correct balloon. We treat this as listening and letter-sound recognition practice—not proof of word reading.' },
     { type: 'h3', content: 'Letter Tracing With Sounds: formation plus sound connection' },
     { type: 'p', content: 'The [Letter Tracing With Sounds game](/letter-tracing-with-sounds-game) combines letter formation with listening and repeating the associated sound. It can reinforce shape–sound familiarity, but tracing accuracy does not by itself prove that the child can retrieve the sound independently or blend words.' },
-    { type: 'p', content: 'Blog #13, [Online Phonics Games for Kids](/blog/online-phonics-games), owns the broader question of how to judge whether any digital phonics game transfers into reading.' },
+    { type: 'p', content: '[Online Phonics Games for Kids](/blog/online-phonics-games) explains how to judge whether a digital game helps reading skills transfer.' },
 
     { type: 'h2', content: 'What progress should parents actually watch for?' },
     { type: 'li', content: '**Faster retrieval without guessing:** a taught grapheme increasingly brings the expected sound to mind.' },

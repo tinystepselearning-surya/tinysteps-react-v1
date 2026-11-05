@@ -112,10 +112,10 @@ const post: BlogPost = {
     content: 'The important boundary with the letter-sounds problem'
   }, {
     type: 'p',
-    content: 'This Blog #2 owns the broader parent question “my child knows ABC but cannot read.” It starts before decoding and checks the whole bridge from alphabet familiarity to usable word reading.'
+    content: 'This guide addresses the broader parent question “my child knows ABC but cannot read.” It starts before decoding and checks the whole bridge from alphabet familiarity to usable word reading.'
   }, {
     type: 'p',
-    content: 'If your child already recalls taught letter sounds accurately but still cannot turn those sounds into words, do not keep repeating alphabet or sound cards. Move to the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words), which owns that narrower sounds-to-blending diagnostic. For the wider phonics framework around sounds, blending, decoding and parent support, use the [complete Phonics for Parents guide](/blog/phonics-for-parents-guide).'
+    content: 'If your child already recalls taught letter sounds accurately but still cannot turn those sounds into words, do not keep repeating alphabet or sound cards. Move to the [letter-sounds-but-cannot-read diagnostic guide](/blog/why-child-knows-letter-sounds-but-cannot-read-words), which examines that more specific sounds-to-blending difficulty. For the wider phonics framework around sounds, blending, decoding and parent support, use the [complete Phonics for Parents guide](/blog/phonics-for-parents-guide).'
   }, {
     type: 'h2',
     content: 'A simple home response for each bottleneck'
