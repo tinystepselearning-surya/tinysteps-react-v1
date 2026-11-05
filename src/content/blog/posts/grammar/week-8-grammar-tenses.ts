@@ -39,7 +39,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This article owns the **tense/time-control** skill. For the broader grammar sequence, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If the real problem is sentence construction, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids).',
+        'This article focuses on **how verb forms express time**. For the broader grammar sequence, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If the real problem is sentence construction, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids).',
     },
 
     {
