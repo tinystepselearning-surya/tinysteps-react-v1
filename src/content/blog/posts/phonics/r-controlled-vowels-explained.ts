@@ -41,14 +41,14 @@ const post: BlogPost = {
 
     { type: 'h3', content: '1. Confirm the child can already blend words using earlier taught correspondences' },
     { type: 'p', content: 'R-controlled vowels should connect to an existing decoding system. A child does not need an arbitrary target such as 30, 50 or 100 mastered CVC words, but they should have enough earlier letter–sound knowledge to blend simple words and attend to the vowel position rather than guess whole words.' },
-    { type: 'p', content: 'Blog #17, [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners), owns the broader beginner sequence and move-ahead decision. This page begins once vowel-r patterns are the actual teaching target.' },
+    { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the wider beginner sequence and how to decide when to move ahead. This page begins once vowel-r patterns are the actual teaching target.' },
 
     { type: 'h3', content: '2. Introduce one programme-defined vowel-r pattern clearly' },
     { type: 'p', content: 'Say a few familiar words containing the target, notice where the vowel and r appear, connect the spelling to the pronunciation used in the child’s programme, and read words made mostly from already-known correspondences. Keep the new information narrow enough that the child can notice what changed.' },
 
     { type: 'h3', content: '3. Connect reading and spelling from the beginning' },
     { type: 'p', content: 'Reading asks the child to see **ar** in a word such as farm and retrieve its pronunciation. Spelling reverses the process: hear the word, segment it, and choose letters. IES home-reading resources specifically pair identifying r-controlled vowels with reading and spelling words containing them.' },
-    { type: 'p', content: 'Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the complete encoding roadmap. Here, spelling is used to expose whether the vowel-r mapping is secure.' },
+    { type: 'p', content: '[How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the full reading-to-spelling progression. Here, spelling is used to expose whether the vowel-r mapping is secure.' },
 
     { type: 'h3', content: '4. Contrast patterns only after the individual examples are understandable' },
     { type: 'p', content: 'Once the child can use a pattern, contrast it with another relevant pattern. This might mean **ar versus or**, or—where appropriate for the child’s accent and programme—comparing **er, ir and ur** as different spellings for a similar sound. The purpose is not to make the list harder; it is to help the child notice which information matters.' },
@@ -58,7 +58,7 @@ const post: BlogPost = {
 
     { type: 'h3', content: '6. Move the pattern into matched sentences and connected text' },
     { type: 'p', content: 'R-controlled knowledge should eventually work inside ordinary reading. Use text that is reasonably matched to what the child has been taught so untaught spellings do not turn a pattern check into a guessing task. After decoding a difficult word, reread the sentence for phrasing and meaning.' },
-    { type: 'p', content: 'For hands-on games, sorting tasks and an activity-heavy practice plan, Blog #30, [R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled), is the practical activity owner. This article owns the pattern explanation, confusions and sequencing logic.' },
+    { type: 'p', content: 'For hands-on games, sorting tasks and an activity-heavy practice plan, [R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled) offers those activities. This article explains the patterns, common confusions and teaching sequence.' },
 
     { type: 'h2', content: 'Why er, ir and ur are such a common spelling problem' },
     { type: 'p', content: 'If several spellings can represent a similar sound in the child’s accent, sound alone cannot always tell the child which spelling is conventional. That is why a learner may read **her, bird** and **turn** successfully yet spell one of them with the wrong vowel letters.' },
@@ -88,7 +88,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'R-controlled vowels are not the same as long vowels' },
     { type: 'p', content: 'Parents sometimes group every “special vowel” rule together. Long-vowel patterns such as VCe/silent-e and common vowel teams are a different instructional family from vowel-r patterns. The child needs to notice which structure is actually present in the word.' },
-    { type: 'p', content: 'Blog #11, [Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids), owns VCe, vowel teams, open syllables and long-vowel confusions. Keeping those intents separate makes it easier to identify whether the problem is a long-vowel pattern or a vowel-r pattern.' },
+    { type: 'p', content: '[Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids) explains VCe, vowel teams, open syllables and long-vowel confusions. Keeping those intents separate makes it easier to identify whether the problem is a long-vowel pattern or a vowel-r pattern.' },
 
     { type: 'h2', content: 'When to ask for a closer teaching review' },
     { type: 'p', content: 'If a child persistently cannot hear relevant contrasts used in their speech variety, connect taught vowel-r spellings to words, blend through the word, retain the pattern, or transfer it despite explicit and appropriately levelled teaching, ask the teacher to identify the earliest point of breakdown.' },
