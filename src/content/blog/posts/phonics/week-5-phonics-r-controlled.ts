@@ -16,7 +16,7 @@ const post: BlogPost = {
     { type: 'p', content: 'Practise **one already-taught r-controlled pattern or comparison at a time**, make the child attend to the complete spelling, then connect the same pattern across reading, spelling and a fresh word or short sentence. A game, gesture or sorting activity is useful only if the child still has to retrieve and apply the sound-spelling relationship.' },
     { type: 'p', content: 'For **ar** and **or**, start with clear examples from the child’s programme. For **er, ir and ur**, remember that these spellings can represent very similar sounds in many accents. Reading the words and choosing the conventional spelling are therefore related but different challenges. Do not treat a spelling choice such as er versus ir as something the child should be able to hear perfectly in every word.' },
 
-    { type: 'h2', content: 'This article owns practice — Blog #18 owns the pattern explanation and sequence' },
+    { type: 'h2', content: 'Practice activities and the explanation of r-controlled vowel patterns' },
     { type: 'p', content: 'If you need the broader explanation of what r-controlled vowels are, how the pattern groups relate, common confusions and a sensible teaching order, use [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained). This article has a narrower job: **practical activities for practising r-controlled spellings that the child has already been taught**.' },
     { type: 'p', content: 'That boundary matters. A home activity should reinforce the child’s current phonics programme rather than introduce all five spellings because they happen to appear in one worksheet.' },
 
@@ -58,7 +58,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Activity 4 — Read, cover, spell, check' },
     { type: 'p', content: 'Show a suitable word containing the current pattern. The child reads it and identifies the r-controlled spelling. Cover the word, say it naturally, and ask the child to segment and spell it. Reveal the word and compare.' },
     { type: 'p', content: 'This is especially informative for **er, ir and ur**. A child may read **bird** correctly because **ir** is visible but spell the same sound with another plausible r-controlled grapheme. That tells you the reading correspondence is more secure than the conventional spelling choice; it does not automatically mean the child failed to hear the sounds.' },
-    { type: 'p', content: 'Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding progression. Here, spelling is a short check that strengthens the current r-controlled pattern.' },
+    { type: 'p', content: 'For the full progression from reading to spelling, see [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling). Here, spelling is a short check that strengthens the current r-controlled pattern.' },
 
     { type: 'h2', content: 'Activity 5 — er, ir and ur spelling sort after the patterns are taught' },
     { type: 'p', content: 'In many accents, **er, ir and ur** can sound the same or very similar in words such as **her, bird, turn**. Once the child has been taught all three spellings, create three columns and sort familiar words by grapheme.' },
