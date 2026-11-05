@@ -23,6 +23,7 @@ const BALLOON_POP_PATH = "/free-balloon-pop-phonics-game-for-kids";
 export default function FreeEnglishGamesCategoryPage() {
   const location = useLocation();
   const config = getPublicEnglishGamesCategoryByPath(location.pathname);
+  const isUnreleasedSpeakingCategory = config?.route === "/free-speaking-games-for-kids";
   const [completedTileIds, setCompletedTileIds] = useState<string[]>(() => {
     if (typeof window === "undefined") return [];
     return parsePublicProgress(window.localStorage.getItem(PUBLIC_PROGRESS_STORAGE_KEY))?.completedTileIds || [];
@@ -56,9 +57,10 @@ export default function FreeEnglishGamesCategoryPage() {
       description: config.description,
       canonicalPath: config.route,
       ogType: "website",
+      robots: isUnreleasedSpeakingCategory ? "noindex, follow" : undefined,
       jsonLd: [breadcrumbSchema, createFAQPageSchema(faqItems)],
     });
-  }, [config]);
+  }, [config, isUnreleasedSpeakingCategory]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -104,7 +106,7 @@ export default function FreeEnglishGamesCategoryPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05010f] text-slate-100">
-      <Meta title={config.title} description={config.description} canonical={pageUrl} />
+      <Meta title={config.title} description={config.description} canonical={pageUrl} robots={isUnreleasedSpeakingCategory ? "noindex, follow" : undefined} />
 
       <style>{`
         .public-category-kpi {
