@@ -39,7 +39,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'Blending is the process of combining phonemes to form a word. In printed word reading, the child looks through the word from left to right, identifies the taught sound-spelling correspondences and merges the sounds. If this process is still breaking down, [How Kids Learn Blending](/blog/how-kids-learn-blending) owns the stage-by-stage blending pathway.'
+      content: 'Blending is the process of combining phonemes to form a word. In printed word reading, the child looks through the word from left to right, identifies the taught sound-spelling correspondences and merges the sounds. If this process is still breaking down, [How Kids Learn Blending](/blog/how-kids-learn-blending) explains the stages of blending.'
     },
     {
       type: 'h3',
@@ -138,7 +138,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'A child may sometimes read a familiar word but still be unable to segment and spell a comparable word. That difference can reveal whether the sound pattern is genuinely secure. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap; here the point is simply that reading and spelling checks strengthen each other inside phonics instruction.'
+      content: 'A child may sometimes read a familiar word but still be unable to segment and spell a comparable word. That difference can reveal whether the sound pattern is genuinely secure. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the full encoding progression; here the point is simply that reading and spelling checks strengthen each other inside phonics instruction.'
     },
 
     {
@@ -256,11 +256,11 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'Where Blog #8 stops: class mechanism is not the same as class shopping'
+      content: 'How phonics classes work versus how to choose one'
     },
     {
       type: 'p',
-      content: 'This article explains the instructional mechanism that should connect a phonics class to better word reading. It does not try to rank providers, prescribe one class frequency, compare every course format or give a complete purchase checklist. For that decision, use Blog #10, [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes). For the separate online-versus-school question, use [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school).'
+      content: 'This article explains the instructional mechanism that should connect a phonics class to better word reading. It does not try to rank providers, prescribe one class frequency, compare every course format or give a complete purchase checklist. For that decision, use [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes). For the separate online-versus-school question, use [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school).'
     },
 
     {
