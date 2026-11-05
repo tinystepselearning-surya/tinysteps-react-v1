@@ -134,7 +134,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'Decode and encode the regular parts first, then identify the unusual or currently untaught correspondence that needs extra attention. Blog #4, [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words), explains this regular-versus-unusual distinction; Blog #28, [How to Teach Tricky Words](/blog/phonics-tricky-words), owns the detailed practice routine.'
+      content: 'Decode and encode the regular parts first, then identify the unusual or currently untaught correspondence that needs extra attention. [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words) explains this regular-versus-unusual distinction; [How to Teach Tricky Words](/blog/phonics-tricky-words) offers a detailed practice routine.'
     },
     {
       type: 'h3',
@@ -238,7 +238,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'If reading is the larger concern, Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), explains the decoding-to-reading mechanism. For the broader beginner sequence, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners).'
+      content: 'If reading is the larger concern, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) explains the decoding-to-reading mechanism. For the broader beginner sequence, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners).'
     },
     {
       type: 'h2',
