@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 13 — 5 November 2026 IST (12:09–12:10 IST)
+
+**Preflight:** 202 unique selected URLs, 22 columns, slots 1–19 ten URLs each and slot 20 twelve. 120 distinct current-day URL attempts before this batch; rows 121–130 were not checked today.
+
+**Observed:** Nine of ten exact blog URLs returned page-specific provider-extracted text with H1 headings (turn539338view0–4, turn539338view6–9); the word-automaticity article returned provider Internal Error (turn539338view5). Provider crawl timestamps unknown. Ten independent HTTPS GET requests began at distinct UTC times from 2026-11-05T06:39:39.091700Z to 2026-11-05T06:39:59.129947Z, all failing before HTTP with NameResolutionError in the audit environment. Not evidence of production downtime.
+
+**Verification boundary:** Origin HTTP status, final redirect, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider text is partial evidence only. No verified production regression/improvement or indexing/ranking/AI citation claim.
+
+**Daily attempted coverage:** 130/202 distinct URLs (64.36%); 72 await their assigned slots; 0 fully origin-verified. Next eligible slot 14, rows 131–140.
+
+**GitHub Actions:** In-progress repository runs API returned zero. Administrative disabled state not independently verified; user's explicit 25 October disable confirmation remains operating basis. No workflow run or enabled.
+
+**Persistence:** Tracker slot 13 recorded with distinct actual UTC attempt times. CHANGES.md unchanged because no verified meaningful before/after transition.
+
+---
+
 ## Slot 12 — 5 November 2026 IST (11:16–11:17 IST)
 
 **Preflight:** Latest tracker contained exactly 202 unique selected URLs, 22 CSV columns, slots 1–19 ten URLs each and slot 20 twelve; 110 distinct 5 November IST attempts before this batch. Rows 111–120 were not checked today.
