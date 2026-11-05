@@ -87,6 +87,78 @@ describe('SEO infrastructure', () => {
     }
   });
 
+  it('has only clean canonical course/resource routes and no active /main navigation paths', () => {
+    const routes = fs.readFileSync(path.join(repoRoot, 'src/app/routes.tsx'), 'utf8');
+    const redirects = firebaseConfig.hosting.redirects as Array<{ source?: string; destination?: string; type?: number }>;
+
+    expect(routes).toContain("{ path: 'courses', element: <CoursesPage /> },");
+    expect(routes).toContain("{ path: 'resources', element: <ResourcesPage /> },");
+    expect(routes).not.toMatch(/\\{ path: 'main\\//);
+    for (const [legacy, canonical] of [
+      ['/main/courses', '/courses'],
+      ['/main/resources', '/resources'],
+      ['/main/parents', '/parents'],
+    ]) {
+      expect(redirects).toContainEqual(expect.objectContaining({ source: legacy, destination: canonical, type: 301 }));
+    }
+
+    const activeFolders = ['src/pages', 'src/components', 'src/content'];
+    const legacyNavigationFiles: string[] = [];
+    const walk = (directory: string) => {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        const fullPath = path.join(directory, entry.name);
+        if (entry.isDirectory()) walk(fullPath);
+        else if (/\\.(tsx?|jsx?)$/.test(entry.name)) {
+          const source = fs.readFileSync(fullPath, 'utf8');
+          if (/['"`]\\/main(?:\\/|['"`])/.test(source)) {
+            legacyNavigationFiles.push(path.relative(repoRoot, fullPath));
+          }
+        }
+      }
+    };
+    activeFolders.forEach((directory) => walk(path.join(repoRoot, directory)));
+    expect(legacyNavigationFiles).toEqual([]);
+  });
+
+  it('keeps six useful GSC recovery pages self-canonical and indexable', async () => {
+    const { PUBLIC_ROUTE_MANIFEST } = await import('../../lib/publicRouteManifest.js');
+    const { ROUTE_SEO_REGISTRY } = await import('../../lib/routeSeoRegistry.js');
+    const sitemaps = ['sitemap-static.xml', 'sitemap-parents.xml'].map(readXml).join('\\n');
+    const redirects = firebaseConfig.hosting.redirects as Array<{ source?: string }>;
+    const pages = [
+      '/parents/speech-confidence',
+      '/parents/choosing-course',
+      '/english-grammar-writing-classes',
+      '/free-grammar-games-for-kids',
+      '/free-sentence-building-games-for-kids',
+      '/free-spelling-game-for-kids',
+    ];
+
+    for (const page of pages) {
+      const route = PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === page);
+      expect(route).toMatchObject({ path: page, intent: 'index', indexable: true, sitemap: true, canonicalPath: page });
+      expect(ROUTE_SEO_REGISTRY[page]?.canonicalPath).toBe(page);
+      expect(ROUTE_SEO_REGISTRY[page]?.robots || 'index, follow').not.toMatch(/noindex/i);
+      expect(sitemaps).toContain(`<loc>https://tinystepslearning.com${page}</loc>`);
+      expect(redirects.some((redirect) => redirect.source === page)).toBe(false);
+    }
+  });
+
+  it('keeps unreleased speaking games accessible but out of search discovery', async () => {
+    const { PUBLIC_ROUTE_MANIFEST } = await import('../../lib/publicRouteManifest.js');
+    const { ROUTE_SEO_REGISTRY } = await import('../../lib/routeSeoRegistry.js');
+    const sitemap = readXml('sitemap-static.xml');
+    const feed = readXml('rss.xml');
+    for (const page of ['/free-speaking-games-for-kids', '/free-speaking-practice-game-for-kids']) {
+      expect(PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === page)).toMatchObject({
+        intent: 'noindex', indexable: false, sitemap: false, prerender: true, robots: 'noindex, follow',
+      });
+      expect(ROUTE_SEO_REGISTRY[page]?.robots).toBe('noindex, follow');
+      expect(sitemap).not.toContain(`<loc>https://tinystepslearning.com${page}</loc>`);
+      expect(feed).not.toContain(`<link>https://tinystepslearning.com${page}</link>`);
+    }
+  });
+
   it('keeps legacy /main routes out of sitemap files and includes priority canonicals', () => {
     const sitemapXml = [
       readXml('sitemap-static.xml'),
