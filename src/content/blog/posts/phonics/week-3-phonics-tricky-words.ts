@@ -39,7 +39,7 @@ const post: BlogPost = {
     content: 'This is why Tiny Steps does not treat tricky words as a fixed list that sits outside phonics. The useful question is: “Which parts of this word can the child already explain with taught sound-spelling knowledge, and which part still needs explicit attention?”'
   }, {
     type: 'h2',
-    content: 'This guide owns the teaching routine — not the whole tricky-word topic'
+    content: 'A practical routine for teaching tricky words'
   }, {
     type: 'p',
     content: 'If you want a broader explanation of digraphs, high-frequency words and how these ideas fit into phonics, read [Digraphs and Tricky Words: What Parents Need to Know](/blog/digraphs-and-tricky-words). This article has a narrower job: it shows parents how to teach an irregular or temporarily irregular word without replacing decoding with guessing.'
