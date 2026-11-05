@@ -115,7 +115,16 @@ for (const device of devices) {
 
     // Delayed public chrome, footer, and support activation occur well after
     // ordinary Lighthouse loading snapshots. Keep observing through that window.
-    await page.waitForTimeout(27_000);
+    // Observe footer activation while the real final CTA occupies the viewport.
+    // Then return to the hero for the later support-widget activation window.
+    await page.locator('#homepage-final-invitation').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(15_000);
+    await testInfo.attach(device.name + '-bottom-after-footer.png', {
+      body: await page.screenshot({ fullPage: false }),
+      contentType: 'image/png',
+    });
+    await heading.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(12_000);
     await expect(page.locator('footer')).toBeVisible();
     await expect(booking).toBeVisible();
     await expect(page.locator('#homepage-final-invitation a[href="/book-demo"]')).toHaveCount(1);
