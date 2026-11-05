@@ -17,7 +17,7 @@ const WEEKLY_PARENT_GUIDE_BLOCKS: BlogBlock[] = [{
   content: 'Use one correction script: "Let us try slowly, then fast."'
 }, {
   type: 'li',
-  content: 'Send one weekly note to the teacher: what improved, what still needs support.'
+  content: 'If a teacher supports the child, share a brief progress observation when it would be useful.'
 }];
 
 const WEEKLY_RESEARCH_BASIS_BLOCKS: BlogBlock[] = [{
@@ -28,7 +28,7 @@ const WEEKLY_RESEARCH_BASIS_BLOCKS: BlogBlock[] = [{
   content: 'This weekly structure reflects evidence-aligned classroom practice used in early literacy and communication instruction: explicit teaching, short retrieval cycles, and repeated guided practice with feedback.'
 }, {
   type: 'li',
-  content: 'Distributed practice beats cramming: short sessions across the week improve retention better than one long session.'
+  content: 'Spaced opportunities to retrieve taught knowledge may support retention; adjust the schedule to the learner.'
 }, {
   type: 'li',
   content: 'Retrieval and correction loops build fluency: recall first, then immediate gentle correction, then one successful retry.'
@@ -72,32 +72,32 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   'week-1-phonics-satpin-launch': {
     heading: 'Real-world action plan: SATPIN without overwhelm',
     context: 'Do not start with heavy worksheets. Start with clear sound production, oral blending, and short decodable lines children can actually read.',
-    routine: ['Day 1-2: Teach s, a, t with pure sounds. Notice whether the child can recall a taught sound without rushing.', 'Day 3-4: Add p, i, n and blend sat, pin, tap, tin with finger taps.', 'When the taught code is secure, read a short line such as "Pat sat." or "Pat taps."; keep the session length flexible.'],
+    routine: ['Start with s, a and t when appropriate, model their sounds clearly, and observe recall without rushing.', 'Add p, i and n when the earlier sounds are secure; blend sat, pin, tap and tin only after their correspondences are taught.', 'When the taught code is secure, read a short line such as "Pat sat." or "Pat taps."; keep the session length flexible.'],
     rescue: 'If your child says letter names instead of sounds, model once, ask for echo twice, then return to one simple blend. If frustration rises, switch to oral-only blending for 2 minutes.',
-    outcomes: ['Child recalls all six SATPIN sounds quickly.', 'Child blends fresh CVC words built from taught sounds without picture guessing.', 'Child reads one short decodable sentence with support.'],
-    parentQuestions: ['My child forgets sounds the next day. Start every session with a 90-second sound review before new words.', 'My child mixes b and d. Delay these letters for now and return after sound confidence is stable.']
+    outcomes: ['Child recalls the taught SATPIN sounds with decreasing support.', 'Child blends fresh CVC words built from taught sounds without picture guessing.', 'Child reads one short decodable sentence with support.'],
+    parentQuestions: ['My child forgets sounds. Revisit a small taught set before adding new letters; no timed recall drill is required.', 'My child confuses letters. Revisit only the graphemes already introduced and avoid adding unrelated letters to the current task.']
   },
   'week-2-phonics-blending-club': {
     heading: 'Real-world action plan: blending that works on school nights',
-    context: 'Blending becomes automatic with short daily repetition. Use a fixed ladder from oral sounds to print to sentence.',
+    context: 'Accurate blending develops through appropriate instruction and supported practice. Move from oral sounds to print and sentences as the child becomes ready.',
     routine: ['Start with a few oral blends built from sounds already taught, such as s-a-t, p-i-n and t-a-p once SATPIN is secure.', 'Read a CVC ladder: sat -> sit -> sip -> tip -> tap. Identify the changed sound in each step: middle, final, initial, middle.', 'If ready, read a line using only known spellings, such as "Pat sat." after SATPIN is taught.'],
     rescue: 'If your child guesses whole words, cover the word, reveal one sound at a time, and blend again slowly. Keep correction neutral and quick.',
-    outcomes: ['Child blends new CVC words from known patterns with less adult prompting.', 'Child notices vowel changes between similar words.', 'Child reads one short sentence by tracking each word left to right.'],
-    parentQuestions: ['How long should blending practice be? Short, well-matched practice can help; adjust frequency and duration to the child’s response.', 'Should I let my child skip hard words? No, help decode them once, then repeat for confidence.']
+    outcomes: ['Child blends new CVC words from known patterns with less adult prompting.', 'Child identifies whether the first, middle or final phoneme changes in a word chain.', 'Child reads one short sentence by tracking each word left to right.'],
+    parentQuestions: ['How long should blending practice be? Short, well-matched practice can help; adjust frequency and duration to the child’s response.', 'Should I let my child skip hard words? Help decode words built from taught patterns; if a spelling has not been taught, supply it and revisit at a suitable stage.']
   },
   'week-3-phonics-tricky-words': {
     heading: 'Real-world action plan: teach tricky words without rote pressure',
     context: 'Use a "sound part + heart part" method so children understand what is decodable and what must be remembered.',
-    routine: ['Choose a manageable set of common-exception words from the child’s programme, such as said, was or the; identify both the regular and unusual parts.', 'Read each tricky word in a tiny sentence: "He said hi." "It was fun." "The dog ran."', 'Play snap game with word cards for 2 minutes before bed.'],
-    rescue: 'If a tricky word keeps failing, reduce to one word for two days. Use tracing in sand or air writing, then read it in a sentence.',
-    outcomes: ['Child reads 2-3 target tricky words automatically.', 'Child can use at least one target word while reading a sentence.', 'Child can spell one target tricky word from memory.'],
-    parentQuestions: ['How many tricky words per week? There is no universal quota; choose words matched to the current teaching sequence.', 'Should I test spelling daily? No, test lightly twice a week and prioritize reading use.']
+    routine: ['Choose a manageable set of common-exception words from the child’s programme, such as said, was or the; identify both the regular and unusual parts.', 'After mapping the target word, use it in a suitable short sentence; support any other spellings the child has not yet been taught.', 'If useful, play a brief word-card game after the child has mapped the sounds to spellings; keep it optional.'],
+    rescue: 'If a tricky word remains difficult, reduce the active set, remap its sounds and letters, and practise reading and spelling it in context.',
+    outcomes: ['Child reads taught tricky words more accurately in fresh sentences rather than only on familiar cards.', 'Child can use at least one target word while reading a sentence.', 'Child can spell one target tricky word from memory.'],
+    parentQuestions: ['How many tricky words per week? There is no universal quota; choose words matched to the current teaching sequence.', 'Should I test spelling daily? Brief retrieval and spelling practice can help; adapt the frequency to the child rather than imposing a fixed test schedule.']
   },
   'week-4-phonics-long-vowels': {
     heading: 'Real-world action plan: long vowels with clear contrasts',
-    context: 'Parents get faster results when children compare short and long vowel pairs directly instead of learning patterns in isolation.',
-    routine: ['Use pair cards: cap/cape, pin/pine, tub/tube. Read short first, then long.', 'Introduce a new VCe pattern only when the previously taught pattern is sufficiently usable in reading and spelling.', 'Write one sentence per day using a long vowel word: "I ride the bike."'],
-    rescue: 'If child reads every vowel as short, exaggerate mouth shape and stretch the long sound once before blending the whole word.',
+    context: 'Contrasting a taught short-vowel word with its VCe counterpart can help a child notice how the spelling changes.',
+    routine: ['Use pair cards: cap/cape, pin/pine, tub/tube. Read short first, then long.', 'Introduce a new VCe pattern only when the previously taught pattern is sufficiently usable in reading and spelling.', 'When the necessary spellings are known, invite the child to read or write a short sentence with the current VCe pattern.'],
+    rescue: 'If the child uses the short-vowel sound, point to the full VCe spelling, model the word clearly and compare a taught pair such as cap and cape.',
     outcomes: ['Child can decode fresh words using the long-vowel spellings that have already been taught.', 'Child can explain that final e is silent but changes the vowel.', 'Child can read mixed short and long vowel lines with fewer errors.'],
     parentQuestions: ['Do I teach all long vowel patterns in one week? No, one pattern at a time is more realistic.', 'My child says the final e. Remind: "Final e is quiet, vowel speaks."']
   },
@@ -105,9 +105,9 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     heading: 'Real-world action plan: bossy-r practice that sticks',
     context: 'R-controlled vowels are easier when grouped by sound families and revisited through sentence reading and dictation.',
     routine: ['When ready, introduce the AR family (car, star, farm, park) with a simple sorting activity.', 'After the first family is secure, introduce the OR family (fork, corn, storm, short) with a brief reading task.', 'Introduce ER/IR/UR in the programme’s sequence; contrast spellings after each has been taught and practised.'],
-    rescue: 'If your child collapses all r-vowels into one sound, split practice by family and avoid mixed lists for two days.',
-    outcomes: ['Child correctly sorts words into AR, OR, and ER/IR/UR groups.', 'Child reads one sentence per r-controlled family.', 'Child spells at least four r-controlled words correctly in dictation.'],
-    parentQuestions: ['Should I teach er/ir/ur separately first? Yes, but combine later because they sound similar.', 'My child does not pronounce a strong r in car. This may reflect a normal non-rhotic accent; follow the child’s coherent teaching pronunciation model.']
+    rescue: 'If the patterns are mixed up, return to one taught family and compare another only when both are secure; account for legitimate accent variation.',
+    outcomes: ['Child correctly sorts words into AR, OR, and ER/IR/UR groups.', 'Child reads one sentence per r-controlled family.', 'Child spells suitable words using the r-controlled grapheme that has been taught, with growing independence.'],
+    parentQuestions: ['Should I teach er/ir/ur separately first? Follow the taught programme, then compare the spellings once the child knows them; pronunciation may vary by accent.', 'My child does not pronounce a strong r in car. This may reflect a normal non-rhotic accent; follow the child’s coherent teaching pronunciation model.']
   },
   'week-6-phonics-comprehension': {
     heading: 'Real-world action plan: connect decoding to understanding',
@@ -191,9 +191,9 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
   },
   'week-16-phonics-summer-plan': {
     heading: 'Real-world action plan: summer phonics without learning loss',
-    context: 'A light, repeatable summer routine protects reading accuracy and confidence better than irregular intensive sessions.',
+    context: 'A manageable summer routine can help children revisit taught reading patterns; neither confidence nor skill maintenance is guaranteed.',
     routine: ['Use an optional rotation of sound review, blending, decodable reading and spelling, adjusting the sequence to the child’s needs.', 'Use travel-friendly materials: 20 word cards, one notebook, one timer.', 'Keep a weekly scorecard: words read correctly, words spelled correctly, confidence level.'],
-    rescue: 'If routine breaks during travel, run a 5-minute oral-only session in car or at bedtime and resume full practice next day.',
+    rescue: 'If a routine is interrupted, restart with a brief activity suited to the child: oral language, taught phonics or independent reading.',
     outcomes: ['Child continues practising relevant reading skills, while individual progress is observed.', 'Child retains core phonics patterns already taught.', 'Parent can identify exactly which pattern needs revision after breaks.'],
     parentQuestions: ['Can I skip practice on vacation? Yes. Resume manageable activities when practical; no universal minimum frequency applies.', 'What is the minimum summer workload? There is no universal required dose; use flexible, purposeful practice.']
   },
@@ -281,7 +281,7 @@ const WEEKLY_REAL_WORLD_PLAYBOOKS: Record<string, WeeklyPlaybook> = {
     heading: 'Real-world action plan: support summer reading practice',
     context: 'Brief reading practice can support continued learning; no fixed routine guarantees that reading level will be maintained.',
     routine: ['If decoding is the current need, briefly revisit one taught spelling pattern before reading.', 'Read or listen to a suitable passage and discuss meaning at a natural point.', 'Invite an optional spoken or written response suited to the child’s age and language level.'],
-    rescue: 'If reading breaks down, reduce text level, reread easier lines for success, and rebuild difficulty gradually over 3-4 days.',
+    rescue: 'If reading breaks down, choose a more accessible text and increase difficulty when the child can read and discuss it with appropriate support.',
     outcomes: ['Child has suitable fluency practice opportunities; observe progress without assuming maintenance.', 'Child shows stronger decoding confidence on unfamiliar words.', 'Parent can spot progress early with a simple weekly check.'],
     parentQuestions: ['Does ten minutes prevent summer reading loss? No fixed duration guarantees that outcome; short purposeful practice may still be valuable.', 'Should we do only reading in summer? No, include brief grammar and speaking transfer for stronger retention.']
   }
