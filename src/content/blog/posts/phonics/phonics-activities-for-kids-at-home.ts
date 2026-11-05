@@ -23,12 +23,12 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Step 1 — Target: choose one skill the child is actually working on' },
     { type: 'p', content: 'Start with the bottleneck, not the most attractive printable. Ask what the child is currently trying to learn and what goes wrong when they attempt it.' },
-    { type: 'li', content: '**Letter-sound recall:** the child hesitates or confuses taught sounds. Blog #16, [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds), owns the focused letter-sound routine.' },
-    { type: 'li', content: '**Oral or printed blending:** the child knows sounds but cannot merge them reliably. Blog #15, [Phonics Blending Activities](/blog/phonics-blending-activities), owns the activity set for this bottleneck.' },
+    { type: 'li', content: '**Letter-sound recall:** the child hesitates or confuses taught sounds. [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds) provides a focused letter-sound routine.' },
+    { type: 'li', content: '**Oral or printed blending:** the child knows sounds but cannot merge them reliably. [Phonics Blending Activities](/blog/phonics-blending-activities) provides activities matched to this difficulty.' },
     { type: 'li', content: '**Fresh-word decoding:** rehearsed words are read, but unfamiliar words using the same taught pattern break down.' },
-    { type: 'li', content: '**Spelling/encoding:** the child can read a pattern but cannot segment and represent it independently. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'li', content: '**Spelling/encoding:** the child can read a pattern but cannot segment and represent it independently. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the full reading-to-spelling progression.' },
     { type: 'li', content: '**Connected reading:** individual words are accurate, but the same knowledge is lost in a sentence or short matched text.' },
-    { type: 'p', content: 'If you are not sure which stage is weak, Blog #2, [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read), provides a broader parent check from letter knowledge through early decoding transfer.' },
+    { type: 'p', content: 'If you are not sure which stage is weak, [Child Knows ABC but Cannot Read](/blog/child-knows-abc-but-cannot-read) provides a broader parent check from letter knowledge through early decoding transfer.' },
 
     { type: 'h2', content: 'Step 2 — Retrieve: begin with something already taught' },
     { type: 'p', content: 'A short retrieval step tells you whether the child can access the sound, grapheme or word pattern before you add more difficulty. Show a few taught graphemes, ask for the sounds, orally blend a simple example, or ask the child to read one previously taught word pattern.' },
@@ -37,9 +37,9 @@ const post: BlogPost = {
     { type: 'h2', content: 'Step 3 — Practise: use one low-prep activity that makes the target unavoidable' },
     { type: 'p', content: 'The activity should require the skill you want to strengthen. A child can be busy without doing the intended reading work, so watch the response rather than the craft.' },
     { type: 'h3', content: 'For sound recall' },
-    { type: 'p', content: 'Use simple letter cards, sound hunts or listen-and-point tasks with a small taught set. Keep Blog #16 as the dedicated letter-sound game guide rather than turning every home session into an alphabet game.' },
+    { type: 'p', content: 'Use simple letter cards, sound hunts or listen-and-point tasks with a small taught set. Use [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds) for focused letter-sound games rather than turning every home session into an alphabet game.' },
     { type: 'h3', content: 'For blending' },
-    { type: 'p', content: 'Say or display short decodable sequences and help the child keep the sounds in order as they merge them. If oral blending itself is weak, remove print temporarily and practise the sound-merging step. Blog #15 owns the detailed blending activities.' },
+    { type: 'p', content: 'Say or display short decodable sequences and help the child keep the sounds in order as they merge them. If oral blending itself is weak, remove print temporarily and practise the sound-merging step. [Phonics Blending Activities](/blog/phonics-blending-activities) offers detailed blending activities.' },
     { type: 'h3', content: 'For decoding a taught pattern' },
     { type: 'p', content: 'Use a few words that contain the same already-taught correspondence, including at least one unfamiliar example. The child should need the phonics pattern to succeed rather than a picture clue or memorised list.' },
     { type: 'h3', content: 'For spelling' },
@@ -79,7 +79,7 @@ const post: BlogPost = {
     { type: 'p', content: 'Not every book at home needs to become a decoding test. Children also benefit from adults reading aloud, talking about books, vocabulary and stories. DfE’s Reading Framework treats systematic phonics as one important part of a wider reading culture, not the whole home literacy experience.' },
 
     { type: 'h2', content: 'What about online games, worksheets and apps?' },
-    { type: 'p', content: 'Use the resource if it serves the current target. Blog #13, [Online Phonics Games for Kids](/blog/online-phonics-games), explains how to judge whether a digital game rehearses a real reading skill and transfers beyond the screen.' },
+    { type: 'p', content: 'Use the resource if it serves the current target. [Online Phonics Games for Kids](/blog/online-phonics-games) explains how to judge whether a digital game rehearses a real reading skill and transfers beyond the screen.' },
     { type: 'p', content: 'A worksheet can be useful when it asks the child to retrieve or apply taught knowledge. It is less informative if the child can complete it by copying, matching pictures or following a repeated visual pattern without reading. The format is secondary to the cognitive work.' },
 
     { type: 'h2', content: 'When home practice should change rather than simply continue' },
@@ -88,7 +88,7 @@ const post: BlogPost = {
     { type: 'li', content: 'The child succeeds only on repeated items but cannot transfer to comparable fresh examples.' },
     { type: 'li', content: 'Practice is becoming a recurring source of distress or conflict.' },
     { type: 'li', content: 'Decoding is now accurate but the real bottleneck has shifted to fluency, vocabulary, comprehension or written expression.' },
-    { type: 'p', content: 'Do not use a universal “after X weeks, home practice has failed” rule. Blog #6, [How Long Does Phonics Take?](/blog/how-long-does-phonics-take), explains why progress should be judged from starting point, accuracy, independence, retention and transfer rather than one calendar deadline.' },
+    { type: 'p', content: 'Do not use a universal “after X weeks, home practice has failed” rule. [How Long Does Phonics Take?](/blog/how-long-does-phonics-take) explains why progress should be judged from starting point, accuracy, independence, retention and transfer rather than one calendar deadline.' },
 
     { type: 'h2', content: 'The Tiny Steps one-card home phonics check' },
     { type: 'p', content: 'Use this as a parent reminder, not a standardized assessment:' },
