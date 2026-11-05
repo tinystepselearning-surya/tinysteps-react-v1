@@ -33,7 +33,7 @@ const post: BlogPost = {
     { type: 'li', content: '**Blending target:** joining known sounds through a short word without guessing from the first letter or picture.' },
     { type: 'li', content: '**Pattern target:** one already-taught digraph, vowel pattern or r-controlled pattern that needs consolidation.' },
     { type: 'li', content: '**Spelling target:** segmenting a word and mapping the heard phonemes back to the graphemes already taught.' },
-    { type: 'p', content: 'If the main issue is that your child knows individual sounds but cannot combine them into words, use [How Kids Learn Blending](/blog/how-kids-learn-blending) and [Phonics Blending Activities](/blog/phonics-blending-activities) rather than adding more patterns. If CVC decoding is the current milestone, [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) owns that foundation.' },
+    { type: 'p', content: 'If the main issue is that your child knows individual sounds but cannot combine them into words, use [How Kids Learn Blending](/blog/how-kids-learn-blending) and [Phonics Blending Activities](/blog/phonics-blending-activities) rather than adding more patterns. If CVC decoding is the current milestone, [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) explains that foundation.' },
 
     { type: 'h2', content: 'The Tiny Steps five-part summer phonics loop' },
     { type: 'p', content: 'For summer home practice, Tiny Steps uses a simple editorial loop: **Retrieve → Decode → Encode → Transfer → Adjust**. It is not a standardized assessment. It is a way to stop an activity from becoming disconnected from the reading skill it is supposed to practise.' },
@@ -42,7 +42,7 @@ const post: BlogPost = {
     { type: 'li', content: '**Encode:** say one or two words aloud and let the child segment the sounds and spell using known graphemes.' },
     { type: 'li', content: '**Transfer:** read the same target inside a fresh sentence, caption or short decodable passage.' },
     { type: 'li', content: '**Adjust:** if transfer collapses, reduce difficulty and reteach the same target rather than automatically adding a new rule.' },
-    { type: 'p', content: 'This same skill-first principle is used in our broader [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home) guide. That article owns the year-round home-routine question; this one adapts the idea specifically for a lighter school-break context.' },
+    { type: 'p', content: 'This same skill-first principle is used in our broader [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home) guide. That article explains year-round home practice; this guide adapts those ideas for a lighter school-break routine.' },
 
     { type: 'h2', content: 'A flexible 10-minute summer phonics routine' },
     { type: 'p', content: 'Use the following as a shape, not a stopwatch. If one part is already easy, shorten it. If a child needs a little more modelling on one word, slow down rather than racing to complete every box.' },
@@ -75,7 +75,7 @@ const post: BlogPost = {
     { type: 'li', content: '**Letter-sound game:** after the game, show the same grapheme on a plain card and ask for the sound.' },
     { type: 'li', content: '**Blending game:** after the game, ask the child to read one fresh word using the same taught correspondences.' },
     { type: 'li', content: '**Spelling game:** say one new suitable word off-screen and ask the child to segment and build it.' },
-    { type: 'p', content: '[Online Phonics Games for Kids](/blog/online-phonics-games) owns the full question of whether a digital game genuinely supports reading transfer. [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds) owns the practical letter-sound game routine.' },
+    { type: 'p', content: '[Online Phonics Games for Kids](/blog/online-phonics-games) explains how to evaluate whether digital games help reading skills transfer. [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds) offers practical letter-sound games.' },
     { type: 'p', content: 'Tiny Steps Balloon Pop can be used as a brief sound-recall warm-up because its core task is **hear sound → identify printed letter → choose the correct balloon**. It should not be treated as evidence that a child can blend or read words. Use an off-screen word or sentence to check the next reading step.' },
 
     { type: 'h2', content: 'How to choose decodable practice text for summer' },
