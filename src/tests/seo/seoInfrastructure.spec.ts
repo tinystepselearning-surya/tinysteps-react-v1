@@ -137,7 +137,7 @@ describe('SEO infrastructure', () => {
     ];
 
     for (const page of pages) {
-      const route = PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === page);
+      const route = PUBLIC_ROUTE_MANIFEST.find((entry: { path: string }) => entry.path === page);
       expect(route).toMatchObject({ path: page, intent: 'index', indexable: true, sitemap: true, canonicalPath: page });
       expect(ROUTE_SEO_REGISTRY[page]?.canonicalPath).toBe(page);
       expect(ROUTE_SEO_REGISTRY[page]?.robots || 'index, follow').not.toMatch(/noindex/i);
@@ -152,7 +152,7 @@ describe('SEO infrastructure', () => {
     const sitemap = readXml('sitemap-static.xml');
     const feed = readXml('rss.xml');
     for (const page of ['/free-speaking-games-for-kids', '/free-speaking-practice-game-for-kids']) {
-      expect(PUBLIC_ROUTE_MANIFEST.find((entry) => entry.path === page)).toMatchObject({
+      expect(PUBLIC_ROUTE_MANIFEST.find((entry: { path: string }) => entry.path === page)).toMatchObject({
         intent: 'noindex', indexable: false, sitemap: false, prerender: true, robots: 'noindex, follow',
       });
       expect(ROUTE_SEO_REGISTRY[page]?.robots).toBe('noindex, follow');
