@@ -17,6 +17,7 @@ on:
       - 'src/content/blog/posts/public-speaking/how-to-teach-storytelling-to-kids.ts'
       - 'src/content/blog/shared/weeklyShared.ts'
       - 'src/content/blog/posts/phonics/how-kids-learn-blending.ts'
+      - 'src/content/blog/posts/**'
       - 'src/config/semanticFacts.ts'
       - 'scripts/prerender.mjs'
       - 'scripts/test/tssa-scq-phase0-rendered.node-test.mjs'
