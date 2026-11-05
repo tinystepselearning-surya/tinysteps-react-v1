@@ -59,7 +59,7 @@ describe('Resources architecture R2 learning gateway', () => {
     const routes = read('src/app/routes.tsx');
     expect(routes).toContain("const ResourcesPage = lazy(() => import('../pages/ResourcesPage'));");
     expect(routes).toContain("{ path: 'resources', element: <ResourcesPage /> },");
-    expect(routes).toContain("{ path: 'main/resources', element: <Navigate to=\"/resources\" replace /> },");
+    expect(routes).not.toContain("{ path: 'main/resources', element: <Navigate to=\"/resources\" replace /> },");
     expect(routes).not.toContain("{ path: 'resources', element: <Navigate to=\"/blog\" replace /> },");
   });
 
