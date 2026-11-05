@@ -93,7 +93,7 @@ describe('SEO infrastructure', () => {
 
     expect(routes).toContain("{ path: 'courses', element: <CoursesPage /> },");
     expect(routes).toContain("{ path: 'resources', element: <ResourcesPage /> },");
-    expect(routes).not.toMatch(/\\{ path: 'main\\//);
+    expect(routes).not.toContain("{ path: 'main/");
     for (const [legacy, canonical] of [
       ['/main/courses', '/courses'],
       ['/main/resources', '/resources'],
@@ -102,21 +102,23 @@ describe('SEO infrastructure', () => {
       expect(redirects).toContainEqual(expect.objectContaining({ source: legacy, destination: canonical, type: 301 }));
     }
 
-    const activeFolders = ['src/pages', 'src/components', 'src/content'];
     const legacyNavigationFiles: string[] = [];
+    const extensions = new Set(['.tsx', '.ts', '.jsx', '.js']);
     const walk = (directory: string) => {
       for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
         const fullPath = path.join(directory, entry.name);
         if (entry.isDirectory()) walk(fullPath);
-        else if (/\\.(tsx?|jsx?)$/.test(entry.name)) {
+        else if (extensions.has(path.extname(entry.name))) {
           const source = fs.readFileSync(fullPath, 'utf8');
-          if (/['"`]\\/main(?:\\/|['"`])/.test(source)) {
+          if (source.includes("'/main/") || source.includes('"/main/')) {
             legacyNavigationFiles.push(path.relative(repoRoot, fullPath));
           }
         }
       }
     };
-    activeFolders.forEach((directory) => walk(path.join(repoRoot, directory)));
+    for (const folder of ['src/pages', 'src/components', 'src/content']) {
+      walk(path.join(repoRoot, folder));
+    }
     expect(legacyNavigationFiles).toEqual([]);
   });
 
