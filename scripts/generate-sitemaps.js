@@ -69,7 +69,6 @@ const SUPPORTING_LONG_TAIL = new Set([
   '/free-sentence-building-games-for-kids',
   '/free-reading-games-for-kids',
   '/free-grammar-games-for-kids',
-  '/free-speaking-games-for-kids',
   '/free-letter-sounds-game-for-kids',
   '/free-sound-listening-game-for-kids',
   '/free-word-building-game-for-kids',
@@ -77,7 +76,6 @@ const SUPPORTING_LONG_TAIL = new Set([
   '/free-sentence-making-game-for-kids',
   '/free-reading-fluency-game-for-kids',
   '/free-grammar-practice-game-for-kids',
-  '/free-speaking-practice-game-for-kids',
   '/free-letter-tracing-game-for-kids',
   '/letter-tracing-with-sounds-game',
 ]);
