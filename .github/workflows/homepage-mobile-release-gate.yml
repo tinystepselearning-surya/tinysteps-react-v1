@@ -96,6 +96,18 @@ jobs:
           tests/homepage-seo-runtime-network.spec.ts
           tests/homepage-gateway-destinations.spec.ts
           tests/homepage-cwv-diagnostics.spec.ts
+      # The later production-preview Playwright invocation clears test-results.
+      # Upload the diagnostic evidence before that next invocation.
+      - name: Upload Playwright evidence (including CWV layout-shift report)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: homepage-mobile-playwright-evidence
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
       - name: Build the production Hosting artifact
         run: npm run build:deploy
       - name: Verify production browser SEO requests
@@ -122,15 +134,5 @@ jobs:
             .filter(name => /HomePage|seo-|Meta-|vocabularyAuthoritySeoManifest|grammarProgrammaticSeoManifest|schemas-/.test(name))
             .map(name => ({ name, bytes: fs.statSync('dist/assets/' + name).size })));
           NODE
-      - name: Upload Playwright evidence (including CWV layout-shift report)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: homepage-mobile-playwright-evidence
-          path: |
-            test-results/
-            playwright-report/
-          if-no-files-found: ignore
-          retention-days: 7
       - name: Confirm validation-only execution
         run: echo "All checks complete. This workflow does not deploy to Firebase."
