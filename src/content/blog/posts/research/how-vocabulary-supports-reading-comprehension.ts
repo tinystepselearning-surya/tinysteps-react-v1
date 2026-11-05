@@ -44,7 +44,7 @@ const post: BlogPost = {
     { type: 'li', content: '**The child struggles even when the whole passage is read aloud:** oral language, vocabulary, background knowledge or broader comprehension may need support.' },
     { type: 'li', content: '**The child understands the passage when an adult reads it aloud but not when reading alone:** decoding effort or fluency may still be consuming too much attention.' },
     { type: 'li', content: '**The child knows individual word meanings but loses the main idea across sentences:** look beyond vocabulary to sentence integration, retelling and comprehension.' },
-    { type: 'p', content: 'The broader [From Decoding to Comprehension](/blog/phonics-comprehension) guide owns the full bottleneck check. This page stays focused on what vocabulary contributes.' },
+    { type: 'p', content: 'The broader [From Decoding to Comprehension](/blog/phonics-comprehension) guide helps parents distinguish decoding difficulties from other comprehension barriers. This page stays focused on what vocabulary contributes.' },
 
     { type: 'h2', content: 'A practical parent routine: notice → explain → connect → reread → use' },
     { type: 'h3', content: 'Notice' },
