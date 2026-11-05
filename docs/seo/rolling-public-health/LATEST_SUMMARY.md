@@ -1,5 +1,21 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 16 — 5 November 2026 IST (15:16 IST)
+
+**Preflight:** 202 unique selected URLs, 22 CSV columns, correct allocations (slots 1–19 ten each; slot 20 twelve). Prior distinct current-day attempts: 150. Rows 151–160 were previously dated 4 November IST.
+
+**Observed:** Ten exact public phonics blog URLs yielded substantive page-specific provider-extracted text with matching H1 headings (turn433273view0–turn433273view9). Provider labelled snapshots Crawled today but supplied no precise crawl times. Ten independent direct HTTPS GET requests began at distinct UTC times from 2026-11-05T09:46:22.619601Z to 2026-11-05T09:46:34.984214Z; five returned curl exit 6 (Could not resolve host) and five exit 28 (Resolving timed out after 3000 milliseconds), all before HTTP. HTTP_CODE 000 is not a production HTTP status.
+
+**Verification boundary:** Origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider-extracted content is partial evidence only. No verified production regression/improvement, indexing, rankings or AI citations.
+
+**Daily attempted coverage:** 160/202 distinct URLs (79.21%); 42 await assigned slots. Fully origin-verified: 0/202. Next eligible slot 17, rows 161–170.
+
+**GitHub Actions:** Administrative workflow disablement and in-progress runs could not be independently confirmed in this run; user-confirmed disablement remains operating basis. No workflow run or enabled.
+
+**Persistence:** Tracker recorded ten actual distinct UTC request start times; CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 15 — 5 November 2026 IST (14:18–14:20 IST)
 
 **Preflight:** 202 unique selected URLs, 22 CSV columns, slots 1–19 ten URLs each and slot 20 twelve; 140 distinct current-day URL attempts before this batch. Rows 141–150 had not been checked on 5 November IST.
