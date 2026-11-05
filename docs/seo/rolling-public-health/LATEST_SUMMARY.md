@@ -1,5 +1,19 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 8 — 5 November 2026 IST
+
+**Preflight:** 202 unique URLs, 22 CSV columns, correct 10/12 slot allocations. Prior to slot 8, 70 distinct URLs had today's attempts; rows 71–80 had yesterday's dates.
+
+**Observed:** Ten independent direct HTTPS GET attempts started at distinct UTC times between 2026-11-05T01:47:28.396183Z and 2026-11-05T01:47:48.432350Z. All failed before HTTP with requests/urllib3 NameResolutionError in the audit environment. Public web provider returned page-specific extracted text for nine exact URLs (turn841298view0–5,7–9); /speaking-progress-framework returned provider Internal Error (turn841298view6). Provider snapshots have no precise verified crawl timestamps. These are partial content observations only, not origin initial HTML. HTTP status, final redirects, canonical, robots/noindex, bot accessibility and JSON-LD remain UNVERIFIED. No verified production regression or improvement.
+
+**Daily attempted coverage:** 80/202 (39.60%), fully origin-verified 0/202, remaining 122. Next eligible slot 9, rows 81–90.
+
+**GitHub Actions:** In-progress runs API returned zero. Administrative disabled state not independently confirmed; user's previous disable confirmation remains operating basis. No workflow started.
+
+**Persistence:** Master tracker updated with actual per-URL UTC attempt timestamps; CHANGES.md unchanged, no verified meaningful before/after transition.
+
+---
+
 ## Slot 7 — 5 November 2026 IST
 
 **Preflight:** Exactly 202 unique URLs, 22 CSV columns, slots 1–19 ten URLs each and slot 20 twelve. Before slot 7, 60 distinct URLs had today's attempts; rows 61–70 were dated 4 November.
