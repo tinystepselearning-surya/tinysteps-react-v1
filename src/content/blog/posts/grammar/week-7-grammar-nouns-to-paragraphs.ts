@@ -28,7 +28,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This page owns the broad grammar roadmap. It does not try to replace the narrower guides for [sentence formation](/blog/how-to-improve-sentence-formation-in-kids), [grammar-rule transfer](/blog/child-knows-grammar-but-makes-mistakes), [English tenses](/blog/grammar-tenses), [conjunctions](/blog/grammar-conjunctions) or [subject–verb agreement](/blog/grammar-subject-verb). Use those when one specific skill is the bottleneck.',
+        'This page introduces the broad grammar roadmap. It does not try to replace the narrower guides for [sentence formation](/blog/how-to-improve-sentence-formation-in-kids), [grammar-rule transfer](/blog/child-knows-grammar-but-makes-mistakes), [English tenses](/blog/grammar-tenses), [conjunctions](/blog/grammar-conjunctions) or [subject–verb agreement](/blog/grammar-subject-verb). Use those when one specific skill is the bottleneck.',
     },
 
     {
@@ -109,7 +109,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'If building the sentence itself is the persistent difficulty, move to [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). That page owns the oral sentence → core structure → expansion → writing-transfer problem.',
+        'If building the sentence itself is the persistent difficulty, move to [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids). That guide explains how to form, expand and independently use complete sentences in speech and writing.',
     },
 
     {
@@ -357,7 +357,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'If a child can explain a grammar rule but repeatedly loses it in fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That article owns the rule-recall → controlled-use → spontaneous-speaking → written-transfer problem.',
+        'If a child can explain a grammar rule but repeatedly loses it in fresh speaking or writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That article explores how children can apply known grammar rules in spontaneous speaking and independent writing.',
     },
 
     {
