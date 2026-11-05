@@ -69,6 +69,7 @@ export default function FreeEnglishGameLandingPage() {
       description: config.seoDescription,
       canonicalPath: config.publicPath,
       ogType: "website",
+      robots: config.isPublicPlayReady ? undefined : "noindex, follow",
       jsonLd: [breadcrumbSchema, createFAQPageSchema(faqItems)],
     });
   }, [config]);
@@ -120,7 +121,7 @@ export default function FreeEnglishGameLandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05010f] text-slate-100">
-      <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} />
+      <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} robots={config.isPublicPlayReady ? undefined : "noindex, follow"} />
 
       <style>{`
         .public-game-panel {
