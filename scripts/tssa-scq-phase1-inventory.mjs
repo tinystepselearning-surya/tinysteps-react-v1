@@ -11,19 +11,27 @@ const dist = path.join(root, 'dist');
 const output = path.join(root, 'artifacts', 'tssa-scq-phase1');
 const origin = 'https://tinystepslearning.com';
 // Preserve the frozen 19 Oct 260/279 reference in the B1 ledger.
-// The four Phonics age pages and three group-commercial pages are explicit
-// approved additions; only these paths may increase the expected inventory.
+// The four Phonics age pages and three group-commercial pages are approved
+// additions. Two as-yet-unplayable speaking game pages remain accessible but
+// are deliberately noindex and omitted from discovery/sitemaps. Track these
+// as explicit policy exceptions rather than silently accepting count drift.
 const APPROVED_GROUP_ROUTES = Object.freeze([
   '/group-phonics-classes-for-kids',
   '/group-grammar-classes-for-kids',
   '/group-public-speaking-classes-for-kids',
 ]);
 const approvedNewRoutes = [...PHONICS_AGE_PROGRAMME_PATHS, ...APPROVED_GROUP_ROUTES];
+const APPROVED_NOINDEX_ROUTES = Object.freeze([
+  '/free-speaking-games-for-kids',
+  '/free-speaking-practice-game-for-kids',
+]);
 const additionalApprovedCount = approvedNewRoutes.length;
-const expectedIndexableCount = 260 + additionalApprovedCount;
+const approvedNoindexCount = APPROVED_NOINDEX_ROUTES.length;
+const expectedIndexableCount = 260 + additionalApprovedCount - approvedNoindexCount;
 const expectedCorpusCount = 279 + additionalApprovedCount;
+const expectedNoindexCount = 19 + approvedNoindexCount;
 const expectedChildCounts = new Map([
-  ['sitemap-static.xml', 159 + additionalApprovedCount],
+  ['sitemap-static.xml', 159 + additionalApprovedCount - approvedNoindexCount],
   ['sitemap-blog.xml', 83],
   ['sitemap-courses.xml', 7],
   ['sitemap-parents.xml', 11],
@@ -91,9 +99,19 @@ for (const approvedPath of approvedNewRoutes) {
   if (!membership.has(url))
     issue('ERROR', approvedPath, 'APPROVED_SITEMAP_MISSING', 'Approved route must appear once in the sitemap');
 }
+// Check the specifically authorised exclusions, not only the resulting count.
+// A changed or missing unrelated route must still fail this release gate.
+for (const excludedPath of APPROVED_NOINDEX_ROUTES) {
+  const url = origin + excludedPath;
+  const owner = corpusByUrl.get(url);
+  if (!owner || owner.indexing_state !== 'noindex')
+    issue('ERROR', excludedPath, 'APPROVED_NOINDEX_MISSING', 'Placeholder must remain a noindex corpus owner');
+  if (membership.has(url))
+    issue('ERROR', excludedPath, 'APPROVED_NOINDEX_IN_SITEMAP', 'Placeholder must not appear in the sitemap');
+}
 const indexIntended = corpus.filter(e => e.indexing_state === 'indexable');
 const noindex = corpus.filter(e => e.indexing_state === 'noindex');
-if (corpus.length !== expectedCorpusCount || indexIntended.length !== expectedIndexableCount || noindex.length !== 19)
+if (corpus.length !== expectedCorpusCount || indexIntended.length !== expectedIndexableCount || noindex.length !== expectedNoindexCount)
   issue('ERROR', 'machine-directory', 'SOURCE_COUNT_DRIFT',
     'Corpus=' + corpus.length + '; indexable=' + indexIntended.length + '; excluded=' + noindex.length);
 if (sitemapCount !== expectedIndexableCount || membership.size !== expectedIndexableCount)
@@ -201,6 +219,7 @@ const summary = {
   audited_at_utc: new Date().toISOString(),
   evidence: 'generated local build artifact; NOT live HTTP, current Google or Bing indexed state, or AI citation evidence',
   frozen_2026_10_19_baseline: { content: 279, indexable: 260, noindex: 19 },
+  approved_temporary_noindex_routes: APPROVED_NOINDEX_ROUTES,
   additional_approved_age_routes: PHONICS_AGE_PROGRAMME_PATHS,
   additional_approved_group_routes: APPROVED_GROUP_ROUTES,
   source_content_count: corpus.length,
