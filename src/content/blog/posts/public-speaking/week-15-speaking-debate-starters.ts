@@ -374,7 +374,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Use [Speaking Confidence](/blog/speaking-confidence-seeds) when the main goal is starting, expanding and transferring spoken responses. Use [Speech Structure](/blog/speaking-structure) when the child needs to organise a planned presentation. Use [Visual Aids](/blog/speaking-visual-aids) when a picture, prop or slide needs to support a talk. This debate guide owns **reasoned opinion exchange: position, support, listening and response**.',
+        'Use [Speaking Confidence](/blog/speaking-confidence-seeds) when the main goal is starting, expanding and transferring spoken responses. Use [Speech Structure](/blog/speaking-structure) when the child needs to organise a planned presentation. Use [Visual Aids](/blog/speaking-visual-aids) when a picture, prop or slide needs to support a talk. This debate guide focuses on **reasoned opinion exchange: taking a position, supporting it, listening and responding**.',
     },
     {
       type: 'p',

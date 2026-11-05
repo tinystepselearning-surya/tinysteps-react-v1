@@ -20,7 +20,7 @@ const post: BlogPost = {
       content: 'Keep the routine small and repeatable. Choose words that use sound–spelling correspondences your child has already been taught, help the child look across the whole printed word, blend the sounds from left to right, say the finished word naturally, and then check the same skill on a fresh word or short matched sentence. The useful evidence is **less guessing, more independent blending and transfer** — not how many cards the child finishes before a timer ends.'
     }, {
       type: 'p',
-      content: 'A daily routine can be brief, but there is no research-proven number of minutes, words or consecutive days that guarantees blending mastery. Some children need only a short reminder; others need slower teaching, fewer examples or more guided practice. This article owns the **repeatable home routine**. For a larger menu of activity types, use [Phonics Blending Activities](/blog/phonics-blending-activities). For the developmental progression from oral blending into increasingly complex word reading, use [How Kids Learn Blending](/blog/how-kids-learn-blending).'
+      content: 'A daily routine can be brief, but there is no research-proven number of minutes, words or consecutive days that guarantees blending mastery. Some children need only a short reminder; others need slower teaching, fewer examples or more guided practice. This article explains a **repeatable home practice routine**. For a larger menu of activity types, use [Phonics Blending Activities](/blog/phonics-blending-activities). For the developmental progression from oral blending into increasingly complex word reading, use [How Kids Learn Blending](/blog/how-kids-learn-blending).'
     },
 
     {
@@ -190,7 +190,7 @@ const post: BlogPost = {
       content: 'Should spelling be part of a blending routine?'
     }, {
       type: 'p',
-      content: 'A brief spelling check can strengthen the connection between reading and writing. After the child reads a word, you can sometimes say the word aloud and ask them to segment the sounds and represent them with the graphemes they know. Keep this secondary to the blending goal here; [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) owns the full encoding progression.'
+      content: 'A brief spelling check can strengthen the connection between reading and writing. After the child reads a word, you can sometimes say the word aloud and ask them to segment the sounds and represent them with the graphemes they know. Keep this secondary to the blending goal here; [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the wider reading-to-spelling progression.'
     },
 
     {
@@ -227,7 +227,7 @@ const post: BlogPost = {
       content: 'Progress difficulty when the current pattern is becoming accurate, independent and transferable — not because a seven-day plan has ended. Increase only one meaningful demand at a time: perhaps a new taught correspondence, a slightly longer word, or more connected text. If performance collapses, reduce the complexity and identify the missing step.'
     }, {
       type: 'p',
-      content: 'There is no universal rule such as “six correct words means move on”. For broader questions about pace, [How Long Does Phonics Take?](/blog/how-long-does-phonics-take) owns the timeline intent. For a larger selection of blending activities matched to specific errors, use [Phonics Blending Activities](/blog/phonics-blending-activities).'
+      content: 'There is no universal rule such as “six correct words means move on”. For broader questions about pace, [How Long Does Phonics Take?](/blog/how-long-does-phonics-take) explains realistic timescales and progress checks. For a larger selection of blending activities matched to specific errors, use [Phonics Blending Activities](/blog/phonics-blending-activities).'
     },
 
     {

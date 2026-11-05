@@ -39,7 +39,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'What order should parents use?' },
     { type: 'p', content: 'There is no single evidence source that says every child must learn long-vowel patterns in one identical order. What research and major phonics guidance support more strongly is **systematic, explicit and cumulative** teaching: introduce sound–spelling relationships deliberately, connect new learning to what is already known, and give children chances to decode, spell and read connected text.' },
     { type: 'p', content: 'A practical order is therefore based on **contrast and readiness**, not the calendar.' },
-    { type: 'li', content: '**Start from a stable contrast.** If short-vowel CVC decoding is still unreliable, strengthen that first. [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) owns that earlier milestone.' },
+    { type: 'li', content: '**Start from a stable contrast.** If short-vowel CVC decoding is still unreliable, strengthen that first. [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) explains that earlier milestone.' },
     { type: 'li', content: '**Introduce one new pattern family clearly.** VCe is often convenient because short/long pairs make the visual contrast obvious, but another systematic programme may legitimately use a different order.' },
     { type: 'li', content: '**Read and spell with the same pattern.** Recognition alone is weaker evidence than being able to decode and encode the correspondence.' },
     { type: 'li', content: '**Check fresh examples.** A child who remembers cake and bike may still be learning the pattern. Try an unfamiliar but appropriately decodable example using already-taught correspondences.' },
@@ -52,7 +52,7 @@ const post: BlogPost = {
     { type: 'li', content: '**Notice** — find the grapheme or spelling pattern representing that sound.' },
     { type: 'li', content: '**Contrast** — compare it with a known pattern, such as cap/cape or ai/ay.' },
     { type: 'li', content: '**Decode** — read taught and then fresh words using the pattern.' },
-    { type: 'li', content: '**Encode** — segment spoken words and choose the taught spelling pattern. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'li', content: '**Encode** — segment spoken words and choose the taught spelling pattern. For the wider reading-to-spelling progression, see [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling).' },
     { type: 'li', content: '**Transfer** — use the same knowledge in a matched sentence or short text.' },
 
     { type: 'h2', content: 'Common long-vowel mix-ups—and what they may mean' },
@@ -77,7 +77,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'How much practice is enough?' },
     { type: 'p', content: 'There is no universal research-defined number of long-vowel words, minutes or practice days that proves mastery. Use the smallest amount of practice that gives useful evidence, then judge **accuracy, independence, transfer and retention** rather than racing through a word count.' },
-    { type: 'p', content: 'For hands-on activities, sorting ideas and home practice examples, use [Long Vowel Practice for Kids](/blog/phonics-long-vowels). That article owns the practical-activity intent; this guide owns pattern order, interpretation and common mix-ups.' },
+    { type: 'p', content: 'For hands-on activities, sorting ideas and home practice examples, use [Long Vowel Practice for Kids](/blog/phonics-long-vowels). That article offers practical activities; this guide explains pattern order, interpretation and common mix-ups.' },
 
     { type: 'h2', content: 'When is a child ready for another long-vowel pattern?' },
     { type: 'p', content: 'Look for a pattern that is becoming usable rather than waiting for perfection. A child is showing useful readiness when they can usually identify the taught spelling, decode suitable fresh words with less help, spell some taught examples from sound, and carry the pattern into matched text without losing earlier patterns.' },
@@ -92,8 +92,8 @@ const post: BlogPost = {
     { type: 'p', content: 'These observations identify where teaching may need to return; they do not diagnose dyslexia or another learning condition. Persistent reading or spelling difficulty may warrant discussion with the child’s teacher and, where appropriate, broader professional assessment.' },
 
     { type: 'h2', content: 'How this fits into the wider phonics sequence' },
-    { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) owns the broad question of how phonics knowledge should progress overall. Blog #11 stays narrower: long-vowel pattern families, ordering decisions and error interpretation.' },
-    { type: 'p', content: 'R-controlled vowels are a separate pattern family because the vowel sound is affected by following r. [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained) owns that explanation rather than treating ar, er, ir, or and ur as ordinary long-vowel spellings.' },
+    { type: 'p', content: '[Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the wider progression of phonics knowledge. This guide focuses on long-vowel pattern families, ordering decisions and error interpretation.' },
+    { type: 'p', content: 'R-controlled vowels are a separate pattern family because the vowel sound is affected by following r. [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained) covers those vowel-r patterns separately from ordinary long-vowel spellings.' },
 
     { type: 'h2', content: 'Evidence and references' },
     { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade: recommends teaching common sound–spelling patterns, decoding, word analysis and writing; includes long-vowel, VCe, vowel-team and syllable-pattern examples. https://ies.ed.gov/ncee/wwc/Docs/practiceGuide/wwc_foundationalreading_040717.pdf' },

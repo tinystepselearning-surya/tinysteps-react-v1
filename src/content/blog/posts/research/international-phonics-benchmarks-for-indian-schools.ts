@@ -38,7 +38,7 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'Blog 55 owns programme-completeness benchmarking — not every school phonics question',
+      content: 'Evaluating phonics programme completeness without confusing different school needs',
     },
     {
       type: 'p',
@@ -53,7 +53,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'If you need to audit transfer rather than familiar-word performance, use [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation). For the detailed instructional order, use [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools). Teacher capability and implementation fidelity are developed separately in [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation), while [Systematic and Cumulative Phonics](/blog/systematic-cumulative-phonics-explained-for-schools) owns the programme-design principle itself.',
+        'If you need to audit transfer rather than familiar-word performance, use [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation). For the detailed instructional order, use [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools). Teacher capability and implementation fidelity are developed separately in [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation), while [Systematic and Cumulative Phonics](/blog/systematic-cumulative-phonics-explained-for-schools) explains those programme-design principles.',
     },
 
     {

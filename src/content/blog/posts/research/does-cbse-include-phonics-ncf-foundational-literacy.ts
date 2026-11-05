@@ -38,7 +38,7 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'Blog 53 owns the official-evidence question — not the whole school phonics implementation problem',
+      content: 'What CBSE and NCF guidance says about phonics — and what schools still need to plan',
     },
     {
       type: 'p',
@@ -223,7 +223,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'That leaves a genuine implementation responsibility with schools, curriculum teams and programme designers: the sound–spelling knowledge still has to be sequenced, cumulative review has to be planned, word-reading practice has to be matched to taught knowledge, teacher routines have to be consistent and progress has to be assessed. [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools) owns that design problem.',
+        'That leaves a genuine implementation responsibility with schools, curriculum teams and programme designers: the sound–spelling knowledge still has to be sequenced, cumulative review has to be planned, word-reading practice has to be matched to taught knowledge, teacher routines have to be consistent and progress has to be assessed. [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools) explains how schools can plan that teaching sequence.',
     },
 
     {

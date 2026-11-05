@@ -20,9 +20,9 @@ const post: BlogPost = {
     { type: 'p', content: 'A child can fail to understand a text for different reasons. One child may still be misreading several words. Another may read the words accurately but so effortfully that little attention remains for meaning. Another may read smoothly yet not know an important word, understand the sentence grammar, connect ideas across sentences or make the inference the text requires.' },
     { type: 'p', content: 'That is why “ask more comprehension questions” is not a complete response. Before choosing an activity, identify which part of the reading process is breaking down.' },
 
-    { type: 'h2', content: 'This guide owns the bridge from accurate decoding into meaning' },
+    { type: 'h2', content: 'Moving from accurate decoding to understanding meaning' },
     { type: 'p', content: 'This article has a narrow job: helping parents move from **accurate word reading into sentence and short-text understanding**. If word reading itself is still inaccurate, return to the relevant phonics or decoding skill rather than trying to solve the problem with pictures or questions.' },
-    { type: 'p', content: 'If the child reads accurately but remains slow, effortful or poorly phrased, [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children) owns the full fluency pathway. If the child reads accessible text accurately and reasonably fluently but repeatedly fails to understand stories, [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story) owns the broader diagnostic parent question. This guide stays focused on the practical teaching bridge between those stages.' },
+    { type: 'p', content: 'If the child reads accurately but remains slow, effortful or poorly phrased, [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children) explains how reading can become smoother and better phrased. If the child reads accessible text accurately and reasonably fluently but repeatedly fails to understand stories, [Why Does My Child Read Words But Not Understand Stories?](/blog/why-child-reads-words-but-does-not-understand-story) helps parents investigate difficulties understanding stories. This guide stays focused on the practical teaching bridge between those stages.' },
 
     { type: 'h2', content: 'Start with the bottleneck, not with a worksheet' },
     { type: 'h3', content: 'Bottleneck 1 — the child is still misreading important words' },
@@ -56,7 +56,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Activity 2 — Phrase the sentence, then compare meaning' },
     { type: 'p', content: 'Mark natural phrase boundaries with light pencil slashes or finger pauses, read the sentence together once, then remove the support. Ask the child to reread and explain how grouping the words helped the sentence make sense.' },
-    { type: 'p', content: 'Phrasing is not a speed race. The aim is to preserve syntax and meaning while word reading becomes easier. The dedicated fluency guide owns fuller repeated-reading and prosody practice.' },
+    { type: 'p', content: 'Phrasing is not a speed race. The aim is to preserve syntax and meaning while word reading becomes easier. The dedicated fluency guide explains repeated-reading and prosody practice in more detail.' },
 
     { type: 'h2', content: 'Activity 3 — Clarify one blocking word in context' },
     { type: 'p', content: 'Pick a word that is necessary for understanding the current sentence. Ask what the child thinks it means, give a concise child-friendly explanation if needed, use one additional example, then reread the original text.' },

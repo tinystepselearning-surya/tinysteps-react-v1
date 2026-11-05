@@ -17,7 +17,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Quick answer: teach the sentence boundary before teaching a list of punctuation marks' },
     { type: 'p', content: 'Punctuation is most useful when a child understands **what the sentence is doing**. Start with one complete spoken idea, show where it begins and ends, then connect that meaning to the written conventions: a capital letter at the beginning and an appropriate end mark. Once this boundary is secure, add other punctuation only when the sentence needs it.' },
     { type: 'p', content: 'A child who can name a full stop, question mark and exclamation mark may still forget them in fresh writing. That is not unusual: recognising a mark in an exercise and using it independently while also thinking about ideas, spelling and handwriting are different demands. This guide therefore focuses on **meaning → sentence boundary → punctuation choice → rereading → transfer**.' },
-    { type: 'p', content: 'For the broader sequence from words into sentences and paragraphs, use [Grammar Basics for Kids: From Nouns to Paragraphs](/blog/grammar-nouns-to-paragraphs). If the child cannot yet build a complete sentence, [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids) owns that earlier problem.' },
+    { type: 'p', content: 'For the broader sequence from words into sentences and paragraphs, use [Grammar Basics for Kids: From Nouns to Paragraphs](/blog/grammar-nouns-to-paragraphs). If the child cannot yet build a complete sentence, [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids) explains how to build complete sentences.' },
 
     { type: 'h2', content: 'Start with two jobs: capitals show beginnings and names; end marks show how the sentence finishes' },
     { type: 'h3', content: 'Capital letter at the beginning of a sentence' },
@@ -57,7 +57,7 @@ const post: BlogPost = {
     { type: 'li', content: '**The rule is recognised but not transferred:** the child can fix a worksheet sentence but does not self-check fresh writing.' },
     { type: 'li', content: '**Too many corrections arrive at once:** the child stops monitoring punctuation because every line receives several unrelated fixes.' },
     { type: 'li', content: '**The mark was taught as a visual label rather than a sentence function:** the child knows its name but not when the meaning requires it.' },
-    { type: 'p', content: 'If the child consistently knows the rule in exercises but loses it during independent writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That page owns the broader transfer problem.' },
+    { type: 'p', content: 'If the child consistently knows the rule in exercises but loses it during independent writing, use [My Child Knows Grammar Rules but Still Makes Mistakes](/blog/child-knows-grammar-but-makes-mistakes). That guide explores how to apply known rules reliably in independent writing.' },
 
     { type: 'h2', content: 'Five useful punctuation activities at home' },
     { type: 'h3', content: '1. Sentence boundary detective' },

@@ -159,7 +159,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'When needed, model the process yourself: point to the graphemes, say the sounds in sequence without inserting unnecessary extra sounds, combine them and say the word. Then let the child try a similar word. [How Kids Learn Blending](/blog/how-kids-learn-blending) owns the detailed stage-by-stage pathway if this is the child’s main difficulty.',
+        'When needed, model the process yourself: point to the graphemes, say the sounds in sequence without inserting unnecessary extra sounds, combine them and say the word. Then let the child try a similar word. [How Kids Learn Blending](/blog/how-kids-learn-blending) explains the detailed stage-by-stage pathway if this is the child’s main difficulty.',
     },
 
     {
@@ -189,7 +189,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'A practical approach is to map the regular parts and explicitly identify the unexpected part. This preserves attention to the alphabetic structure while still building rapid recognition. [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first) owns that decision in detail.',
+        'A practical approach is to map the regular parts and explicitly identify the unexpected part. This preserves attention to the alphabetic structure while still building rapid recognition. [Should Children Memorize Sight Words or Learn Phonics First?](/blog/sight-words-or-phonics-first) explores that decision in detail.',
     },
 
     {

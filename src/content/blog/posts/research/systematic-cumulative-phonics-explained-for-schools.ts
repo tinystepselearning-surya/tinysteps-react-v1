@@ -310,7 +310,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        '[Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation) owns the professional-development problem in detail. Blog 59’s leadership point is broader: **teacher capability has to sit inside a coherent programme and implementation infrastructure.**',
+        '[Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation) explains professional development in detail. The wider leadership point here is that **teacher capability has to sit inside a coherent programme and implementation infrastructure.**',
     },
 
     {

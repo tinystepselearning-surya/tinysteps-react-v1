@@ -38,7 +38,7 @@ const post: BlogPost = {
 
     {
       type: 'h2',
-      content: 'Blog 60 owns the “what comes after letter sounds?” question',
+      content: 'What children need after learning letter sounds',
     },
     {
       type: 'p',
@@ -253,7 +253,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Fresh transfer does not mean surprising children with untaught code. It means changing the word while keeping the required knowledge within what has already been taught. [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation) owns the full assessment design, including the careful use of unfamiliar real words and optional pseudo-words.',
+        'Fresh transfer does not mean surprising children with untaught code. It means changing the word while keeping the required knowledge within what has already been taught. [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation) explains assessment design, including the careful use of unfamiliar real words and optional pseudo-words.',
     },
 
     {
@@ -417,7 +417,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Assessment should locate the first unstable prerequisite before new complexity is added. Blog 54 provides the school assessment framework for separating familiar-word performance from genuine decoding transfer.',
+        'Assessment should locate the first unstable prerequisite before new complexity is added. [How Schools Can Assess Decoding Instead of Word Memorisation](/blog/how-schools-can-assess-decoding-not-memorisation) provides the school assessment framework for separating familiar-word performance from genuine decoding transfer.',
     },
     {
       type: 'p',
@@ -472,12 +472,12 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'Those criteria do **not** apply automatically to CBSE schools and are not Indian regulatory requirements. They are useful comparative evidence because they help leaders test programme completeness. [International Phonics Benchmarks for Indian Schools](/blog/international-phonics-benchmarks-for-indian-schools) owns that comparison in detail.',
+        'Those criteria do **not** apply automatically to CBSE schools and are not Indian regulatory requirements. They are useful comparative evidence because they help leaders test programme completeness. [International Phonics Benchmarks for Indian Schools](/blog/international-phonics-benchmarks-for-indian-schools) compares those criteria in more detail.',
     },
     {
       type: 'p',
       content:
-        'Likewise, a good sequence cannot implement itself. Teachers need to understand how to model blending, interpret errors, choose matched practice and decide when to reteach. [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation) owns that capability-building problem.',
+        'Likewise, a good sequence cannot implement itself. Teachers need to understand how to model blending, interpret errors, choose matched practice and decide when to reteach. [Phonics Teacher Training for Schools](/blog/phonics-teacher-training-for-schools-implementation) explains how schools can build those capabilities.',
     },
 
     {

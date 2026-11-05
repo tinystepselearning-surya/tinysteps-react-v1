@@ -47,7 +47,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Phonics is where speech sounds and written graphemes meet' },
     { type: 'p', content: 'Phonics teaches that written letters and letter groups represent sounds in spoken words. Children use those relationships in two directions: **print → sound → word** when reading, and **spoken word → phonemes → graphemes** when spelling.' },
-    { type: 'p', content: 'This is why knowing alphabet names is not enough for decoding. A child may know that the letter **B** is called “bee” but still need to learn that **b** commonly represents /b/ in words such as *bat*. The broader [What Is Phonics for Kids?](/blog/what-is-phonics-for-kids) guide owns the full start-here explanation.' },
+    { type: 'p', content: 'This is why knowing alphabet names is not enough for decoding. A child may know that the letter **B** is called “bee” but still need to learn that **b** commonly represents /b/ in words such as *bat*. The broader [What Is Phonics for Kids?](/blog/what-is-phonics-for-kids) guide provides a fuller introduction.' },
 
     { type: 'h2', content: 'Oral blending and printed-word blending are related but not identical tasks' },
     { type: 'p', content: 'If an adult says /m/ /a/ /p/ and the child combines the sounds into *map* without seeing letters, the child is demonstrating **phonemic blending**. If the child looks at **m-a-p**, retrieves the taught sound for each grapheme and combines them into *map*, the child is using **phonics for decoding**.' },
@@ -72,7 +72,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Show a taught grapheme and retrieve its sound.' },
     { type: 'li', content: 'Blend a printed word built from taught correspondences.' },
     { type: 'li', content: 'Say a word and let the child segment and represent the sounds with known graphemes.' },
-    { type: 'p', content: 'The [Tiny Steps phonics resources hub](/resources/phonics) now keeps this distinction visible: sound awareness supports the reading system, while the word utility uses explicit grapheme-to-sound mappings instead of guessing pronunciation from spelling.' },
+    { type: 'p', content: 'The [Tiny Steps phonics resources hub](/resources/phonics) helps parents explore both listening to spoken sounds and connecting sounds to print. In phonics activities, children should apply taught grapheme–phoneme correspondences rather than guess a word from its overall appearance.' },
 
     { type: 'h2', content: 'Five parent observations that help locate the gap' },
     { type: 'li', content: '**Can the child hear syllables and rhyme?** If not, broader phonological-awareness play may help.' },

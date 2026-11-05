@@ -16,7 +16,7 @@ const post: BlogPost = {
   body: [
     { type: 'h2', content: 'Quick answer: teach the story as an organised message, not a performance trick' },
     { type: 'p', content: 'A child tells a clearer story when the listener can understand **who or what the story is about, what happened in a meaningful order, which details matter, and how the story ends**. Begin with familiar events and retelling before demanding imaginative performance. Organisation comes first; expression can be refined later.' },
-    { type: 'p', content: 'This page owns oral storytelling and retelling. [Story Cards for Kids](/blog/grammar-speaking-bridge) remains a useful prompt-based activity, while [How to Structure a Speech for Kids](/blog/speaking-structure) owns planned informational or persuasive talks. Creative writing belongs to [Creative Writing Scaffolds for Ages 8–10](/blog/grammar-creative-writing).' },
+    { type: 'p', content: 'This page explains oral storytelling and retelling. [Story Cards for Kids](/blog/grammar-speaking-bridge) remains a useful prompt-based activity, while [How to Structure a Speech for Kids](/blog/speaking-structure) explains how to plan informational or persuasive talks. Creative writing belongs to [Creative Writing Scaffolds for Ages 8–10](/blog/grammar-creative-writing).' },
 
     { type: 'h2', content: 'Retelling and creating a story are related but different jobs' },
     { type: 'h3', content: 'Retelling' },

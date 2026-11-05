@@ -27,7 +27,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'The key skill is not simply choosing a word from a conjunction bank. Children first need to recognise the relationship between two ideas. This article therefore owns the focused skill of **joining ideas according to meaning**. For the broader progression, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If building complete sentences is the main difficulty, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids).',
+        'The key skill is not simply choosing a word from a conjunction bank. Children first need to recognise the relationship between two ideas. This article therefore teaches the focused skill of **joining ideas according to meaning**. For the broader progression, use [Grammar Basics for Kids](/blog/grammar-nouns-to-paragraphs). If building complete sentences is the main difficulty, use [How to Improve Sentence Formation in Kids](/blog/how-to-improve-sentence-formation-in-kids).',
     },
 
     {

@@ -54,7 +54,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'If accurate decoding is already established but reading remains slow or choppy, use [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children). Blog #6 owns the phonics-progress timeline; the fluency article owns what comes after accurate decoding needs to become smoother and more automatic.'
+      content: 'If accurate decoding is already established but reading remains slow or choppy, use [How to Improve Reading Fluency in Children](/blog/how-to-improve-reading-fluency-in-children). This guide explains phonics progress; the fluency article focuses on making accurate reading smoother and more automatic.'
     },
     {
       type: 'h2',
@@ -162,7 +162,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'The child learns additional digraphs and other sound-spelling patterns in a planned sequence and applies them cumulatively. Blog #4, [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words), explains what should still be decoded and what needs extra attention.'
+      content: 'The child learns additional digraphs and other sound-spelling patterns in a planned sequence and applies them cumulatively. [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words) explains what should still be decoded and what needs extra attention.'
     },
     {
       type: 'h3',
@@ -322,7 +322,7 @@ const post: BlogPost = {
     },
     {
       type: 'p',
-      content: 'For the full parent comparison framework, use [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes). That article owns provider selection; Blog #6 owns realistic interpretation of time and progress.'
+      content: 'For the full parent comparison framework, use [How to Choose a Phonics Class](/blog/how-to-choose-phonics-classes). That article helps parents compare providers; this guide explains how to interpret phonics progress and timescales.'
     },
     {
       type: 'h2',

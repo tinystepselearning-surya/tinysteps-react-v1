@@ -41,9 +41,9 @@ const post: BlogPost = {
     { type: 'h3', content: 'Phonemic-awareness and oral blending games' },
     { type: 'p', content: 'Games that ask children to hear, separate or combine speech sounds can support the sound-analysis skills used in reading and spelling. To become reading practice, that oral work eventually needs to connect to print.' },
     { type: 'h3', content: 'Printed blending and decoding games' },
-    { type: 'p', content: 'These should require the child to use taught grapheme–phoneme correspondences through the word rather than rely on pictures, first-letter guessing or repeated visual memory. Blog #5, [How Kids Learn Blending](/blog/how-kids-learn-blending), owns the full blending progression.' },
+    { type: 'p', content: 'These should require the child to use taught grapheme–phoneme correspondences through the word rather than rely on pictures, first-letter guessing or repeated visual memory. [How Kids Learn Blending](/blog/how-kids-learn-blending) explains the full blending progression.' },
     { type: 'h3', content: 'Word-building and spelling games' },
-    { type: 'p', content: 'A useful encoding game asks the child to hear a word, segment its phonemes and select or write appropriate taught graphemes. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'p', content: 'A useful encoding game asks the child to hear a word, segment its phonemes and select or write appropriate taught graphemes. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the wider spelling progression.' },
     { type: 'h3', content: 'Connected-reading and fluency games' },
     { type: 'p', content: 'Once decoding is sufficiently accurate for the material, digital practice can include sentences or short matched texts. IES recommends opportunities to read connected text to support accuracy, fluency and comprehension; a fast tapping task is not a substitute for actually reading the text.' },
 
@@ -74,8 +74,8 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'When a game is the wrong next tool' },
     { type: 'p', content: 'If the child repeatedly cannot hear the target sound, cannot understand what the task is asking, uses a guessing strategy that the game does not correct, or cannot transfer the practised skill outside the game, simply adding more levels may not address the bottleneck. A parent or teacher may need to model the underlying skill directly and observe the child’s response.' },
-    { type: 'p', content: 'Likewise, if decoding is accurate but reading remains slow, or if the child reads words accurately but does not understand the text, the priority may have moved beyond beginner phonics. Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), explains the wider instructional chain from taught correspondences into independent reading.' },
-    { type: 'p', content: 'This article owns the **quality of online phonics games and their transfer to reading**. Blog #16, [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds), owns a practical parent routine specifically for letter-sound practice, while Blog #14, [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home), owns the broader home-practice routine.' },
+    { type: 'p', content: 'Likewise, if decoding is accurate but reading remains slow, or if the child reads words accurately but does not understand the text, the priority may have moved beyond beginner phonics. [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) explains the wider instructional chain from taught correspondences into independent reading.' },
+    { type: 'p', content: 'This article focuses on **evaluating online phonics games and whether skills transfer to reading**. For hands-on practice, [Phonics Games for Letter Sounds](/blog/phonics-games-for-letter-sounds) provides letter-sound activities, while [Phonics Activities at Home](/blog/phonics-activities-for-kids-at-home) covers a broader home routine.' },
 
     { type: 'h2', content: 'Evidence and references' },
     { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade: strong-evidence recommendations for sound–letter links and decoding/word writing, plus connected-text practice. https://ies.ed.gov/ncee/wwc/PracticeGuide/21' },

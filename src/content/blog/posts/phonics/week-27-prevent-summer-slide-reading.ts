@@ -31,10 +31,10 @@ const post: BlogPost = {
     content: 'A better home question is: “Which reading processes does my child still need to use regularly?” For a beginning reader, that may be phoneme awareness, sound-letter recall and blending. For a developing reader, it may be accurate word reading and fluency. For an increasingly fluent reader, vocabulary, comprehension and summarising may deserve more attention.'
   }, {
     type: 'h2',
-    content: 'Summer reading plan vs summer phonics plan: choose the right owner'
+    content: 'Summer reading plan or summer phonics plan: which fits your child?'
   }, {
     type: 'p',
-    content: 'This guide owns broad summer reading maintenance across reading stages: decoding, fluency, vocabulary, comprehension, discussion and reading for pleasure. If your child still has a specific active phonics target — for example, consolidating CVC blending, a taught digraph or another sound-spelling pattern — use our [Summer Phonics Practice for Kids: A 10-Minute Daily Routine](/blog/phonics-summer-plan). That narrower guide owns phonics-target practice rather than whole-reading maintenance.'
+    content: 'This guide covers summer reading across stages: decoding, fluency, vocabulary, comprehension, discussion and reading for pleasure. If your child still has a specific active phonics target — for example, consolidating CVC blending, a taught digraph or another sound-spelling pattern — use our [Summer Phonics Practice for Kids: A 10-Minute Daily Routine](/blog/phonics-summer-plan). That narrower guide focuses on phonics-target practice, not the full reading journey.'
   }, {
     type: 'p',
     content: 'You do not need to run both plans in full. Choose the one that matches the main bottleneck, and borrow one useful element from the other only when the child’s reading evidence calls for it.'

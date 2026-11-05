@@ -52,7 +52,7 @@ const post: BlogPost = {
     content: 'Phonics supports spelling when children practise encoding as well as reading: hear the word, segment the sounds, choose matching graphemes, write or build the word, then read it back. Early spellings may not always be conventionally correct, especially when more than one spelling can represent the same sound, but they should increasingly show that the child is accounting for the sound sequence rather than choosing random letters.'
   }, {
     type: 'p',
-    content: 'For a detailed encoding pathway, use [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling). That page owns the spelling-specific routine and error analysis.'
+    content: 'For a detailed encoding pathway, use [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling). That page explains spelling practice and how to interpret common errors.'
   }, {
     type: 'h3',
     content: '5. Reading can become smoother after accurate decoding becomes easier'
@@ -145,7 +145,7 @@ const post: BlogPost = {
     content: 'Uneven progress does not automatically mean phonics is failing. One child may learn letter-sound correspondences quickly but need more blending practice. Another may decode accurately but need more encoding work. A third may read isolated words but lose accuracy in sentences. Identify the exact bottleneck before changing the whole method.'
   }, {
     type: 'p',
-    content: 'Avoid deciding that a programme has worked or failed because a fixed number of weeks has passed. Progress depends on the child’s starting point, teaching quality, practice opportunities and whether instruction is matched to current knowledge. The [How Long Does Phonics Take?](/blog/how-long-does-phonics-take) guide owns realistic progress expectations and timelines.'
+    content: 'Avoid deciding that a programme has worked or failed because a fixed number of weeks has passed. Progress depends on the child’s starting point, teaching quality, practice opportunities and whether instruction is matched to current knowledge. The [How Long Does Phonics Take?](/blog/how-long-does-phonics-take) guide explains realistic progress expectations and timelines.'
   }, {
     type: 'h2',
     content: 'When to ask for more support'
