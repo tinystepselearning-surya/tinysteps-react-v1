@@ -125,7 +125,7 @@ describe('SEO infrastructure', () => {
   it('keeps six useful GSC recovery pages self-canonical and indexable', async () => {
     const { PUBLIC_ROUTE_MANIFEST } = await import('../../lib/publicRouteManifest.js');
     const { ROUTE_SEO_REGISTRY } = await import('../../lib/routeSeoRegistry.js');
-    const sitemaps = ['sitemap-static.xml', 'sitemap-parents.xml'].map(readXml).join('\\n');
+    const sitemaps = ['sitemap-static.xml', 'sitemap-parents.xml'].map(readXml).join(' ');
     const redirects = firebaseConfig.hosting.redirects as Array<{ source?: string }>;
     const pages = [
       '/parents/speech-confidence',
