@@ -29,23 +29,23 @@ const post: BlogPost = {
 
     { type: 'h3', content: '1. Build phonemic awareness while introducing a small useful sound–spelling set' },
     { type: 'p', content: 'Children need to notice and work with sounds in spoken words while beginning to connect those sounds with print. They do not need to complete a long oral-only course before seeing letters, nor do they need all 26 letters before reading a word.' },
-    { type: 'p', content: 'A useful first correspondence set is one that can quickly form several simple words. Blog #19, [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide), owns one common early-set example and how parents can use it. This page owns the broader sequencing principles.' },
+    { type: 'p', content: 'A useful first correspondence set is one that can quickly form several simple words. [SATPIN Phonics Guide for Parents](/blog/satpin-phonics-guide) explains one common early sound set and how parents can use it. This page explains the broader sequencing principles.' },
 
     { type: 'h3', content: '2. Apply the taught set immediately in blending and segmenting' },
     { type: 'p', content: 'As soon as the child knows enough correspondences to form simple words, connect isolated sounds to reading and spelling. Reading uses the printed graphemes to retrieve phonemes and blend them; spelling reverses the process by segmenting a spoken word and mapping the phonemes to graphemes.' },
-    { type: 'p', content: 'Early words are often simple short-vowel structures such as CVC words, but CVC is a useful early word structure—not a complete beginner curriculum. Blog #3, [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents), owns that first decoding milestone.' },
+    { type: 'p', content: 'Early words are often simple short-vowel structures such as CVC words, but CVC is a useful early word structure—not a complete beginner curriculum. [CVC Words Explained for Parents](/blog/cvc-words-explained-for-parents) explains that first decoding milestone.' },
 
     { type: 'h3', content: '3. Expand consonants and common grapheme patterns cumulatively' },
     { type: 'p', content: 'Once the first set is usable, add further correspondences according to the teaching programme while keeping earlier ones in review. Common consonant digraphs such as sh, ch and th are important because two letters can represent one phoneme. Adjacent consonants such as st or bl are different: their phonemes remain separate and still need to be blended through the word.' },
-    { type: 'p', content: 'This distinction prevents the vague instruction “teach blends and digraphs next” from becoming one undifferentiated rule family. Blog #4, [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words), owns the conceptual distinction between digraphs, blends and common-exception words.' },
+    { type: 'p', content: 'This distinction prevents the vague instruction “teach blends and digraphs next” from becoming one undifferentiated rule family. [Digraphs and Tricky Words](/blog/digraphs-and-tricky-words) explains the differences between digraphs, blends and common-exception words.' },
 
     { type: 'h3', content: '4. Introduce common-exception words gradually inside the sequence' },
     { type: 'p', content: 'Some useful words contain correspondences that are unusual or not yet taught. These should not become a giant sight-word list learned as visual shapes. DfE guidance recommends introducing common-exception words gradually and drawing attention to the part that is exceptional while keeping phonics as the main decoding strategy.' },
-    { type: 'p', content: 'Blog #20, [Phonics vs Sight Words](/blog/sight-words-or-phonics-first), owns the broader parent decision about phonics, sight words and tricky/common-exception words.' },
+    { type: 'p', content: '[Phonics vs Sight Words](/blog/sight-words-or-phonics-first) helps parents compare phonics, sight words and tricky/common-exception words.' },
 
     { type: 'h3', content: '5. Add long-vowel and other common patterns in a coherent programme order' },
     { type: 'p', content: 'As the child’s basic decoding expands, the sequence can add common vowel patterns and more complex sound–spelling relationships. The key is not memorising every vowel rule together. Introduce a manageable pattern, contrast it with already-secure knowledge, use it in decoding and spelling, and revisit it cumulatively.' },
-    { type: 'p', content: 'Blog #11, [Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids), owns VCe/silent-e, vowel teams, open syllables and common long-vowel confusions. Blog #18, [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained), owns ar, er, ir, or and ur pattern groups and their confusions.' },
+    { type: 'p', content: '[Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids) explains VCe/silent-e, vowel teams, open syllables and common long-vowel confusions. [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained) explains ar, er, ir, or and ur pattern groups and their confusions.' },
 
     { type: 'h3', content: '6. Keep extending from words into matched sentences and text' },
     { type: 'p', content: 'A phonics pattern is not useful merely because the child can recite its name. Children need reading material that gives them a fair chance to apply the correspondences they have actually been taught. DfE guidance requires decodable texts to closely match programme progression; IES also recommends connected-text reading to build accuracy, fluency and comprehension.' },
@@ -58,7 +58,7 @@ const post: BlogPost = {
     { type: 'h3', content: '2. Decoding — can the child use it inside a fresh word?' },
     { type: 'p', content: 'A memorised list can hide weak transfer. Include a new regular word built only from correspondences already taught. Watch whether the child processes the whole word rather than guessing from the first letter or picture.' },
     { type: 'h3', content: '3. Encoding — can the child map the same knowledge back into spelling?' },
-    { type: 'p', content: 'Say a simple word using the current pattern and ask the child to segment and write it. Reading and spelling are related but not identical, so a spelling error can reveal a mapping confusion that reading alone did not show. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'p', content: 'Say a simple word using the current pattern and ask the child to segment and write it. Reading and spelling are related but not identical, so a spelling error can reveal a mapping confusion that reading alone did not show. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the full spelling progression.' },
     { type: 'h3', content: '4. Independence — is adult support reducing?' },
     { type: 'p', content: 'The child does not need to be instantly automatic before every new item appears. But if every response still requires the same adult model, the current knowledge may need more practice before substantially increasing complexity.' },
     { type: 'h3', content: '5. Transfer and retention — does the knowledge survive a new context?' },
@@ -87,7 +87,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Should parents follow the school sequence or a different sequence at home?' },
     { type: 'p', content: 'If the child is receiving coherent systematic phonics at school, home practice should usually reinforce the correspondences and word types already taught rather than introduce a competing order. A different programme may use different mnemonics or a different sequence while still being systematic.' },
-    { type: 'p', content: 'If extra support is needed, the useful question is not “Which sequence looks more advanced?” but “What does the child already know, where does transfer break, and how will the supplemental teaching connect sensibly with current learning?” Blog #12, [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school), owns that delivery-context decision.' },
+    { type: 'p', content: 'If extra support is needed, the useful question is not “Which sequence looks more advanced?” but “What does the child already know, where does transfer break, and how will the supplemental teaching connect sensibly with current learning?” [Online Phonics Classes vs School](/blog/online-phonics-classes-vs-school) helps parents compare those learning settings.' },
 
     { type: 'h2', content: 'When a beginner needs a closer review rather than another phonics rule' },
     { type: 'p', content: 'If a child remains persistently unable to hear or manipulate relevant speech sounds, connect taught sounds with print, blend simple taught patterns, or retain the correspondences despite explicit and appropriately levelled instruction, ask the child’s teacher or an appropriate qualified professional for a closer review. Speech, language, hearing, attention or broader learning factors may also affect progress.' },
