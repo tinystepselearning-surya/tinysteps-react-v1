@@ -502,6 +502,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Explore free speaking games for kids from Tiny Steps. Help children practise clear speaking, confidence, expression and communication skills.',
     canonicalPath: '/free-speaking-games-for-kids',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/free-letter-sounds-game-for-kids': {
@@ -559,6 +560,7 @@ export const ROUTE_SEO_REGISTRY = {
     description:
       'Explore a free speaking practice game for kids. Help children build clear speaking, confidence, expression and communication skills.',
     canonicalPath: '/free-speaking-practice-game-for-kids',
+    robots: 'noindex, follow',
     ogType: 'website',
   },
   '/free-balloon-pop-phonics-game-for-kids': {

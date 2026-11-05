@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FreeEnglishGameLandingPage from "../../../pages/public/FreeEnglishGameLandingPage";
 import { PUBLIC_ENGLISH_GAME_LANDING_CONFIGS } from "../../../lib/publicEnglishGames";
+import { applySeo } from "../../../lib/seo";
 
 const landingMocks = vi.hoisted(() => ({
   recordLevelResultMock: vi.fn(),
@@ -114,6 +115,17 @@ describe("FreeEnglishGameLandingPage", () => {
       expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
     },
   );
+
+  it("keeps unreleased speaking practice accessible while setting noindex", () => {
+    vi.mocked(applySeo).mockClear();
+    renderRoute("/free-speaking-practice-game-for-kids");
+
+    expect(screen.getByRole("heading", { name: "Free Speaking Practice Game for Kids", level: 1 })).toBeInTheDocument();
+    expect(vi.mocked(applySeo)).toHaveBeenCalledWith(expect.objectContaining({
+      canonicalPath: "/free-speaking-practice-game-for-kids",
+      robots: "noindex, follow",
+    }));
+  });
 
   it("covers every configured individual landing route", () => {
     const configuredRoutes = new Set(PUBLIC_ENGLISH_GAME_LANDING_CONFIGS.map((config) => config.publicPath));
