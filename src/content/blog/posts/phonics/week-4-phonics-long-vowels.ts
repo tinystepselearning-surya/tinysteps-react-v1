@@ -15,7 +15,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Quick answer: what should long-vowel practice actually look like?' },
     { type: 'p', content: 'Long-vowel practice works best when it stays tied to one already-taught spelling pattern at a time. Instead of asking a child to memorise a large mixed list, choose one target such as VCe in **cake**, **bike** and **hope**, or a taught vowel team such as **ai** in rain. Help the child notice the spelling, decode it in words, spell with it from sound, and then check the same knowledge on a fresh word or short sentence.' },
     { type: 'p', content: 'The goal is not to complete a seven-day plan or hit a percentage score. The stronger evidence is that the child can use the taught pattern with increasing independence and transfer it beyond the exact cards used during practice.' },
-    { type: 'p', content: 'Blog #11, [Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids), owns the broader explanation of long-vowel pattern families, teaching order and common mix-ups. This Blog #29 has a narrower job: **practical activities for practising a pattern the child has already been taught**.' },
+    { type: 'p', content: '[Long Vowel Sounds for Kids](/blog/long-vowel-sounds-for-kids) explains long-vowel pattern families, teaching order and common mix-ups. This guide focuses instead on **practical activities for practising a pattern the child has already been taught**.' },
 
     { type: 'h2', content: 'First, choose one pattern instead of “doing long vowels” all at once' },
     { type: 'p', content: 'Long vowel sounds can be represented by several spellings. Long /ā/, for example, appears in words such as **cake**, **rain** and **play**. Those are not one single spelling rule. A child who is just learning one pattern benefits from seeing that pattern clearly before several alternatives are mixed together.' },
@@ -56,7 +56,7 @@ const post: BlogPost = {
     { type: 'h2', content: 'Activity 4 — Read, cover, spell, check' },
     { type: 'p', content: 'Reading and spelling should reinforce the same correspondence. Show a taught long-vowel word, let the child decode it, then cover the word and say it aloud. Ask the child to segment the sounds and spell it. Reveal the word and compare.' },
     { type: 'p', content: 'A spelling difference is useful information. A child may read **rain** correctly but choose another plausible long-a spelling when writing it. That does not mean the child failed to hear the long vowel. It shows that conventional spelling of the pattern still needs practice.' },
-    { type: 'p', content: 'For the full reading-to-spelling progression, Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the encoding roadmap.' },
+    { type: 'p', content: 'For the full reading-to-spelling progression, see [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) for a step-by-step explanation.' },
 
     { type: 'h2', content: 'Activity 5 — One-pattern fresh-word check' },
     { type: 'p', content: 'Repeated cards can become memorised. Add an unfamiliar but appropriately decodable word containing the same taught pattern. The child should not need to have seen that exact word during the activity.' },
@@ -109,7 +109,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Do not use fixed 80% rules, word quotas or calendar deadlines as universal mastery criteria.' },
 
     { type: 'h2', content: 'Where r-controlled vowels fit' },
-    { type: 'p', content: 'R-controlled vowel spellings are a separate practice family. The following r changes the vowel pronunciation, so **ar, er, ir, or and ur** should not simply be folded into ordinary long-vowel activities. Blog #18, [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained), owns the pattern explanation, and Blog #30 will own the practical r-controlled-vowel activity routine.' },
+    { type: 'p', content: 'R-controlled vowel spellings are a separate practice family. The following r changes the vowel pronunciation, so **ar, er, ir, or and ur** should not simply be folded into ordinary long-vowel activities. [R-Controlled Vowels Explained](/blog/r-controlled-vowels-explained) explains these patterns, while [R-Controlled Vowel Practice for Kids](/blog/phonics-r-controlled) offers related activities.' },
 
     { type: 'h2', content: 'When home practice needs a closer review' },
     { type: 'p', content: 'Ask the child’s teacher or an appropriately qualified reading professional for a closer look when the child persistently cannot decode or spell patterns that have been explicitly taught, repeatedly guesses instead of attending through words, or shows broader difficulties with phoneme awareness, sound–spelling recall, language, hearing, attention or learning.' },
