@@ -84,7 +84,7 @@ const post: BlogPost = {
 
     { type: 'h2', content: 'Common confusion: “sound” does not always mean one written letter' },
     { type: 'p', content: 'English phonics is not a one-letter-one-sound system. The word **ship** has four letters but can be analysed as three phonemes /sh/ /i/ /p/. The first phoneme is represented by the two-letter grapheme **sh**. Likewise, **night** contains the three-letter grapheme **igh** representing the long-i sound in that word.' },
-    { type: 'p', content: 'That is why Tiny Steps stores phoneme/grapheme mappings explicitly in the sound-and-word utility rather than automatically splitting every word into letters.' },
+    { type: 'p', content: 'When teaching this pattern, identify the phonemes and the graphemes that represent them rather than assuming every letter stands for a separate sound.' },
 
     { type: 'h2', content: 'Evidence and source boundary' },
     { type: 'p', content: 'The definitions and distinctions above are supported by foundational-reading research and guidance, but the Tiny Steps examples and parent observation framework are editorial teaching tools, not standardized tests. The evidence does not justify one universal age, number of oral-only weeks, or mastery threshold for every child.' },

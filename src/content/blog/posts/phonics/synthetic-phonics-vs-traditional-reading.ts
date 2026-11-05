@@ -132,7 +132,6 @@ const post: BlogPost = {
     { type: 'li', content: 'Institute of Education Sciences / What Works Clearinghouse — Foundational Skills to Support Reading for Understanding in Kindergarten Through 3rd Grade: recommends explicit sound–spelling instruction, decoding, word analysis and connected-text reading. https://ies.ed.gov/ncee/wwc/Docs/practiceGuide/wwc_foundationalreading_040717.pdf' },
     { type: 'li', content: 'Institute of Education Sciences — Supporting Your Child’s Reading at Home: family-facing foundational-reading activities built around sound–spelling patterns, word reading and connected practice. https://ies.ed.gov/ncee/edlabs/regions/southeast/foundations/index.asp' },
 
-    { type: 'h2', content: 'FAQs' }
   ],
   faq: [
     {
