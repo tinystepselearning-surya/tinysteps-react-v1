@@ -17,7 +17,7 @@ const post: BlogPost = {
     { type: 'p', content: 'The goal is not for a child to recite hundreds of “phonics rules.” The goal is increasingly independent word reading and spelling: **see print → retrieve the taught sounds → blend through the word → recognise the word → use it in connected reading**.' },
 
     { type: 'h2', content: 'This is the start-here phonics guide' },
-    { type: 'p', content: 'Blog #33 owns the parent question **“What is phonics, what does it teach, and what should I expect it to look like?”** For the right starting age and readiness question, use [What Is the Right Age to Start Phonics?](/blog/what-age-to-start-phonics). For the full beginner teaching sequence, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners). For a deeper research-and-parent-support guide later in the Tiny Steps library, use [Phonics for Parents](/blog/phonics-for-parents-guide).' },
+    { type: 'p', content: 'This article answers the parent question **“What is phonics, what does it teach, and what should I expect it to look like?”** For the right starting age and readiness question, use [What Is the Right Age to Start Phonics?](/blog/what-age-to-start-phonics). For the full beginner teaching sequence, use [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners). For a deeper research-and-parent-support guide later in the Tiny Steps library, use [Phonics for Parents](/blog/phonics-for-parents-guide).' },
 
     { type: 'h2', content: 'Six terms make phonics much easier to understand' },
     { type: 'h3', content: '1. Phoneme — a speech sound' },
@@ -27,7 +27,7 @@ const post: BlogPost = {
     { type: 'h3', content: '3. Blending — combining sounds to read a word' },
     { type: 'p', content: 'When a child sees **sat**, retrieves /s/ /a/ /t/ and combines the sequence into **sat**, that is blending for reading. The useful habit is left-to-right attention to the whole printed word rather than guessing from the first letter or a picture.' },
     { type: 'h3', content: '4. Segmenting — breaking a spoken word into sounds for spelling' },
-    { type: 'p', content: 'For spelling **ship**, the child hears the word, identifies /sh/ /i/ /p/ and represents those phonemes with the graphemes **sh-i-p**. This sound-to-print direction is often called **encoding**; reading a printed word through its graphemes is **decoding**. Blog #9, [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling), owns the full encoding roadmap.' },
+    { type: 'p', content: 'For spelling **ship**, the child hears the word, identifies /sh/ /i/ /p/ and represents those phonemes with the graphemes **sh-i-p**. This sound-to-print direction is often called **encoding**; reading a printed word through its graphemes is **decoding**. [How Phonics Improves Spelling](/blog/how-phonics-improves-spelling) explains the wider spelling progression.' },
     { type: 'h3', content: '5. Decoding — using print knowledge to work out a word' },
     { type: 'p', content: 'Decoding means using the information in the printed word to identify it. A child who decodes a fresh word such as **sit** from taught correspondences is showing something different from remembering that **sat** was on yesterday’s flashcard.' },
     { type: 'h3', content: '6. Decodable text — reading material matched to taught code' },
@@ -72,7 +72,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Review earlier knowledge while adding new graphemes.' },
     { type: 'li', content: 'Use fresh words to check application rather than only rehearsed lists.' },
     { type: 'li', content: 'Move into matched phrases, sentences and books.' },
-    { type: 'p', content: 'Different programmes can use different orders. The important parent question is whether the order is explicit, coherent and cumulative. Blog #17 owns the detailed sequence question.' },
+    { type: 'p', content: 'Different programmes can use different orders. The important parent question is whether the order is explicit, coherent and cumulative. [Phonics Rules for Beginners](/blog/phonics-rules-for-beginners) explains the teaching sequence in detail.' },
 
     { type: 'h2', content: 'Does phonics include spelling?' },
     { type: 'p', content: 'Yes, a strong phonics programme connects reading and spelling. Reading asks the child to move from graphemes to sounds and words; spelling asks the child to move from a spoken word to phonemes and graphemes. The two directions reinforce the same sound–print system, even though conventional English spelling eventually includes morphology, word history and pattern knowledge beyond simple one-sound-one-letter mapping.' },
@@ -95,7 +95,7 @@ const post: BlogPost = {
     { type: 'li', content: 'Cumulative review of earlier knowledge.' },
     { type: 'li', content: 'Fresh-word checks that reduce the chance of memorised-list success being mistaken for decoding.' },
     { type: 'li', content: 'Connected reading matched closely enough to taught code for independent practice.' },
-    { type: 'p', content: 'Blog #8, [How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read), owns the full explanation of what effective phonics instruction does inside lessons.' },
+    { type: 'p', content: '[How Phonics Classes Help Kids Read](/blog/how-phonics-classes-help-kids-read) provides a fuller explanation of what effective phonics instruction does inside lessons.' },
 
     { type: 'h2', content: 'Where home support fits' },
     { type: 'p', content: 'At home, the safest starting point is to reinforce the sequence the child is actually being taught rather than introduce a second competing programme. Use a small amount of taught knowledge in retrieval, word reading, spelling and a fresh matched example, then notice where help is still needed.' },
