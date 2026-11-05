@@ -28,6 +28,7 @@ on:
       - 'src/lib/routeSeoRegistry.js'
       - 'src/tests/seo/homeMachineReadability.spec.ts'
       - 'tests/homepage-premium-responsive.spec.ts'
+      - 'tests/homepage-cwv-diagnostics.spec.ts'
       - 'tests/homepage-seo-runtime-network.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
       - '.github/workflows/homepage-mobile-release-gate.yml'
@@ -94,6 +95,7 @@ jobs:
           tests/homepage-premium-responsive.spec.ts
           tests/homepage-seo-runtime-network.spec.ts
           tests/homepage-gateway-destinations.spec.ts
+          tests/homepage-cwv-diagnostics.spec.ts
       - name: Build the production Hosting artifact
         run: npm run build:deploy
       - name: Verify production browser SEO requests
@@ -120,8 +122,8 @@ jobs:
             .filter(name => /HomePage|seo-|Meta-|vocabularyAuthoritySeoManifest|grammarProgrammaticSeoManifest|schemas-/.test(name))
             .map(name => ({ name, bytes: fs.statSync('dist/assets/' + name).size })));
           NODE
-      - name: Upload Playwright failure evidence
-        if: failure()
+      - name: Upload Playwright evidence (including CWV layout-shift report)
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: homepage-mobile-playwright-evidence
