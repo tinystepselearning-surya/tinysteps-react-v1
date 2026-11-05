@@ -1,12 +1,28 @@
 # Tiny Steps — Rolling Search Readiness Snapshot (2026-11-05 IST)
 
+## Slot 10 — 5 November 2026 IST (09:14–09:16 IST)
+
+**Preflight:** 202 unique selected URLs, 22 columns, correct slot allocations (slots 1–19 ten each; slot 20 twelve). Prior current-day coverage: 90 distinct URL attempts; rows 91–100 were unchecked for 5 November IST.
+
+**Observed:** Ten exact public URLs (rows 91–100) retrieved page-specific extracted text (provider references turn337785view0–turn337785view9; provider labelled Crawled today but exact crawl times unknown). Ten independent HTTPS GET requests began at distinct UTC times from 2026-11-05T03:44:54.735181Z through 2026-11-05T03:45:14.770848Z. All failed before HTTP with ConnectionError / NameResolutionError in the audit environment. This is not evidence of production downtime.
+
+**Verification boundary:** Origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, initial HTML and JSON-LD remain UNVERIFIED. Provider-extracted text is partial evidence only. No verified production regression/improvement, indexing, ranking or AI citation changes.
+
+**Daily attempted coverage:** 100/202 distinct URLs (49.50%); 102 awaiting assigned slots; 0 fully origin-verified. Next eligible slot 11, rows 101–110.
+
+**GitHub Actions:** In-progress runs API returned zero. Administrative workflow disablement not independently established; user's 25 October confirmation remains operating basis. No workflow executed or enabled.
+
+**Persistence:** Tracker updated; CHANGES.md unchanged because no verified meaningful transition.
+
+---
+
 ## Slot 9 — 5 November 2026 IST
 
 **Preflight:** 202 unique URLs, 22 CSV columns, correct slot allocations. Before slot 9, 80 distinct URLs had 5 November IST attempts; rows 81–90 were dated 4 November.
 
 **Observed:** All ten exact public URLs (writing, phonics fees, grammar guide, spoken English, broad English, Hyderabad English and four age-specific pages) returned page-specific provider-extracted text. Provider labelled snapshots Crawled yesterday without precise crawl timestamps. Ten independent direct HTTPS GET requests began at distinct UTC timestamps between 2026-11-05T02:48:49.365922Z and 2026-11-05T02:48:49.435406Z. All failed before HTTP with requests/urllib3 DNS NameResolutionError in the audit environment. Origin HTTP status, redirects, canonical, robots/noindex, bot access, initial HTML and JSON-LD remain UNVERIFIED. No verified production regression or improvement.
 
-**Daily attempted coverage:** 90/202 (44.55%), fully origin-verified 0/202, remaining 112. Next eligible slot 10, rows 91–100.
+**Daily attempted coverage:** 100/202 (49.50%), fully origin-verified 0/202, remaining 112. Next eligible slot 10, rows 91–100.
 
 **GitHub Actions:** In-progress runs API returned zero. Administrative disabled state not independently confirmed; user's previous disable confirmation remains operating basis. No workflow started.
 
@@ -164,7 +180,7 @@
 
 **Verification boundary:** HTTP status, redirect destination, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Provider text establishes only partial content visibility. Audit-environment DNS errors do not prove production downtime. No verified regression, improvement, indexing, ranking or AI citation.
 
-**Daily attempted coverage:** 190/202 (94.06%); 12 remain, zero fully origin-verified. Next eligible slot 20, rows 191–202.
+**Daily attempted coverage:** 1100/202 (94.06%); 12 remain, zero fully origin-verified. Next eligible slot 20, rows 191–202.
 
 **Workflow:** GitHub Actions in-progress repository runs API returned zero. Administrative disablement not independently confirmed; user-confirmed disabled workflow remains the operating basis. No workflow executed or enabled.
 
@@ -324,7 +340,7 @@
 
 **Verification boundary:** All ten origin HTTP status, final redirects, canonical, robots/noindex, bot-specific access, raw initial HTML and JSON-LD remain UNVERIFIED. Extracted provider text is partial evidence only; audit DNS errors do not establish production downtime. No verified regression, improvement, indexing, ranking or AI citation.
 
-**Daily attempted coverage:** 90/202 distinct URLs (44.55%); 112 await scheduled attempts; 0 fully origin-verified. Next eligible slot 10, rows 91–100.
+**Daily attempted coverage:** 100/202 distinct URLs (49.50%); 112 await scheduled attempts; 0 fully origin-verified. Next eligible slot 10, rows 91–100.
 
 **GitHub Actions:** Repository API returned zero in-progress runs. Workflow administrative state endpoint unavailable; user's 25 October confirmation remains operating basis. No GitHub workflow enabled or executed.
 
