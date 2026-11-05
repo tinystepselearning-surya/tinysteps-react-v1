@@ -43,7 +43,7 @@ const post: BlogPost = {
     {
       type: 'p',
       content:
-        'This article focuses on the bridge between programme selection and classroom delivery: **what teacher capability and support systems are needed after initial training?** For the wider programme-completeness question, see [International Phonics Benchmarks for Indian Schools](/blog/international-phonics-benchmarks-for-indian-schools), or the detailed teaching order, which is covered in [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools).',
+        'This article focuses on the bridge between programme selection and classroom delivery: **what teacher capability and support systems are needed after initial training?** For the wider programme-completeness question, see [International Phonics Benchmarks for Indian Schools](/blog/international-phonics-benchmarks-for-indian-schools). For detailed teaching order, see [Phonics Scope and Sequence for CBSE Schools](/blog/phonics-scope-and-sequence-for-cbse-schools).',
     },
     {
       type: 'p',
