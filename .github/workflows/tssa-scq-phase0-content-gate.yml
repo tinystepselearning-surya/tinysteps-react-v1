@@ -15,6 +15,8 @@ on:
       - 'src/content/blog/posts/parent-tips/child-knows-grammar-but-makes-mistakes.ts'
       - 'src/content/blog/posts/parent-tips/child-understands-english-but-does-not-speak.ts'
       - 'src/content/blog/posts/public-speaking/how-to-teach-storytelling-to-kids.ts'
+      - 'src/content/blog/shared/weeklyShared.ts'
+      - 'src/content/blog/posts/phonics/how-kids-learn-blending.ts'
       - 'src/config/semanticFacts.ts'
       - 'scripts/prerender.mjs'
       - 'scripts/test/tssa-scq-phase0-rendered.node-test.mjs'

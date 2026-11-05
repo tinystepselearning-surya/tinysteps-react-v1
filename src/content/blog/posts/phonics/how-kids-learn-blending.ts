@@ -43,7 +43,7 @@ const post: BlogPost = {
     content: 'Begin with listening. Say a simple word one phoneme at a time, such as /m/ /a/ /p/, and ask the child to say the whole word. There are no letters to look at yet. This separates the sound-merging skill from letter recognition.'
   }, {
     type: 'li',
-    content: 'Useful early examples: /a/ /t/ → at, /m/ /e/ → me, /s/ /a/ /t/ → sat, /m/ /a/ /p/ → map.'
+    content: 'Useful early examples: /a/ /t/ → at, /i/ /t/ → it, /s/ /a/ /t/ → sat, /m/ /a/ /p/ → map.'
   }, {
     type: 'li',
     content: 'Use words whose spoken sounds are familiar to the child; the purpose is hearing and merging, not testing vocabulary.'
