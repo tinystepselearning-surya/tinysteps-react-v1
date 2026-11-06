@@ -1,14 +1,14 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-06T13:41:04Z UTC (6 November 2026 IST)
+Updated: 2026-11-06T18:45:14Z UTC (7 November 2026 IST)
 
-- Selected URLs: **202 unique**, 22 CSV columns; slots 1–19 contain 10 URLs each, slot 20 contains 12. Tracker validated before this batch.
-- Today (2026-11-06 IST) distinct URLs with recorded observations/attempts: **202/202 (100%)**. This is attempted/partial-evidence coverage, **not verified production health**.
-- Fully origin-verified today: **0/202**. All origin readiness statuses remain **UNVERIFIED** because direct HTTPS checks failed before HTTP in this audit environment.
-- Latest batch: **slot 20, rows 191–202** (three course pages, nine parent-facing pages). Exact-URL public web retrieval returned page-specific extracted text and H1 headings for **12/12** URLs (web refs turn549803view0–turn549803view11; provider labelled crawled today, precise crawl times unknown). Provider-extracted text does not independently verify raw origin HTML.
-- Twelve direct HTTPS curl GETs began **2026-11-06T13:40:44.869511160Z through 2026-11-06T13:41:00.058873529Z**. Six failed with curl exit 6 (DNS host resolution failure), six with exit 28 (DNS resolution timeout); all returned HTTP_CODE 000, which is not an HTTP response. Exact per-URL request start timestamps and evidence are in the tracker.
-- Production HTTP status, final redirect, canonical, robots/noindex, bot access, initial HTML and JSON-LD **UNVERIFIED**. These audit-environment DNS failures are not evidence of production downtime. No verified production regression or improvement; CHANGES.md unchanged.
-- GitHub Actions API reported **zero in-progress repository runs** at inspection. Workflow administrative disablement not independently confirmed; user confirmed disabled 2026-10-25. No GitHub audit workflow started.
-- Next scheduled slots 21–22: reconciliation/recovery; slots 23–24: catch-up. Revisit incomplete origin verification only when a functioning network permits real checks; do not relabel partial checks as PASS.
+- Selected URLs: **202 unique**, 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12. Current tracker validated before the batch.
+- Today (2026-11-07 IST): **10/202 distinct URLs with actual partial observations (4.95%)**; **192/202 not yet checked today**. Previous-day 6 November observations do not count toward today's coverage.
+- Fully origin-verified today: **0/202**. The ten slot-1 URLs remain **UNVERIFIED** for production technical readiness.
+- Latest batch: **slot 1, rows 1–10** (homepage, blog, resources hubs and six phonics guides). Exact-URL public web retrieval returned page-specific extracted H1 and useful text for **10/10** (web refs turn190160view0–turn190160view9; provider crawl time imprecise, some labelled yesterday). This is provider-extracted text only, not independent initial origin HTML evidence.
+- Ten direct HTTPS curl GETs began at distinct UTC timestamps between **2026-11-06T18:44:49.354966Z** and **2026-11-06T18:45:09.567470Z**. Five failed with curl exit 6 (DNS resolution error), five with exit 28 (DNS resolution timeout). All yielded HTTP_CODE 000, not a valid HTTP response. Per-URL timestamps and exact failure evidence are recorded in the tracker.
+- Origin HTTP status, final redirect, canonical, robots/noindex, bot access, initial HTML and JSON-LD **UNVERIFIED**. Audit-environment DNS errors are not proof of production downtime. No verified production regression or improvement; CHANGES.md unchanged.
+- GitHub Actions API returned **zero in-progress repository runs** during inspection. Old workflow administrative disablement could not be independently confirmed via allowed connector endpoint; user's 2026-10-25 disable confirmation remains the operating basis. No GitHub audit workflow started.
+- Next eligible batch: **slot 2, rows 11–20**. Continue current-day fresh observations without rechecking completed rows or prematurely scanning later slots.
 
 Evidence: [tracker](MASTER_URL_TRACKER.csv); [change log](CHANGES.md).
