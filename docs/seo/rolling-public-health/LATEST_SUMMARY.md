@@ -1,15 +1,15 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-09T09:49:33.911Z UTC (9 November 2026 IST)
+Updated: 2026-11-09T10:43:09.553Z UTC (9 November 2026 IST)
 
 - Selected URLs: **202 unique**, 22 CSV columns; slots 1–19 have 10 URLs each, slot 20 has 12. Structure and slot allocations validated.
-- Today (2026-11-09 IST): **160/202 distinct URLs with recorded partial observations (79.21%)**; **42 unchecked today**. Prior-day observations excluded.
+- Today (2026-11-09 IST): **170/202 distinct URLs with recorded partial observations (84.16%)**; **32 unchecked today**. Prior-day observations excluded.
 - Fully origin-verified today: **0/202**; technical readiness remains **UNVERIFIED**.
-- Latest batch: **slot 16, rows 151–160**. Exact-URL web retrieval returned relevant page-specific H1 and article text for **10/10 URLs** (turn796899view0–9); provider reports text/html and 'crawled yesterday', without exact crawl timestamps.
-- Independent origin HTTPS probe failed DNS resolution before HTTP (2026-11-09T09:49:19Z UTC); this is not evidence of production downtime. HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot-specific access remain **UNVERIFIED**. Provider-extracted text cannot establish origin health.
-- UTC observation-recording markers: 2026-11-09T09:49:33.911Z–2026-11-09T09:49:33.920Z; not origin response or provider crawl timestamps.
+- Latest batch: **slot 17, rows 161–170**. Exact-URL web retrieval returned relevant page-specific H1 and article text for **9/10 URLs** (turn256172view0,2–9). Row 162 returned provider Internal Error (turn256172view1), not confirmed production failure. Provider reports text/html and 'crawled today' for retrieved pages, without precise crawl timestamps.
+- HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot-specific access remain **UNVERIFIED**. Provider-extracted text cannot establish origin health.
+- UTC observation-recording markers: 2026-11-09T10:43:09.553Z–2026-11-09T10:43:09.562Z; not origin response or provider crawl timestamps.
 - No verified production regression or improvement; CHANGES.md unchanged.
-- GitHub Actions check: zero in-progress runs reported. Administrative disablement could not be independently read (workflow endpoint rejected); user-confirmed disablement remains operating basis. No workflow launched.
-- Next eligible batch: slot 17, rows 161–170.
+- GitHub Actions check: zero in-progress repository runs reported; administrative workflow disablement could not be independently read (endpoint rejected). User-confirmed disablement remains operating basis. No workflow launched.
+- Next eligible batch: slot 18, rows 171–180.
 
 Evidence: [tracker](MASTER_URL_TRACKER.csv); [change log](CHANGES.md).
