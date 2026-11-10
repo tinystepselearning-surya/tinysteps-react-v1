@@ -1,15 +1,15 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-10T01:47:22.513Z UTC (10 November 2026 IST; slot 8 recording marker)
+Updated: 2026-11-10T02:39:52.481Z UTC (10 November 2026 IST; slot 9 recording marker)
 
 - Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12.
-- 10 November IST: **80/202** distinct URLs have current-day recorded partial attempts; **122 unchecked**. These are not 80 fully verified URLs.
-- Slot 8 (rows 71–80): exact-URL public retrieval returned page-specific extracted text for **9/10** URLs (turn495527view0–5 and turn495527view7–9). The speaking progress framework URL returned **provider Internal Error** (turn495527view6); this does not establish website downtime.
-- Provider reported crawl labels *today* or *yesterday*, without exact crawl times. No origin response headers, redirect chain, canonical, robots/noindex, raw initial HTML, JSON-LD, bot accessibility or interactive functionality was verified.
+- 10 November IST: **90/202** distinct URLs have current-day recorded partial attempts; **112 unchecked**. These are not 90 fully verified URLs.
+- Slot 9 (rows 81–90): exact-URL public retrieval returned relevant page-specific extracted text for **10/10** URLs (turn239754view0, turn239754view1, turn239754view2, turn239754view3, turn239754view4, turn239754view5, turn239754view6, turn239754view7, turn239754view8, turn239754view9), covering writing, phonics pricing, grammar guide, spoken English, general English, Hyderabad, and age-specific English pages.
+- Provider reported text/html and *Crawled: today*, without exact crawl timestamps. No origin response headers, redirect chain, canonical, robots/noindex, raw initial HTML, JSON-LD, bot accessibility or interactive functionality was verified.
 - Fully origin-verified today: **0/202**. All current-day technical readiness statuses remain **UNVERIFIED**.
-- Slot 8 entries share UTC batch recording marker **2026-11-10T01:47:22.513Z**. This is not ten distinct HTTP timestamps. Individual provider retrieval times were unavailable; no fabricated times were assigned.
+- Slot 9 UTC recording markers: **2026-11-10T02:39:52.472Z–2026-11-10T02:39:52.481Z**. These mark evidence recording, not ten independently timed HTTP responses. Provider retrieval times were unavailable.
 - No verified production regression or improvement; **CHANGES.md unchanged**.
-- GitHub Actions repository in-progress runs query returned **0**; workflow administrative state endpoint was unavailable, so disablement remains based on the user's explicit confirmation. No workflow executed.
-- Next eligible batch: **slot 9, rows 81–90**.
+- GitHub Actions repository in-progress runs query returned **0**; administrative workflow state not independently verified. User-confirmed disablement remains the operating basis. No workflow executed.
+- Next eligible batch: **slot 10, rows 91–100**.
 
 Evidence: [tracker](MASTER_URL_TRACKER.csv); [change log](CHANGES.md).
