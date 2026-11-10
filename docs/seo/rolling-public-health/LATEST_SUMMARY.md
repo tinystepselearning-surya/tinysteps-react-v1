@@ -1,15 +1,15 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-10T02:39:52.481Z UTC (10 November 2026 IST; slot 9 recording marker)
+Updated: 2026-11-10T03:42:04.216Z UTC (10 November 2026 IST; slot 10 evidence recording)
 
-- Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12.
-- 10 November IST: **90/202** distinct URLs have current-day recorded partial attempts; **112 unchecked**. These are not 90 fully verified URLs.
-- Slot 9 (rows 81–90): exact-URL public retrieval returned relevant page-specific extracted text for **10/10** URLs (turn239754view0, turn239754view1, turn239754view2, turn239754view3, turn239754view4, turn239754view5, turn239754view6, turn239754view7, turn239754view8, turn239754view9), covering writing, phonics pricing, grammar guide, spoken English, general English, Hyderabad, and age-specific English pages.
-- Provider reported text/html and *Crawled: today*, without exact crawl timestamps. No origin response headers, redirect chain, canonical, robots/noindex, raw initial HTML, JSON-LD, bot accessibility or interactive functionality was verified.
-- Fully origin-verified today: **0/202**. All current-day technical readiness statuses remain **UNVERIFIED**.
-- Slot 9 UTC recording markers: **2026-11-10T02:39:52.472Z–2026-11-10T02:39:52.481Z**. These mark evidence recording, not ten independently timed HTTP responses. Provider retrieval times were unavailable.
+- Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 contain 10 URLs each and slot 20 contains 12.
+- 10 November IST: **100/202** distinct URLs have recorded partial retrieval attempts; **102 unchecked**. No previous-day timestamps counted as current-day coverage.
+- Slot 10 (rows 91–100): exact-URL public retrieval returned relevant page-specific extracted text for **10/10** URLs (turn286349view0–turn286349view9), covering reading difficulties, speaking confidence, English foundation, and archived 2026 summer programmes.
+- Seasonal content explicitly says Summer Camp 2026 concluded 13 June 2026 and pages are archives or planning guides, not currently active camp offers.
+- Provider reported text/html and *Crawled: yesterday* without exact crawl times. Origin HTTP status, final URL/redirects, canonical, robots/noindex, raw HTML, structured data, and crawler access remain **UNVERIFIED**.
+- Fully origin-verified today: **0/202**. Slot 10 UTC recording markers: 2026-11-10T03:42:04.216Z through 2026-11-10T03:42:04.225Z; recording markers are not independent origin HTTP response times.
 - No verified production regression or improvement; **CHANGES.md unchanged**.
-- GitHub Actions repository in-progress runs query returned **0**; administrative workflow state not independently verified. User-confirmed disablement remains the operating basis. No workflow executed.
-- Next eligible batch: **slot 10, rows 91–100**.
+- GitHub Actions repository in-progress runs query returned **0**. Administrative workflow disabled state not independently verified; user's explicit disable confirmation remains operating basis. No workflow executed.
+- Next eligible batch: **slot 11, rows 101–110**.
 
 Evidence: [tracker](MASTER_URL_TRACKER.csv); [change log](CHANGES.md).
