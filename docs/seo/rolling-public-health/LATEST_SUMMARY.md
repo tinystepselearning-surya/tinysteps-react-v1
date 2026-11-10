@@ -1,15 +1,13 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-10T13:43:21.884Z UTC (10 November 2026 IST; slot 20 partial evidence recording)
+Updated: 2026-11-10T18:40:32.859Z UTC (11 November 2026 IST; slot 1 partial evidence recording)
 
 - Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 contain 10 URLs each and slot 20 contains 12.
-- 10 November IST: **202/202** distinct URLs have recorded partial retrieval attempts; **0 unchecked**. Previous-day timestamps excluded from today's coverage.
-- Slot 20 (rows 191–202): exact-URL public retrieval returned relevant page-specific H1 and extracted text for **12/12** URLs (turn928074view0–view11), covering three course pages and nine parent hub/guides.
-- Provider-extracted content is partial evidence only. Recording markers 2026-11-10T13:43:21.881Z through 2026-11-10T13:43:21.892Z are not independently measured origin HTTP response times; provider crawl timestamps are imprecise.
-- Direct origin HTTPS probe for /parents at 2026-11-10T13:42:58.710Z failed DNS before HTTP (curl exit 6); this is a local audit network limitation, **not verified production downtime**.
-- Fully origin-verified today: **0/202**. HTTP status, final URL/redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**.
-- No verified production regression or improvement; **CHANGES.md unchanged**.
+- 11 November IST: **10/202** distinct URLs have current-day exact-URL provider retrieval observations; **192 unchecked**. All 10 observations are partial and remain `UNVERIFIED` for origin readiness. Yesterday's 202 records do not count toward today's coverage.
+- Slot 1 (rows 1–10): exact-URL public retrieval returned relevant page-specific headings and extracted text for **10/10** URLs (turn790936view0–view9): homepage, blog, resources hub, phonics hub and six phonics pattern guides.
+- Recording markers 2026-11-10T18:40:32.860Z through 2026-11-10T18:40:32.869Z UTC are evidence-recording times, not origin HTTP response or provider crawl times.
+- Fully origin-verified today: **0/202**. HTTP status, final URL/redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. No verified production regression or improvement.
 - GitHub Actions in-progress repository runs query returned **0**. Administrative workflow disabled state not independently verified; user's explicit disable confirmation remains operating basis. No workflow executed.
-- Next eligible slots **21–22 reconciliation/recovery**; do not recheck today's already attempted URLs. Full origin technical verification requires working origin network access.
+- Next eligible batch: slot 2, rows 11–20. Do not recheck today's already attempted URLs.
 
 Evidence: [tracker](MASTER_URL_TRACKER.csv); [change log](CHANGES.md).
