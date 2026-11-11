@@ -11,3 +11,9 @@ Updated: 2026-11-11T13:42:10.468Z UTC (11 November 2026 IST; slot 20 evidence re
 - Slots 21–22: reconciliation/recovery; slots 23–24: catch-up. No current-day unchecked URL remains, so do not artificially recheck rows.
 
 Evidence: [tracker](./MASTER_URL_TRACKER.csv) · [changes](./CHANGES.md).
+
+## Slot 21 reconciliation — 11 November 2026 IST
+
+- Read-only CSV reconciliation confirmed 202 rows, 202 unique URLs, 22 columns, slots 1–19 with 10 rows and slot 20 with 12 rows; 202 distinct URLs have 11 November IST evidence markers. All 202 are `UNVERIFIED` for origin readiness; 0 fully origin-verified.
+- **Tracker timestamp integrity warning:** only **175 distinct `checked_at_utc` values across 202 rows**. Rows **91–100** share `2026-11-11T03:47:23.221Z`, rows **101–110** share `2026-11-11T04:48:12.744Z`, and rows **111–120** share `2026-11-11T05:45:06.363Z`. These are shared evidence-recording markers, **not individually observed UTC HTTP check times**. Do not manufacture replacement timestamps or treat these as independent origin probes. Existing 202/202 count represents distinct URLs with recorded retrieval attempts, not 202 distinct timestamped origin checks.
+- GitHub repository in-progress Actions runs query returned **zero** during reconciliation; administrative disablement could not be independently verified. No URL was rechecked in this slot because all 202 already have current-day retrieval attempts. No production transition established. `MASTER_URL_TRACKER.csv` remains unchanged to preserve original recorded evidence; `CHANGES.md` unchanged because no verified production transition occurred.
