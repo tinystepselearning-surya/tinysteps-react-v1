@@ -35,4 +35,17 @@ describe('Leads admin read/write guardrails', () => {
     expect(source).toContain('Enquired {formatUpdated(row.createdAtMs)}');
     expect(source).toContain('Updated {formatUpdated(row.updatedAtMs)}');
   });
+
+  it('makes contact logging deliberate and keeps opening WhatsApp separate', async () => {
+    const workspace = await import('./LeadsInquiriesWorkspaceV2?raw').then((module) => module.default as string);
+    const tools = await import('./LeadAdminToolsMenu?raw').then((module) => module.default as string);
+
+    expect(workspace).toContain('showQuickLogButton={row.bucket !== \'closed\'}');
+    expect(workspace).toContain('this does not confirm a sent or received message');
+    expect(tools).toContain('Log contact');
+    expect(tools).toContain('Direction (staff-reported)');
+    expect(tools).toContain("direction: communicationType === 'note' ? 'internal' : communicationDirection");
+    expect(tools).toContain('Record only actual interactions, not merely opening WhatsApp');
+  });
+
 });
