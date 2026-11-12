@@ -61,7 +61,7 @@ type ChannelSummary = {
   channel: string;
   label: string;
   count: number;
-  demoCount: number;
+  demoWorkflowCount: number;
   admittedCount: number;
 };
 
@@ -83,7 +83,9 @@ const ATTRIBUTION_COHORT_OPTIONS: Array<{ id: AttributionCohort; label: string }
 
 const normalize = (value: unknown): string => String(value || '').trim();
 
-const isDemoReached = (lead: LeadRow): boolean => {
+// This flag indicates only a linked demo record or recorded lifecycle stage.
+// An auto-created pending request is not a confirmed or delivered appointment.
+const hasDemoWorkflowEvidence = (lead: LeadRow): boolean => {
   if (normalize(lead.demoSessionId)) return true;
   return [
     'demo_pending_schedule',
@@ -240,41 +242,41 @@ export default function LeadSourceAnalysis({
 
   const analysis = useMemo(() => {
     const byChannel = new Map<string, ChannelSummary>();
-    const byLanding = new Map<string, { page: string; count: number; demoCount: number; admittedCount: number }>();
+    const byLanding = new Map<string, { page: string; count: number; demoWorkflowCount: number; admittedCount: number }>();
     let attributedCount = 0;
-    let demoCount = 0;
+    let demoWorkflowCount = 0;
     let admittedCount = 0;
 
     cohortRows.forEach((lead) => {
       const resolved = resolveChannel(lead);
       const landingPage = resolveLandingPage(lead);
-      const reachedDemo = isDemoReached(lead);
+      const hasDemoWorkflow = hasDemoWorkflowEvidence(lead);
       const admitted = isAdmitted(lead);
 
       if (hasAttributionEvidence(lead)) attributedCount += 1;
-      if (reachedDemo) demoCount += 1;
+      if (hasDemoWorkflow) demoWorkflowCount += 1;
       if (admitted) admittedCount += 1;
 
       const channelBucket = byChannel.get(resolved.channel) || {
         channel: resolved.channel,
         label: resolved.label,
         count: 0,
-        demoCount: 0,
+        demoWorkflowCount: 0,
         admittedCount: 0,
       };
       channelBucket.count += 1;
-      if (reachedDemo) channelBucket.demoCount += 1;
+      if (hasDemoWorkflow) channelBucket.demoWorkflowCount += 1;
       if (admitted) channelBucket.admittedCount += 1;
       byChannel.set(resolved.channel, channelBucket);
 
       const landingBucket = byLanding.get(landingPage) || {
         page: landingPage,
         count: 0,
-        demoCount: 0,
+        demoWorkflowCount: 0,
         admittedCount: 0,
       };
       landingBucket.count += 1;
-      if (reachedDemo) landingBucket.demoCount += 1;
+      if (hasDemoWorkflow) landingBucket.demoWorkflowCount += 1;
       if (admitted) landingBucket.admittedCount += 1;
       byLanding.set(landingPage, landingBucket);
     });
@@ -300,7 +302,7 @@ export default function LeadSourceAnalysis({
     return {
       total: cohortRows.length,
       attributedCount,
-      demoCount,
+      demoWorkflowCount,
       admittedCount,
       businessChannelCounts,
       channelRows,
@@ -342,7 +344,7 @@ export default function LeadSourceAnalysis({
             <div>
               <h3 className="text-base font-semibold">Marketing Attribution</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                First-touch acquisition, landing pages, demo progression and admissions from website enquiries.
+                Lead-row acquisition evidence, demo workflow status and admissions. Demo workflow is not a confirmed booking.
               </p>
               {controlledRange ? (
                 <p className="mt-1 text-[11px] font-medium text-slate-500">
@@ -395,7 +397,7 @@ export default function LeadSourceAnalysis({
             {[
               ['Leads', analysis.total],
               ['Attribution coverage', `${analysis.attributedCount} (${pct(analysis.attributedCount, analysis.total)})`],
-              ['Reached demo', `${analysis.demoCount} (${pct(analysis.demoCount, analysis.total)})`],
+              ['Demo workflow', `${analysis.demoWorkflowCount} (${pct(analysis.demoWorkflowCount, analysis.total)})`],
               ['Admitted', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
@@ -421,7 +423,7 @@ export default function LeadSourceAnalysis({
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="p-2">Channel</th>
                     <th className="p-2 text-right">Leads</th>
-                    <th className="p-2 text-right">Demo</th>
+                    <th className="p-2 text-right">Demo stage</th>
                     <th className="p-2 text-right">Admitted</th>
                     <th className="p-2 text-right">Lead → admitted</th>
                   </tr>
@@ -434,7 +436,7 @@ export default function LeadSourceAnalysis({
                       <tr key={row.channel} className="border-b last:border-b-0">
                         <td className="p-2 font-medium">{row.label}</td>
                         <td className="p-2 text-right">{row.count}</td>
-                        <td className="p-2 text-right">{row.demoCount}</td>
+                        <td className="p-2 text-right">{row.demoWorkflowCount}</td>
                         <td className="p-2 text-right">{row.admittedCount}</td>
                         <td className="p-2 text-right font-semibold">{pct(row.admittedCount, row.count)}</td>
                       </tr>
@@ -451,7 +453,7 @@ export default function LeadSourceAnalysis({
                   <tr className="border-b text-left text-xs text-muted-foreground">
                     <th className="p-2">Landing page</th>
                     <th className="p-2 text-right">Leads</th>
-                    <th className="p-2 text-right">Demo</th>
+                    <th className="p-2 text-right">Demo stage</th>
                     <th className="p-2 text-right">Admitted</th>
                   </tr>
                 </thead>
@@ -463,7 +465,7 @@ export default function LeadSourceAnalysis({
                       <tr key={row.page} className="border-b last:border-b-0">
                         <td className="max-w-[300px] truncate p-2 font-mono text-xs" title={row.page}>{row.page}</td>
                         <td className="p-2 text-right">{row.count}</td>
-                        <td className="p-2 text-right">{row.demoCount}</td>
+                        <td className="p-2 text-right">{row.demoWorkflowCount}</td>
                         <td className="p-2 text-right">{row.admittedCount}</td>
                       </tr>
                     ))
@@ -473,6 +475,9 @@ export default function LeadSourceAnalysis({
             </div>
           </div>
 
+          <p className="mt-3 text-[11px] text-muted-foreground">
+            Demo workflow includes pending-schedule requests and linked demo records, including automatically created requests. These counts are not confirmed bookings, delivered assessments or a measure of appointment attendance.
+          </p>
           <p className="mt-3 text-[11px] text-muted-foreground">
             Older leads without stored first-touch data remain labelled legacy/unattributed rather than being guessed as organic. GSC query visibility is reviewed separately; this panel attributes business outcomes only from stored first-touch channel and landing-page evidence.
           </p>
