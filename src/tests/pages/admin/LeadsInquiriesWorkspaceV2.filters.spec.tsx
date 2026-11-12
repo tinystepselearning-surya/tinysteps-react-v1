@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   fetchRange: vi.fn(),
   toast: vi.fn(),
   leadsLoading: false,
+  loadedLeads: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('../../../pages/admin/leadsPaged', () => ({
@@ -18,7 +19,10 @@ vi.mock('../../../pages/admin/leadsPaged', () => ({
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 
 vi.mock('../../../services/demoSessionsService', () => ({
-  listenDemoSessionsByIds: vi.fn(() => vi.fn()),
+  listenDemoSessionsByIds: vi.fn((_ids: unknown, onData: (rows: unknown[]) => void) => {
+    onData([]);
+    return vi.fn();
+  }),
   listenDemoSessionPrivatePhonesByIds: vi.fn(() => vi.fn()),
   reassignDemoSession: vi.fn(),
   updateDemoConversion: vi.fn(),
@@ -107,6 +111,7 @@ beforeEach(() => {
   mocks.fetchRange.mockReset();
   mocks.toast.mockReset();
   mocks.leadsLoading = false;
+  mocks.loadedLeads = [];
 
   mocks.usePagedLeads.mockImplementation((options: any) => {
     React.useEffect(() => {
@@ -118,7 +123,7 @@ beforeEach(() => {
     }, [options.dateFromMs, options.dateToMs]);
 
     return {
-      leads: [],
+      leads: mocks.loadedLeads,
       isLoading: mocks.leadsLoading,
       reloadPage: (resetToFirst = false) => {
         mocks.reloadPage(resetToFirst);
@@ -201,4 +206,52 @@ describe('Leads & Enquiries explicit date filter application', () => {
     const button = screen.getByRole('button', { name: 'Applying…' }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
+
+  it('filters only scheduled Admin Review follow-ups due by today without another lead query', async () => {
+    const today = todayDateInputIST();
+    const todayStart = dateBoundaryMs(today);
+    const afterToday = dateBoundaryMs(today, true) + 60_000;
+    const makeLead = (
+      id: string,
+      parentName: string,
+      nextFollowUpAt: number,
+      status: string,
+      phone: string,
+    ) => ({
+      id,
+      parentName,
+      childName: 'Child ' + id,
+      primaryPhone: phone,
+      status,
+      source: 'website',
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+      nextFollowUpAt: { toMillis: () => nextFollowUpAt },
+    });
+
+    mocks.loadedLeads = [
+      makeLead('due', 'Due Parent', todayStart + 60_000, 'admission_follow_up', '919111111101'),
+      makeLead('later', 'Later Parent', afterToday, 'admission_follow_up', '919111111102'),
+      makeLead('closed', 'Closed Parent', todayStart + 60_000, 'admitted_confirmed', '919111111103'),
+    ];
+
+    render(<LeadsInquiriesWorkspaceV2 />);
+
+    const dueToggle = await screen.findByRole('button', { name: 'Follow-ups due today (1)' });
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+    fireEvent.click(dueToggle);
+
+    expect(screen.getByText('Due Parent')).toBeTruthy();
+    expect(screen.queryByText('Later Parent')).toBeNull();
+    expect(screen.queryByText('Closed Parent')).toBeNull();
+    expect(dueToggle.getAttribute('aria-pressed')).toBe('true');
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(dueToggle);
+    expect(screen.getByText('Due Parent')).toBeTruthy();
+    expect(screen.getByText('Later Parent')).toBeTruthy();
+    expect(dueToggle.getAttribute('aria-pressed')).toBe('false');
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
 });
