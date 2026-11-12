@@ -1,0 +1,32 @@
+name: Admissions Funnel Label Integrity
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/LeadSourceAnalysis.tsx'
+      - 'src/tests/pages/LeadSourceAnalysis.spec.tsx'
+      - '.github/workflows/admissions-funnel-labels.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-funnel-labels:
+    name: Verify pending demo-stage labelling
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test demo-stage and existing date-range reporting
+        run: npx vitest run src/tests/pages/LeadSourceAnalysis.spec.tsx
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Confirm validation-only run
+        run: echo "No production deployment from this workflow."
