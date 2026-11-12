@@ -6,6 +6,7 @@ on:
       - 'src/pages/admin/LeadsInquiriesWorkspaceV2.tsx'
       - 'src/pages/admin/leadsDueFollowUps.ts'
       - 'src/pages/admin/leadsDueFollowUps.spec.ts'
+      - 'src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx'
       - '.github/workflows/admissions-follow-up-priority.yml'
   workflow_dispatch:
 
