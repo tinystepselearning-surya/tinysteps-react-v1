@@ -6,6 +6,7 @@ import type { DemoSession } from '../../types/models';
 import { listenAllDemoSessions } from '../../services/demoSessionsService';
 import LegacyDemoSessionsManagement from './LegacyDemoSessionsManagement';
 import LeadFunnelTrendAnalysis from './LeadFunnelTrendAnalysis';
+import FutureDemoMilestonesCard from './FutureDemoMilestonesCard';
 import type { LeadFunnelLead } from './leadFunnelAnalytics';
 
 interface DemoSessionsManagementProps {
@@ -41,6 +42,8 @@ function LeadFunnelTrendContainer({
   const { toast } = useToast();
   const [leads, setLeads] = useState<LeadSnapshotRecord[]>([]);
   const [demos, setDemos] = useState<DemoSession[]>([]);
+  const [leadsReady, setLeadsReady] = useState(false);
+  const [demosReady, setDemosReady] = useState(false);
 
   useEffect(() => {
     if (prefetchedLeads) return;
@@ -54,8 +57,10 @@ function LeadFunnelTrendContainer({
           }))
           .filter((lead) => !isArchived(lead));
         setLeads(next);
+        setLeadsReady(true);
       },
       (error) => {
+        setLeadsReady(false);
         console.error('[LeadFunnelTrendContainer] leads load failed', error);
         toast({
           title: 'Failed to load lead analytics',
@@ -70,8 +75,12 @@ function LeadFunnelTrendContainer({
   useEffect(() => {
     if (prefetchedDemos) return;
     return listenAllDemoSessions(
-      (next) => setDemos(next.filter((demo) => !isArchived(demo as DemoSession & { archived?: boolean }))),
+      (next) => {
+        setDemos(next.filter((demo) => !isArchived(demo as DemoSession & { archived?: boolean })));
+        setDemosReady(true);
+      },
       (error) => {
+        setDemosReady(false);
         console.error('[LeadFunnelTrendContainer] demos load failed', error);
         toast({
           title: 'Failed to load demo analytics',
@@ -82,14 +91,24 @@ function LeadFunnelTrendContainer({
     );
   }, [prefetchedDemos, toast]);
 
+  const effectiveLeads = prefetchedLeads || leads;
+  const effectiveDemos = prefetchedDemos || demos;
+
   return (
-    <LeadFunnelTrendAnalysis
-      leads={prefetchedLeads || leads}
-      demos={prefetchedDemos || demos}
-      startKey={startKey}
-      endKey={endKey}
-      variant={variant}
-    />
+    <div className="space-y-4">
+      <FutureDemoMilestonesCard
+        leads={effectiveLeads}
+        demos={effectiveDemos}
+        ready={Boolean(prefetchedLeads || leadsReady) && Boolean(prefetchedDemos || demosReady)}
+      />
+      <LeadFunnelTrendAnalysis
+        leads={effectiveLeads}
+        demos={effectiveDemos}
+        startKey={startKey}
+        endKey={endKey}
+        variant={variant}
+      />
+    </div>
   );
 }
 
