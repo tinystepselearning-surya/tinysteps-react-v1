@@ -8,6 +8,14 @@ Preserve current Firebase leads, canonical website parent-phone + child-name ide
 
 **Acquisition KPI:** first-observed canonical website parent-child opportunities from 2026-11-01 00:00 IST. Same parent + second child counts separately; repeat for the same child does not count as new. The current callable's scope is **website leads**, not all phone/WhatsApp/referral enquiries. Preserve the forward-only cutover; no July–October backfill/reconciliation.
 
+## Explicit future-only policy (owner direction, 12 November 2026)
+
+**From the release of the relevant feature onward, focus measurement and improvements on newly received leads and newly recorded interactions.** Do not modify, repair, migrate, rescore, reclassify, deduplicate afresh, or backfill historic leads, demo outcomes, communications or payment records. Do not reconstruct historical conversion rates or contact-response times from incomplete records.
+
+The existing 2026-11-01 website acquisition cutover remains intact as an already-approved metric contract; **do not move its start date or recompute older records**. New operational KPIs introduced by this roadmap must have their own first-live-event timestamp and exclude earlier history. Older records stay intact and can be viewed for day-to-day support of still-active parents; displaying them is not authorization to mutate them or include them in new-KPI baselines.
+
+Use isolated forward-looking test records, mocks, and read-only verification of current code/security/deployment when needed. No bulk historical Firestore scans, exports or remediation as a prerequisite to the next development step.
+
 ## Source-inspected facts (not a current production-runtime assertion)
 - `functions/src/getProspectiveAcquisitionSummary.ts`: admin/founder-restricted, aggregate-only, bounded read, with `repeatsAvailable: false`. Recently received identity records can await canonicalization.
 - `functions/src/websiteLeadDeduplication.ts`: canonical phone+child identity, inquiry history and collision safeguards. Do not replace.
@@ -39,16 +47,16 @@ Unknown, unresolved, archived, synthetic, legacy and source-unattributed categor
 - Explain prominently that pending/automatically created requests are not bookings or delivered assessments.
 - Add a regression test covering pending, linked, admitted, and new records.
 - **Do not** change public page URLs, content, redirects, robots, sitemap, schema, GA4 event definitions, forms, leads, demos, Functions, rules, or financial logic.
-- A real **confirmed-demo conversion** metric is deferred until the production demo fields are reconciled read-only.
+- A real **confirmed-demo conversion** metric is deferred until the existing demo-state contract is verified on code, safe tests, and new events; there is no retrospective correction of older demos.
 
-## Mandatory production read-only verification before the next package
+## Forward-only verification before the next package
 1. Verify exact current main and Hosting/Functions deployment versions independently; a green workflow alone is not proof of live deployment.
-2. Review schema prevalence and authorised aggregate counts for `leads`, dated inquiries, `demoSessions`, and communication activity. Keep raw parent/child information out of issues, PRs and reports.
-3. Reconcile cutover 2026-11-01 to current IST date for new website parent-child count, unresolved identity, first-touch source and their channel coverage. Record eventual-consistency caveats.
-4. Review demo attempts, links, confirmation date/time, completion and no-show handling, including reschedules and multiple attempts per child.
-5. Inspect actual contact-log coverage before computing time-to-first-contact or overdue follow-up performance. Missing logs are **unknown**, not proof no contact occurred.
-6. Compare distinct lead, demo attempt, demo event, and payment grain before any joins. Confirm staff and Admin/Founder permissions.
-7. Validate metric cards against safe direct aggregates and run the existing CI, typecheck, build and focused regression tests.
+2. Verify current schema, Firestore authorization, and event writers from code/emulator tests and, where authorized, minimal read-only checks of new events. Keep raw parent/child information out of issues, PRs and reports.
+3. Preserve the existing 2026-11-01 acquisition metric without replaying historical records. For newly introduced operational metrics, record a separate first-live timestamp after deployment, and validate using only subsequently created events.
+4. Review the demo-state contract and tests for future requests, including confirmation, completion, no-shows and reschedules. Validate only prospectively captured examples; do not correct previous demo attempts.
+5. Measure contact response-time and overdue follow-up only from newly captured communications after the feature release; missing historical logs are **unknown**, not proof no contact occurred.
+6. Validate distinct lead, demo attempt, event and payment relationships in code/test fixtures before any future-only reporting joins. Confirm staff and Admin/Founder permissions.
+7. Validate future-event metrics against safe controlled records and run existing CI, typecheck, build and focused regression tests; no historical reconciliation or production data repair.
 
 ## Next independent, gated packages
 - **ADM-02:** authoritative confirmed/delivered demo metrics only after verified demo fields and cohort grain.
