@@ -11,12 +11,13 @@ import { db } from '../lib/firebaseConfig';
 
 export type LeadCommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 export type LeadCommunicationChannel = 'whatsapp' | 'phone' | 'internal' | 'other';
+export type LeadCommunicationDirection = 'inbound' | 'outbound' | 'internal';
 
 export interface LeadCommunicationRecord {
   id: string;
   type: LeadCommunicationType;
   channel: LeadCommunicationChannel;
-  direction: 'inbound' | 'outbound' | 'internal';
+  direction: LeadCommunicationDirection;
   summary: string;
   createdAtMs: number;
   createdBy?: string | null;
@@ -73,13 +74,18 @@ export async function addLeadCommunication(input: {
   leadId: string;
   type: LeadCommunicationType;
   channel: LeadCommunicationChannel;
+  direction?: LeadCommunicationDirection;
   summary: string;
 }): Promise<LeadCommunicationRecord> {
   const leadId = input.leadId.trim();
   const summary = input.summary.trim();
   if (!leadId) throw new Error('Lead ID is required.');
   if (!summary) throw new Error('Communication summary is required.');
-  const direction = input.type === 'note' ? 'internal' : 'outbound';
+  // Staff-reported direction, never inferred from opening a WhatsApp link.
+  // Notes remain internal; legacy callers without a direction keep outbound semantics.
+  const direction: LeadCommunicationDirection = input.type === 'note'
+    ? 'internal'
+    : input.direction === 'inbound' ? 'inbound' : 'outbound';
   const createdAtMs = Date.now();
   const ref = await addDoc(collection(db, 'leads', leadId, 'communications'), {
     type: input.type,
