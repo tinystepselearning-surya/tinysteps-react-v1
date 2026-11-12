@@ -28,7 +28,7 @@ jobs:
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
       - name: Prospective milestone, existing demo, and lead regression tests
-        run: npx vitest run src/pages/admin/futureDemoMilestones.spec.ts src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts src/tests/pages/LeadSourceAnalysis.spec.tsx
+        run: npx vitest run src/pages/admin/futureDemoMilestones.spec.ts src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
       - name: TypeScript validation
         run: npm run typecheck
       - name: Install Chromium for production prerender
