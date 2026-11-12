@@ -440,7 +440,11 @@ export default function LeadAdminToolsMenu({
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <Label>Type</Label>
-                <Select value={communicationType} onValueChange={(value) => setCommunicationType(value as LeadCommunicationType)}>
+                <Select value={communicationType} onValueChange={(value) => {
+                  const nextType = value as LeadCommunicationType;
+                  setCommunicationType(nextType);
+                  setCommunicationChannel(nextType === 'note' ? 'internal' : nextType === 'call' ? 'phone' : 'whatsapp');
+                }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="note">Internal note</SelectItem>
