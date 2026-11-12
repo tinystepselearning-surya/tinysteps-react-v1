@@ -48,6 +48,7 @@ import {
   addLeadCommunication,
   fetchLeadCommunications,
   type LeadCommunicationChannel,
+  type LeadCommunicationDirection,
   type LeadCommunicationRecord,
   type LeadCommunicationType,
 } from '../../services/leadCommunicationsService';
@@ -76,6 +77,7 @@ interface LeadAdminToolsMenuProps {
   onReassign: () => void;
   onOutcome: () => void;
   onWorkflowChanged?: () => void;
+  showQuickLogButton?: boolean;
 }
 
 const CORRECTION_REASONS = [
@@ -132,6 +134,7 @@ export default function LeadAdminToolsMenu({
   onReassign,
   onOutcome,
   onWorkflowChanged,
+  showQuickLogButton = false,
 }: LeadAdminToolsMenuProps) {
   const { toast } = useToast();
   const [busyAction, setBusyAction] = useState<string | null>(null);
@@ -140,6 +143,7 @@ export default function LeadAdminToolsMenu({
   const [communications, setCommunications] = useState<LeadCommunicationRecord[]>([]);
   const [communicationType, setCommunicationType] = useState<LeadCommunicationType>('note');
   const [communicationChannel, setCommunicationChannel] = useState<LeadCommunicationChannel>('internal');
+  const [communicationDirection, setCommunicationDirection] = useState<LeadCommunicationDirection>('outbound');
   const [communicationSummary, setCommunicationSummary] = useState('');
   const [communicationSaving, setCommunicationSaving] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -257,6 +261,7 @@ export default function LeadAdminToolsMenu({
         leadId,
         type: communicationType,
         channel: communicationChannel,
+        direction: communicationType === 'note' ? 'internal' : communicationDirection,
         summary: communicationSummary,
       });
       setCommunications((current) => [created, ...current].slice(0, 50));
@@ -323,6 +328,11 @@ export default function LeadAdminToolsMenu({
 
   return (
     <>
+      {showQuickLogButton && leadId && (
+        <Button type="button" size="sm" variant="outline" onClick={() => void openCommunications()}>
+          <MessageSquareText className="mr-1 h-4 w-4" /> Log contact
+        </Button>
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -454,6 +464,20 @@ export default function LeadAdminToolsMenu({
               </div>
             </div>
             <div>
+              <Label>Direction (staff-reported)</Label>
+              {communicationType === 'note' ? (
+                <p className="mt-1 text-sm text-slate-500">Internal note — not evidence of parent contact.</p>
+              ) : (
+                <Select value={communicationDirection} onValueChange={(value) => setCommunicationDirection(value as LeadCommunicationDirection)}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="outbound">Outbound — Tiny Steps contacted parent</SelectItem>
+                    <SelectItem value="inbound">Inbound — parent contacted Tiny Steps</SelectItem>
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+            <div>
               <Label>Summary</Label>
               <Textarea
                 className="mt-1"
@@ -472,7 +496,7 @@ export default function LeadAdminToolsMenu({
               </Button>
             </div>
             <p className="text-xs text-slate-500">
-              Follow-up dates remain managed through Admin Review so this log stays a single Firestore write.
+              Record only actual interactions, not merely opening WhatsApp or preparing a message. Direction is staff-reported, not externally verified. Follow-up dates remain managed through Admin Review.
             </p>
           </div>
 
@@ -486,7 +510,7 @@ export default function LeadAdminToolsMenu({
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{communicationTypeLabels[item.type]}</Badge>
-                    <span className="text-xs text-slate-500">{item.channel}</span>
+                    <span className="text-xs text-slate-500">{item.channel} · {item.direction}</span>
                   </div>
                   <span className="text-xs text-slate-500">{formatActionTime(item.createdAtMs)}</span>
                 </div>
