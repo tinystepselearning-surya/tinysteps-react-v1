@@ -17,7 +17,7 @@ export interface LeadCommunicationRecord {
   id: string;
   type: LeadCommunicationType;
   channel: LeadCommunicationChannel;
-  direction: LeadCommunicationDirection;
+  direction: LeadCommunicationDirection | 'unknown';
   summary: string;
   createdAtMs: number;
   createdBy?: string | null;
@@ -57,7 +57,10 @@ export async function fetchLeadCommunications(leadId: string, maxRows = 50): Pro
   return snapshot.docs.map((item) => {
     const data = item.data() as Record<string, unknown>;
     const directionRaw = String(data.direction || '').trim().toLowerCase();
-    const direction = directionRaw === 'inbound' || directionRaw === 'outbound' ? directionRaw : 'internal';
+    // Historical records without a direction are unknown, not evidence of an internal note.
+    const direction = directionRaw === 'inbound' || directionRaw === 'outbound' || directionRaw === 'internal'
+      ? directionRaw
+      : 'unknown';
     return {
       id: item.id,
       type: normalizeType(data.type),
