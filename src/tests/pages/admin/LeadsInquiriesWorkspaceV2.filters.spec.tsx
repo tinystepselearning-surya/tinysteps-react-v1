@@ -19,7 +19,7 @@ vi.mock('../../../pages/admin/leadsPaged', () => ({
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 
 vi.mock('../../../services/demoSessionsService', () => ({
-  listenDemoSessionsByIds: vi.fn((_ids, onData) => {
+  listenDemoSessionsByIds: vi.fn((_ids: unknown, onData: (rows: unknown[]) => void) => {
     onData([]);
     return vi.fn();
   }),
