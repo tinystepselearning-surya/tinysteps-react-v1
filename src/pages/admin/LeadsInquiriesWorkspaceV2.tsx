@@ -968,9 +968,9 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             {row.followUpAtMs > 0 && <div className="text-[11px] text-slate-500">Follow-up {formatFollowUp(row.followUpAtMs)}</div>}
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> WhatsApp</Button>}
+            {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" title="Open WhatsApp; this does not confirm a sent or received message" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> Open WhatsApp</Button>}
             {renderAction(row)}
-            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
+            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} showQuickLogButton={row.bucket !== 'closed'} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
           </div>
         </div>)}</div>}
         {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">
