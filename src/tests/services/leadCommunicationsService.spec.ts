@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   addDoc: vi.fn(),
+  getDocs: vi.fn(),
   collection: vi.fn(() => ({ kind: 'communications-collection' })),
   serverTimestamp: vi.fn(() => ({ kind: 'server-timestamp' })),
 }));
@@ -12,17 +13,18 @@ vi.mock('firebase/firestore', () => ({
   addDoc: mocks.addDoc,
   collection: mocks.collection,
   serverTimestamp: mocks.serverTimestamp,
-  getDocs: vi.fn(),
+  getDocs: mocks.getDocs,
   limit: vi.fn(),
   orderBy: vi.fn(),
   query: vi.fn(),
 }));
 
-import { addLeadCommunication } from '../../services/leadCommunicationsService';
+import { addLeadCommunication, fetchLeadCommunications } from '../../services/leadCommunicationsService';
 
 describe('Staff-recorded lead communication evidence', () => {
   beforeEach(() => {
     mocks.addDoc.mockReset().mockResolvedValue({ id: 'communication-1' });
+    mocks.getDocs.mockReset();
     mocks.collection.mockClear();
   });
 
@@ -82,4 +84,25 @@ describe('Staff-recorded lead communication evidence', () => {
     })).rejects.toThrow('Communication summary is required.');
     expect(mocks.addDoc).not.toHaveBeenCalled();
   });
+
+  it('does not invent a direction for historical records missing that field', async () => {
+    mocks.getDocs.mockResolvedValue({
+      docs: [
+        { id: 'legacy-contact', data: () => ({
+          type: 'message', channel: 'whatsapp',
+          summary: 'Historical contact without recorded direction',
+        }) },
+        { id: 'parent-reply', data: () => ({
+          type: 'message', channel: 'whatsapp', direction: 'inbound',
+          summary: 'Parent replied to the invitation',
+        }) },
+      ],
+    });
+
+    const records = await fetchLeadCommunications('existing-lead');
+
+    expect(records.map((row) => row.direction)).toEqual(['unknown', 'inbound']);
+    expect(mocks.addDoc).not.toHaveBeenCalled();
+  });
+
 });
