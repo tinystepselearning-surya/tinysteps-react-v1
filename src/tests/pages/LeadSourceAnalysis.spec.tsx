@@ -43,6 +43,12 @@ vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
   default: () => <div>Lead admission analytics</div>,
 }));
 
+// The prospective callable has its own tests; this suite verifies only
+// legacy attribution/range behaviour and demo-workflow display semantics.
+vi.mock('../../pages/admin/ProspectiveAcquisitionSummary', () => ({
+  default: () => <div>Prospective acquisition summary</div>,
+}));
+
 import LeadSourceAnalysis from '../../pages/admin/LeadSourceAnalysis';
 
 type Deferred<T> = {
