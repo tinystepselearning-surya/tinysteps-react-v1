@@ -52,6 +52,7 @@ import {
 } from './leadsPaged';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import LeadAdminToolsMenu from './LeadAdminToolsMenu';
+import { isAdminFollowUpDue } from './leadsDueFollowUps';
 import {
   isSimpleFollowUpDecision,
   resolveSimpleLeadAction,
@@ -350,6 +351,7 @@ const rowTeacherWasAssigned = (row: SimpleRow): boolean => Boolean(row.demo?.ass
 export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
+  const [dueTodayOnly, setDueTodayOnly] = useState(false);
   const [pageSize, setPageSize] = useState<LeadPageSize>(25);
   const [pageIndex, setPageIndex] = useState(0);
   const [search, setSearch] = useState('');
@@ -671,8 +673,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     return counts;
   }, [rows]);
 
+  const todayFollowUpKey = todayDateInputIST();
+  const dueTodayCount = filteredRows.filter((row) => isAdminFollowUpDue(row, todayFollowUpKey)).length;
+
   const sortedRows = useMemo(() => {
-    const list = filteredRows.filter((row) => row.bucket === bucket);
+    const list = filteredRows.filter((row) =>
+      row.bucket === bucket && (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)));
     const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
     return [...list].sort((a, b) => {
       if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
@@ -682,7 +688,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       if (a.followUpAtMs && b.followUpAtMs) return a.followUpAtMs - b.followUpAtMs;
       return b.updatedAtMs - a.updatedAtMs;
     });
-  }, [bucket, filteredRows]);
+  }, [bucket, dueTodayOnly, filteredRows, todayFollowUpKey]);
 
   const currentTotal = sortedRows.length;
   const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(currentTotal / pageSize));
@@ -695,7 +701,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   useEffect(() => {
     setPageIndex(0);
-  }, [bucket, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
+  }, [bucket, dueTodayOnly, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
 
   const previousPage = () => setPageIndex((current) => Math.max(0, current - 1));
   const nextPage = () => setPageIndex((current) => Math.min(totalPages - 1, current + 1));
@@ -735,6 +741,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   };
 
   const clearFilters = () => {
+    setDueTodayOnly(false);
     setSearch('');
     setMonthFilter('today');
     setDateFrom('');
@@ -921,11 +928,29 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         </div>
         {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
           const meta = bucketMeta[item]; const Icon = meta.icon;
-          return <button key={item} type="button" onClick={() => setBucket(item)} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
+          return <button key={item} type="button" onClick={() => { setBucket(item); setDueTodayOnly(false); }} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
             <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{loading ? '—' : stageCounts[item]}</span></div>
             <p className="mt-2 text-sm opacity-75">{meta.subtitle}</p>
           </button>;
         })}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant={dueTodayOnly ? 'default' : 'outline'}
+          aria-pressed={dueTodayOnly}
+          onClick={() => {
+            setBucket('admin_review');
+            setDueTodayOnly((current) => !current);
+          }}
+        >
+          Follow-ups due today ({loading ? '…' : dueTodayCount})
+        </Button>
+        <p className="text-xs text-slate-500">
+          Scheduled Admin Review follow-ups due by today (IST) within the selected enquiry period only.
+          This is not a complete backlog or proof of parent contact.
+        </p>
       </div>
     </Card>
 
@@ -965,7 +990,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             <Badge variant="outline">{row.statusLabel}</Badge>
             <div className="mt-1 text-xs font-medium text-slate-600">Enquired {formatUpdated(row.createdAtMs)}</div>
             {row.updatedAtMs > row.createdAtMs + 60_000 && <div className="text-[11px] text-slate-400">Updated {formatUpdated(row.updatedAtMs)}</div>}
-            {row.followUpAtMs > 0 && <div className="text-[11px] text-slate-500">Follow-up {formatFollowUp(row.followUpAtMs)}</div>}
+            {row.followUpAtMs > 0 && <div className={`text-[11px] ${isAdminFollowUpDue(row, todayFollowUpKey) ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{isAdminFollowUpDue(row, todayFollowUpKey) ? 'Follow-up due' : 'Follow-up'} {formatFollowUp(row.followUpAtMs)}</div>}
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> WhatsApp</Button>}
