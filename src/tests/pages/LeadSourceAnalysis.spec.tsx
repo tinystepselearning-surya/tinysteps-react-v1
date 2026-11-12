@@ -199,4 +199,41 @@ describe('LeadSourceAnalysis request ordering', () => {
     });
     expect(screen.queryByText('Instagram (legacy)')).toBeNull();
   });
+
+  it('labels demo-stage evidence without claiming that pending requests are confirmed bookings', async () => {
+    const doc = (id: string, status: string, demoSessionId?: string) => ({
+      id,
+      data: () => ({
+        source: 'website',
+        status,
+        demoSessionId: demoSessionId || null,
+        receivedAt: new Date('2026-08-10T03:00:00.000Z'),
+      }),
+    });
+    const docs = [
+      doc('pending-auto-request', 'demo_pending_schedule'),
+      doc('linked-not-confirmed', 'new', 'auto-created-demo-record'),
+      doc('admitted-legacy', 'admitted_confirmed'),
+      doc('plain-new', 'new'),
+    ];
+    getDocsLoggedMock.mockResolvedValue({ docs });
+
+    render(
+      <LeadSourceAnalysis
+        startDateKey="2026-08-10"
+        endDateKey="2026-08-10"
+        showFunnel={false}
+      />,
+    );
+
+    await waitFor(() => {
+      const cardLabel = screen.getByText('Demo workflow');
+      expect(cardLabel.parentElement?.textContent).toContain('3 (75%)');
+    });
+
+    expect(screen.queryByText('Reached demo')).toBeNull();
+    expect(screen.getAllByText('Demo stage').length).toBe(2);
+    expect(screen.getByText(/These counts are not confirmed bookings/)).toBeTruthy();
+  });
+
 });
