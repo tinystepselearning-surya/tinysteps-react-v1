@@ -253,6 +253,15 @@ export default function LeadAdminToolsMenu({
     }
   };
 
+  const openQuickContactLog = () => {
+    // A quick log is a deliberate staff action; opening WhatsApp never logs contact.
+    setCommunicationType('message');
+    setCommunicationChannel('whatsapp');
+    setCommunicationDirection('outbound');
+    setCommunicationSummary('');
+    void openCommunications();
+  };
+
   const saveCommunication = async () => {
     if (!leadId || !communicationSummary.trim() || communicationSaving) return;
     setCommunicationSaving(true);
@@ -329,7 +338,7 @@ export default function LeadAdminToolsMenu({
   return (
     <>
       {showQuickLogButton && leadId && (
-        <Button type="button" size="sm" variant="outline" onClick={() => void openCommunications()}>
+        <Button type="button" size="sm" variant="outline" disabled={deleting || Boolean(busyAction)} onClick={openQuickContactLog}>
           <MessageSquareText className="mr-1 h-4 w-4" /> Log contact
         </Button>
       )}
