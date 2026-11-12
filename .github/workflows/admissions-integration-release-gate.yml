@@ -1,0 +1,84 @@
+name: Admissions Forward-only Integrated Release Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/**'
+      - 'src/services/leadCommunicationsService.ts'
+      - 'src/tests/pages/**'
+      - 'src/tests/services/leadCommunicationsService.spec.ts'
+      - 'docs/acquisition/**'
+      - '.github/workflows/admissions-*.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-integrated-admissions:
+    name: Combined admissions regression, TypeScript and SEO build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Reject changes outside approved internal admissions scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/admissions-contact-evidence.yml|\
+              .github/workflows/admissions-follow-up-priority.yml|\
+              .github/workflows/admissions-funnel-labels.yml|\
+              .github/workflows/admissions-future-demo-evidence.yml|\
+              .github/workflows/admissions-integration-release-gate.yml|\
+              docs/acquisition/ADM_01_FUNNEL_EVIDENCE_AND_RELEASE_GATES_20261112.md|\
+              docs/acquisition/ADM_02_PROSPECTIVE_DEMO_EVIDENCE.md|\
+              docs/acquisition/ADM_INTEGRATION_RELEASE_PLAN_20261113.md|\
+              src/pages/admin/DemoSessionsManagement.tsx|\
+              src/pages/admin/FutureDemoMilestonesCard.tsx|\
+              src/pages/admin/LeadAdminToolsMenu.tsx|\
+              src/pages/admin/LeadSourceAnalysis.tsx|\
+              src/pages/admin/LeadsInquiriesWorkspaceV2.tsx|\
+              src/pages/admin/futureDemoMilestones.spec.ts|\
+              src/pages/admin/futureDemoMilestones.ts|\
+              src/pages/admin/leadAdminReadPolicy.test.ts|\
+              src/pages/admin/leadsDueFollowUps.spec.ts|\
+              src/pages/admin/leadsDueFollowUps.ts|\
+              src/services/leadCommunicationsService.ts|\
+              src/tests/pages/LeadSourceAnalysis.spec.tsx|\
+              src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx|\
+              src/tests/services/leadCommunicationsService.spec.ts)
+                echo "Approved internal change: $path"
+                ;;
+              *)
+                echo "::error::Release scope violation: $path"
+                exit 1
+                ;;
+            esac
+          done < <(git diff --name-only origin/main...HEAD)
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run all four workstreams together plus existing regression coverage
+        run: >
+          npx vitest run
+          src/tests/pages/LeadSourceAnalysis.spec.tsx
+          src/tests/services/leadCommunicationsService.spec.ts
+          src/pages/admin/leadAdminReadPolicy.test.ts
+          src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx
+          src/pages/admin/leadsDueFollowUps.spec.ts
+          src/pages/admin/futureDemoMilestones.spec.ts
+          src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Install Chromium for static SEO prerender
+        run: npx playwright install --with-deps chromium
+      - name: Build all public routes without deploying
+        run: npm run build
