@@ -1,0 +1,37 @@
+name: Admissions Contact Evidence Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/services/leadCommunicationsService.ts'
+      - 'src/pages/admin/LeadAdminToolsMenu.tsx'
+      - 'src/pages/admin/LeadsInquiriesWorkspaceV2.tsx'
+      - 'src/pages/admin/leadAdminReadPolicy.test.ts'
+      - 'src/tests/services/leadCommunicationsService.spec.ts'
+      - '.github/workflows/admissions-contact-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-contact-evidence:
+    name: Verify contact logging and unaffected public build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Focused admissions logging and existing workspace regression tests
+        run: npx vitest run src/tests/services/leadCommunicationsService.spec.ts src/pages/admin/leadAdminReadPolicy.test.ts src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Install Chromium for prerender validation
+        run: npx playwright install --with-deps chromium
+      - name: Full SEO and prerender build (no deployment)
+        run: npm run build
