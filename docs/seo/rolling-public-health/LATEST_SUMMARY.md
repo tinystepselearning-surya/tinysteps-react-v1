@@ -1,13 +1,13 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-12T18:42:26.948Z UTC (13 November 2026 IST, slot 1 evidence handling)
+Updated: 2026-11-12T19:42:22.343Z UTC (13 November 2026 IST, slot 2 evidence handling)
 
 - Registry validated before auditing: **202 unique selected URLs**, 22 CSV columns; slots 1–19 have 10 URLs each and slot 20 has 12.
-- **13 November IST: 10/202 distinct URLs with new provider retrieval attempts; 192 unchecked today.** Previous day's 202/202 provider-retrieval coverage does not count for today.
-- Slot 1, rows 1–10: **10/10 exact-URL provider-extracted page texts**, with page-specific headings and substantive content for the homepage, blog, resources, phonics hub, CK, Floss, QU, CH, KN and NG guides. Provider refs: turn488005view0 through turn488005view9; each labelled text/html and crawled today, but no independently observed origin response headers.
-- UTC evidence-handling markers: **2026-11-12T18:42:26.948Z–2026-11-12T18:42:26.957Z**. These mark recording of observations, not measured HTTP response times.
+- **13 November IST: 20/202 distinct URLs with new provider retrieval attempts; 182 unchecked today.** Previous-day coverage excluded.
+- Slot 2, rows 11–20: **10/10 exact-URL provider-extracted page texts**, with page-specific headings and substantive content for SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE phonics guides. Provider refs: turn616329view0 through turn616329view9; labelled text/html and crawled yesterday. Retrieval dates are provider labels, not independently measured origin checks.
+- UTC evidence-recording marker for this batch: **2026-11-12T19:42:22.343Z**. This is not a measured HTTP response time; individual distinct origin timestamps were unavailable and were not fabricated.
 - **Fully origin-verified today: 0/202.** HTTP status, final redirect destination, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. No origin PASS/FAIL or Google/Bing indexing/ranking assertion.
-- GitHub Actions repository run listing showed 7 in-progress runs and 0 queued runs; returned run details included unrelated admissions release gates. No positive concurrent SEO audit run was observed in the inspected results. Administrative state of the former SEO workflow could not be independently read; user-confirmed disablement remains the operating basis. No workflow was run or enabled.
-- No verified production regression or improvement established. **Next eligible batch: slot 2, rows 11–20**. Later slots remain untouched.
+- GitHub Actions repository run listing returned **zero in-progress runs**. Workflow-specific administrative disablement could not be read; user-confirmed disablement remains the operating basis. No workflow was run or enabled.
+- No verified production regression or improvement established. **Next eligible batch: slot 3, rows 21–30**. Later slots untouched.
 
 Evidence: [tracker](./MASTER_URL_TRACKER.csv) · [changes](./CHANGES.md).
