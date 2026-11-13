@@ -1,15 +1,15 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
-Updated: 2026-11-13T18:45:58.442Z UTC (14 November 2026 IST, slot 1 evidence recording)
+Updated: 2026-11-13T19:42:03.062Z UTC (14 November 2026 IST, slot 2 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**; slots 1–19 contain 10 URLs each and slot 20 contains 12.
-- **14 November IST: 10/202 distinct URLs attempted (4.95% provider-retrieval coverage); 192 not attempted today.** Prior-day checks excluded. Slot 1 rows 1–10 attempted.
-- All **10/10 exact-URL provider retrievals** returned relevant page-specific extracted text for homepage, blog, resources hub, phonics hub, and six phonics pattern guides. Provider references: `turn588381view0`–`turn588381view9`. This does **not** constitute origin verification.
-- UTC evidence-recording markers: `2026-11-13T18:45:58.433Z`–`2026-11-13T18:45:58.442Z`. These are handling markers, **not measured HTTP origin response times**.
+- **14 November IST: 20/202 distinct URLs attempted (9.90% provider-retrieval coverage); 182 not attempted today.** Prior-day checks excluded. Slot 2 rows 11–20 attempted.
+- **10/10 exact-URL provider retrievals** returned relevant page-specific extracted text for SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE phonics guides. Provider references: `turn268951view0`–`turn268951view9`. This is **not** origin verification.
+- Evidence-handling marker: `2026-11-13T19:42:03.062Z` UTC shared by all 10 records due to millisecond clock resolution. **Not 10 distinct origin-response timestamps.** Each retrieval has a distinct evidence reference.
 - **Fully origin-verified: 0/202.** HTTP status, final redirect, canonical, robots/noindex, raw HTML, structured data, and bot access remain UNVERIFIED.
-- GitHub Actions in-progress run query returned `total_count: 0`, `workflow_runs: []`. Legacy workflow administrative disablement was not independently established; user's explicit confirmation remains the operating basis.
+- GitHub Actions in-progress repository runs query returned `total_count: 0`, `workflow_runs: []`. Legacy workflow administrative disablement not independently established; user's explicit confirmation remains the operating basis.
 - No verified production regression or improvement. `CHANGES.md` unchanged. No production or workflow changes.
-- Next eligible batch: **slot 2, rows 11–20**, or earliest eligible unchecked prior-slot rows subject to daily scheduling.
+- Next eligible batch: **slot 3, rows 21–30**, or earliest eligible unchecked prior-slot rows subject to daily scheduling.
 
 ## Prior-day reconciliation history
 
