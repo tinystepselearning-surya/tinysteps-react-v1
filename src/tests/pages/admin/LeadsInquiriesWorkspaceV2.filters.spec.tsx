@@ -7,7 +7,9 @@ const mocks = vi.hoisted(() => ({
   reloadPage: vi.fn(),
   fetchRange: vi.fn(),
   toast: vi.fn(),
+  retryDemo: vi.fn(),
   leadsLoading: false,
+  loadedLeads: [] as Array<Record<string, unknown>>,
 }));
 
 vi.mock('../../../pages/admin/leadsPaged', () => ({
@@ -18,7 +20,10 @@ vi.mock('../../../pages/admin/leadsPaged', () => ({
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 
 vi.mock('../../../services/demoSessionsService', () => ({
-  listenDemoSessionsByIds: vi.fn(() => vi.fn()),
+  listenDemoSessionsByIds: vi.fn((_ids: unknown, onData: (rows: unknown[]) => void) => {
+    onData([]);
+    return vi.fn();
+  }),
   listenDemoSessionPrivatePhonesByIds: vi.fn(() => vi.fn()),
   reassignDemoSession: vi.fn(),
   updateDemoConversion: vi.fn(),
@@ -26,6 +31,7 @@ vi.mock('../../../services/demoSessionsService', () => ({
 
 vi.mock('../../../services/leadsAdminService', () => ({
   adminDeleteLeadWorkflowRecord: vi.fn(),
+  adminRetryLeadDemoRequest: mocks.retryDemo,
   adminUpdateLeadWorkflowRecord: vi.fn(),
 }));
 
@@ -106,7 +112,9 @@ beforeEach(() => {
   mocks.reloadPage.mockReset();
   mocks.fetchRange.mockReset();
   mocks.toast.mockReset();
+  mocks.retryDemo.mockReset();
   mocks.leadsLoading = false;
+  mocks.loadedLeads = [];
 
   mocks.usePagedLeads.mockImplementation((options: any) => {
     React.useEffect(() => {
@@ -118,7 +126,7 @@ beforeEach(() => {
     }, [options.dateFromMs, options.dateToMs]);
 
     return {
-      leads: [],
+      leads: mocks.loadedLeads,
       isLoading: mocks.leadsLoading,
       reloadPage: (resetToFirst = false) => {
         mocks.reloadPage(resetToFirst);
@@ -201,4 +209,103 @@ describe('Leads & Enquiries explicit date filter application', () => {
     const button = screen.getByRole('button', { name: 'Applying…' }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
   });
+
+  it('filters only scheduled Admin Review follow-ups due by today without another lead query', async () => {
+    const today = todayDateInputIST();
+    const todayStart = dateBoundaryMs(today);
+    const afterToday = dateBoundaryMs(today, true) + 60_000;
+    const makeLead = (
+      id: string,
+      parentName: string,
+      nextFollowUpAt: number,
+      status: string,
+      phone: string,
+    ) => ({
+      id,
+      parentName,
+      childName: 'Child ' + id,
+      primaryPhone: phone,
+      status,
+      source: 'website',
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+      nextFollowUpAt: { toMillis: () => nextFollowUpAt },
+    });
+
+    mocks.loadedLeads = [
+      makeLead('due', 'Due Parent', todayStart + 60_000, 'admission_follow_up', '919111111101'),
+      makeLead('later', 'Later Parent', afterToday, 'admission_follow_up', '919111111102'),
+      makeLead('closed', 'Closed Parent', todayStart + 60_000, 'admitted_confirmed', '919111111103'),
+    ];
+
+    render(<LeadsInquiriesWorkspaceV2 />);
+
+    const dueToggle = await screen.findByRole('button', { name: 'Follow-ups due today (1)' });
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+    fireEvent.click(dueToggle);
+
+    expect(screen.getByText('Due Parent')).toBeTruthy();
+    expect(screen.queryByText('Later Parent')).toBeNull();
+    expect(screen.queryByText('Closed Parent')).toBeNull();
+    expect(dueToggle.getAttribute('aria-pressed')).toBe('true');
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(dueToggle);
+    expect(screen.getByText('Due Parent')).toBeTruthy();
+    expect(screen.getByText('Later Parent')).toBeTruthy();
+    expect(dueToggle.getAttribute('aria-pressed')).toBe('false');
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry automatically and requires explicit admin confirmation for a missing 1:1 demo', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = [{
+      id: 'canonical-retry',
+      parentName: 'Retry Parent',
+      childName: 'Retry Child',
+      primaryPhone: '919100000112',
+      status: 'new',
+      source: 'website',
+      classFormatPreference: 'one_to_one',
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+    }];
+    mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_canonical-retry' });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+      render(<LeadsInquiriesWorkspaceV2 />);
+      const retry = await screen.findByRole('button', { name: 'Retry demo request' });
+      expect(mocks.retryDemo).not.toHaveBeenCalled();
+      fireEvent.click(retry);
+      await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
+      expect(confirm).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Demo request linked',
+      })));
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
+  it('does not offer an automatic 1:1 retry for group or undecided enquiries', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = ['small_group', 'unsure'].map((format, index) => ({
+      id: `format-${index}`,
+      parentName: `Format Parent ${index}`,
+      childName: `Child ${index}`,
+      primaryPhone: `91910000011${index}`,
+      status: 'new',
+      source: 'website',
+      classFormatPreference: format,
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+    }));
+    render(<LeadsInquiriesWorkspaceV2 />);
+    expect(await screen.findByText('Small-group enquiry — review')).toBeTruthy();
+    expect(screen.getByText('Class format undecided')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Retry demo request' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Review enquiry' })).toHaveLength(2);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+  });
+
 });

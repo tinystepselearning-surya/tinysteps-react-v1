@@ -13,6 +13,7 @@ export interface SimpleLeadWorkflowInput {
   conversionStatus?: unknown;
   hasDemo?: boolean;
   hasFollowUp?: boolean;
+  classFormatPreference?: unknown;
 }
 
 const normalize = (value: unknown): string => String(value || '').trim().toLowerCase();
@@ -74,7 +75,10 @@ export function resolveSimpleLeadAction(input: SimpleLeadWorkflowInput): SimpleL
 
   if (bucket === 'closed') return 'view_outcome';
   if (bucket === 'admin_review') return input.hasDemo ? 'review_outcome' : 'follow_up_lead';
-  if (!input.hasDemo) return 'awaiting_demo';
+  if (!input.hasDemo) {
+    const format = normalize(input.classFormatPreference);
+    return format === 'small_group' || format === 'unsure' ? 'follow_up_lead' : 'awaiting_demo';
+  }
   if (demoStatus === 'open') return 'assign_teacher';
   if (demoStatus === 'assigned') return 'wait_teacher';
   return 'review_outcome';
@@ -105,5 +109,7 @@ export function resolveSimpleStatusLabel(input: SimpleLeadWorkflowInput): string
     return bucket === 'admin_review' ? 'Admin action needed' : 'In progress';
   }
 
-  return input.hasFollowUp ? 'Admin follow-up' : 'Preparing demo request';
+  if (normalize(input.classFormatPreference) === 'small_group') return 'Small-group enquiry — review';
+  if (normalize(input.classFormatPreference) === 'unsure') return 'Class format undecided';
+  return input.hasFollowUp ? 'Admin follow-up' : 'Demo request not linked';
 }

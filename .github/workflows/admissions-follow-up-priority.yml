@@ -1,0 +1,36 @@
+name: Admissions Follow-up Priority Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/LeadsInquiriesWorkspaceV2.tsx'
+      - 'src/pages/admin/leadsDueFollowUps.ts'
+      - 'src/pages/admin/leadsDueFollowUps.spec.ts'
+      - 'src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx'
+      - '.github/workflows/admissions-follow-up-priority.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Verify bounded due-today workflow and SEO safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Focused due follow-up and workspace regression tests
+        run: npx vitest run src/pages/admin/leadsDueFollowUps.spec.ts src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx src/pages/admin/leadAdminReadPolicy.test.ts
+      - name: TypeScript check
+        run: npm run typecheck
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: SEO/prerender production build without deployment
+        run: npm run build

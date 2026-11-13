@@ -45,3 +45,19 @@ export async function adminDeleteLeadWorkflowRecord(
     AdminLeadDeletePayload
   >('adminDeleteLeadWorkflowRecord', safePayload);
 }
+
+/**
+ * Explicit recovery for an eligible, canonical 1:1 enquiry with no linked demo.
+ * The server reuses the automatic workflow's idempotent unique-key transaction.
+ * Never call automatically on page render.
+ */
+export async function adminRetryLeadDemoRequest(
+  leadId: string,
+): Promise<{ ok: true; action: string; demoId: string }> {
+  const canonicalId = canonicalLeadId(leadId);
+  if (!canonicalId) throw new Error('A canonical lead is required for retry.');
+  return callFunction<
+    { ok: true; action: string; demoId: string },
+    { leadId: string }
+  >('adminRetryLeadDemoRequest', { leadId: canonicalId });
+}

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import * as admin from 'firebase-admin';
 import * as logger from 'firebase-functions/logger';
 import { onDocumentWritten } from 'firebase-functions/v2/firestore';
+import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import {
   normalizeWebsiteLeadChildName,
   normalizeWebsiteLeadPhone,
@@ -248,18 +249,9 @@ export const shouldRunOrphanDemoRepair = (
   return created || !currentLeadId || isSyntheticDemoLeadId(currentLeadId, demoId);
 };
 
-export const onLeadEnsureDemoRequest = onDocumentWritten(
-  { document: 'leads/{leadId}', region: REGION },
-  async (event) => {
-    const change = event.data;
-    if (!change || !change.after.exists) return;
-
-    const leadId = cleanText(event.params.leadId, 120);
-    const beforeLead = change.before.exists ? (change.before.data() || {}) : {};
-    const initialLead = change.after.data() || {};
-    if (!hasMeaningfulLeadDemoChange(beforeLead, initialLead, !change.before.exists)) return;
-    if (!shouldEnsureDemoForLead(leadId, initialLead)) return;
-
+// One idempotent, identity-checked transaction for the automatic trigger and an explicit admin retry.
+// The retry does not bypass canonicalization, format preference, ownership or unique-key conflicts.
+const ensureDemoRequest = async (leadId: string) => {
     const db = admin.firestore();
     const leadRef = db.collection('leads').doc(leadId);
     const deterministicDemoRef = db.collection('demoSessions').doc(`lead_${leadId}`);
@@ -505,6 +497,93 @@ export const onLeadEnsureDemoRequest = onDocumentWritten(
         ...result,
       });
     }
+    return result;
+};
+
+export const onLeadEnsureDemoRequest = onDocumentWritten(
+  { document: 'leads/{leadId}', region: REGION },
+  async (event) => {
+    const change = event.data;
+    if (!change || !change.after.exists) return;
+    const leadId = cleanText(event.params.leadId, 120);
+    const beforeLead = change.before.exists ? (change.before.data() || {}) : {};
+    const initialLead = change.after.data() || {};
+    if (!hasMeaningfulLeadDemoChange(beforeLead, initialLead, !change.before.exists)) return;
+    if (!shouldEnsureDemoForLead(leadId, initialLead)) return;
+    await ensureDemoRequest(leadId);
+  },
+);
+
+export const adminRetryLeadDemoRequest = onCall<{ leadId: string }>(
+  { region: REGION },
+  async (request) => {
+    const uid = cleanText(request.auth?.uid, 160);
+    if (!uid) throw new HttpsError('unauthenticated', 'Sign in required.');
+    const db = admin.firestore();
+    const callerSnap = await db.collection('users').doc(uid).get();
+    const caller = callerSnap.data() || {};
+    const role = cleanText(caller.role, 80).toLowerCase();
+    const roles = Array.isArray(caller.roles)
+      ? caller.roles.map((value: unknown) => cleanText(value, 80).toLowerCase())
+      : [];
+    const accountStatus = cleanText(caller.status, 80).toLowerCase();
+    if (!callerSnap.exists || (role !== 'admin' && !roles.includes('admin')) ||
+      (accountStatus && accountStatus !== 'active')) {
+      throw new HttpsError('permission-denied', 'Only active admins can retry demo requests.');
+    }
+
+    const leadId = cleanText(request.data?.leadId, 120);
+    if (!leadId || isSyntheticDemoLeadId(leadId)) {
+      throw new HttpsError('invalid-argument', 'A canonical lead is required.');
+    }
+    const leadRef = db.collection('leads').doc(leadId);
+    const leadSnap = await leadRef.get();
+    if (!leadSnap.exists) throw new HttpsError('not-found', 'Lead not found.');
+    const lead = leadSnap.data() || {};
+    if (lead.archived === true || isTerminalLead(lead)) {
+      throw new HttpsError('failed-precondition', 'Closed or archived leads cannot be retried.');
+    }
+    if (lead.classFormatPreference === 'small_group' || lead.classFormatPreference === 'unsure') {
+      throw new HttpsError('failed-precondition', 'Review class format with the parent; a group/unsure enquiry is not an approved 1:1 demo.');
+    }
+    if (!isWebsiteCanonicalReady(leadId, lead)) {
+      throw new HttpsError('failed-precondition', 'Lead identity is not canonical or has a conflict. Review before creating a demo.');
+    }
+
+    const linkedDemoId = cleanText(lead.demoSessionId, 120);
+    if (linkedDemoId) {
+      const linkedSnap = await db.collection('demoSessions').doc(linkedDemoId).get();
+      if (!linkedSnap.exists || cleanText(linkedSnap.data()?.leadId, 120) !== leadId) {
+        throw new HttpsError('failed-precondition', 'Existing demo link requires admin investigation; no duplicate was created.');
+      }
+      return { ok: true, action: 'already_linked', demoId: linkedDemoId };
+    }
+    if (!shouldEnsureDemoForLead(leadId, lead)) {
+      throw new HttpsError('failed-precondition', 'Lead cannot safely receive an automatic 1:1 demo.');
+    }
+
+    const result = await ensureDemoRequest(leadId);
+    if ('demoId' in result &&
+      ['created', 'linked_existing', 'linked_deterministic'].includes(result.action)) {
+      return { ok: true, action: result.action, demoId: result.demoId };
+    }
+
+    // Another trigger may have linked the same canonical lead during the retry.
+    if (result.action === 'not_needed') {
+      const latest = (await leadRef.get()).data() || {};
+      const latestId = cleanText(latest.demoSessionId, 120);
+      if (latestId) {
+        const demoSnap = await db.collection('demoSessions').doc(latestId).get();
+        if (demoSnap.exists && cleanText(demoSnap.data()?.leadId, 120) === leadId) {
+          return { ok: true, action: 'already_linked', demoId: latestId };
+        }
+      }
+    }
+    logger.warn('[lead-demo-workflow] admin retry needs manual review', {
+      leadId, action: result.action,
+    });
+    throw new HttpsError('failed-precondition',
+      'Demo request needs identity or ownership review. No duplicate was created.');
   },
 );
 

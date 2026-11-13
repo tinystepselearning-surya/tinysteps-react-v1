@@ -42,6 +42,7 @@ import {
 } from '../../services/demoSessionsService';
 import {
   adminDeleteLeadWorkflowRecord,
+  adminRetryLeadDemoRequest,
   adminUpdateLeadWorkflowRecord,
 } from '../../services/leadsAdminService';
 import { buildNewWebsiteLeadToastDescription } from './leadsRealtime';
@@ -52,6 +53,7 @@ import {
 } from './leadsPaged';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import LeadAdminToolsMenu from './LeadAdminToolsMenu';
+import { isAdminFollowUpDue } from './leadsDueFollowUps';
 import {
   isSimpleFollowUpDecision,
   resolveSimpleLeadAction,
@@ -327,14 +329,14 @@ const formatFollowUp = (ms: number): string => {
 const buildWhatsAppUrl = (phone: string): string => `https://wa.me/${phoneDigits(phone)}`;
 
 const bucketMeta: Record<SimpleLeadBucket, { title: string; subtitle: string; icon: React.ElementType; accent: string }> = {
-  open: { title: 'Open', subtitle: 'Demo ready, waiting for teacher', icon: CircleDot, accent: 'border-blue-200 bg-blue-50/70 text-blue-950' },
+  open: { title: 'Open', subtitle: 'New enquiries and demo requests needing admin action', icon: CircleDot, accent: 'border-blue-200 bg-blue-50/70 text-blue-950' },
   in_progress: { title: 'With Teacher', subtitle: 'Assigned to teacher for the demo', icon: Clock3, accent: 'border-amber-200 bg-amber-50/70 text-amber-950' },
   admin_review: { title: 'Admin Review', subtitle: 'Teacher finished — admin action needed', icon: ClipboardCheck, accent: 'border-violet-200 bg-violet-50/70 text-violet-950' },
   closed: { title: 'Closed', subtitle: 'Final admin decision saved', icon: CheckCircle2, accent: 'border-emerald-200 bg-emerald-50/70 text-emerald-950' },
 };
 
 const bucketGuidance: Record<SimpleLeadBucket, string> = {
-  open: 'Open contains unassigned demo requests. Newest enquiries are shown first.',
+  open: 'Open includes unassigned demos and enquiries needing format or demo-link review. No teacher assignment without a linked open demo.',
   in_progress: 'Teacher owns this bucket until the demo is completed.',
   admin_review: 'Teacher work is finished. Admin should review, follow up or close the lead.',
   closed: 'Final decision is saved. Admin tools remain available from the row menu.',
@@ -350,6 +352,7 @@ const rowTeacherWasAssigned = (row: SimpleRow): boolean => Boolean(row.demo?.ass
 export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange }: LeadsInquiriesWorkspaceProps) {
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
+  const [dueTodayOnly, setDueTodayOnly] = useState(false);
   const [pageSize, setPageSize] = useState<LeadPageSize>(25);
   const [pageIndex, setPageIndex] = useState(0);
   const [search, setSearch] = useState('');
@@ -370,6 +373,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [assignRow, setAssignRow] = useState<SimpleRow | null>(null);
   const [assignTeacherId, setAssignTeacherId] = useState('');
   const [assignSaving, setAssignSaving] = useState(false);
+  const [retryingLeadId, setRetryingLeadId] = useState<string | null>(null);
   const [outcomeRow, setOutcomeRow] = useState<SimpleRow | null>(null);
   const [outcomeForm, setOutcomeForm] = useState<OutcomeFormState>(EMPTY_OUTCOME);
   const [outcomeSaving, setOutcomeSaving] = useState(false);
@@ -527,7 +531,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       const demoStatus = demo ? normalizeDemoStatus(demo.status) : '';
       const followUpAtMs = (demo ? parseDateInputMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
       const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
-      const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0 };
+      const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0, classFormatPreference: lead?.classFormatPreference };
       const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
       return {
         id, lead, demo,
@@ -658,6 +662,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     conversionStatus: row.demo?.conversionStatus,
     hasDemo: Boolean(row.demo),
     hasFollowUp: row.followUpAtMs > 0,
+    classFormatPreference: row.lead?.classFormatPreference,
   });
 
   const stageCounts = useMemo(() => {
@@ -671,8 +676,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     return counts;
   }, [rows]);
 
+  const todayFollowUpKey = todayDateInputIST();
+  const dueTodayCount = filteredRows.filter((row) => isAdminFollowUpDue(row, todayFollowUpKey)).length;
+
   const sortedRows = useMemo(() => {
-    const list = filteredRows.filter((row) => row.bucket === bucket);
+    const list = filteredRows.filter((row) =>
+      row.bucket === bucket && (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)));
     const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
     return [...list].sort((a, b) => {
       if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
@@ -682,7 +691,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       if (a.followUpAtMs && b.followUpAtMs) return a.followUpAtMs - b.followUpAtMs;
       return b.updatedAtMs - a.updatedAtMs;
     });
-  }, [bucket, filteredRows]);
+  }, [bucket, dueTodayOnly, filteredRows, todayFollowUpKey]);
 
   const currentTotal = sortedRows.length;
   const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(currentTotal / pageSize));
@@ -695,7 +704,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   useEffect(() => {
     setPageIndex(0);
-  }, [bucket, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
+  }, [bucket, dueTodayOnly, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
 
   const previousPage = () => setPageIndex((current) => Math.max(0, current - 1));
   const nextPage = () => setPageIndex((current) => Math.min(totalPages - 1, current + 1));
@@ -735,6 +744,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   };
 
   const clearFilters = () => {
+    setDueTodayOnly(false);
     setSearch('');
     setMonthFilter('today');
     setDateFrom('');
@@ -878,12 +888,41 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     } finally { setDeletingRowId(null); }
   };
 
+  const retryDemoRequest = async (row: SimpleRow) => {
+    const leadId = row.lead?.id;
+    if (!leadId || retryingLeadId) return;
+    if (!window.confirm(`Safely check and link or create a 1:1 demo request for ${row.childName}? No teacher will be assigned automatically.`)) return;
+    setRetryingLeadId(leadId);
+    try {
+      const result = await adminRetryLeadDemoRequest(leadId);
+      reloadPage();
+      toast({
+        title: 'Demo request linked',
+        description: result.action === 'created'
+          ? 'A new open demo request is ready for teacher assignment.'
+          : 'Existing open/demo workflow was linked. Review its status before assignment.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Demo request needs admin review',
+        description: error?.message || 'The safe retry was blocked; check class format, canonical identity and existing demo ownership.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRetryingLeadId(null);
+    }
+  };
+
   const renderAction = (row: SimpleRow) => {
     const action = actionForRow(row);
-    if (action === 'awaiting_demo') return <Badge variant="outline" className="px-3 py-2">Preparing demo…</Badge>;
+    if (action === 'awaiting_demo') return row.lead
+      ? <Button size="sm" variant="outline" disabled={Boolean(retryingLeadId)} onClick={() => void retryDemoRequest(row)}>
+          {retryingLeadId === row.lead.id ? 'Checking demo…' : 'Retry demo request'}
+        </Button>
+      : <Badge variant="outline">Demo link missing — review</Badge>;
     if (action === 'assign_teacher') return <Button size="sm" onClick={() => openAssign(row)}>Assign teacher</Button>;
     if (action === 'wait_teacher') return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
-    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>Open details</Button>;
+    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>{row.classFormatPreference === 'small_group' || row.classFormatPreference === 'unsure' ? 'Review enquiry' : 'Open details'}</Button>;
     if (action === 'review_outcome') return <Button size="sm" onClick={() => openOutcome(row)}>{isSimpleFollowUpDecision(row.demo?.conversionStatus) ? 'Update follow-up' : 'Review & update'}</Button>;
     return <Button size="sm" variant="outline" onClick={() => openOutcome(row)}>View outcome</Button>;
   };
@@ -921,11 +960,29 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         </div>
         {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
           const meta = bucketMeta[item]; const Icon = meta.icon;
-          return <button key={item} type="button" onClick={() => setBucket(item)} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
+          return <button key={item} type="button" onClick={() => { setBucket(item); setDueTodayOnly(false); }} className={`rounded-xl border p-4 text-left transition ${meta.accent} ${bucket === item ? 'ring-2 ring-slate-900/10 shadow-sm' : 'hover:shadow-sm'}`}>
             <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-2 font-semibold"><Icon className="h-5 w-5" />{meta.title}</div><span className="text-2xl font-bold">{loading ? '—' : stageCounts[item]}</span></div>
             <p className="mt-2 text-sm opacity-75">{meta.subtitle}</p>
           </button>;
         })}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          size="sm"
+          variant={dueTodayOnly ? 'default' : 'outline'}
+          aria-pressed={dueTodayOnly}
+          onClick={() => {
+            setBucket('admin_review');
+            setDueTodayOnly((current) => !current);
+          }}
+        >
+          Follow-ups due today ({loading ? '…' : dueTodayCount})
+        </Button>
+        <p className="text-xs text-slate-500">
+          Scheduled Admin Review follow-ups due by today (IST) within the selected enquiry period only.
+          This is not a complete backlog or proof of parent contact.
+        </p>
       </div>
     </Card>
 
@@ -965,12 +1022,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             <Badge variant="outline">{row.statusLabel}</Badge>
             <div className="mt-1 text-xs font-medium text-slate-600">Enquired {formatUpdated(row.createdAtMs)}</div>
             {row.updatedAtMs > row.createdAtMs + 60_000 && <div className="text-[11px] text-slate-400">Updated {formatUpdated(row.updatedAtMs)}</div>}
-            {row.followUpAtMs > 0 && <div className="text-[11px] text-slate-500">Follow-up {formatFollowUp(row.followUpAtMs)}</div>}
+            {row.followUpAtMs > 0 && <div className={`text-[11px] ${isAdminFollowUpDue(row, todayFollowUpKey) ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{isAdminFollowUpDue(row, todayFollowUpKey) ? 'Follow-up due' : 'Follow-up'} {formatFollowUp(row.followUpAtMs)}</div>}
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> WhatsApp</Button>}
+            {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" title="Open WhatsApp; this does not confirm a sent or received message" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> Open WhatsApp</Button>}
             {renderAction(row)}
-            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
+            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} showQuickLogButton={row.bucket !== 'closed'} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
           </div>
         </div>)}</div>}
         {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">

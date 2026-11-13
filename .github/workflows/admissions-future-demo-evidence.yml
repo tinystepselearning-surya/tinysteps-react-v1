@@ -1,0 +1,37 @@
+name: Admissions Future Demo Evidence Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/futureDemoMilestones.ts'
+      - 'src/pages/admin/futureDemoMilestones.spec.ts'
+      - 'src/pages/admin/FutureDemoMilestonesCard.tsx'
+      - 'src/pages/admin/DemoSessionsManagement.tsx'
+      - 'docs/acquisition/ADM_02_PROSPECTIVE_DEMO_EVIDENCE.md'
+      - '.github/workflows/admissions-future-demo-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validation:
+    name: Verify future-only demo milestone reporting and SEO prerender
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Prospective milestone, existing demo, and lead regression tests
+        run: npx vitest run src/pages/admin/futureDemoMilestones.spec.ts src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
+      - name: TypeScript validation
+        run: npm run typecheck
+      - name: Install Chromium for production prerender
+        run: npx playwright install --with-deps chromium
+      - name: Full production SEO/prerender build, without deployment
+        run: npm run build
