@@ -43,6 +43,7 @@ const FUNCTION_REGION_OVERRIDES: Record<string, string> = {
   assignLPToTeacher: 'asia-south1',
   adminProcessEnrollmentCSV: 'asia-south1',
   adminCreateDemoSession: 'asia-south1',
+  adminRetryLeadDemoRequest: 'asia-south1',
   runAttendanceValidationRange: 'asia-south1',
   updateAttendanceValidationMonthlyParentProgress: 'asia-south1',
   revalidateAttendanceValidationGroupCached: 'asia-south1',
