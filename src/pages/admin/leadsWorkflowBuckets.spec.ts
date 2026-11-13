@@ -11,7 +11,18 @@ describe('four-stage leads workflow buckets', () => {
   it('treats a new enquiry without a linked demo as a short-lived open sync state', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'new', hasDemo: false })).toBe('open');
     expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('awaiting_demo');
-    expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('Preparing demo request');
+    expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('Demo request not linked');
+  });
+
+  it('never treats group or undecided enquiries as failed 1:1 demo creation', () => {
+    for (const format of ['small_group', 'unsure']) {
+      const input = { leadStatus: 'new', hasDemo: false, classFormatPreference: format };
+      expect(resolveSimpleLeadBucket(input)).toBe('open');
+      expect(resolveSimpleLeadAction(input)).toBe('follow_up_lead');
+    }
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'small_group' })).toBe('Small-group enquiry — review');
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'unsure' })).toBe('Class format undecided');
+    expect(resolveSimpleLeadAction({ hasDemo: false, classFormatPreference: 'one_to_one' })).toBe('awaiting_demo');
   });
 
   it('keeps an unassigned demo in Open', () => {
