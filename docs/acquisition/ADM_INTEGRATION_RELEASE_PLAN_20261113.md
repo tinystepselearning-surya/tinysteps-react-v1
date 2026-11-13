@@ -43,3 +43,20 @@ The one overlapping source file, `src/pages/admin/LeadsInquiriesWorkspaceV2.tsx`
 - Parent-agreed booking confirmation is **not** yet evidenced by the current `teacherConfirmedDate` / `teacherConfirmedTime` fields.
 - Paid conversion, response-time SLAs and source ROI are **not** claimed from the new dashboard.
 - The existing full-range historical operational reports remain available unchanged; the separate future metric is a different definition.
+
+## Missing-demo remediation added to integration candidate (13 Nov 2026)
+
+- The simple workspace formerly displayed **Preparing demo request** indefinitely for every lead without a linked demo, even though the automatic trigger intentionally skips `small_group` and `unsure` interests.
+- Those class formats now display a truthful review status and an explicit **Review enquiry** action, not a 1:1 demo retry. A parent format decision must be made through the normal admin process.
+- For canonical, non-terminal 1:1 leads with no linked demo, an Admin may select **Retry demo request** after confirmation. The admin-only callable `adminRetryLeadDemoRequest` reuses the existing automatic transaction, canonical identity check, phone/child unique-key check, and demo owner checks. It never uses `forceCreate`.
+- If a matching demo exists with a compatible owner, the retry links it rather than creating another. If identity, dedupe-key or ownership evidence conflicts, the retry fails closed with an admin review message.
+- The retry creates or links the operational demo request only; it does not assign a teacher, confirm a parent appointment, deliver an assessment, enrol a child, send WhatsApp, update payments, rewrite a lead cohort timestamp, or backfill historical reporting.
+- Existing leads are not changed in bulk. Only an explicit staff operation against a selected live lead may cause the server to create/link a missing operational demo.
+- Production runtime causes and counts of individual stuck leads remain unverified without approved read-only Firebase observations. Monitor callable errors and new lead trigger logs before declaring the incident fully closed.
+
+### Additional release gates
+- Include `functions/src/leadDemoAutoWorkflow.ts`, `functions/src/index.ts`, `functions/test/leadDemoAutoWorkflow.emulator.spec.ts`, `src/services/leadsAdminService.ts`, and workflow bucket/tests in the exact release allowlist.
+- Run Cloud Functions TypeScript compilation and retry-guard unit suite as well as the original integrated UI/SEO gates.
+- Exercise a newly created eligible 1:1 enquiry and manual retry; separately test small-group, undecided, already-linked and conflicting identity scenarios in an authorised emulator/staging environment.
+- Cloud Functions deployment must be verified **separately** from Firebase Hosting, since the new callable does not exist on production until explicitly deployed.
+- Manual remediation of any currently affected active lead requires the Admin to review that particular record and confirm the action. No automatic historical sweep.
