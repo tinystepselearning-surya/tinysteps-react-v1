@@ -42,6 +42,7 @@ import {
 } from '../../services/demoSessionsService';
 import {
   adminDeleteLeadWorkflowRecord,
+  adminRetryLeadDemoRequest,
   adminUpdateLeadWorkflowRecord,
 } from '../../services/leadsAdminService';
 import { buildNewWebsiteLeadToastDescription } from './leadsRealtime';
@@ -328,14 +329,14 @@ const formatFollowUp = (ms: number): string => {
 const buildWhatsAppUrl = (phone: string): string => `https://wa.me/${phoneDigits(phone)}`;
 
 const bucketMeta: Record<SimpleLeadBucket, { title: string; subtitle: string; icon: React.ElementType; accent: string }> = {
-  open: { title: 'Open', subtitle: 'Demo ready, waiting for teacher', icon: CircleDot, accent: 'border-blue-200 bg-blue-50/70 text-blue-950' },
+  open: { title: 'Open', subtitle: 'New enquiries and demo requests needing admin action', icon: CircleDot, accent: 'border-blue-200 bg-blue-50/70 text-blue-950' },
   in_progress: { title: 'With Teacher', subtitle: 'Assigned to teacher for the demo', icon: Clock3, accent: 'border-amber-200 bg-amber-50/70 text-amber-950' },
   admin_review: { title: 'Admin Review', subtitle: 'Teacher finished — admin action needed', icon: ClipboardCheck, accent: 'border-violet-200 bg-violet-50/70 text-violet-950' },
   closed: { title: 'Closed', subtitle: 'Final admin decision saved', icon: CheckCircle2, accent: 'border-emerald-200 bg-emerald-50/70 text-emerald-950' },
 };
 
 const bucketGuidance: Record<SimpleLeadBucket, string> = {
-  open: 'Open contains unassigned demo requests. Newest enquiries are shown first.',
+  open: 'Open includes unassigned demos and enquiries needing format or demo-link review. No teacher assignment without a linked open demo.',
   in_progress: 'Teacher owns this bucket until the demo is completed.',
   admin_review: 'Teacher work is finished. Admin should review, follow up or close the lead.',
   closed: 'Final decision is saved. Admin tools remain available from the row menu.',
@@ -372,6 +373,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [assignRow, setAssignRow] = useState<SimpleRow | null>(null);
   const [assignTeacherId, setAssignTeacherId] = useState('');
   const [assignSaving, setAssignSaving] = useState(false);
+  const [retryingLeadId, setRetryingLeadId] = useState<string | null>(null);
   const [outcomeRow, setOutcomeRow] = useState<SimpleRow | null>(null);
   const [outcomeForm, setOutcomeForm] = useState<OutcomeFormState>(EMPTY_OUTCOME);
   const [outcomeSaving, setOutcomeSaving] = useState(false);
@@ -529,7 +531,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       const demoStatus = demo ? normalizeDemoStatus(demo.status) : '';
       const followUpAtMs = (demo ? parseDateInputMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
       const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
-      const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0 };
+      const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0, classFormatPreference: lead?.classFormatPreference };
       const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
       return {
         id, lead, demo,
@@ -660,6 +662,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     conversionStatus: row.demo?.conversionStatus,
     hasDemo: Boolean(row.demo),
     hasFollowUp: row.followUpAtMs > 0,
+    classFormatPreference: row.lead?.classFormatPreference,
   });
 
   const stageCounts = useMemo(() => {
@@ -885,12 +888,41 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     } finally { setDeletingRowId(null); }
   };
 
+  const retryDemoRequest = async (row: SimpleRow) => {
+    const leadId = row.lead?.id;
+    if (!leadId || retryingLeadId) return;
+    if (!window.confirm(`Safely check and link or create a 1:1 demo request for ${row.childName}? No teacher will be assigned automatically.`)) return;
+    setRetryingLeadId(leadId);
+    try {
+      const result = await adminRetryLeadDemoRequest(leadId);
+      reloadPage();
+      toast({
+        title: 'Demo request linked',
+        description: result.action === 'created'
+          ? 'A new open demo request is ready for teacher assignment.'
+          : 'Existing open/demo workflow was linked. Review its status before assignment.',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Demo request needs admin review',
+        description: error?.message || 'The safe retry was blocked; check class format, canonical identity and existing demo ownership.',
+        variant: 'destructive',
+      });
+    } finally {
+      setRetryingLeadId(null);
+    }
+  };
+
   const renderAction = (row: SimpleRow) => {
     const action = actionForRow(row);
-    if (action === 'awaiting_demo') return <Badge variant="outline" className="px-3 py-2">Preparing demo…</Badge>;
+    if (action === 'awaiting_demo') return row.lead
+      ? <Button size="sm" variant="outline" disabled={Boolean(retryingLeadId)} onClick={() => void retryDemoRequest(row)}>
+          {retryingLeadId === row.lead.id ? 'Checking demo…' : 'Retry demo request'}
+        </Button>
+      : <Badge variant="outline">Demo link missing — review</Badge>;
     if (action === 'assign_teacher') return <Button size="sm" onClick={() => openAssign(row)}>Assign teacher</Button>;
     if (action === 'wait_teacher') return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
-    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>Open details</Button>;
+    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>{row.classFormatPreference === 'small_group' || row.classFormatPreference === 'unsure' ? 'Review enquiry' : 'Open details'}</Button>;
     if (action === 'review_outcome') return <Button size="sm" onClick={() => openOutcome(row)}>{isSimpleFollowUpDecision(row.demo?.conversionStatus) ? 'Update follow-up' : 'Review & update'}</Button>;
     return <Button size="sm" variant="outline" onClick={() => openOutcome(row)}>View outcome</Button>;
   };
