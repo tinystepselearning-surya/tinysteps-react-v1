@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   reloadPage: vi.fn(),
   fetchRange: vi.fn(),
   toast: vi.fn(),
+  retryDemo: vi.fn(),
   leadsLoading: false,
   loadedLeads: [] as Array<Record<string, unknown>>,
 }));
@@ -30,6 +31,7 @@ vi.mock('../../../services/demoSessionsService', () => ({
 
 vi.mock('../../../services/leadsAdminService', () => ({
   adminDeleteLeadWorkflowRecord: vi.fn(),
+  adminRetryLeadDemoRequest: mocks.retryDemo,
   adminUpdateLeadWorkflowRecord: vi.fn(),
 }));
 
@@ -110,6 +112,7 @@ beforeEach(() => {
   mocks.reloadPage.mockReset();
   mocks.fetchRange.mockReset();
   mocks.toast.mockReset();
+  mocks.retryDemo.mockReset();
   mocks.leadsLoading = false;
   mocks.loadedLeads = [];
 
@@ -252,6 +255,57 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(screen.getByText('Later Parent')).toBeTruthy();
     expect(dueToggle.getAttribute('aria-pressed')).toBe('false');
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not retry automatically and requires explicit admin confirmation for a missing 1:1 demo', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = [{
+      id: 'canonical-retry',
+      parentName: 'Retry Parent',
+      childName: 'Retry Child',
+      primaryPhone: '919100000112',
+      status: 'new',
+      source: 'website',
+      classFormatPreference: 'one_to_one',
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+    }];
+    mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_canonical-retry' });
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    try {
+      render(<LeadsInquiriesWorkspaceV2 />);
+      const retry = await screen.findByRole('button', { name: 'Retry demo request' });
+      expect(mocks.retryDemo).not.toHaveBeenCalled();
+      fireEvent.click(retry);
+      await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
+      expect(confirm).toHaveBeenCalledTimes(1);
+      await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Demo request linked',
+      })));
+    } finally {
+      confirm.mockRestore();
+    }
+  });
+
+  it('does not offer an automatic 1:1 retry for group or undecided enquiries', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = ['small_group', 'unsure'].map((format, index) => ({
+      id: `format-${index}`,
+      parentName: `Format Parent ${index}`,
+      childName: `Child ${index}`,
+      primaryPhone: `91910000011${index}`,
+      status: 'new',
+      source: 'website',
+      classFormatPreference: format,
+      programInterest: 'Phonics',
+      createdAt: { toMillis: () => todayStart + 1_000 },
+    }));
+    render(<LeadsInquiriesWorkspaceV2 />);
+    expect(await screen.findByText('Small-group enquiry — review')).toBeTruthy();
+    expect(screen.getByText('Class format undecided')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Retry demo request' })).toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Review enquiry' })).toHaveLength(2);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
   });
 
 });
