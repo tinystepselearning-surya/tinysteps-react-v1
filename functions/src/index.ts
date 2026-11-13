@@ -282,6 +282,7 @@ export {
 } from "./leadLifecycle";
 export {
   onLeadEnsureDemoRequest,
+  adminRetryLeadDemoRequest,
   onOrphanDemoIdentityRepair,
 } from './leadDemoAutoWorkflow';
 export { adminBackfillLeadLifecycle } from './leadLifecycleBackfill';
