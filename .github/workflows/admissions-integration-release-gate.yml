@@ -57,8 +57,7 @@ jobs:
               functions/src/leadDemoAutoWorkflow.ts|\
               functions/src/index.ts|\
               functions/test/leadDemoAutoWorkflow.emulator.spec.ts|\
-              src/pages/admin/leadsWorkflowBuckets.spec.ts
-          src/pages/admin/futureDemoMilestones.spec.ts|\
+              src/pages/admin/futureDemoMilestones.spec.ts|\
               src/pages/admin/futureDemoMilestones.ts|\
               src/pages/admin/leadAdminReadPolicy.test.ts|\
               src/pages/admin/leadsDueFollowUps.spec.ts|\
@@ -85,6 +84,7 @@ jobs:
           src/pages/admin/leadAdminReadPolicy.test.ts
           src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx
           src/pages/admin/leadsDueFollowUps.spec.ts
+          src/pages/admin/leadsWorkflowBuckets.spec.ts
           src/pages/admin/futureDemoMilestones.spec.ts
           src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
       - name: Install locked Cloud Functions dependencies
