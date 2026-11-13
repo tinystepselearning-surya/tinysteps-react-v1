@@ -6,6 +6,7 @@ on:
       - 'src/pages/admin/**'
       - 'src/services/leadCommunicationsService.ts'
       - 'src/services/leadsAdminService.ts'
+      - 'src/lib/callFunctions.ts'
       - 'functions/src/leadDemoAutoWorkflow.ts'
       - 'functions/src/index.ts'
       - 'functions/test/leadDemoAutoWorkflow.emulator.spec.ts'
@@ -54,6 +55,7 @@ jobs:
               src/pages/admin/leadsWorkflowBuckets.ts|\
               src/pages/admin/leadsWorkflowBuckets.spec.ts|\
               src/services/leadsAdminService.ts|\
+              src/lib/callFunctions.ts|\
               functions/src/leadDemoAutoWorkflow.ts|\
               functions/src/index.ts|\
               functions/test/leadDemoAutoWorkflow.emulator.spec.ts|\
