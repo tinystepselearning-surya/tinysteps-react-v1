@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   onLeadEnsureDemoRequest,
+  adminRetryLeadDemoRequest,
   onOrphanDemoIdentityRepair,
   shouldEnsureDemoForLead,
 } from '../src/leadDemoAutoWorkflow';
@@ -136,6 +137,49 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
 
     expect((await db.collection('demoSessions').get()).size).toBe(1);
     expect((await leadRef.get()).data()?.demoSessionId).toBe(expectedDemoId);
+  });
+
+  it('lets an authorised admin safely retry once without duplicating an existing demo', async () => {
+    const leadId = 'retry-canonical';
+    const leadRef = db.collection('leads').doc(leadId);
+    const adminUid = 'admin-demo-retry-test';
+    await db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' });
+    await leadRef.set({
+      parentName: 'Parent',
+      childName: 'Keerthi',
+      primaryPhone: '9440436379',
+      source: 'website',
+      status: 'new',
+      classFormatPreference: 'one_to_one',
+      programInterest: 'Reading',
+      dedupeCanonicalLeadId: leadId,
+      dedupeIdentityKey: 'identity-key',
+      createdAt: admin.firestore.Timestamp.now(),
+    });
+    const payload = { auth: { uid: adminUid }, data: { leadId } } as never;
+    const first = await adminRetryLeadDemoRequest.run(payload);
+    expect(first).toMatchObject({ ok: true, action: 'created', demoId: `lead_${leadId}` });
+    const repeated = await adminRetryLeadDemoRequest.run(payload);
+    expect(repeated).toMatchObject({ ok: true, action: 'already_linked', demoId: `lead_${leadId}` });
+    expect((await db.collection('demoSessions').get()).size).toBe(1);
+    expect((await leadRef.get()).data()?.demoSessionId).toBe(`lead_${leadId}`);
+  });
+
+  it('blocks manual retry for undecided or small-group enquiries', async () => {
+    const adminUid = 'admin-demo-retry-format-test';
+    await db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' });
+    for (const format of ['small_group', 'unsure']) {
+      const leadId = `retry-${format}`;
+      await db.collection('leads').doc(leadId).set({
+        childName: 'Keerthi', primaryPhone: '9440436379', source: 'website',
+        status: 'new', classFormatPreference: format,
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'identity-key',
+      });
+      await expect(adminRetryLeadDemoRequest.run({
+        auth: { uid: adminUid }, data: { leadId },
+      } as never)).rejects.toThrow(/Review class format/);
+    }
+    expect((await db.collection('demoSessions').get()).size).toBe(0);
   });
 
   it('repairs an orphan completed demo onto the real lead and removes the safe synthetic duplicate', async () => {
