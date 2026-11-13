@@ -55,7 +55,7 @@ The one overlapping source file, `src/pages/admin/LeadsInquiriesWorkspaceV2.tsx`
 - Production runtime causes and counts of individual stuck leads remain unverified without approved read-only Firebase observations. Monitor callable errors and new lead trigger logs before declaring the incident fully closed.
 
 ### Additional release gates
-- Include `functions/src/leadDemoAutoWorkflow.ts`, `functions/src/index.ts`, `functions/test/leadDemoAutoWorkflow.emulator.spec.ts`, `src/services/leadsAdminService.ts`, and workflow bucket/tests in the exact release allowlist.
+- Include `functions/src/leadDemoAutoWorkflow.ts`, `functions/src/index.ts`, `functions/test/leadDemoAutoWorkflow.emulator.spec.ts`, `src/services/leadsAdminService.ts`, `src/lib/callFunctions.ts` for the asia-south1 callable route, and workflow bucket/tests in the exact release allowlist.
 - Run Cloud Functions TypeScript compilation and retry-guard unit suite as well as the original integrated UI/SEO gates.
 - Exercise a newly created eligible 1:1 enquiry and manual retry; separately test small-group, undecided, already-linked and conflicting identity scenarios in an authorised emulator/staging environment.
 - Cloud Functions deployment must be verified **separately** from Firebase Hosting, since the new callable does not exist on production until explicitly deployed.
