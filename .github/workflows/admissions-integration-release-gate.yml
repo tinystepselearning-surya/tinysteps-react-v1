@@ -101,3 +101,48 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Build all public routes without deploying
         run: npm run build
+
+  verify-demo-retry-emulator:
+    name: Real Firestore emulator — idempotent demo retry
+    needs: validate-integrated-admissions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      GCLOUD_PROJECT: demo-tinysteps-admissions-retry
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-admissions-retry
+      FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Refuse production project and credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-admissions-retry
+          test "$GOOGLE_CLOUD_PROJECT" = demo-tinysteps-admissions-retry
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -z "${FIREBASE_TOKEN:-}"
+      - name: Install locked dependencies without lifecycle scripts
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm ci --prefix functions --include=dev --ignore-scripts --no-audit --no-fund
+      - name: Compile production Cloud Functions code
+        run: npm --prefix functions run build
+      - name: Test live Firestore transactions against an isolated emulator
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes firebase-tools@15.30.0 emulators:exec \
+            --project demo-tinysteps-admissions-retry \
+            --only firestore \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 GCLOUD_PROJECT=demo-tinysteps-admissions-retry GOOGLE_CLOUD_PROJECT=demo-tinysteps-admissions-retry npx vitest run --config functions/vitest.config.ts functions/test/leadDemoAutoWorkflow.emulator.spec.ts'
