@@ -5,6 +5,10 @@ on:
     paths:
       - 'src/pages/admin/**'
       - 'src/services/leadCommunicationsService.ts'
+      - 'src/services/leadsAdminService.ts'
+      - 'functions/src/leadDemoAutoWorkflow.ts'
+      - 'functions/src/index.ts'
+      - 'functions/test/leadDemoAutoWorkflow.emulator.spec.ts'
       - 'src/tests/pages/**'
       - 'src/tests/services/leadCommunicationsService.spec.ts'
       - 'docs/acquisition/**'
@@ -47,7 +51,14 @@ jobs:
               src/pages/admin/LeadAdminToolsMenu.tsx|\
               src/pages/admin/LeadSourceAnalysis.tsx|\
               src/pages/admin/LeadsInquiriesWorkspaceV2.tsx|\
-              src/pages/admin/futureDemoMilestones.spec.ts|\
+              src/pages/admin/leadsWorkflowBuckets.ts|\
+              src/pages/admin/leadsWorkflowBuckets.spec.ts|\
+              src/services/leadsAdminService.ts|\
+              functions/src/leadDemoAutoWorkflow.ts|\
+              functions/src/index.ts|\
+              functions/test/leadDemoAutoWorkflow.emulator.spec.ts|\
+              src/pages/admin/leadsWorkflowBuckets.spec.ts
+          src/pages/admin/futureDemoMilestones.spec.ts|\
               src/pages/admin/futureDemoMilestones.ts|\
               src/pages/admin/leadAdminReadPolicy.test.ts|\
               src/pages/admin/leadsDueFollowUps.spec.ts|\
@@ -76,6 +87,12 @@ jobs:
           src/pages/admin/leadsDueFollowUps.spec.ts
           src/pages/admin/futureDemoMilestones.spec.ts
           src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
+      - name: Install locked Cloud Functions dependencies
+        run: npm ci --prefix functions --no-audit --no-fund
+      - name: Validate Cloud Functions and safe-retry guards
+        run: |
+          npm --prefix functions run build
+          npm --prefix functions run test -- test/leadDemoAutoWorkflow.emulator.spec.ts
       - name: TypeScript check
         run: npm run typecheck
       - name: Install Chromium for static SEO prerender
