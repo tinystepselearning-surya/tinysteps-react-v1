@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import * as admin from 'firebase-admin';
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
@@ -179,6 +180,44 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
         auth: { uid: adminUid }, data: { leadId },
       } as never)).rejects.toThrow(/Review class format/);
     }
+    expect((await db.collection('demoSessions').get()).size).toBe(0);
+  });
+
+  it('refuses a conflicting owned demo instead of creating a second parent-child request', async () => {
+    const uid = 'admin-owned-conflict-test';
+    const leadId = 'canonical-owned-conflict';
+    const existingDemoId = 'existing-owned-demo';
+    const key = createHash('sha256').update('keerthi|9440436379').digest('hex');
+    await Promise.all([
+      db.collection('users').doc(uid).set({ role: 'admin', status: 'active' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436379',
+        source: 'website', status: 'new', classFormatPreference: 'one_to_one',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'identity-key',
+      }),
+      db.collection('demoSessions').doc(existingDemoId).set({
+        childName: 'Keerthi', leadId: 'another-canonical-owner', status: 'open',
+      }),
+      db.collection('demoSessionsPrivate').doc(existingDemoId).set({
+        parentPhone: '9440436379', parentPhoneKey: '9440436379',
+      }),
+      db.collection('demoSessionUniqueKeys').doc(key).set({
+        demoId: existingDemoId, dedupeKey: key,
+      }),
+    ]);
+    await expect(adminRetryLeadDemoRequest.run({
+      auth: { uid }, data: { leadId },
+    } as never)).rejects.toThrow(/identity or ownership review/);
+    const demos = await db.collection('demoSessions').get();
+    expect(demos.size).toBe(1);
+    expect(demos.docs[0].id).toBe(existingDemoId);
+    expect((await db.collection('leads').doc(leadId).get()).data()?.demoSessionId).toBeUndefined();
+  });
+
+  it('rejects unauthenticated demo retries without touching a lead', async () => {
+    await expect(adminRetryLeadDemoRequest.run({
+      data: { leadId: 'any-lead' },
+    } as never)).rejects.toThrow(/Sign in required/);
     expect((await db.collection('demoSessions').get()).size).toBe(0);
   });
 
