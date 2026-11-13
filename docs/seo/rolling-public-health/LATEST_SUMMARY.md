@@ -1,5 +1,19 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-13T18:45:58.442Z UTC (14 November 2026 IST, slot 1 evidence recording)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**; slots 1–19 contain 10 URLs each and slot 20 contains 12.
+- **14 November IST: 10/202 distinct URLs attempted (4.95% provider-retrieval coverage); 192 not attempted today.** Prior-day checks excluded. Slot 1 rows 1–10 attempted.
+- All **10/10 exact-URL provider retrievals** returned relevant page-specific extracted text for homepage, blog, resources hub, phonics hub, and six phonics pattern guides. Provider references: `turn588381view0`–`turn588381view9`. This does **not** constitute origin verification.
+- UTC evidence-recording markers: `2026-11-13T18:45:58.433Z`–`2026-11-13T18:45:58.442Z`. These are handling markers, **not measured HTTP origin response times**.
+- **Fully origin-verified: 0/202.** HTTP status, final redirect, canonical, robots/noindex, raw HTML, structured data, and bot access remain UNVERIFIED.
+- GitHub Actions in-progress run query returned `total_count: 0`, `workflow_runs: []`. Legacy workflow administrative disablement was not independently established; user's explicit confirmation remains the operating basis.
+- No verified production regression or improvement. `CHANGES.md` unchanged. No production or workflow changes.
+- Next eligible batch: **slot 2, rows 11–20**, or earliest eligible unchecked prior-slot rows subject to daily scheduling.
+
+## Prior-day reconciliation history
+
+
 Updated: 2026-11-13T13:43:43.474Z UTC (13 November 2026 IST, slot 20 evidence recording)
 
 - Registry validated: **202 unique URLs**, 22 columns; slots 1–19 have 10 URLs each and slot 20 has 12.
