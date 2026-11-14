@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-14T02:40:14.041Z UTC (14 November 2026 IST, slot 9)
+
+- Registry validated: **202 unique URLs**, **22 columns**, slots 1–19 contain 10 URLs each and slot 20 contains 12.
+- **14 November IST: 90/202 exact-URL provider retrieval attempts (44.55%); 112 unattempted.** Previous-day evidence excluded.
+- Slot 9 rows 81–90: **10/10 returned page-specific provider-extracted text** for writing, phonics fees, grammar levels, spoken English, general online English, Hyderabad and age-specific pages (4, 5, 6 and 7–10). Evidence: turn992382view0, turn992382view1, turn992382view2, turn992382view3, turn992382view4, turn992382view5, turn992382view6, turn992382view7, turn992382view8, turn992382view9.
+- UTC evidence-recording marker: 2026-11-14T02:40:14.041Z, a batch recording time, **not a measured origin HTTP response time or ten distinct request timestamps**.
+- **Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**.
+- GitHub Actions in-progress repository runs: **0** from current API read. Legacy workflow administrative disabled state not independently confirmed; user's explicit disable confirmation remains the operating basis.
+- No verified production regression or improvement; CHANGES.md unchanged. No production changes.
+- Next eligible batch: **slot 10, rows 91–100**, subject to earlier eligible unchecked recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-14T01:40:47.899Z UTC (14 November 2026 IST, slot 8)
 
 - Registry validated: **202 unique URLs**, **22 columns**, slots 1–19 contain 10 URLs each; slot 20 contains 12.
