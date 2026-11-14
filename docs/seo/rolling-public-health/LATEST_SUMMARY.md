@@ -249,3 +249,12 @@ Updated: 2026-11-13T13:43:43.474Z UTC (13 November 2026 IST, slot 20 evidence re
 - **202/202 provider-retrieval attempts previously recorded today; 0 unchecked eligible rows; 0/202 fully origin-verified.** No additional URL checks were executed in Slot 22, and no timestamps or coverage were backfilled. Prior markers are evidence-handling markers, not measured origin response times.
 - GitHub Actions in-progress repository query returned `total_count: 0` and `workflow_runs: []`. Direct workflow administrative-state endpoint could not be read through the connector (unsupported URL); disablement remains based on the user's explicit confirmation. No concurrent legacy SEO audit positively observed.
 - No new verified regression or improvement; `MASTER_URL_TRACKER.csv` and `CHANGES.md` unchanged. Next eligible slots **23–24 catch-up** only if unchecked rows are subsequently identified. Full origin technical verification remains outstanding.
+
+## Slot 17 — 14 November 2026 IST
+
+- Revalidated tracker: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Previously attempted today: 160 distinct URLs. Rows 161–170 were eligible, not previously checked today.
+- Attempted 10 exact-URL public provider retrievals: **9 returned substantive page-specific text** (refs turn224784view0, turn224784view2–turn224784view9); **row 162** (`/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics`) returned an internal provider error, not a confirmed production failure.
+- Today's attempted coverage **170/202 (84.16%)**; **32 unattempted**. **Fully origin-verified 0/202**. HTTP status, final redirects, canonical, robots/noindex, raw origin HTML, JSON-LD and bot access remain UNVERIFIED. Provider crawl labels are not origin HTTP evidence.
+- Independent HTTPS curl for row 161 failed DNS before HTTP at approximately **2026-11-14T10:40:45Z** (`curl: (6) Could not resolve host: tinystepslearning.com`); not a verified site outage. Recorded distinct UTC evidence-handling markers for the ten provider attempts; markers are not measured origin response timestamps.
+- GitHub Actions repository in-progress run query returned `total_count: 0`, `workflow_runs: []`; legacy workflow administrative disabled state remains independently unverified, user's confirmation is operating basis. No verified before/after production transition, so CHANGES.md unchanged.
+- Next eligible slot: **18, rows 171–180**. No production changes.
