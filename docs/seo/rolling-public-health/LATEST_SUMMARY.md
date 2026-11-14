@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-14T06:48:40.343Z UTC (14 November 2026 IST, slot 13)
+
+- Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12.
+- **14 November IST: 130/202 distinct exact-URL provider retrieval attempts (64.36%); 72 unattempted.** Previous-day records excluded.
+- Slot 13 rows 121–130: **9/10 returned relevant page-specific provider-extracted text** (grammar and phonics guides). Row 126, `https://tinystepslearning.com/blog/how-children-recognise-words-automatically-after-phonics`, returned an internal retrieval-provider error, **not a verified production failure**. Evidence: turn869780view0 through turn869780view9.
+- UTC evidence-recording markers: 2026-11-14T06:48:40.326Z–2026-11-14T06:48:40.337Z; these are **recording times, not measured origin HTTP response times**.
+- **Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**.
+- GitHub Actions workflow state/concurrent runs could not be independently verified this run (connector request rejected); user's explicit disabled-workflow confirmation remains operating basis. No GitHub workflow was run.
+- No verified production regression or improvement; CHANGES.md unchanged. No production changes.
+- Next eligible batch: **slot 14, rows 131–140**, subject to earlier eligible unchecked recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-14T05:43:31.059Z UTC (14 November 2026 IST, slot 12)
 
 - Registry validated: **202 unique URLs**, **22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12.
