@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-14T22:40:02.984Z UTC (15 November 2026 IST, slot 5 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
+- **15 November IST: 50/202 distinct exact-URL provider retrieval attempts (24.75%); 152 unattempted.** Previous-day timestamps excluded.
+- Slot 5 rows 41–50: **10/10 exact-URL retrievals returned page-specific provider-extracted text**: why Tiny Steps, team, founder profile, class samples, testimonials, careers, courses, curriculum, FAQ and India phonics comparison guide. Evidence: `turn816320view0`–`turn816320view9`.
+- UTC evidence-handling markers: 2026-11-14T22:40:02.984Z–2026-11-14T22:40:02.984Z; these are **not measured origin response times** and may coincide at millisecond resolution.
+- **Fully origin-verified: 0/202 today.** HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider-extracted content is not an origin-health PASS.
+- GitHub Actions latest 30 repository runs inspected: none active and none identified as legacy rolling audit. Workflow administrative disabled state could not be independently read; user's confirmed disablement remains operating basis. No GitHub workflow run or enabled.
+- No verified production regression/improvement; CHANGES.md unchanged. No production/workflow changes.
+- Next eligible batch: slot 6, rows 51–60, subject to earlier eligible unchecked recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-14T21:48:51.436Z UTC (15 November 2026 IST, slot 4 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
