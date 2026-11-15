@@ -6,7 +6,6 @@ import {
   MessageSquareText,
   MoreHorizontal,
   Pencil,
-  PhoneCall,
   RotateCcw,
   Trash2,
   Undo2,
@@ -410,14 +409,6 @@ export default function LeadAdminToolsMenu({
           )}
 
           <DropdownMenuSeparator />
-          {hasPhone && (
-            <DropdownMenuItem asChild>
-              <a href={`tel:${row.parentPhone.replace(/[^+\d]/g, '')}`}
-                title="Open your dialler. Log an actual completed contact separately.">
-                <PhoneCall className="mr-2 h-4 w-4" /> Call parent
-              </a>
-            </DropdownMenuItem>
-          )}
           {hasPhone && (
             <DropdownMenuItem onClick={() => void copyWithToast(row.parentPhone, 'Phone')}>
               <ClipboardCopy className="mr-2 h-4 w-4" /> Copy phone
