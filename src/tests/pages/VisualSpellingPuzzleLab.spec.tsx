@@ -41,4 +41,60 @@ describe('free visual spelling puzzle lab', () => {
     expect(screen.getByRole('button', { name: /spelling expert/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /word architect/i })).toBeTruthy();
   });
+  it('requires sorting two contrasting words before counting the puzzle complete', () => {
+    render(
+      <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
+        <VisualSpellingPuzzleLab />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
+      fireEvent.click(screen.getByRole('button', { name: new RegExp('Add tile ' + letter + ', position') }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: /check spelling/i }));
+    fireEvent.click(screen.getByRole('button', { name: /next puzzle/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'friend' }));
+    fireEvent.click(screen.getByRole('button', { name: /next puzzle/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'r' }));
+    fireEvent.click(screen.getByRole('button', { name: /next puzzle/i }));
+
+    expect(screen.getByText('hopeful')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ends in -ful' }));
+    expect(screen.getByText('hopeless')).toBeTruthy();
+    expect(screen.queryByText(/both words sorted/i)).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Ends in -less' }));
+    expect(screen.getByText(/both words sorted/i)).toBeTruthy();
+    expect(screen.getByText(/compare hopeful and hopeless/i)).toBeTruthy();
+  });
+
+  it('finishes each level with independent recall rather than only recognition', () => {
+    const save = vi.spyOn(Storage.prototype, 'setItem');
+    render(
+      <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
+        <VisualSpellingPuzzleLab />
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    for (let i = 0; i < 8; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
+      fireEvent.click(screen.getByRole('button', { name: /show answer & learn/i }));
+      fireEvent.click(screen.getByRole('button', {
+        name: i === 7 ? /final spelling challenge/i : /next puzzle/i,
+      }));
+    }
+
+    expect(screen.getByRole('heading', { name: /spell it without the tiles/i })).toBeTruthy();
+    const input = screen.getByRole('textbox', { name: /type the spelling from memory/i });
+    fireEvent.change(input, { target: { value: 'jorney' } });
+    fireEvent.click(screen.getByRole('button', { name: /check spelling/i }));
+    expect(screen.getByText(/not quite.*order of the letters/i)).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'journey' } });
+    fireEvent.click(screen.getByRole('button', { name: /check spelling/i }));
+    fireEvent.click(screen.getByRole('button', { name: /see results/i }));
+    expect(screen.getByText(/final word recall: correct after practising/i)).toBeTruthy();
+    expect(save).not.toHaveBeenCalled();
+  });
+
 });
