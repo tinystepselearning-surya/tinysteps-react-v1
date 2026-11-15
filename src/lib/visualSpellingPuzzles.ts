@@ -16,7 +16,12 @@ export type VisualSpellingPuzzle =
   | (BasePuzzle & { kind: 'arrange'; tiles: string[] })
   | (BasePuzzle & { kind: 'correct'; options: string[] })
   | (BasePuzzle & { kind: 'missing'; before: string; after: string; choices: string[]; missing: string })
-  | (BasePuzzle & { kind: 'sort'; categories: [string, string]; answer: string });
+  | (BasePuzzle & {
+      kind: 'sort';
+      categories: [string, string];
+      answer: string;
+      pair: { word: string; answer: string; learningNote: string };
+    });
 
 export const VISUAL_SPELLING_STAGES: readonly {
   id: VisualSpellingStage;
@@ -55,6 +60,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'explorer-hopeful', stage: 'explorer', kind: 'sort', word: 'hopeful',
     clue: 'Feeling that something good may happen.',
     categories: ['Ends in -ful', 'Ends in -less'], answer: 'Ends in -ful',
+    pair: { word: 'hopeless', answer: 'Ends in -less', learningNote: 'Hopeless is hope + less. Compare hopeful and hopeless: the endings change the meaning.' },
     hint: 'Check the last three or four letters of the word.',
     learningNote: 'Hopeful ends in -ful: hope + ful. The suffix has one final l.',
   },
@@ -83,6 +89,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'explorer-joyless', stage: 'explorer', kind: 'sort', word: 'joyless',
     clue: 'Without joy or happiness.',
     categories: ['Ends in -ful', 'Ends in -less'], answer: 'Ends in -less',
+    pair: { word: 'joyful', answer: 'Ends in -ful', learningNote: 'Joyful ends in -ful, while joyless ends in -less. Study the ending carefully.' },
     hint: 'Look at the last four letters.',
     learningNote: 'Joyless is joy + less. The suffix -less means without.',
   },
@@ -112,6 +119,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'builder-careless', stage: 'builder', kind: 'sort', word: 'careless',
     clue: 'Not paying enough attention or care.',
     categories: ['Ends in -ful', 'Ends in -less'], answer: 'Ends in -less',
+    pair: { word: 'careful', answer: 'Ends in -ful', learningNote: 'Careful has the suffix -ful. Careless has -less; the two endings change the meaning.' },
     hint: 'The suffix changes the meaning of care.',
     learningNote: 'Careless is care + less. The suffix -less often means without.',
   },
@@ -140,6 +148,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'builder-agreement', stage: 'builder', kind: 'sort', word: 'agreement',
     clue: 'A shared decision or understanding.',
     categories: ['Ends in -ment', 'Ends in -ness'], answer: 'Ends in -ment',
+    pair: { word: 'happiness', answer: 'Ends in -ness', learningNote: 'Happiness is happy + ness, changing y to i. Agreement instead ends in -ment.' },
     hint: 'Look at the ending after agree.',
     learningNote: 'Agreement is agree + ment. The suffix -ment can help form nouns.',
   },
@@ -169,6 +178,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'expert-kindness', stage: 'expert', kind: 'sort', word: 'kindness',
     clue: 'The quality of being thoughtful and caring.',
     categories: ['Prefix at the start', 'Suffix at the end'], answer: 'Suffix at the end',
+    pair: { word: 'unhappy', answer: 'Prefix at the start', learningNote: 'Unhappy has un- at the start. Kindness has -ness at the end.' },
     hint: 'Find which part was added to kind.',
     learningNote: 'Kindness is kind + ness. -ness is a suffix added at the end.',
   },
@@ -197,6 +207,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'expert-enjoyment', stage: 'expert', kind: 'sort', word: 'enjoyment',
     clue: 'The feeling of taking pleasure in something.',
     categories: ['Ends in -ment', 'Ends in -ness'], answer: 'Ends in -ment',
+    pair: { word: 'kindness', answer: 'Ends in -ness', learningNote: 'Kindness ends in -ness; enjoyment ends in -ment. Both endings form nouns.' },
     hint: 'Identify the suffix following enjoy.',
     learningNote: 'Enjoyment is enjoy + ment. The spelling of enjoy is kept.',
   },
@@ -226,6 +237,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'master-interdependence', stage: 'master', kind: 'sort', word: 'interdependence',
     clue: 'A state in which people or things depend on one another.',
     categories: ['Has prefix inter-', 'Has prefix pre-'], answer: 'Has prefix inter-',
+    pair: { word: 'preview', answer: 'Has prefix pre-', learningNote: 'Preview begins with pre-, which can mean before. Interdependence begins with inter-.' },
     hint: 'Look at the first five letters of the word.',
     learningNote: 'Interdependence starts with inter-, often meaning between or among.',
   },
@@ -255,6 +267,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     id: 'master-unhappy', stage: 'master', kind: 'sort', word: 'unhappy',
     clue: 'Not feeling happy.',
     categories: ['Prefix at the start', 'Suffix at the end'], answer: 'Prefix at the start',
+    pair: { word: 'kindness', answer: 'Suffix at the end', learningNote: 'Kindness adds -ness at the end, while unhappy adds un- at the beginning.' },
     hint: 'Look for the added part before happy.',
     learningNote: 'Unhappy adds un- before happy. Un- is a prefix that often means not.',
   },
@@ -286,7 +299,11 @@ export function validateVisualSpellingPuzzles(puzzles: readonly VisualSpellingPu
           puzzle.choices.length !== 4 || new Set(puzzle.choices).size !== 4 ||
           puzzle.choices.filter(v => v === puzzle.missing).length !== 1) errors.push(puzzle.id + ': invalid missing letter choices');
     } else {
-      if (!puzzle.categories.includes(puzzle.answer) || puzzle.categories[0] === puzzle.categories[1]) errors.push(puzzle.id + ': invalid categories');
+      if (!puzzle.categories.includes(puzzle.answer) || puzzle.categories[0] === puzzle.categories[1] ||
+          !puzzle.pair?.word || puzzle.pair.word === puzzle.word ||
+          !puzzle.categories.includes(puzzle.pair.answer) ||
+          puzzle.pair.answer === puzzle.answer ||
+          !puzzle.pair.learningNote) errors.push(puzzle.id + ': invalid paired sorting categories');
     }
   }
   return errors;
