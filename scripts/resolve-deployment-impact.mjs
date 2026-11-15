@@ -98,12 +98,13 @@ const firestoreIndexesResult = classifyArtifactChanges(
   currentFirebase,
 );
 
- // Changes to the IndexNow notifier must be activated by a successful Hosting
- // deployment, even when no ordinary frontend artifact changed. This check is
- // deliberately separate from Functions/Firestore deployment classification.
+// Changes to the IndexNow notifier must be activated by a successful Hosting
+// deployment, even when no ordinary frontend artifact changed. This check is
+// deliberately separate from Functions/Firestore deployment classification.
 const indexnowHostingChanged = hostingChangedFiles.some(file =>
   file === 'scripts/indexnow-submit.mjs'
     || file === 'scripts/indexnow-change-detection.mjs');
+if (indexnowHostingChanged) hostingResult.hostingChanged = true;
 
 const result = {
   ...artifactResult,
@@ -122,7 +123,7 @@ const result = {
     || firestoreIndexesResult.firestoreValidationRequired
     || forceFirestoreRules
     || forceFirestoreIndexes,
-  hostingChanged: hostingResult.hostingChanged || indexnowHostingChanged || forceHosting,
+  hostingChanged: hostingResult.hostingChanged || forceHosting,
   firestoreRulesChanged: firestoreRulesResult.firestoreRulesChanged || forceFirestoreRules,
   firestoreIndexesChanged: firestoreIndexesResult.firestoreIndexesChanged || forceFirestoreIndexes,
   functionsDeploymentRequired:
