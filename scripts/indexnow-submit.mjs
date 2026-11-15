@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { loadCanonicalUrls, createPageState, changedUrls, validateState, STATE_VERSION } from './indexnow-change-detection.mjs';
 
 const DEFAULT_HOST = 'tinystepslearning.com';
@@ -17,56 +18,64 @@ function validateKey(key) {
   return /^[A-Za-z0-9-]{8,128}$/.test(key);
 }
 
-async function githubRequest(method, route, token, body, allow404 = false) {
-  const response = await fetch('https://api.github.com' + route, {
-    method,
-    headers: {
-      Accept: 'application/vnd.github+json',
-      Authorization: 'Bearer ' + token,
-      'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'TinySteps-IndexNow/2.0',
-      ...(body ? { 'Content-Type': 'application/json' } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-    signal: AbortSignal.timeout(20000),
-  });
-  if (allow404 && response.status === 404) return null;
-  if (!response.ok) {
-    throw new Error('GitHub IndexNow state request failed (' + response.status + '): ' +
-      (await response.text()).slice(0, 350));
-  }
-  return response.json();
+function git(args, input) {
+  return execFileSync('git', args, {
+    encoding: 'utf8',
+    input,
+    timeout: 25000,
+    maxBuffer: 2 * 1024 * 1024,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim();
 }
 
-async function readSubmittedState(repo, token, host) {
-  const root = '/repos/' + repo;
-  const ref = await githubRequest('GET', root + '/git/ref/heads/' + STATE_BRANCH, token, null, true);
-  if (!ref) return { exists: false, sha: null, state: null };
-  const file = await githubRequest('GET', root + '/contents/' + STATE_FILE +
-    '?ref=' + encodeURIComponent(STATE_BRANCH), token, null, true);
-  if (!file) return { exists: true, sha: null, state: null };
-  if (file.encoding !== 'base64' || typeof file.content !== 'string') {
-    throw new Error('IndexNow state must be a base64-encoded GitHub file.');
+async function readSubmittedState(host) {
+  // actions/checkout already configures authenticated git transport in the
+  // existing contents:write deployment job. No additional workflow token
+  // injection or permissions are necessary.
+  let remoteSha;
+  try {
+    remoteSha = git(['ls-remote', '--exit-code', '--heads', 'origin', STATE_BRANCH]).split(/\s+/)[0];
+  } catch (error) {
+    if (error?.status === 2) return { exists: false, sha: null, state: null };
+    throw new Error('Unable to check IndexNow state branch: ' + String(error?.message || error));
   }
-  const parsed = JSON.parse(Buffer.from(file.content.replace(/\s/g, ''), 'base64').toString('utf8'));
-  return { exists: true, sha: file.sha, state: validateState(parsed, host) };
+  if (!/^[a-f0-9]{40}$/.test(remoteSha)) {
+    throw new Error('Invalid remote IndexNow state commit SHA.');
+  }
+  git(['fetch', '--no-tags', 'origin',
+    'refs/heads/' + STATE_BRANCH + ':refs/remotes/origin/' + STATE_BRANCH]);
+  const fetchedSha = git(['rev-parse', 'refs/remotes/origin/' + STATE_BRANCH]);
+  if (fetchedSha !== remoteSha) {
+    throw new Error('IndexNow state changed while being read; refusing a stale update.');
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(git(['show', fetchedSha + ':' + STATE_FILE]));
+  } catch (error) {
+    throw new Error('IndexNow state branch exists but lacks a valid state file: ' +
+      String(error?.message || error));
+  }
+  return { exists: true, sha: fetchedSha, state: validateState(parsed, host) };
 }
 
-async function saveSubmittedState(repo, token, baseSha, prior, state) {
-  const root = '/repos/' + repo;
-  if (!prior.exists) {
-    if (!/^[a-f0-9]{40}$/.test(baseSha)) throw new Error('GITHUB_SHA is required to bootstrap IndexNow state.');
-    await githubRequest('POST', root + '/git/refs', token, {
-      ref: 'refs/heads/' + STATE_BRANCH,
-      sha: baseSha,
-    });
+async function saveSubmittedState(baseSha, prior, state) {
+  // Git plumbing creates a separate state-only commit without touching the
+  // checkout, current branch, tracked app files, or production artifact.
+  const parent = prior.sha || baseSha;
+  if (!/^[a-f0-9]{40}$/.test(parent)) {
+    throw new Error('GITHUB_SHA is required to bootstrap IndexNow state.');
   }
-  await githubRequest('PUT', root + '/contents/' + STATE_FILE, token, {
-    message: 'chore(indexnow): record successfully notified canonical URLs',
-    content: Buffer.from(JSON.stringify(state, null, 2) + '\n').toString('base64'),
-    branch: STATE_BRANCH,
-    ...(prior.sha ? { sha: prior.sha } : {}),
-  });
+  const content = JSON.stringify(state, null, 2) + '\n';
+  const blob = git(['hash-object', '-w', '--stdin'], content);
+  const tree = git(['mktree'], '100644 blob ' + blob + '\t' + STATE_FILE + '\n');
+  const commit = git([
+    '-c', 'user.name=Tiny Steps IndexNow Bot',
+    '-c', 'user.email=indexnow-bot@users.noreply.github.com',
+    'commit-tree', tree, '-p', parent,
+    '-m', 'chore(indexnow): record successfully notified canonical URLs',
+  ]);
+  // Fast-forward-only push rejects a concurrent update, rather than losing it.
+  git(['push', 'origin', commit + ':refs/heads/' + STATE_BRANCH]);
 }
 
 function retryDelay(response, attempt) {
@@ -118,12 +127,6 @@ async function main() {
     throw new Error('INDEXNOW_KEY_LOCATION must be HTTPS on the submitted host.');
   }
 
-  const token = process.env.GITHUB_TOKEN || '';
-  const repo = process.env.GITHUB_REPOSITORY || '';
-  if (!token || !/^[\w.-]+\/[\w.-]+$/.test(repo)) {
-    throw new Error('GITHUB_TOKEN and GITHUB_REPOSITORY are required for durable incremental IndexNow state.');
-  }
-
   const distDir = path.resolve(process.cwd(), process.env.INDEXNOW_DIST || 'dist');
   const sitemapPath = path.resolve(process.cwd(), process.env.INDEXNOW_SITEMAP || 'dist/sitemap.xml');
   const urls = await loadCanonicalUrls(sitemapPath, distDir, host);
@@ -135,11 +138,11 @@ async function main() {
   }
 
   const next = { version: STATE_VERSION, host, pages };
-  const prior = await readSubmittedState(repo, token, host);
+  const prior = await readSubmittedState(host);
   if (!prior.state) {
     // Existing production already submitted its full sitemap. A one-time baseline
     // avoids reporting every old URL as changed when this implementation is enabled.
-    await saveSubmittedState(repo, token, process.env.GITHUB_SHA || '', prior, next);
+    await saveSubmittedState(process.env.GITHUB_SHA || '', prior, next);
     console.log('IndexNow incremental baseline established for ' + urls.length +
       ' canonical URLs. No historical bulk submission made.');
     return;
@@ -161,7 +164,7 @@ async function main() {
   }
   // Only advance the durable baseline after every notification is accepted.
   // An interrupted run will retry on the next run or job rerun.
-  await saveSubmittedState(repo, token, process.env.GITHUB_SHA || '', prior, next);
+  await saveSubmittedState(process.env.GITHUB_SHA || '', prior, next);
   console.log('IndexNow: ' + changed.length + ' notification(s) accepted and state saved.');
 }
 
