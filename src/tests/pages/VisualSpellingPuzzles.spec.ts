@@ -25,6 +25,26 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     }
   });
 
+  it('introduces each level with an accurate, varied first task', () => {
+    const stageIds = ['explorer', 'builder', 'expert', 'master'] as const;
+    expect(stageIds.map(id => VISUAL_SPELLING_PUZZLES.find(p => p.stage === id)?.kind))
+      .toEqual(['arrange', 'sort', 'missing', 'arrange']);
+    const labels = VISUAL_SPELLING_STAGES.map(stage => stage.title);
+    expect(labels).toEqual([
+      'Everyday Words', 'Patterns & Endings', 'Tricky Spellings', 'Long Word Challenge',
+    ]);
+    expect(VISUAL_SPELLING_STAGES.every(stage =>
+      stage.subtitle.length > 35 && stage.examples.includes(' · ')
+    )).toBe(true);
+    const international = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'master-international');
+    expect(international?.kind).toBe('arrange');
+    if (international?.kind === 'arrange') {
+      expect(international.tiles).toHaveLength(3);
+      expect(international.tiles.join('').split('').sort().join(''))
+        .toBe(international.word.split('').sort().join(''));
+    }
+  });
+
   it('has answerable word-building, spotting, fill and sorting tasks', () => {
     const journey = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'explorer-journey');
     const friend = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'explorer-friend');
