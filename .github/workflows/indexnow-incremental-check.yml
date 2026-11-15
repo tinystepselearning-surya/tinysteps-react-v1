@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/indexnow-submit.mjs'
       - 'scripts/indexnow-change-detection.mjs'
+      - 'scripts/resolve-deployment-impact.mjs'
       - 'scripts/test/indexnow-change-detection.node-test.mjs'
       - '.github/workflows/deploy.yml'
       - '.github/workflows/indexnow-incremental-check.yml'
@@ -38,8 +39,10 @@ jobs:
           const job = yml.split('\n  deploy-to-firebase:\n')[1]?.split('\n  recover-functions-manually:\n')[0];
           assert.ok(job, 'Production Hosting job not found');
           assert.match(job, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
-          assert.match(job, /- name: Verify live IndexNow ownership key[\s\S]*?- name: Submit changed canonical public URLs to IndexNow/);
-          assert.match(job, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
+          assert.match(job, /- name: Verify live IndexNow ownership key[\s\S]*?- name: Submit canonical public URLs to IndexNow/);
           assert.match(job, /run: npm run indexnow:submit/);
-          console.log('IndexNow remains post-Hosting, main-only, and scoped.');
+          const impact = fs.readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
+          assert.match(impact, /indexnowHostingChanged = hostingChangedFiles\.some/);
+          assert.match(impact, /hostingChanged: hostingResult\.hostingChanged \|\| indexnowHostingChanged \|\| forceHosting/);
+          console.log('IndexNow activates a Hosting deploy while preserving the original main-only post-deploy step.');
           NODE
