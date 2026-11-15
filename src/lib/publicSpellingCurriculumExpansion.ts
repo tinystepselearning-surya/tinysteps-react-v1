@@ -108,10 +108,11 @@ function mixedLetters(word: string): string[] {
 }
 
 function choiceTiles(correct: string, distractors: string): string[] {
-  if (distractors.length !== 4 || !distractors.includes(correct) || new Set(distractors).size !== 4) {
+  const otherLetters = [...new Set(distractors.split(''))].filter(letter => letter !== correct);
+  if (correct.length !== 1 || otherLetters.length < 3) {
     throw new Error('Invalid curated choice tiles for ' + correct);
   }
-  return distractors.split('');
+  return [otherLetters[0], correct, otherLetters[1], otherLetters[2]];
 }
 
 export const PUBLIC_SPELLING_EXTRA_CHALLENGES: readonly PublicSpellingChallenge[] = [
