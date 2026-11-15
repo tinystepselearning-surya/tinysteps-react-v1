@@ -484,11 +484,11 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
     categoryPath: "/free-word-building-games-for-kids",
     seoTitle: "Free Spelling Game for Kids | Online Word & Spelling Practice",
     seoDescription:
-      "Play a free spelling game for kids from Tiny Steps. Build words, complete missing letters, correct mistakes and spell whole words from clues. No login required.",
+      "Play two free spelling games for kids at Tiny Steps. Practise short-word spelling or challenge yourself with visual word puzzles, patterns and spelling corrections. No login required.",
     h1: "Free Spelling Game for Kids",
     intro:
-      "This public Tiny Steps spelling game moves from short-word foundations into blends, digraphs, long-vowel patterns, spelling correction, and whole-word recall from clear vocabulary clues.",
-    ageRange: "Ages 5 to 8",
+      "Choose between Spelling Adventure for shorter words and guided spelling (approximately ages 5–8), or Spelling Puzzle Lab for older children to arrange, sort and recall trickier words (approximately ages 8–10+). Both are free and sound-free.",
+    ageRange: "Ages 5 to 10+",
     skills: ["Spelling formation", "Blends and digraphs", "Long-vowel patterns", "Spelling correction", "Vocabulary recall"],
     howToPlay: [
       "Look at the picture, meaning, or sentence clue before choosing letters or typing a word.",
@@ -520,24 +520,24 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
       "Spelling is more than memorization—it's understanding patterns and rules. Tiny Steps classes teach spelling strategies step-by-step, with teacher guidance to catch and fix misconceptions early.",
     faqs: [
       {
-        question: "At what age should my child start spelling practice?",
-        answer: "Children can start simple CVC spelling (like 'cat', 'dog') around age 5–6, once they know letter sounds. More complex patterns come later, typically ages 6–8.",
+        question: "Are both spelling games free?",
+        answer: "Yes. Both spelling games are free to play in your browser without creating an account. They do not save individual spelling scores or puzzle progress.",
       },
       {
-        question: "My child spells words the way they sound. Is that okay?",
-        answer: "Phonetic spelling is a great first step. It shows your child understands sounds. Gradually introduce spelling patterns and rules to move from 'sed' to 'said'.",
+        question: "Which spelling game should my child choose?",
+        answer: "Choose by reading and spelling confidence, not only age. Spelling Adventure starts with shorter familiar words; Puzzle Lab uses longer words, word parts and spelling patterns.",
       },
       {
-        question: "Should I correct every spelling mistake?",
-        answer: "Correct mistakes gently and focus on patterns, not isolated words. For example, if your child misspells 'rain' as 'rane', teach the 'ai' pattern with several examples.",
+        question: "Does my child need headphones or sound?",
+        answer: "No. Both spelling games can be played silently. Puzzle Lab focuses on written patterns, meaning clues and word formation.",
       },
       {
-        question: "How is this different from spelling lists at school?",
-        answer: "This game teaches spelling through patterns and clues, not memorization. It builds understanding of how English spelling works, which helps with new words your child hasn't seen before.",
+        question: "Can children play on phones and tablets?",
+        answer: "Yes. Both games support tapping answers on touchscreens. Dragging is optional where tapping is supported.",
       },
       {
-        question: "Can this game help with spelling tests?",
-        answer: "Yes, it builds foundational spelling skills. For test-specific practice, combine this with targeted word practice and teacher-guided pattern instruction.",
+        question: "Do the games replace spelling instruction?",
+        answer: "No. These games offer short, independent practice; children still benefit from explicit instruction, explanations of spelling patterns, and applying words in writing.",
       },
     ],
   },

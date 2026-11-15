@@ -6,6 +6,7 @@ import { createFAQPageSchema } from "../../lib/schemas";
 import { applySeo } from "../../lib/seo";
 import { trackFreeResourceToTrialClick } from "../../lib/conversionTracking";
 import PublicEnglishGamePlayer from "./PublicEnglishGamePlayer";
+import SpellingGamesLanding from "./SpellingGamesLanding";
 import {
   PUBLIC_ENGLISH_GAMES_HUB_PATH,
   getPublicEnglishGameLandingByPath,
@@ -32,12 +33,21 @@ export default function FreeEnglishGameLandingPage() {
   const [searchParams] = useSearchParams();
   const config: PublicEnglishGameLandingConfig | null = getPublicEnglishGameLandingByPath(location.pathname);
   const isPlayMode = searchParams.get("play") === "1";
+  const isSpellingLanding = config?.publicPath === "/free-spelling-game-for-kids";
+  const isSpellingPlayMode = isSpellingLanding && isPlayMode;
+  // Query-only variant: keep the established spelling page, canonical and SEO contract.
+  const isVisualPuzzleMode =
+    config?.publicPath === "/free-spelling-game-for-kids" &&
+    isPlayMode &&
+    searchParams.get("mode") === "puzzles";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
   useEffect(() => {
-    if (!shouldRenderPlayer) return;
+    // Both spelling experiences are dedicated game-first modes. Avoid
+    // scrolling an overlaid game inside the long information page.
+    if (!shouldRenderPlayer || isSpellingPlayMode) return;
     scrollToPublicGamePlayer();
-  }, [shouldRenderPlayer]);
+  }, [shouldRenderPlayer, isSpellingPlayMode]);
 
   useEffect(() => {
     if (!config) return;
@@ -79,6 +89,21 @@ export default function FreeEnglishGameLandingPage() {
   }
 
   const pageUrl = `${SITE_ORIGIN}${config.publicPath}`;
+
+  // The single indexed spelling URL offers two distinct age-appropriate games.
+  // Both query-only play variants render just the game, never a long landing
+  // page with nested fixed overlays and automatic scroll-to-game behaviour.
+  if (isSpellingLanding) {
+    return (
+      <>
+        <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} />
+        {isSpellingPlayMode
+          ? <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode={isVisualPuzzleMode} />
+          : <SpellingGamesLanding faqs={config.faqs || []} />}
+      </>
+    );
+  }
+
   const tiles = getPublicEnglishGameLandingTiles(config);
 
   // Use custom FAQs if provided, otherwise fall back to generic
@@ -158,7 +183,9 @@ export default function FreeEnglishGameLandingPage() {
                 {config.intro}
               </p>
               <p className="mt-1 text-xs font-semibold text-emerald-200/90">
-                No login required. Progress is saved only temporarily in this browser.
+                {isVisualPuzzleMode
+                  ? "Free to play. No login, accounts, saved scores or progress tracking."
+                  : "No login required. Progress is saved only temporarily in this browser."}
               </p>
             </div>
 
@@ -232,7 +259,7 @@ export default function FreeEnglishGameLandingPage() {
                 </>
               )}
 
-              <div className="mt-4">
+              <div className="mt-4 flex flex-wrap items-center gap-3">
                 {config.isPublicPlayReady && config.playPath ? (
                   shouldRenderPlayer ? (
                     <button
@@ -254,6 +281,16 @@ export default function FreeEnglishGameLandingPage() {
                   <span className="inline-flex rounded-xl border border-slate-500/30 bg-slate-800/80 px-5 py-3 text-sm font-black text-slate-200">
                     {config.statusText}
                   </span>
+                )}
+                {config.publicPath === "/free-spelling-game-for-kids" && (
+                  <Link
+                    to={isVisualPuzzleMode
+                      ? "/free-spelling-game-for-kids?play=1"
+                      : "/free-spelling-game-for-kids?play=1&mode=puzzles"}
+                    className="inline-flex rounded-xl border border-amber-300/40 bg-amber-300/15 px-5 py-3 text-sm font-black text-amber-100 hover:bg-amber-300/25"
+                  >
+                    {isVisualPuzzleMode ? "Try Classic Spelling" : "Play Visual Spelling Puzzles (8–10+)"}
+                  </Link>
                 )}
               </div>
             </div>
@@ -296,9 +333,13 @@ export default function FreeEnglishGameLandingPage() {
               <div className="rounded-2xl border border-white/10 bg-slate-950/36 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h2 className="text-2xl font-black text-slate-100">Guest Play Mode</h2>
+                    <h2 className="text-2xl font-black text-slate-100">
+                      {isVisualPuzzleMode ? "Visual Spelling Puzzle Lab" : "Guest Play Mode"}
+                    </h2>
                     <p className="mt-2 text-sm text-slate-300">
-                      No login required. Progress is saved only temporarily in this browser.
+                      {isVisualPuzzleMode
+                        ? "No login and no saved progress. Your puzzle results disappear when you leave or refresh this game."
+                        : "No login required. Progress is saved only temporarily in this browser."}
                     </p>
                   </div>
                   <Link
@@ -311,7 +352,7 @@ export default function FreeEnglishGameLandingPage() {
               </div>
 
               <div className="mt-4 overflow-hidden rounded-[28px] border border-white/10 bg-slate-950/25">
-                <PublicEnglishGamePlayer publicPath={config.publicPath} />
+                <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode={isVisualPuzzleMode} />
               </div>
             </section>
           ) : null}

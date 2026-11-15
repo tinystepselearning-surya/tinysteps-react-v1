@@ -335,8 +335,18 @@ const Layout: FC = () => {
   const normalizedPath = normalizePathname(location.pathname);
   const isNativeRuntime = isNativeCapacitorRuntime();
   const hideNativeAuthChrome = isNativeRuntime && isAuthEntryRoute(normalizedPath);
+  // Both public spelling play variants are immersive, distraction-free games.
+  // Keep global site chrome on the canonical landing page only.
+  const focusParams = new URLSearchParams(location.search);
+  const isSpellingPlayFocus =
+    normalizedPath === '/free-spelling-game-for-kids' &&
+    focusParams.get('play') === '1';
+  // Keep the protected/public theme boundary independent of the optional
+  // public spelling focus view; only its chrome is suppressed during play.
   const hideMarketingChrome = isProtectedAppRoute(normalizedPath) || hideNativeAuthChrome;
-  const hideSupportWidgets = !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome;
+  const suppressMarketingChrome = hideMarketingChrome || isSpellingPlayFocus;
+  const hideSupportWidgets =
+    !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome || isSpellingPlayFocus;
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
@@ -344,7 +354,7 @@ const Layout: FC = () => {
   const [hideHomepageBottomWidgets, setHideHomepageBottomWidgets] = useState(false);
 
   useEffect(() => {
-    if (hideMarketingChrome || normalizedPath === '/book-demo') {
+    if (suppressMarketingChrome || normalizedPath === '/book-demo') {
       setIsAssessmentModalOpen(false);
       return;
     }
@@ -353,10 +363,10 @@ const Layout: FC = () => {
     if (params.get('book') === '1') {
       setIsAssessmentModalOpen(true);
     }
-  }, [hideMarketingChrome, location.search, normalizedPath]);
+  }, [suppressMarketingChrome, location.search, normalizedPath]);
 
   useEffect(() => {
-    if (hideMarketingChrome) {
+    if (suppressMarketingChrome) {
       setShowDeferredChrome(false);
       return;
     }
@@ -376,10 +386,10 @@ const Layout: FC = () => {
       activationDelayMs,
       2500,
     );
-  }, [hideMarketingChrome]);
+  }, [suppressMarketingChrome]);
 
   useEffect(() => {
-    if (hideMarketingChrome || hideSupportWidgets) {
+    if (suppressMarketingChrome || hideSupportWidgets) {
       setShowDeferredSupportWidgets(false);
       return;
     }
@@ -398,7 +408,7 @@ const Layout: FC = () => {
       activationDelayMs,
       4000,
     );
-  }, [hideMarketingChrome, hideSupportWidgets]);
+  }, [suppressMarketingChrome, hideSupportWidgets]);
 
   // Keep fixed support controls away from the final homepage booking CTA and footer.
   // This is homepage-only: specialist pages retain their existing support widgets.
@@ -432,7 +442,7 @@ const Layout: FC = () => {
       window.removeEventListener('resize', onScrollOrResize);
       if (frame) window.cancelAnimationFrame(frame);
     };
-  }, [hideMarketingChrome, normalizedPath]);
+  }, [suppressMarketingChrome, normalizedPath]);
 
   const closeAssessmentModal = useCallback(() => {
     setIsAssessmentModalOpen(false);
@@ -452,7 +462,7 @@ const Layout: FC = () => {
   // The shared commercial floating CTA is mounted on document.body, outside
   // React's click-capture boundary. Give it an explicit, tracked modal action.
   useEffect(() => {
-    if (hideMarketingChrome || normalizedPath === '/book-demo') return;
+    if (suppressMarketingChrome || normalizedPath === '/book-demo') return;
 
     const handleFloatingAssessmentRequest = (event: Event) => {
       event.preventDefault();
@@ -479,11 +489,11 @@ const Layout: FC = () => {
 
     window.addEventListener('tinysteps:open-assessment', handleFloatingAssessmentRequest);
     return () => window.removeEventListener('tinysteps:open-assessment', handleFloatingAssessmentRequest);
-  }, [hideMarketingChrome, location.pathname, location.search, navigate, normalizedPath]);
+  }, [suppressMarketingChrome, location.pathname, location.search, navigate, normalizedPath]);
 
   const handlePublicBookingIntercept = useCallback(
     (event: MouseEvent<HTMLDivElement>) => {
-      if (hideMarketingChrome || normalizedPath === '/book-demo') return;
+      if (suppressMarketingChrome || normalizedPath === '/book-demo') return;
 
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
@@ -549,7 +559,7 @@ const Layout: FC = () => {
         );
       }
     },
-    [hideMarketingChrome, location.pathname, location.search, navigate, normalizedPath]
+    [suppressMarketingChrome, location.pathname, location.search, navigate, normalizedPath]
   );
 
   return (
@@ -558,28 +568,30 @@ const Layout: FC = () => {
       data-ts-surface={hideMarketingChrome ? 'app' : isContactPage ? undefined : 'public'}
       className={`min-h-screen ${isContactPage ? 'bg-[#060a16]' : 'bg-[#F4F8FF]'}`}
     >
-      {!hideMarketingChrome ? (
+      {!suppressMarketingChrome ? (
         <Suspense fallback={null}>
           <AnalyticsTracker />
           {showDeferredChrome ? <ConversionTracker /> : null}
         </Suspense>
       ) : null}
       <ScrollToTop />
-      {!hideMarketingChrome ? <Header /> : null}
+      {!suppressMarketingChrome ? <Header /> : null}
       <main
         className={
-          isContactPage
-            ? `${hideMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
+          isSpellingPlayFocus
+            ? 'min-h-screen bg-[#05010f] p-0'
+            : isContactPage
+              ? `${suppressMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
             : normalizedPath === '/'
               ? 'min-h-screen bg-[#F4F8FF] pb-0 pt-0'
-              : `min-h-screen pb-16 ${hideMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
+              : `min-h-screen pb-16 ${suppressMarketingChrome ? '' : 'pt-8 md:pt-12 lg:pt-16'}`
         }
       >
         <Suspense fallback={routeLoaderFallback}>
           <Outlet />
         </Suspense>
       </main>
-      {!hideMarketingChrome && showDeferredChrome ? (
+      {!suppressMarketingChrome && showDeferredChrome ? (
         <Suspense fallback={null}>
           <Footer />
         </Suspense>
@@ -590,7 +602,7 @@ const Layout: FC = () => {
           {!hideHomepageBottomWidgets ? <BackToTopButton /> : null}
         </Suspense>
       ) : null}
-      {!hideMarketingChrome && normalizedPath !== '/book-demo' && isAssessmentModalOpen ? (
+      {!suppressMarketingChrome && normalizedPath !== '/book-demo' && isAssessmentModalOpen ? (
         <Suspense fallback={null}>
           <AssessmentRequestModal isOpen={isAssessmentModalOpen} onClose={closeAssessmentModal} />
         </Suspense>
