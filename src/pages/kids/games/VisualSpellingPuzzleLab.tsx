@@ -10,7 +10,7 @@ import {
 } from '../../../lib/visualSpellingPuzzles';
 import './VisualSpellingPuzzleLab.css';
 
-const STAGE_SYMBOLS = ['🧭', '🧩', '🔎', '🏆'] as const;
+const STAGE_SYMBOLS = ['🧭', '🧩', '📚', '🔎', '🧱', '🏆'] as const;
 
 type Feedback = 'correct' | 'retry' | null;
 
