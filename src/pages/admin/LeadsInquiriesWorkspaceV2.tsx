@@ -1071,7 +1071,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" onClick={applyFilters} disabled={leadsLoading}>{leadsLoading ? 'Applying…' : 'Apply filter'}</Button>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. A returning website enquiry from another IST date appears in Open as a new task, without creating a duplicate lead. Same-day submissions count once per parent and child. Historical first-touch attribution remains unchanged; the selected range shows unique active parent-child records, not the number of form submissions.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Choose a month, All months, or custom dates, then select Apply filter to fetch that range. Clearing both custom dates returns to Today. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows. A returning website enquiry on another IST date appears as a new task in Open, without a duplicate lead or any change to first-touch attribution. Same-day repeat submissions show once.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
