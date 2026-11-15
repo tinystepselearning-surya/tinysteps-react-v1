@@ -1,3 +1,5 @@
+import { PUBLIC_SPELLING_EXTRA_CHALLENGES } from './publicSpellingCurriculumExpansion';
+
 export type PublicSpellingMode = "build" | "family" | "missing" | "choice" | "fix" | "spell";
 
 export type PublicSpellingDifficulty = "foundation" | "developing" | "confident";
@@ -153,6 +155,26 @@ export const PUBLIC_SPELLING_LEVELS: PublicSpellingLevel[] = [
     ],
   },
 ];
+
+// Keep the original six-question introduction intact and extend every mode to
+// eighteen reviewed words. Each replay rotates to a different six-word set.
+for (const level of PUBLIC_SPELLING_LEVELS) {
+  level.challenges.push(...PUBLIC_SPELLING_EXTRA_CHALLENGES.filter(challenge => challenge.mode === level.mode));
+}
+
+export const PUBLIC_SPELLING_SESSION_SIZE = 6;
+
+export function publicSpellingPracticeRound(
+  level: PublicSpellingLevel,
+  round: number,
+): PublicSpellingChallenge[] {
+  if (!level.challenges.length) return [];
+  const start = (Math.max(0, Math.floor(round)) * PUBLIC_SPELLING_SESSION_SIZE) % level.challenges.length;
+  return Array.from(
+    { length: Math.min(PUBLIC_SPELLING_SESSION_SIZE, level.challenges.length) },
+    (_, i) => level.challenges[(start + i) % level.challenges.length],
+  );
+}
 
 export const normalizePublicSpellingAnswer = (answer: string) => answer.trim().toLocaleLowerCase("en");
 
