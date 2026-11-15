@@ -149,6 +149,22 @@ const resolveLandingPage = (lead: LeadRow): string => {
   return normalize(lead.landingPage || a.landingPage) || 'Legacy / unknown';
 };
 
+// A landing page alone is not evidence that the acquisition channel is identifiable.
+// Keep legacy/direct/other evidence separate from recognized referring sources.
+const IDENTIFIED_SOURCE_CHANNELS = new Set<string>([
+  'google_organic', 'bing_organic', 'google_ads', 'microsoft_ads',
+  'chatgpt', 'google_gemini', 'perplexity', 'microsoft_copilot', 'claude',
+  'instagram', 'facebook', 'linkedin', 'youtube', 'referral',
+]);
+
+const broadChannelForDetailedSource = (channel: string) => {
+  if (channel === 'google_organic' || channel === 'bing_organic') return 'organic_search';
+  if (['chatgpt', 'google_gemini', 'perplexity', 'microsoft_copilot', 'claude'].includes(channel)) return 'organic_ai';
+  if (channel === 'google_ads' || channel === 'microsoft_ads') return 'paid';
+  if (['instagram', 'facebook', 'linkedin', 'youtube', 'referral'].includes(channel)) return 'referral';
+  return 'direct_or_unknown';
+};
+
 const pct = (part: number, total: number): string => (total > 0 ? `${Math.round((part / total) * 100)}%` : '0%');
 
 const istBoundaryDate = (dateKey: string, endOfDay = false): Date =>
@@ -245,6 +261,8 @@ export default function LeadSourceAnalysis({
     const byChannel = new Map<string, ChannelSummary>();
     const byLanding = new Map<string, { page: string; count: number; demoWorkflowCount: number; admittedCount: number }>();
     let attributedCount = 0;
+    let identifiedSourceCount = 0;
+    let channelProjectionDisagreements = 0;
     let demoWorkflowCount = 0;
     let admittedCount = 0;
 
@@ -255,6 +273,12 @@ export default function LeadSourceAnalysis({
       const admitted = isAdmitted(lead);
 
       if (hasAttributionEvidence(lead)) attributedCount += 1;
+      if (IDENTIFIED_SOURCE_CHANNELS.has(resolved.channel)) identifiedSourceCount += 1;
+      // Both summaries describe the same lead rows, so disagreements must be visible
+      // rather than silently presented as a single consistent channel distribution.
+      if (buildSpeakingAttributionProjection(lead).businessChannel !== broadChannelForDetailedSource(resolved.channel)) {
+        channelProjectionDisagreements += 1;
+      }
       if (hasDemoWorkflow) demoWorkflowCount += 1;
       if (admitted) admittedCount += 1;
 
@@ -303,6 +327,8 @@ export default function LeadSourceAnalysis({
     return {
       total: cohortRows.length,
       attributedCount,
+      identifiedSourceCount,
+      channelProjectionDisagreements,
       demoWorkflowCount,
       admittedCount,
       businessChannelCounts,
@@ -407,6 +433,17 @@ export default function LeadSourceAnalysis({
               </div>
             ))}
           </div>
+
+          <p className="mt-2 text-xs text-muted-foreground">
+            Identified non-direct source: {loading ? '…' : `${analysis.identifiedSourceCount} / ${analysis.total} (${pct(analysis.identifiedSourceCount, analysis.total)})`}.
+            Attribution coverage above also includes landing-page-only evidence and should not be treated as known-source coverage.
+          </p>
+          {!loading && analysis.channelProjectionDisagreements > 0 ? (
+            <p className="mt-2 text-xs text-amber-800" role="status">
+              Channel reconciliation needed: {analysis.channelProjectionDisagreements} lead{analysis.channelProjectionDisagreements === 1 ? '' : 's'} receive different broad and detailed channel labels.
+              Summary chips and the detailed table use different classifiers; check original first-touch evidence before interpreting channel shares.
+            </p>
+          ) : null}
 
           <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
             <span className="rounded-full border px-2.5 py-1">Organic search {loading ? '…' : `${analysis.businessChannelCounts.organic_search} (${pct(analysis.businessChannelCounts.organic_search, analysis.total)})`}</span>
