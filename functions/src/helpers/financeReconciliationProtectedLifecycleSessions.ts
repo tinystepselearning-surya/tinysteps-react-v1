@@ -1,6 +1,6 @@
-import * as admin from 'firebase-admin';
 import {
-  buildFinanceReconciliationMonthBounds,
+  fetchMonthBoundedFinanceSessionCandidates,
+  type MonthBoundedFinanceSessionCandidates,
 } from './financeReconciliationCompletedSessions';
 import {
   isFinanciallyEarnedAttendanceStatus,
@@ -102,6 +102,7 @@ export async function fetchFinanciallyEarnedProtectedLifecycleSessionsForFinance
     db: FirebaseFirestore.Firestore;
     monthKey: string | null;
     maxDocs: number;
+    monthCandidates?: Promise<MonthBoundedFinanceSessionCandidates>;
   },
 ): Promise<ProtectedLifecycleSessionFetchResult> {
   const { db, monthKey } = input;
@@ -161,43 +162,8 @@ export async function fetchFinanciallyEarnedProtectedLifecycleSessionsForFinance
     };
   }
 
-  const bounds =
-    buildFinanceReconciliationMonthBounds(monthKey);
-
-  const [dateSnap, startAtSnap, explicitMonthSnap] =
-    await Promise.all([
-      fetchLimited(
-        db.collection('classSessions')
-          .where('date', '>=', bounds.firstDate)
-          .where('date', '<', bounds.nextMonthDate),
-        maxDocs,
-      ),
-
-      fetchLimited(
-        db.collection('classSessions')
-          .where(
-            'startAt',
-            '>=',
-            admin.firestore.Timestamp.fromDate(
-              bounds.startAtInclusive,
-            ),
-          )
-          .where(
-            'startAt',
-            '<',
-            admin.firestore.Timestamp.fromDate(
-              bounds.startAtExclusive,
-            ),
-          ),
-        maxDocs,
-      ),
-
-      fetchLimited(
-        db.collection('classSessions')
-          .where('monthKey', '==', monthKey),
-        maxDocs,
-      ),
-    ]);
+  const candidates = await (input.monthCandidates ??
+    fetchMonthBoundedFinanceSessionCandidates({ db, monthKey, maxDocs }));
 
   const byId = new Map<
     string,
@@ -205,11 +171,7 @@ export async function fetchFinanciallyEarnedProtectedLifecycleSessionsForFinance
   >();
 
   for (
-    const docSnap of [
-      ...dateSnap.docs,
-      ...startAtSnap.docs,
-      ...explicitMonthSnap.docs,
-    ]
+    const docSnap of candidates.docs
   ) {
     const data =
       (docSnap.data() || {}) as Record<string, unknown>;
@@ -235,10 +197,7 @@ export async function fetchFinanciallyEarnedProtectedLifecycleSessionsForFinance
         : docs,
 
     truncated:
-      dateSnap.truncated ||
-      startAtSnap.truncated ||
-      explicitMonthSnap.truncated ||
-      unionTruncated,
+      candidates.truncated || unionTruncated,
 
     mode:
       'month_bounded_protected_lifecycle_union',
