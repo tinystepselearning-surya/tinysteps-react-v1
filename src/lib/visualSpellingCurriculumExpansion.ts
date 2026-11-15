@@ -84,7 +84,7 @@ const sortRows: SortRow[] = [
   ['expert','terrible','Very bad or unpleasant.','reliable','Able to be trusted.','Ends in -ible','Ends in -able','Terrible ends in -ible; reliable ends in -able.'],
   ['master','interconnected','Linked together.','transcontinental','Across a continent.','Has prefix inter-','Has prefix trans-','Inter- means between; trans- means across.'],
   ['master','preparation','Getting ready for something.','reconsideration','Thinking about a choice again.','Has prefix pre-','Has prefix re-','Pre- can mean before; re- means again.'],
-  ['master','biography','A written account of a person’s life.','biology','The study of living things.','Ends in -graphy','Ends in -logy','-graphy relates to recording or writing; -logy relates to study.'],
+  ['master','cartography','The art and science of making maps.','biology','The study of living things.','Ends in -graphy','Ends in -logy','Cartography ends in -graphy, while biology ends in -logy.'],
   ['master','representation','Showing or speaking for someone.','development','Growing or improving over time.','Ends in -tion','Ends in -ment','Representation ends in -tion; development ends in -ment.'],
 ];
 
