@@ -772,17 +772,22 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     if (!row.demo) return;
     setAssignRow(row);
     setAssignTeacherId(row.demo.assignedTeacherId || '');
+    // Use the saved assessment type, preserving the original parent preference.
+    // Undecided parents require an explicit admin choice.
+    setAssignAssessmentFormat(row.demo.leadType === 'Group Class'
+      ? 'small_group'
+      : row.demo.leadType === '1:1' ? 'one_to_one' : '');
     void loadTeachersIfNeeded();
   };
 
   const submitAssign = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!assignRow?.demo || !assignTeacherId) return;
+    if (!assignRow?.demo || !assignTeacherId || !assignAssessmentFormat) return;
     const teacher = teachers.find((item) => item.id === assignTeacherId);
     if (!teacher) return;
     setAssignSaving(true);
     try {
-      await reassignDemoSession({ demoId: assignRow.demo.id, assignedTeacherId: teacher.id, assignedTeacherName: teacher.name });
+      await reassignDemoSession({ demoId: assignRow.demo.id, assignedTeacherId: teacher.id, assignedTeacherName: teacher.name, assessmentFormat: assignAssessmentFormat });
       const wasAssigned = rowTeacherWasAssigned(assignRow);
       setAssignRow(null);
       refreshWorkflowSoon();
@@ -891,7 +896,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const retryDemoRequest = async (row: SimpleRow) => {
     const leadId = row.lead?.id;
     if (!leadId || retryingLeadId) return;
-    if (!window.confirm(`Safely check and link or create a 1:1 demo request for ${row.childName}? No teacher will be assigned automatically.`)) return;
+    if (!window.confirm(`Safely check and link or create an open demo request for ${row.childName}? The parent's original preference will be preserved and no teacher will be assigned automatically.`)) return;
     setRetryingLeadId(leadId);
     try {
       const result = await adminRetryLeadDemoRequest(leadId);
@@ -905,7 +910,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     } catch (error: any) {
       toast({
         title: 'Demo request needs admin review',
-        description: error?.message || 'The safe retry was blocked; check class format, canonical identity and existing demo ownership.',
+        description: error?.message || 'The safe retry was blocked; check canonical identity and existing demo ownership.',
         variant: 'destructive',
       });
     } finally {
@@ -917,12 +922,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     const action = actionForRow(row);
     if (action === 'awaiting_demo') return row.lead
       ? <Button size="sm" variant="outline" disabled={Boolean(retryingLeadId)} onClick={() => void retryDemoRequest(row)}>
-          {retryingLeadId === row.lead.id ? 'Checking demo…' : 'Retry demo request'}
+          {retryingLeadId === row.lead.id ? 'Checking demo…' : 'Create / link demo'}
         </Button>
       : <Badge variant="outline">Demo link missing — review</Badge>;
     if (action === 'assign_teacher') return <Button size="sm" onClick={() => openAssign(row)}>Assign teacher</Button>;
     if (action === 'wait_teacher') return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
-    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>{row.classFormatPreference === 'small_group' || row.classFormatPreference === 'unsure' ? 'Review enquiry' : 'Open details'}</Button>;
+    if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>Open details</Button>;
     if (action === 'review_outcome') return <Button size="sm" onClick={() => openOutcome(row)}>{isSimpleFollowUpDecision(row.demo?.conversionStatus) ? 'Update follow-up' : 'Review & update'}</Button>;
     return <Button size="sm" variant="outline" onClick={() => openOutcome(row)}>View outcome</Button>;
   };
@@ -1037,7 +1042,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       </>}
     </Card>
 
-    <Dialog open={Boolean(assignRow)} onOpenChange={(open) => !open && setAssignRow(null)}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</DialogTitle><DialogDescription>Teacher options load only when this dialog is opened; there is no background teacher listener.</DialogDescription></DialogHeader><form onSubmit={submitAssign} className="space-y-4"><div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}</div><div><Label>Teacher *</Label><Select value={assignTeacherId} onValueChange={setAssignTeacherId}><SelectTrigger className="mt-1"><SelectValue placeholder={teachersLoading ? 'Loading teachers…' : teachersLoaded ? 'Select active teacher' : 'Teacher list not loaded'} /></SelectTrigger><SelectContent>{teachers.map((teacher) => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setAssignRow(null)}>Cancel</Button><Button type="submit" disabled={teachersLoading || !teachersLoaded || !assignTeacherId || assignSaving}>{assignSaving ? 'Saving…' : assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</Button></div></form></DialogContent></Dialog>
+    <Dialog open={Boolean(assignRow)} onOpenChange={(open) => !open && setAssignRow(null)}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</DialogTitle><DialogDescription>Teacher options load only when this dialog is opened; there is no background teacher listener.</DialogDescription></DialogHeader><form onSubmit={submitAssign} className="space-y-4"><div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}</div><div><Label>Teacher *</Label><Select value={assignTeacherId} onValueChange={setAssignTeacherId}><SelectTrigger className="mt-1"><SelectValue placeholder={teachersLoading ? 'Loading teachers…' : teachersLoaded ? 'Select active teacher' : 'Teacher list not loaded'} /></SelectTrigger><SelectContent>{teachers.map((teacher) => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select></div><div><Label>Assessment format *</Label><Select value={assignAssessmentFormat} onValueChange={(value) => setAssignAssessmentFormat(value as 'one_to_one' | 'small_group')}><SelectTrigger className="mt-1"><SelectValue placeholder="Choose assessment format" /></SelectTrigger><SelectContent><SelectItem value="one_to_one">One-to-one assessment</SelectItem><SelectItem value="small_group">Group assessment</SelectItem></SelectContent></Select><p className="mt-1 text-xs text-slate-500">Parent preference: {assignRow?.classFormatPreference === 'small_group' ? 'Group Classes' : assignRow?.classFormatPreference === 'unsure' ? 'Help Me Choose' : 'One-to-One Classes'} — this is not a confirmed appointment.</p></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setAssignRow(null)}>Cancel</Button><Button type="submit" disabled={teachersLoading || !teachersLoaded || !assignTeacherId || !assignAssessmentFormat || assignSaving}>{assignSaving ? 'Saving…' : assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</Button></div></form></DialogContent></Dialog>
 
     <Dialog open={Boolean(outcomeRow)} onOpenChange={(open) => !open && setOutcomeRow(null)}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{outcomeRow?.bucket === 'closed' ? 'Outcome' : 'Review teacher response & update'}</DialogTitle><DialogDescription>{outcomeRow?.bucket === 'closed' ? 'The final workflow decision is read-only here. Admin tools remain available from the row menu.' : 'Teacher completion is in Admin Review. Save a final decision to close, or a follow-up decision to keep it here.'}</DialogDescription></DialogHeader>
       {outcomeRow?.demo && <div className="rounded-xl border bg-slate-50 p-4 text-sm"><div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Teacher response</div><div className="mt-2 grid gap-2 sm:grid-cols-2"><div><span className="text-slate-500">Remarks:</span> {outcomeRow.demo.teacherRemarks || 'Not submitted yet'}</div><div><span className="text-slate-500">Recommendation:</span> {outcomeRow.demo.teacherRecommendation || '—'}</div><div><span className="text-slate-500">Next step:</span> {formatTrack(outcomeRow.demo.recommendedNextStep) || '—'}</div><div><span className="text-slate-500">Demo outcome:</span> {formatTrack(outcomeRow.demo.outcome) || '—'}</div></div></div>}
