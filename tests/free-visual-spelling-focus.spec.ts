@@ -126,7 +126,8 @@ test('English Games directory has no duplicate standalone Puzzle Lab listing', a
 test('guest puzzle progress resets completely on refresh', async ({ page }) => {
   await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
   await page.getByRole('button', { name: /Everyday Words/ }).click();
-  await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Everyday Words', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build the Word', level: 3 })).toBeVisible();
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
   await expect(page.getByText('Puzzle 1 of 8')).toHaveCount(0);
