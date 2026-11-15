@@ -527,9 +527,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/free-spelling-game-for-kids': {
-    title: 'Free Spelling Game for Kids | Online Word & Spelling Practice',
+    title: 'Free Spelling Games for Kids | Adventure & Puzzle Lab',
     description:
-      'Play a free spelling game for kids from Tiny Steps. Practise word formation, missing letters and correct spellings through interactive online English activities. No login required.',
+      'Play Spelling Adventure (ages 5–8) or Spelling Puzzle Lab (ages 8–10+) for free. Build words, practise spelling patterns and correct mistakes. No login or sound.',
     canonicalPath: '/free-spelling-game-for-kids',
     ogType: 'website',
   },
