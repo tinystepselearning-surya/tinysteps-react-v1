@@ -1,9 +1,10 @@
 import React from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { getDocsLoggedMock } = vi.hoisted(() => ({
+const { getDocsLoggedMock, resolveStoredLeadAcquisitionMock } = vi.hoisted(() => ({
   getDocsLoggedMock: vi.fn(),
+  resolveStoredLeadAcquisitionMock: vi.fn(() => ({ channel: 'direct', source: 'direct', label: 'Direct' })),
 }));
 
 vi.mock('../../lib/firebaseConfig', () => ({
@@ -37,8 +38,12 @@ vi.mock('@components/ui/card', () => ({
 }));
 
 vi.mock('../../lib/leadAcquisition', () => ({
-  resolveStoredLeadAcquisition: () => ({ channel: 'direct', source: 'direct', label: 'Direct' }),
+  resolveStoredLeadAcquisition: resolveStoredLeadAcquisitionMock,
 }));
+
+afterEach(() => {
+  resolveStoredLeadAcquisitionMock.mockImplementation(() => ({ channel: 'direct', source: 'direct', label: 'Direct' }));
+});
 
 vi.mock('../../pages/admin/DemoSessionsManagement', () => ({
   default: () => <div>Lead admission analytics</div>,
@@ -79,6 +84,45 @@ const leadSnapshot = (id: string, source: string) => ({
       }),
     },
   ],
+});
+
+describe('LeadSourceAnalysis channel evidence honesty', () => {
+  beforeEach(() => getDocsLoggedMock.mockReset());
+
+  it('separates known source from landing-page coverage and flags conflicting classifiers', async () => {
+    const receivedAt = new Date('2026-11-10T08:00:00.000Z');
+    getDocsLoggedMock.mockResolvedValue({ docs: [
+      {
+        id: 'stored-google-raw-chatgpt',
+        data: () => ({
+          source: 'website', receivedAt, status: 'new',
+          landingPage: '/phonics', acquisitionChannel: 'google_organic',
+          attribution: { utm_source: 'chatgpt.com' },
+        }),
+      },
+      {
+        id: 'landing-only',
+        data: () => ({ source: 'website', receivedAt, status: 'new', landingPage: '/pricing' }),
+      },
+    ] });
+    resolveStoredLeadAcquisitionMock.mockImplementation((input: { acquisitionChannel?: string }) => (
+      input.acquisitionChannel === 'google_organic'
+        ? { channel: 'google_organic', source: 'google', label: 'Google Organic' }
+        : { channel: 'direct', source: 'direct', label: 'Direct' }
+    ));
+
+    render(<LeadSourceAnalysis startDateKey="2026-11-01" endDateKey="2026-11-15" showFunnel={false} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Identified non-direct source:/).textContent).toContain('1 / 2 (50%)');
+    });
+    expect(screen.getByText(/Channel reconciliation needed:/).textContent).toContain('1 lead');
+    const coverage = screen.getByText('Attribution coverage').parentElement;
+    expect(coverage?.textContent).toContain('2 (100%)');
+    // This diagnostic must never relabel the canonical stored lead or imply 2 paid conversions.
+    expect(screen.getByText('Google Organic')).toBeTruthy();
+    expect(screen.queryByText(/confirmed bookings/)).not.toBeNull();
+  });
 });
 
 describe('LeadSourceAnalysis enrolled-only conversion', () => {
