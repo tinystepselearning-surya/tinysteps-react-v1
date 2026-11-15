@@ -17,6 +17,7 @@ vi.mock('../../lib/firestoreReadLogging', () => ({
 vi.mock('firebase/firestore', () => ({
   collection: (...args: unknown[]) => ({ kind: 'collection', args }),
   query: (...args: unknown[]) => ({ kind: 'query', args }),
+  limit: (value: number) => ({ kind: 'limit', value }),
   where: (...args: unknown[]) => ({ kind: 'where', args }),
   Timestamp: {
     fromDate: (value: Date) => value,
@@ -78,6 +79,50 @@ const leadSnapshot = (id: string, source: string) => ({
       }),
     },
   ],
+});
+
+describe('LeadSourceAnalysis exact paid-source evidence', () => {
+  beforeEach(() => getDocsLoggedMock.mockReset());
+
+  it('verifies an explicitly linked allocated payment only when staff requests the check', async () => {
+    const lead = {
+      id: 'lead-with-payment',
+      data: () => ({
+        source: 'website', status: 'admitted_confirmed',
+        receivedAt: new Date(), enrollmentId: 'enrollment-1',
+        dedupeCanonicalLeadId: 'lead-with-payment',
+      }),
+    };
+    getDocsLoggedMock.mockImplementation((label: unknown) => {
+      if (String(label || '').includes(':payment-evidence:')) {
+        return Promise.resolve({ docs: [{ data: () => ({
+          enrollmentId: 'enrollment-1', paidAmount: 400,
+          paymentIds: ['payment-1'], status: 'partial',
+        }) }] });
+      }
+      return Promise.resolve({ docs: label === 'LeadSourceAnalysis:30d' ? [lead] : [] });
+    });
+
+    render(<LeadSourceAnalysis showFunnel={false} />);
+    await waitFor(() => expect(screen.getByText('Legacy / unattributed')).toBeInTheDocument());
+    expect(getDocsLoggedMock.mock.calls.some(([label]) => String(label).includes('payment-evidence'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Verify linked payments' }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/1 payment-evidenced admissions/));
+    expect(getDocsLoggedMock.mock.calls.some(([label]) => String(label).includes('payment-evidence'))).toBe(true);
+  });
+
+  it('leaves an unlinked admission unknown without scanning the payments ledger', async () => {
+    getDocsLoggedMock.mockImplementation((label: string) => Promise.resolve({
+      docs: label === 'LeadSourceAnalysis:30d'
+        ? [{ id: 'unlinked', data: () => ({ source: 'website', status: 'admitted_confirmed', receivedAt: new Date() }) }]
+        : [],
+    }));
+    render(<LeadSourceAnalysis showFunnel={false} />);
+    await waitFor(() => expect(screen.getByText('Legacy / unattributed')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Verify linked payments' }));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toMatch(/1 admissions with unknown payment evidence/));
+    expect(getDocsLoggedMock.mock.calls.some(([label]) => String(label).includes('payment-evidence'))).toBe(false);
+  });
 });
 
 describe('LeadSourceAnalysis request ordering', () => {
