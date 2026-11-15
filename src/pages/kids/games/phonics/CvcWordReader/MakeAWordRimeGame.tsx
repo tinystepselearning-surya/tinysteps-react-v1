@@ -505,6 +505,7 @@ function PublicSpellingAdventure({
   const [sessionRound, setSessionRound] = useState(0);
   const [twoLetterMode, setTwoLetterMode] = useState(false);
   const [builtLetters, setBuiltLetters] = useState<string[]>([]);
+  const [usedBuildTileIndices, setUsedBuildTileIndices] = useState<number[]>([]);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
   const [isAdvancing, setIsAdvancing] = useState(false);
@@ -535,6 +536,7 @@ function PublicSpellingAdventure({
   useEffect(() => {
     setImgOk(true);
     setBuiltLetters([]);
+    setUsedBuildTileIndices([]);
     setTypedAnswer("");
     typedSubmissionLockRef.current = false;
     setFeedback("idle");
@@ -561,6 +563,7 @@ function PublicSpellingAdventure({
     setLevelIndex(safeIndex);
     setQueue(publicSpellingPracticeRound(level, round));
     setBuiltLetters([]);
+    setUsedBuildTileIndices([]);
     setTypedAnswer("");
     setFeedback("idle");
     setIsAdvancing(false);
@@ -626,6 +629,7 @@ function PublicSpellingAdventure({
         return [];
       });
       setBuiltLetters([]);
+      setUsedBuildTileIndices([]);
       setTypedAnswer("");
       setFeedback("idle");
       setIsAdvancing(false);
@@ -659,14 +663,16 @@ function PublicSpellingAdventure({
     }, 520);
   };
 
-  const handleBuildLetter = (letter: string) => {
-    if (!current || current.mode !== "build" || isAdvancing) return;
+  const handleBuildLetter = (letter: string, tileIndex: number) => {
+    if (!current || current.mode !== "build" || isAdvancing ||
+        usedBuildTileIndices.includes(tileIndex)) return;
     const expected = current.word[builtLetters.length];
     if (letter !== expected) {
       markWrong();
       return;
     }
     const nextLetters = [...builtLetters, letter];
+    setUsedBuildTileIndices(indices => [...indices, tileIndex]);
     setBuiltLetters(nextLetters);
     if (nextLetters.join("") === current.word) {
       markCorrect();
@@ -753,8 +759,8 @@ function PublicSpellingAdventure({
             <button
               key={`${challenge.id}-tile-${letter}-${index}`}
               type="button"
-              disabled={isAdvancing}
-              onClick={() => handleBuildLetter(letter)}
+              disabled={isAdvancing || usedBuildTileIndices.includes(index)}
+              onClick={() => handleBuildLetter(letter, index)}
               className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55 sm:h-16 sm:w-16 sm:text-4xl"
               aria-label={`Letter ${letter}`}
             >
