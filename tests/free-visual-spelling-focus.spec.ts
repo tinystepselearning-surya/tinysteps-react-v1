@@ -32,6 +32,9 @@ for (const viewport of [
 
     await page.getByRole('button', { name: /Word Explorer/ }).click();
     await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
+    await page.getByRole('button', { name: 'Change level' }).click();
+    await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+    await page.getByRole('button', { name: /Word Explorer/ }).click();
 
     await page.getByRole('button', { name: 'Exit to Free Games' }).click();
     await expect(page).toHaveURL(/\/free-english-games-for-kids$/);
