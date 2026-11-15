@@ -683,7 +683,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const sortedRows = useMemo(() => {
     const list = filteredRows.filter((row) =>
       row.bucket === bucket && (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)));
-    const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
+    const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, wait_teacher: 3, view_outcome: 4 };
     return [...list].sort((a, b) => {
       if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
