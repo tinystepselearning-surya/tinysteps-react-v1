@@ -669,7 +669,7 @@ export default function PublicAssessmentForm({
           </div>
           {errors.contactPreference && <p className="text-xs text-rose-600">{errors.contactPreference}</p>}
           <p className="text-xs leading-5 text-slate-600">
-            By submitting, you request contact about this enquiry only. WhatsApp is optional; no marketing.
+            By submitting, you request contact about this enquiry only. WhatsApp is optional; this does not subscribe you to marketing.
           </p>
         </fieldset>
 
