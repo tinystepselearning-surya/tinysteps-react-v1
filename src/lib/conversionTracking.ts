@@ -427,17 +427,14 @@ export function isHighIntentCtaLabel(label: string): boolean {
   );
 }
 
+// Legacy function name retained for existing CTA call sites.
+// Exactly one canonical assessment click event is emitted per invocation.
 export const trackBookDemoClick = (location: string) => {
   const pagePath = resolvePagePath();
   trackEvent('book_assessment_click', {
     location,
     page_path: pagePath,
     ...buildAttributionEventParams(pagePath),
-  });
-  trackEvent('book_demo_click', {
-    location,
-    page: pagePath,
-    page_path: pagePath,
   });
 };
 
@@ -674,7 +671,7 @@ export function trackDemoBookingComplete(params: FunnelDemoBookingCompleteParams
 
 export function trackConversionEvent(
   eventName:
-    | 'book_demo_click'
+    | 'book_assessment_click'
     | 'whatsapp_click'
     | 'lead_form_submit'
     | 'form_error'
