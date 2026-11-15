@@ -1,5 +1,19 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T13:40:36.563Z UTC (15 November 2026 IST, slot 20 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12; distinct current-day timestamps counted separately from previous days.
+- **15 November IST: 202/202 distinct exact-URL provider retrieval attempts (100%).** Slot 20 rows 191–202: **12/12** returned relevant page-specific H1 headings and substantive extracted text for three course pages and nine parent guides. Evidence: `turn747095view0`–`turn747095view11`; provider labelled text/html, crawled yesterday.
+- **Fully origin-verified: 0/202 today.** Independent curl probe at 2026-11-15T13:40:36Z UTC failed DNS resolution (exit 6); provider-extracted content cannot verify HTTP status, redirect, canonical, robots/noindex, raw HTML, JSON-LD or bot accessibility. All technical production readiness remains **UNVERIFIED**. This is an audit-environment limitation, not a confirmed website failure.
+- Individual UTC evidence-handling markers recorded per row, **not independently measured HTTP request times**.
+- GitHub Actions in-progress query returned **zero** runs at this check; legacy workflow administrative disabled state could not be independently retrieved. User's explicit disable confirmation remains the operating basis. No GitHub audit workflow triggered.
+- No verified production regression or improvement; CHANGES.md unchanged. No source, workflow or production changes.
+- Next slots 21–22: reconcile/recover blocked or incomplete audits; slots 23–24: catch-up as eligible. **Complete provider attempt coverage does not mean origin verification.**
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T12:42:52.226Z UTC (15 November 2026 IST, slot 19 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Current-day timestamps and distinct URL count checked; previous-day checks excluded.
