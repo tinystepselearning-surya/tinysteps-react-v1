@@ -1,7 +1,9 @@
 /**
- * Ages 8–10+ visual spelling prototype: deliberately silent, with contextual word work.
- * Reviewed examples only; no phoneme inference, speech APIs, or backend writes.
+ * Ages 8–10+ silent spelling lab: editor-curated written word practice.
+ * Twenty-four puzzles per level, served in eight-item mini-rounds.
+ * No phoneme inference, speech APIs, child profiles or backend writes.
  */
+import { VISUAL_SPELLING_EXTRA_PUZZLES } from './visualSpellingCurriculumExpansion';
 export type VisualSpellingStage = 'explorer' | 'builder' | 'expert' | 'master';
 type BasePuzzle = {
   id: string;
@@ -278,6 +280,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     hint: 'Compare the first three letters of the words.',
     learningNote: 'Misinterpretation begins with mis-, meaning wrongly, followed by interpretation.',
   },
+  ...VISUAL_SPELLING_EXTRA_PUZZLES,
 ];
 
 /**
