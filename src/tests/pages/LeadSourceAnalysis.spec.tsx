@@ -95,8 +95,8 @@ describe('LeadSourceAnalysis enrolled-only conversion', () => {
     }));
     render(<LeadSourceAnalysis showFunnel={false} />);
     await waitFor(() => {
-      const card = screen.getByText('Enrolled');
-      expect(card.parentElement?.textContent).toContain('1 (50%)');
+      const card = screen.getAllByText('Enrolled').find((node) => node.tagName === 'DIV');
+      expect(card?.parentElement?.textContent).toContain('1 (50%)');
     });
     expect(screen.getByText('Lead → enrolled')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Verify linked payments' })).not.toBeInTheDocument();
