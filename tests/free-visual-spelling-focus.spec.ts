@@ -12,7 +12,7 @@ for (const viewport of [
 
     const game = page.getByRole('region', { name: 'Spelling Puzzle Lab' });
     await expect(game.getByRole('heading', { name: 'Spelling Puzzle Lab', level: 1 })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
     await expect(page.getByText(/free for ages 8–10\+.*no login.*no sound/i)).toBeVisible();
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
       'href', 'https://tinystepslearning.com/free-spelling-game-for-kids',
@@ -30,13 +30,13 @@ for (const viewport of [
     );
     expect(horizontalOverflow).toBe(false);
 
-    await page.getByRole('button', { name: /Word Explorer/ }).click();
+    await page.getByRole('button', { name: /Everyday Words/ }).click();
     await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
 
     // In-level back stays inside the spelling game, not the unrelated
     // English Excellence Games directory, and preserves the puzzle URL.
     await page.getByRole('button', { name: 'All Spelling Levels' }).click();
-    await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
     await expect(page).toHaveURL(/\/free-spelling-game-for-kids\?play=1&mode=puzzles$/);
 
     // A separate, explicitly labelled exit is available only on the chooser.
@@ -70,7 +70,7 @@ test('classic spelling opens at a playable word and scrolls as a normal page on 
   await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Spelling Adventure', level: 1 })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Build It', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build a Word', level: 2 })).toBeVisible();
   // Picture assets can fall back to the authored emoji; the meaning clue
   // and word-building challenge must work in either rendering.
   await expect(page.getByText('A small pet that says meow.')).toBeVisible();
@@ -86,6 +86,8 @@ test('classic spelling opens at a playable word and scrolls as a normal page on 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
   await page.getByRole('button', { name: /spelling games/i }).click();
   await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+  await expect(page.getByRole('heading', { name: 'Free Spelling Game for Kids', level: 1 })).toBeVisible();
 });
 
 test('English Games directory has no duplicate standalone Puzzle Lab listing', async ({ page }) => {
@@ -100,17 +102,17 @@ test('English Games directory has no duplicate standalone Puzzle Lab listing', a
 
 test('guest puzzle progress resets completely on refresh', async ({ page }) => {
   await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: /Word Explorer/ }).click();
+  await page.getByRole('button', { name: /Everyday Words/ }).click();
   await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
   await expect(page.getByText('Puzzle 1 of 8')).toHaveCount(0);
 });
 
 test('long advanced sorting word fits a compact 320px screen', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 });
   await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
-  await page.getByRole('button', { name: /Word Architect/ }).click();
+  await page.getByRole('button', { name: /Long Word Challenge/ }).click();
   for (let index = 0; index < 3; index += 1) {
     await page.getByRole('button', { name: /need a hint/i }).click();
     await page.getByRole('button', { name: /show answer & learn/i }).click();
