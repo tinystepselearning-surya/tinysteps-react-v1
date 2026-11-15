@@ -4,7 +4,8 @@
  * No phoneme inference, speech APIs, child profiles or backend writes.
  */
 import { VISUAL_SPELLING_EXTRA_PUZZLES } from './visualSpellingCurriculumExpansion';
-export type VisualSpellingStage = 'explorer' | 'builder' | 'expert' | 'master';
+import { VISUAL_SPELLING_BRIDGE_PUZZLES } from './visualSpellingBridgeCurriculum';
+export type VisualSpellingStage = 'explorer' | 'builder' | 'syllables' | 'expert' | 'morphology' | 'master';
 type BasePuzzle = {
   id: string;
   stage: VisualSpellingStage;
@@ -33,7 +34,9 @@ export const VISUAL_SPELLING_STAGES: readonly {
 }[] = [
   { id: 'explorer', title: 'Everyday Words', subtitle: 'Build familiar words, spot mistakes and fill missing letters.', examples: 'friend · school · planet' },
   { id: 'builder', title: 'Patterns & Endings', subtitle: 'Match word endings, prefixes and tricky letter patterns.', examples: 'careful · receive · happiness' },
+  { id: 'syllables', title: 'Longer & Compound Words', subtitle: 'Build compound words and practise longer written word patterns.', examples: 'sunflower · basketball · umbrella' },
   { id: 'expert', title: 'Tricky Spellings', subtitle: 'Practise double letters, spelling changes and longer words.', examples: 'necessary · calendar · opportunity' },
+  { id: 'morphology', title: 'Prefixes & Word Parts', subtitle: 'Build and recognise words using meaningful beginnings and endings.', examples: 'unhappiness · disapproval · rearrangement' },
   { id: 'master', title: 'Long Word Challenge', subtitle: 'Build and check long words using meaningful word parts.', examples: 'international · accommodation · misunderstanding' },
 ];
 
@@ -281,6 +284,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     learningNote: 'Misinterpretation begins with mis-, meaning wrongly, followed by interpretation.',
   },
   ...VISUAL_SPELLING_EXTRA_PUZZLES,
+  ...VISUAL_SPELLING_BRIDGE_PUZZLES,
 ];
 
 /**
@@ -311,16 +315,18 @@ export function visualSpellingPracticeRound(
   round: number,
 ): VisualSpellingPuzzle[] {
   const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage);
-  if (!round) return selected.slice(0, 8);
   const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
-  const offset = ((Math.max(0, Math.floor(round)) % 3) * 2);
+  const normalizedRound = Math.max(0, Math.floor(round)) % 3;
+  const offset = normalizedRound * 2;
   const groups = activityKinds.map(kind =>
     selected.filter(puzzle => puzzle.kind === kind).slice(offset, offset + 2)
   );
   const next = [0, 1].flatMap(i => groups.map(group => group[i]).filter(
     (item): item is VisualSpellingPuzzle => Boolean(item)
   ));
-  return shuffleVisualSpellingPuzzles(next);
+  // Preserve the original eight-puzzle introduction for existing learners,
+  // but interleave categories in newly added stages as well.
+  return normalizedRound === 0 ? next : shuffleVisualSpellingPuzzles(next);
 }
 
 export const visualSpellingAnswer = (puzzle: VisualSpellingPuzzle): string => {
