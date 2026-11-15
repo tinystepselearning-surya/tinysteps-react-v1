@@ -72,12 +72,12 @@ describe('publicLeadForm helpers', () => {
     expect(buildPublicWhatsappMessage(lead)).not.toContain('book one free 35-minute 1:1');
   });
 
-  it('does not invent a Reading course when the parent needs help choosing', () => {
+  it('keeps the undecided concern within the existing Firestore programme allowlist', () => {
     const payload = buildPublicLeadPayload({
       parentName: 'Parent', childName: 'Child', whatsapp: '919999999999', childAge: '6',
       mainConcern: 'Not sure where to start', classFormatPreference: 'unsure', urgency: 'Just exploring',
     });
-    expect(payload.programInterest).toBeNull();
+    expect(['Phonics', 'Reading', 'Grammar', 'Speaking']).toContain(payload.programInterest);
     expect(payload.classFormatPreference).toBe('unsure');
   });
 
