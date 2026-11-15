@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T22:42:07.665Z UTC (16 November 2026 IST, slot 5)
+
+- Tracker validated: **202 selected and unique URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted URLs: **50/202 (24.75%)**, rows 1–50; **152 not yet attempted**; **0/202 fully origin-verified**. Prior-day attempts excluded.
+- Slot 5 rows 41–50: ten exact-URL web.open retrievals returned substantive page-specific provider-extracted text (refs `turn272554view0`–`turn272554view9`), covering Why Tiny Steps, team, founder profile, class samples, testimonials, careers, courses, curriculum, FAQ and phonics comparison. Provider labels nine crawled yesterday, one today; no origin HTTP response was independently verified.
+- Direct HTTPS curl at **2026-11-15T22:41:52Z** failed with `curl: (6) Could not resolve host: tinystepslearning.com`. HTTP status, redirect destination, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain **UNVERIFIED**. Row UTC `2026-11-15T22:42:07.665Z` is an evidence-handling marker, not measured origin request time.
+- GitHub Actions in-progress query returned `total_count: 0`; legacy workflow administrative state endpoint was unavailable, so disablement is not independently confirmed. User's explicit UI disablement remains operating basis. No GitHub workflow was run or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 6, rows 51–60**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T21:45:15.734Z UTC (16 November 2026 IST, slot 4)
 
 - Tracker validated before audit: **202 selected URLs, 202 unique, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted URLs: **40/202 (19.80%)**, rows 1–40; **162 not yet attempted**; **0/202 fully origin-verified**. Prior-day attempts excluded.
