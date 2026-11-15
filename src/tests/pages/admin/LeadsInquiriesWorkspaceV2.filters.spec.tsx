@@ -14,7 +14,8 @@ const mocks = vi.hoisted(() => ({
   loadedLeads: [] as Array<Record<string, unknown>>,
 }));
 
-vi.mock('../../../pages/admin/leadsPaged', () => ({
+vi.mock('../../../pages/admin/leadsPaged', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../../pages/admin/leadsPaged')>()),
   LEAD_PAGE_SIZE_OPTIONS: [10, 25, 50, 100],
   usePagedLeads: mocks.usePagedLeads,
 }));
@@ -316,6 +317,31 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(mocks.retryDemo).not.toHaveBeenCalled();
     expect(mocks.getTeachers).not.toHaveBeenCalled();
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows a different-day returning parent as a fresh Open review without resetting a prior closed decision', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    const first = todayStart - 3 * 24 * 60 * 60 * 1000;
+    mocks.loadedLeads = [{
+      id: 'returning-parent', parentName: 'Returning Parent',
+      childName: 'Same Child', primaryPhone: '919100006677',
+      source: 'website', programInterest: 'Phonics',
+      status: 'not_interested',
+      createdAt: { toMillis: () => first },
+      receivedAt: { toMillis: () => first },
+      lastInquiryAt: { toMillis: () => todayStart + 60_000 },
+      contactPreference: 'phone', contactPermission: true,
+    }];
+    render(<LeadsInquiriesWorkspaceV2 />);
+
+    expect(await screen.findByText('Returning Parent')).toBeInTheDocument();
+    expect(screen.getByText('New enquiry · Returning parent')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Review new enquiry' })).toBeInTheDocument();
+    expect(screen.getByText(/Existing history retained/)).toBeInTheDocument();
+    expect(screen.getByText('Returning enquiry · Needs review')).toBeInTheDocument();
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    expect(mocks.getDemoDoc).not.toHaveBeenCalled();
+    expect(screen.queryByRole('button', { name: 'Assign teacher' })).not.toBeInTheDocument();
   });
 
   it('shows phone callback requests and keeps phone-only parents out of WhatsApp shortcuts', async () => {

@@ -96,12 +96,52 @@ const timestampToMillis = (value: unknown): number => {
 
 /**
  * Universal lead-received timestamp. receivedAt is authoritative; requestedAt and
- * createdAt are compatibility fallbacks only for historical records.
+ * createdAt are compatibility fallbacks only for historical records. Do not replace
+ * this first-touch date with a later returning-enquiry timestamp.
  */
 export const leadReceivedAtMillis = (lead: Record<string, unknown>): number =>
   timestampToMillis(lead.receivedAt) ||
   timestampToMillis(lead.requestedAt) ||
   timestampToMillis(lead.createdAt);
+
+/** Latest submitted website enquiry; not an edit timestamp or a new unique child. */
+export const leadLatestInquiryAtMillis = (lead: Record<string, unknown>): number =>
+  timestampToMillis(lead.lastInquiryAt) || leadReceivedAtMillis(lead);
+
+const enquiryIstDay = (ms: number): string => {
+  if (!ms) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric',
+  }).formatToParts(new Date(ms));
+  const value = (kind: string) => parts.find((item) => item.type === kind)?.value || '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+};
+
+/**
+ * A different IST calendar date constitutes a new operational enquiry.
+ * Do not rewrite receivedAt (first-touch cohort) or infer activity from updatedAt.
+ */
+export const isReturningWebsiteEnquiryInRange = (
+  lead: Record<string, unknown>,
+  dateFromMs: number,
+  dateToMs: number,
+): boolean => {
+  if (normalizeText(lead.source) !== 'website' || (!dateFromMs && !dateToMs)) return false;
+  const first = leadReceivedAtMillis(lead);
+  const latest = timestampToMillis(lead.lastInquiryAt);
+  return Boolean(first && latest &&
+    enquiryIstDay(first) !== enquiryIstDay(latest) &&
+    latest >= first &&
+    (!dateFromMs || latest >= dateFromMs) &&
+    (!dateToMs || latest <= dateToMs));
+};
+
+const enquiryActivityInRange = (
+  lead: Record<string, unknown>,
+  from: number,
+  to: number,
+): number => isReturningWebsiteEnquiryInRange(lead, from, to)
+  ? leadLatestInquiryAtMillis(lead) : leadReceivedAtMillis(lead);
 
 const leadReceivedAtValue = (lead: Record<string, unknown>): unknown => {
   if (timestampToMillis(lead.receivedAt)) return lead.receivedAt;
@@ -146,7 +186,7 @@ const buildCreatedAtConstraints = (
 };
 
 const buildReceiptRangeConstraints = (
-  field: 'receivedAt' | 'requestedAt' | 'createdAt',
+  field: 'receivedAt' | 'requestedAt' | 'createdAt' | 'lastInquiryAt',
   dateFromMs: number,
   dateToMs: number,
 ): QueryConstraint[] => {
@@ -162,23 +202,25 @@ const isWithinReceivedDateRange = (
   dateFromMs: number,
   dateToMs: number,
 ): boolean => {
-  const receivedAtMs = leadReceivedAtMillis(docSnapshot.data());
-  if (!receivedAtMs) return false;
-  if (dateFromMs && receivedAtMs < dateFromMs) return false;
-  if (dateToMs && receivedAtMs > dateToMs) return false;
-  return true;
+  const lead = docSnapshot.data();
+  const receivedAtMs = leadReceivedAtMillis(lead);
+  const originalInRange = receivedAtMs > 0 &&
+    (!dateFromMs || receivedAtMs >= dateFromMs) &&
+    (!dateToMs || receivedAtMs <= dateToMs);
+  return originalInRange || isReturningWebsiteEnquiryInRange(lead, dateFromMs, dateToMs);
 };
 
 /**
- * Bounded receipt-date read. Canonical rows come from receivedAt. Two additional
- * bounded compatibility lanes retain historical records that predate receivedAt.
- * The three result sets are de-duplicated before workflow-bucket filtering.
+ * Date-scoped operational read. First-touch receivedAt remains immutable; legacy
+ * requestedAt/createdAt lanes remain. A fourth indexed lastInquiryAt lane makes
+ * returning website parents visible on the day of their newest submission.
+ * Rows stay unique by canonical lead ID, including repeated same-day submits.
  */
 const getReceivedDateRangeDocs = async (
   dateFromMs: number,
   dateToMs: number,
 ): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
-  const [receivedSnapshot, requestedSnapshot, createdSnapshot] = await Promise.all([
+  const [receivedSnapshot, requestedSnapshot, createdSnapshot, returningSnapshot] = await Promise.all([
     getDocs(query(
       collection(db, LEADS_COLLECTION),
       ...buildReceiptRangeConstraints('receivedAt', dateFromMs, dateToMs),
@@ -190,6 +232,10 @@ const getReceivedDateRangeDocs = async (
     getDocs(query(
       collection(db, LEADS_COLLECTION),
       ...buildReceiptRangeConstraints('createdAt', dateFromMs, dateToMs),
+    )),
+    getDocs(query(
+      collection(db, LEADS_COLLECTION),
+      ...buildReceiptRangeConstraints('lastInquiryAt', dateFromMs, dateToMs),
     )),
   ]);
 
@@ -205,10 +251,18 @@ const getReceivedDateRangeDocs = async (
       docsById.set(docSnapshot.id, docSnapshot);
     }
   });
+  returningSnapshot.docs.forEach((docSnapshot) => {
+    if (isReturningWebsiteEnquiryInRange(docSnapshot.data(), dateFromMs, dateToMs)) {
+      docsById.set(docSnapshot.id, docSnapshot);
+    }
+  });
 
   return Array.from(docsById.values())
     .filter((docSnapshot) => isWithinReceivedDateRange(docSnapshot, dateFromMs, dateToMs))
-    .sort(sortLeadDocsByReceivedAtDesc);
+    .sort((left, right) =>
+      enquiryActivityInRange(right.data(), dateFromMs, dateToMs) -
+      enquiryActivityInRange(left.data(), dateFromMs, dateToMs) ||
+      right.id.localeCompare(left.id));
 };
 
 const getBucketDocs = async (bucket: SimpleLeadBucket): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
@@ -541,6 +595,44 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       (error) => onErrorRef.current(error as Error),
     );
   }, [bucket, dateFromMs, dateToMs, effectivePageIndex, refreshCounts]);
+
+  // A returning parent updates an older canonical lead, not a newly created
+  // document. The existing createdAt watcher won't see that row; this additional
+  // five-row watch refreshes Today when the server-side merge arrives.
+  useEffect(() => {
+    if (!hasDateFilter || (bucket !== 'all' && bucket !== 'open') || effectivePageIndex !== 0) return undefined;
+    let hasBaseline = false;
+    let priorInquiryTimes = new Map<string, number>();
+    return onSnapshot(
+      query(collection(db, LEADS_COLLECTION), orderBy('lastInquiryAt', 'desc'), limit(NEW_LEAD_WATCH_SIZE)),
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        if (snapshot.metadata.fromCache) return;
+        const nextTimes = new Map(snapshot.docs.map((document) =>
+          [document.id, leadLatestInquiryAtMillis(document.data())]));
+        if (!hasBaseline) {
+          hasBaseline = true;
+          priorInquiryTimes = nextTimes;
+          return;
+        }
+        const now = Date.now();
+        const hasNewReturningEnquiry = snapshot.docChanges().some((change) => {
+          if (change.type === 'removed' || change.doc.metadata.hasPendingWrites) return false;
+          const data = change.doc.data();
+          const latest = leadLatestInquiryAtMillis(data);
+          return isReturningWebsiteEnquiryInRange(data, dateFromMs, dateToMs) &&
+            priorInquiryTimes.get(change.doc.id) !== latest &&
+            latest > 0 && now - latest >= 0 &&
+            now - latest <= RECENT_NOTIFICATION_WINDOW_MS;
+        });
+        priorInquiryTimes = nextTimes;
+        if (!hasNewReturningEnquiry) return;
+        receivedRangeCacheRef.current = null;
+        setReloadVersion((current) => current + 1);
+      },
+      (error) => onErrorRef.current(error as Error),
+    );
+  }, [bucket, dateFromMs, dateToMs, effectivePageIndex, hasDateFilter]);
 
   const reloadPage = useCallback((resetToFirst = false) => {
     if (bucket !== 'all') smallBucketCacheRef.current.delete(bucket);
