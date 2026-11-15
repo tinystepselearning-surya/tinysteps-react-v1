@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { trackFreeResourceToTrialClick } from "../../lib/conversionTracking";
 
@@ -41,6 +42,12 @@ type SpellingGamesLandingProps = {
 
 // The public page and FAQ JSON-LD share the same content in the route registry.
 export default function SpellingGamesLanding({ faqs }: SpellingGamesLandingProps) {
+  // Returning from either full-screen game must show the spelling page's
+  // heading, not the scroll position inherited from the previous route.
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f7f8ff] text-[#232449]">
       <div className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 sm:pt-9">
