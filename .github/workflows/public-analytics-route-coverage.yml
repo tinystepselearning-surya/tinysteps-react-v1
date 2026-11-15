@@ -1,0 +1,32 @@
+name: Public Analytics Route Coverage Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/publicAnalyticsPathPolicy.js'
+      - 'src/tests/seo/clarityRoutePolicy.spec.ts'
+      - '.github/workflows/public-analytics-route-coverage.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  route-coverage:
+    name: Verify public analytics allowlist and private-route exclusions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Validate public/private route policy
+        run: npx vitest run src/tests/seo/clarityRoutePolicy.spec.ts
+      - name: Check TypeScript
+        run: npm run typecheck
+      - name: Confirm validation-only run
+        run: echo "No analytics settings, user records, or production systems changed."
