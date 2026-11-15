@@ -163,7 +163,6 @@ const LetterTracingWithSounds = lazy(() => import('../pages/kids/games/phonics/L
 const Blend2LettersGame = lazy(() => import('../pages/kids/games/phonics/MyFirstWords/MyFirstWordsGame'));
 const CvcWordReaderGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/CvcWordReaderGame'));
 const MakeAWordRimeGame = lazy(() => import('../pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame'));
-const VisualSpellingPuzzleLab = lazy(() => import('../pages/kids/games/VisualSpellingPuzzleLab'));
 const SentenceStepperStage4 = lazy(() => import('../pages/kids/games/phonics/SentenceStepperStage4'));
 const BuildBetterSentencesReorder = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesReorder'));
 const BuildBetterSentencesFillBlank = lazy(() => import('../pages/kids/games/grammar/BuildBetterSentencesFillBlank'));
@@ -882,7 +881,6 @@ const router = createBrowserRouter(
             { path: 'games/phonics/cvc-word-reader', element: <CvcWordReaderGame /> },
             { path: 'games/phonics/cvc-word-reader/make-a-word', element: <MakeAWordRimeGame /> },
             { path: 'games/phonics/spelling-practice', element: <MakeAWordRimeGame /> },
-            { path: 'games/spelling-puzzle-lab', element: <VisualSpellingPuzzleLab /> },
             { path: 'games/phonics/sentence-stepper', element: <SentenceStepperStage4 /> },
             { path: 'games/grammar/build-better-sentences', element: <BuildBetterSentencesReorder /> },
             { path: 'games/grammar/build-better-sentences/fill-missing-word', element: <BuildBetterSentencesFillBlank /> },
