@@ -24,6 +24,46 @@ test('homepage booking modal owns the screen and restores support after close', 
   await expect(supportDock).toBeVisible({ timeout: 5000 });
 });
 
+test('mobile assessment close control never overlays fields while scrolling', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => window.dispatchEvent(new Event('tinysteps:open-assessment')));
+
+  const dialog = page.getByRole('dialog', { name: 'Book an assessment' });
+  const close = dialog.getByRole('button', { name: 'Close assessment form' });
+  const scrollRegion = dialog.locator('[data-assessment-scroll-region="1"]');
+  await expect(scrollRegion).toBeVisible();
+
+  for (const viewport of [
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+    { width: 430, height: 932 },
+  ]) {
+    await page.setViewportSize(viewport);
+    await scrollRegion.evaluate((node) => { node.scrollTop = node.scrollHeight; });
+    await expect(close).toBeInViewport();
+
+    const measurements = await dialog.evaluate((node) => {
+      const toolbar = node.querySelector('[data-assessment-toolbar="1"]');
+      const scroller = node.querySelector('[data-assessment-scroll-region="1"]');
+      const closeControl = node.querySelector('[aria-label="Close assessment form"]');
+      if (!toolbar || !scroller || !closeControl) return null;
+      return {
+        closeBottom: closeControl.getBoundingClientRect().bottom,
+        scrollTop: scroller.getBoundingClientRect().top,
+        scrollOffset: scroller.scrollTop,
+        toolbarBottom: toolbar.getBoundingClientRect().bottom,
+      };
+    });
+    expect(measurements).not.toBeNull();
+    expect(measurements!.closeBottom).toBeLessThanOrEqual(measurements!.scrollTop + 1);
+    expect(measurements!.toolbarBottom).toBeLessThanOrEqual(measurements!.scrollTop + 1);
+    expect(measurements!.scrollOffset).toBeGreaterThan(0);
+  }
+  await close.click();
+  await expect(dialog).toHaveCount(0);
+});
+
 test('dedicated booking page has no floating support and shows the submit action on desktop', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/book-demo', { waitUntil: 'domcontentloaded' });
