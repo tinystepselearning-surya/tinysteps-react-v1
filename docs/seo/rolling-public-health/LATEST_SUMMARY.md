@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T02:45:35.214Z UTC (15 November 2026 IST, slot 9 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
+- **15 November IST: 90/202 distinct exact-URL provider retrieval attempts (44.55%); 112 unattempted.** Previous-day timestamps excluded.
+- Slot 9 rows 81–90: **10/10 exact-URL provider retrievals returned page-specific extracted text** covering writing, phonics pricing, grammar, spoken English, general English, Hyderabad and age-specific programmes. Evidence: `turn631389view0`–`turn631389view9` (provider-labelled text/html, crawled yesterday).
+- **Fully origin-verified: 0/202 today.** Origin HTTP status, final redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider text cannot establish production health.
+- UTC per-row evidence-handling markers do not independently establish origin request times.
+- GitHub Actions API returned **zero in-progress and zero queued repository runs** at audit time. Legacy workflow administrative disablement could not be independently retrieved; user's confirmed disablement remains operating basis. No workflow executed or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No production/workflow changes.
+- Next eligible batch: slot 10, rows 91–100, subject to recovery of earlier eligible unchecked URLs.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T01:41:16.966Z UTC (15 November 2026 IST, slot 8 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
