@@ -560,7 +560,7 @@ export default function LeadAdminToolsMenu({
               </Button>
             </div>
             <p className="text-xs text-slate-500">
-              Record an actual contact attempt or interaction, not just opening WhatsApp. Outcomes are staff-reported, not externally verified. Follow-up dates remain managed through Admin Review.
+              Record only actual interactions, not merely opening WhatsApp or preparing a message. An unanswered call is a valid attempted-contact outcome. All outcomes are staff-reported, not externally verified. Follow-up dates remain managed through Admin Review.
             </p>
           </div>
 
