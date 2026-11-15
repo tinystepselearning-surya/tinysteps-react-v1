@@ -227,8 +227,16 @@ export default function PublicAssessmentForm({
       nextErrors.childName = 'Please enter child name.';
     }
 
-    if (!form.whatsapp.trim()) {
-      nextErrors.whatsapp = 'Please enter WhatsApp number.';
+    const contactNumber = form.whatsapp.trim();
+    const contactDigits = contactNumber.replace(/\D/g, '');
+    if (!contactNumber) {
+      nextErrors.whatsapp = 'Please enter a mobile number so we can reach you.';
+    } else if (
+      !/^\+?[0-9\s()-]+$/.test(contactNumber) ||
+      contactDigits.length < 8 || contactDigits.length > 15 ||
+      contactNumber.length > 24
+    ) {
+      nextErrors.whatsapp = 'Enter a valid mobile number (8–15 digits, including country code where needed).';
     }
 
     if (!form.childAge) {
