@@ -245,3 +245,32 @@ test('two-letter warm-up remains optional, compact and separate from classic 6-s
   await expect(page.getByRole('heading', { name: 'Build a Word' })).toBeVisible();
   await expect(page.getByText('A small pet that says meow.')).toBeVisible();
 });
+
+test('tablet touch: puzzles are operable without mouse drag and do not clip at iPad size', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 820, height: 1180 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /Longer & Compound Words/ }).tap();
+    await expect(page.getByRole('heading', { name: 'Build from Word Parts' })).toBeVisible();
+    // Tap-based placement is a complete alternative to desktop drag-and-drop.
+    await page.getByRole('button', { name: /Add tile sun, position/ }).tap();
+    await page.getByRole('button', { name: /Add tile flower, position/ }).tap();
+    await page.getByRole('button', { name: 'Check spelling' }).tap();
+    await expect(page.getByText(/you got it: sunflower/i)).toBeVisible();
+    const widths = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    }));
+    expect(widths.document).toBeLessThanOrEqual(widths.viewport + 2);
+    await page.getByRole('button', { name: /All Spelling Levels/ }).tap();
+    await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
