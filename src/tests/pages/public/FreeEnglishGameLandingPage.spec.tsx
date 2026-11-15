@@ -399,8 +399,10 @@ describe("FreeEnglishGameLandingPage", () => {
     });
 
     expect(screen.getByRole("heading", { name: "Build a Word" })).toBeInTheDocument();
-    expect(screen.getByAltText("cat")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /letter c/i })).toBeInTheDocument();
+    // Replay intentionally rotates to the second curated word set, rather than
+    // restarting the same six preview words.
+    expect(screen.getByText("You wear it on your head.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /letter h/i })).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /spelling games/i }));
 
