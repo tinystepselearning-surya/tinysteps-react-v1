@@ -9,6 +9,10 @@ on:
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.css'
       - 'src/pages/public/PublicEnglishGamePlayer.tsx'
       - 'src/pages/public/FreeEnglishGameLandingPage.tsx'
+      - 'src/pages/public/SpellingGamesLanding.tsx'
+      - 'src/pages/kids/games/phonics/CvcWordReader/MakeAWordRimeGame.tsx'
+      - 'src/lib/publicEnglishGames.ts'
+      - 'src/tests/pages/public/FreeEnglishGameLandingPage.spec.tsx'
       - 'src/pages/public/FreeEnglishGamesHubPage.tsx'
       - 'src/pages/KidsGamesHub.tsx'
       - 'src/tests/pages/VisualSpellingPuzzles.spec.ts'
@@ -46,6 +50,7 @@ jobs:
           npx vitest run
           src/tests/pages/VisualSpellingPuzzles.spec.ts
           src/tests/pages/VisualSpellingPuzzleLab.spec.tsx
+          src/tests/pages/public/FreeEnglishGameLandingPage.spec.tsx
       - name: Install Chromium for game route checks
         run: npx playwright install --with-deps chromium
       - name: Test immersive puzzle route and classic-game regression in browser
