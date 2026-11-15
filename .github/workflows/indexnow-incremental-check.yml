@@ -37,10 +37,10 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          node scripts/resolve-deployment-impact.mjs \\
-            --before "$BASE_SHA" --functions-before "$BASE_SHA" \\
-            --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" \\
-            --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA" \\
+          node scripts/resolve-deployment-impact.mjs \
+            --before "$BASE_SHA" --functions-before "$BASE_SHA" \
+            --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" \
+            --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA" \
             > /tmp/indexnow-impact-summary.txt
           cat /tmp/indexnow-impact-summary.txt | grep -E 'Hosting changed:|Functions deployment required:|Firestore rules changed:|Firestore indexes changed:'
           grep -qx 'hosting_changed=true' "$GITHUB_OUTPUT"
