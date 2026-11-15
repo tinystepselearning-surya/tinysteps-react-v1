@@ -1024,12 +1024,10 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             </p>
           </>
         )}
-        {bucket !== 'open' && (
-          <p className="text-xs text-slate-500">
-            Scheduled Admin Review follow-ups due by today (IST) within the selected enquiry period only.
-            This is not a complete backlog or proof of parent contact.
-          </p>
-        )}
+        <p className="text-xs text-slate-500">
+          Scheduled Admin Review follow-ups due by today (IST) within the selected enquiry period only.
+          This is not a complete backlog or proof of parent contact.
+        </p>
       </div>
     </Card>
 
