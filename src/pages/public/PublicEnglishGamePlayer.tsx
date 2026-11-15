@@ -58,7 +58,7 @@ export default function PublicEnglishGamePlayer({
           forceAnonymousMode
           disableAudio
           publicSpellingAdventure
-          activityContextLabelOverride="Guest Play Mode • Spelling Adventure"
+          activityContextLabelOverride="Tiny Steps • Free Spelling Practice"
           missionReturnHrefOverride={publicPath}
           missionBackLabel="← Spelling Games"
         />
