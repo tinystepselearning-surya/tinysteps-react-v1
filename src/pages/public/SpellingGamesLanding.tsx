@@ -27,7 +27,7 @@ const games = [
     age: "Approx. ages 8–10+",
     label: "Try more challenging patterns",
     description: "Rearrange letters and word parts, sort spelling patterns, spot errors and spell words from memory. No sound-based tasks.",
-    features: ["6 progressive levels", "144 reviewed puzzles", "8 per round · more on replay"],
+    features: ["10 connected levels", "240 reviewed puzzles", "8 per round · more on replay"],
     href: PUZZLE_PATH,
     button: "Play Spelling Puzzle Lab",
     visual: "🧩",
