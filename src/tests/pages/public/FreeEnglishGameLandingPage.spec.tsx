@@ -694,8 +694,8 @@ describe("FreeEnglishGameLandingPage", () => {
     it("renders FAQs consistent with the two spelling games", () => {
       renderRoute("/free-spelling-game-for-kids");
 
-      expect(screen.getByText(/are both games free/i)).toBeInTheDocument();
-      expect(screen.getByText(/which game should my child choose/i)).toBeInTheDocument();
+      expect(screen.getByText(/are both spelling games free/i)).toBeInTheDocument();
+      expect(screen.getByText(/which spelling game should my child choose/i)).toBeInTheDocument();
       expect(screen.getByText(/does my child need headphones or sound/i)).toBeInTheDocument();
     });
 
