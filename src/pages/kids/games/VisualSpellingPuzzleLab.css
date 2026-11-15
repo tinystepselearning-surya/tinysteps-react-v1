@@ -140,7 +140,7 @@
   background: linear-gradient(105deg,#ecf9ff,#f1f6ff);
 }
 .ts-spelling-progress {
-  height: .78rem;
+  height: .52rem;
   flex: 1 1 0;
   border-radius: 999px;
   background: #e8eaf4;
@@ -150,6 +150,40 @@
 .ts-spelling-progress--active { background: linear-gradient(90deg,#ffab63,#ffcb7b); transform: scaleY(1.1); }
 .ts-spelling-surface button:focus-visible,
 .ts-spelling-surface input:focus-visible { outline: 3px solid #ffb84e; outline-offset: 4px; }
+/* A single compact reading/game surface, without nested scroll panes.
+ * Short mobile screens may scroll vertically; inputs and the Next button are
+ * never hidden or scaled below usable touch-target size. */
+.ts-spelling-gameplay {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.ts-spelling-gameplay .ts-spelling-tile,
+.ts-spelling-gameplay .ts-spelling-choice {
+  scroll-margin-block: 1rem;
+}
+.ts-spelling-gameplay .ts-spelling-slot {
+  min-width: 0;
+}
+@media (max-width: 480px) {
+  .ts-spelling-gameplay .ts-spelling-tile {
+    font-size: 1rem;
+    border-radius: .75rem;
+  }
+  .ts-spelling-gameplay .ts-spelling-choice {
+    border-radius: .9rem;
+  }
+  .ts-spelling-board {
+    border-radius: 1.1rem;
+  }
+}
+/* Typical tablet landscape / laptop height: trim decorative spacing so
+ * the active task and primary action are visible without an extra page. */
+@media (min-width: 700px) and (max-height: 820px) {
+  .ts-spelling-gameplay .ts-spelling-slot { min-height: 3.25rem; }
+  .ts-spelling-gameplay .ts-spelling-hint { padding: .6rem .8rem; }
+  .ts-spelling-gameplay .ts-spelling-message { padding: .7rem 1rem; }
+}
+
 @media (max-width: 420px) {
   .ts-spelling-board { border-radius: 1.35rem; }
   .ts-spelling-stage-card { border-radius: 1.3rem; }
