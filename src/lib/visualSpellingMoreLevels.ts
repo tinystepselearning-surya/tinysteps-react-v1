@@ -9,7 +9,7 @@ import type { VisualSpellingPuzzle, VisualSpellingStage } from './visualSpelling
 type Stage = Extract<VisualSpellingStage, 'vowels' | 'syllable-spelling' | 'inflections' | 'roots'>;
 type Build = [Stage,string,string,string,string,string];
 type Choice = [Stage,string,string,string,string,string,string,string];
-type Missing = [Stage,string,string,string,string,string,string];
+type Missing = [Stage,string,string,string,string,string,string,string];
 type Sort = [Stage,string,string,string,string,string,string,string,string];
 
 const builds: Build[] = [
