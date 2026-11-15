@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'src/content/blog/shared/conversionFamilies.ts'
+      - 'src/pages/PricingPage.tsx'
+      - 'src/tests/seo/commercialPricingReadingIntentPilot.spec.ts'
       - 'src/tests/seo/blogB11LeadAttribution.spec.ts'
       - 'docs/seo/commercial-parent-intent-routing-pilot-20261116.md'
       - '.github/workflows/commercial-parent-intent-routing-gate.yml'
@@ -30,6 +32,7 @@ jobs:
         run: >-
           npx vitest run
           src/tests/seo/blogB11LeadAttribution.spec.ts
+          src/tests/seo/commercialPricingReadingIntentPilot.spec.ts
           src/tests/seo/readingAuthorityConsolidation.spec.ts
           src/tests/seo/speakingEcosystemNavigation.spec.ts
           src/tests/seo/commercialC3OwnerPageAudit.spec.ts
