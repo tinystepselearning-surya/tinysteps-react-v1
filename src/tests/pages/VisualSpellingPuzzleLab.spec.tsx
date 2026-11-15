@@ -154,7 +154,7 @@ describe('free visual spelling puzzle lab', () => {
     fireEvent.click(screen.getByRole('button', { name: /show answer & finish/i }));
     fireEvent.click(screen.getByRole('button', { name: /see results/i }));
     expect(screen.getByText(/independent first-try puzzles: 0 of 8/i)).toBeTruthy();
-    expect(screen.getByRole('button', { name: /replay mixed puzzles/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /play another set/i })).toBeTruthy();
   });
 
 });
