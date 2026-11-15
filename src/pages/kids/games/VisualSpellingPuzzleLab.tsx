@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   VISUAL_SPELLING_PUZZLES,
   VISUAL_SPELLING_STAGES,
+  shuffleVisualSpellingPuzzles,
   visualSpellingAnswer,
   type VisualSpellingPuzzle,
   type VisualSpellingStage,
@@ -13,6 +14,8 @@ type Feedback = 'correct' | 'retry' | null;
 export default function VisualSpellingPuzzleLab() {
   const navigate = useNavigate();
   const [stageId, setStageId] = useState<VisualSpellingStage | null>(null);
+  const [practiceRound, setPracticeRound] = useState(0);
+  const focusHeadingRef = useRef<HTMLHeadingElement>(null);
   const [index, setIndex] = useState(0);
   const [chosenIndices, setChosenIndices] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<Feedback>(null);
@@ -32,10 +35,10 @@ export default function VisualSpellingPuzzleLab() {
   const [recallFirstTry, setRecallFirstTry] = useState(false);
   const [recallRevealed, setRecallRevealed] = useState(false);
 
-  const puzzles = useMemo(
-    () => VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stageId),
-    [stageId]
-  );
+  const puzzles = useMemo(() => {
+    const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stageId);
+    return practiceRound ? shuffleVisualSpellingPuzzles(selected) : selected;
+  }, [stageId, practiceRound]);
   const puzzle = puzzles[index] as VisualSpellingPuzzle | undefined;
   const recallWord = puzzles.find(p => p.kind === 'arrange') || puzzles[0];
   const activeSortWord = puzzle?.kind === 'sort'
@@ -45,8 +48,18 @@ export default function VisualSpellingPuzzleLab() {
     ? sortIndex === 0 ? puzzle.answer : puzzle.pair.answer
     : '';
 
-  const startStage = (id: VisualSpellingStage) => {
+  // Heading focus and scroll reset keep successive puzzles easy to find on
+  // phones and make new activities discoverable to keyboard/screen-reader users.
+  useEffect(() => {
+    if (!stageId) return;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    focusHeadingRef.current?.focus({ preventScroll: true });
+  }, [stageId, index, recallMode, finished]);
+
+  const startStage = (id: VisualSpellingStage, replay = false) => {
     setStageId(id);
+    setPracticeRound(current => replay ? current + 1 : 0);
     setIndex(0);
     setChosenIndices([]);
     setFeedback(null);
@@ -76,6 +89,9 @@ export default function VisualSpellingPuzzleLab() {
     if (correct) {
       // Sort both contrasting words before accepting the puzzle as complete.
       if (puzzle.kind === 'sort' && sortIndex === 0) {
+        // A hint on the first word still makes this an assisted attempt,
+        // even if the second word is answered independently.
+        if (showHint) setAttempted(true);
         setSortIndex(1);
         setWrongChoice(null);
         setFeedback(null);
@@ -175,14 +191,14 @@ export default function VisualSpellingPuzzleLab() {
         {stageId && finished && (
           <section className="rounded-3xl bg-white p-6 text-slate-900 shadow-xl sm:p-10" aria-live="polite">
             <p className="text-xs font-bold uppercase tracking-widest text-indigo-700">Level complete</p>
-            <h2 className="mt-2 text-3xl font-black">Nice word work!</h2>
+            <h2 ref={focusHeadingRef} tabIndex={-1} className="mt-2 text-3xl font-black focus:outline-none">Nice word work!</h2>
             <p className="mt-3 text-lg">You completed {puzzles.length} visual spelling puzzles.</p>
             <p className="mt-2 text-sm">Independent first-try puzzles: {independentCorrect} of {puzzles.length}.</p>
             <p className="mt-2 text-sm">Final word recall: {recallFirstTry ? 'Correct independently on the first try' : recallCorrect ? 'Correct after practising' : 'Answer studied with help'}.</p>
             <p className="mt-2 text-sm">Hints and retries are part of learning. These results are not saved.</p>
             <p className="mt-4 text-sm text-slate-600">For lasting spelling confidence, return to these words later and try writing them in your own sentences without looking.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={() => startStage(stageId)} className="rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white hover:bg-indigo-800">Replay this level</button>
+              <button type="button" onClick={() => startStage(stageId, true)} className="rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white hover:bg-indigo-800">Replay mixed puzzles</button>
               <button type="button" onClick={() => setStageId(null)} className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-indigo-900">Choose another level</button>
             </div>
           </section>
@@ -191,14 +207,14 @@ export default function VisualSpellingPuzzleLab() {
         {stageId && !finished && recallMode && recallWord && (
           <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="recall-heading">
             <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">Final challenge · Remember and spell</span>
-            <h2 id="recall-heading" className="mt-5 text-2xl font-black">Can you spell it without the tiles?</h2>
+            <h2 id="recall-heading" ref={focusHeadingRef} tabIndex={-1} className="mt-5 text-2xl font-black focus:outline-none">Can you spell it without the tiles?</h2>
             <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {recallWord.clue}</p>
             <p className="mt-3 text-sm text-slate-600">Type the complete word from memory. No sound or picture is needed.</p>
             {!recallCorrect && !recallRevealed && (
               <form onSubmit={event => { event.preventDefault(); submitRecall(); }} className="mt-5 flex flex-col gap-3 sm:flex-row">
                 <label className="flex-1">
                   <span className="mb-2 block text-sm font-bold">Your spelling</span>
-                  <input type="text" value={recallValue} autoComplete="off" spellCheck={false}
+                  <input type="text" value={recallValue} autoComplete="off" autoCapitalize="none" spellCheck={false}
                     onChange={event => setRecallValue(event.target.value)}
                     className="w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg font-semibold text-slate-950 focus:border-indigo-700 focus:outline-none"
                     aria-label="Type the spelling from memory" />
@@ -247,7 +263,7 @@ export default function VisualSpellingPuzzleLab() {
             <div aria-hidden="true" className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: ((index + (feedback === 'correct' ? 1 : 0)) / puzzles.length * 100) + '%' }} />
             </div>
-            <h2 id="puzzle-heading" className="text-2xl font-black">
+            <h2 id="puzzle-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black focus:outline-none">
               {puzzle.kind === 'arrange' ? 'Build the correct word' :
                puzzle.kind === 'correct' ? 'Spot the correct spelling' :
                puzzle.kind === 'missing' ? 'Fill the missing letters' :
@@ -336,7 +352,7 @@ export default function VisualSpellingPuzzleLab() {
                   <span
                     draggable={feedback !== 'correct'}
                     onDragStart={event => event.dataTransfer.setData('text/plain', activeSortWord)}
-                    className="inline-block cursor-grab rounded-xl border-2 border-indigo-300 bg-white px-6 py-4 text-3xl font-black text-indigo-950 shadow-sm"
+                    className="inline-block max-w-full cursor-grab break-words rounded-xl border-2 border-indigo-300 bg-white px-4 py-4 text-2xl font-black text-indigo-950 shadow-sm sm:px-6 sm:text-3xl"
                     aria-label={'Word to sort: ' + activeSortWord}
                   >{activeSortWord}</span>
                 </div>
