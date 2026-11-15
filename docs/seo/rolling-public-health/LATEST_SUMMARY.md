@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T09:49:29.684Z UTC (15 November 2026 IST, slot 16 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **15 November IST: 160/202 distinct exact-URL provider retrieval attempts (79.21%); 42 unattempted.** Previous-day timestamps excluded.
+- Slot 16 rows 151–160: **10/10** exact-URL provider retrievals returned page-specific extracted content on parent phonics, letter-sound games, long vowels, multisyllabic decoding, r-controlled vowels, beginner sequence, SATPIN, CBSE scope/sequence, summer practice and school teacher training. Evidence: `turn473575view0`–`turn473575view9`; provider labelled text/html, crawled yesterday except row 158 labelled today.
+- **Fully origin-verified: 0/202 today.** Direct HTTPS curl failed DNS resolution (exit 6) in audit environment. Provider-extracted text does not verify origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD or bot accessibility; all remain UNVERIFIED.
+- UTC evidence-handling markers `2026-11-15T09:49:29.684Z`–`2026-11-15T09:49:29.695Z` distinguish tracker records, **not independently measured HTTP request times**.
+- GitHub Actions: 3 in-progress repository runs were returned; workflow administrative disabled state could not independently be read. No concurrent rolling SEO audit identified in the returned run records; user's explicit disable confirmation remains operating basis. No workflow run or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No source, workflow or production changes.
+- Next eligible batch: slot 17, rows 161–170, subject to earlier eligible recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T08:46:02.517Z UTC (15 November 2026 IST, slot 15 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
