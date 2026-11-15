@@ -7,7 +7,7 @@ import {
   query,
   serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../lib/firebaseConfig';
+import { auth, db } from '../lib/firebaseConfig';
 
 export type LeadCommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 export type LeadCommunicationChannel = 'whatsapp' | 'phone' | 'internal' | 'other';
@@ -167,6 +167,7 @@ export async function addLeadCommunication(input: {
     direction,
     ...(input.outcome ? { outcome: input.outcome } : {}),
     summary,
+    ...(auth?.currentUser?.uid ? { createdBy: auth.currentUser.uid } : {}),
     followUpNeeded: false,
     status: 'logged',
     createdAt: serverTimestamp(),
@@ -180,5 +181,6 @@ export async function addLeadCommunication(input: {
     outcome: input.outcome || null,
     summary,
     createdAtMs,
+    createdBy: auth?.currentUser?.uid || null,
   };
 }
