@@ -250,11 +250,11 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     learningNote: 'Misunderstanding can be built from mis- + understand + -ing. The word parts help with longer spellings.',
   },
   {
-    id: 'master-because', stage: 'master', kind: 'correct', word: 'because',
-    clue: 'A word used when giving a reason.',
-    options: ['becaus', 'beacause', 'because', 'becose'],
-    hint: 'Check the middle vowels and the final e.',
-    learningNote: 'Because is spelled b-e-c-a-u-s-e. Make sure the a comes before the u.',
+    id: 'master-extraordinary', stage: 'master', kind: 'correct', word: 'extraordinary',
+    clue: 'Something very unusual or remarkable.',
+    options: ['extrordinary', 'extraordenary', 'extraordinary', 'extraordinnary'],
+    hint: 'This word joins extra and ordinary. Keep every letter in both parts.',
+    learningNote: 'Extraordinary is extra + ordinary. Notice the full extra- and -ordinary parts.',
   },
   {
     id: 'master-environment', stage: 'master', kind: 'missing', word: 'environment',
@@ -264,12 +264,16 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     learningNote: 'Environment keeps the o in environ- before -ment.',
   },
   {
-    id: 'master-unhappy', stage: 'master', kind: 'sort', word: 'unhappy',
-    clue: 'Not feeling happy.',
-    categories: ['Prefix at the start', 'Suffix at the end'], answer: 'Prefix at the start',
-    pair: { word: 'kindness', answer: 'Suffix at the end', learningNote: 'Kindness adds -ness at the end, while unhappy adds un- at the beginning.' },
-    hint: 'Look for the added part before happy.',
-    learningNote: 'Unhappy adds un- before happy. Un- is a prefix that often means not.',
+    id: 'master-misinterpretation', stage: 'master', kind: 'sort', word: 'misinterpretation',
+    clue: 'Understanding the meaning of something incorrectly.',
+    categories: ['Begins with mis-', 'Begins with dis-'], answer: 'Begins with mis-',
+    pair: {
+      word: 'disagreement',
+      answer: 'Begins with dis-',
+      learningNote: 'Disagreement starts with dis- and comes from disagree + -ment. Misinterpretation starts with mis-.',
+    },
+    hint: 'Compare the first three letters of the words.',
+    learningNote: 'Misinterpretation begins with mis-, meaning wrongly, followed by interpretation.',
   },
 ];
 
