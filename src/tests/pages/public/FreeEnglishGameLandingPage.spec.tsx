@@ -402,7 +402,7 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByAltText("cat")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /letter c/i })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /back to free games/i }));
+    fireEvent.click(screen.getByRole("button", { name: /spelling games/i }));
 
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids");
     expect(getItemSpy).not.toHaveBeenCalledWith("ts_active_kid_v1");
@@ -449,7 +449,7 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByText("frend")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /correct spelling/i })).toHaveValue("");
 
-    fireEvent.click(screen.getByRole("button", { name: /back to free games/i }));
+    fireEvent.click(screen.getByRole("button", { name: /spelling games/i }));
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids");
     vi.useRealTimers();
   });
