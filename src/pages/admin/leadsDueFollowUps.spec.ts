@@ -1,11 +1,25 @@
 import { describe, expect, it } from 'vitest';
-import { isAdminFollowUpDue } from './leadsDueFollowUps';
+import { isAdminFollowUpDue, parseAdminFollowUpDateIstMs } from './leadsDueFollowUps';
 
 const dateAtIst = (day: string, clock: string): number =>
   Date.parse(`${day}T${clock}+05:30`);
 
 describe('bounded admin follow-up priority', () => {
   const today = '2026-11-13';
+
+  it('parses follow-up dates at a fixed IST noon, independent of browser timezone', () => {
+    expect(parseAdminFollowUpDateIstMs(today)).toBe(dateAtIst(today, '12:00:00.000'));
+    expect(parseAdminFollowUpDateIstMs(' 2026-11-14 ')).toBe(dateAtIst('2026-11-14', '12:00:00.000'));
+    expect(parseAdminFollowUpDateIstMs('2026-02-30')).toBe(0);
+    expect(parseAdminFollowUpDateIstMs('2026-11-99')).toBe(0);
+    expect(parseAdminFollowUpDateIstMs(null)).toBe(0);
+    expect(isAdminFollowUpDue({
+      bucket: 'admin_review', followUpAtMs: parseAdminFollowUpDateIstMs(today),
+    }, today)).toBe(true);
+    expect(isAdminFollowUpDue({
+      bucket: 'admin_review', followUpAtMs: parseAdminFollowUpDateIstMs('2026-11-14'),
+    }, today)).toBe(false);
+  });
 
   it('includes an Admin Review follow-up earlier today or overdue', () => {
     expect(isAdminFollowUpDue({
