@@ -249,7 +249,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(phoneRow).not.toContainElement(support);
     expect(screen.getByRole('option', { name: 'Select age' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /book your free assessment/i })).toBeInTheDocument();
-    expect(screen.getByText(/WhatsApp is optional; no marketing/i)).toBeInTheDocument();
+    expect(screen.getByText(/WhatsApp is optional; this does not subscribe you to marketing/i)).toBeInTheDocument();
   });
 
   it('preselects group programme and saves a group-interest enquiry without a demo claim', async () => {
