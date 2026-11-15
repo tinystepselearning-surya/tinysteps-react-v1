@@ -85,7 +85,7 @@ export default function SpellingGamesLanding({ faqs }: SpellingGamesLandingProps
           </div>
           <div className="grid gap-5 lg:grid-cols-2">
             {games.map(game => (
-              <article key={game.key} className={`flex min-w-0 flex-col overflow-hidden rounded-[26px] border border-[#e0e3f3] bg-white shadow-[0_9px_24px_rgba(44,48,100,.07)]`}>
+              <article id={game.key === "foundation" ? "spelling-adventure" : "spelling-puzzle-lab"} key={game.key} className={`flex min-w-0 flex-col overflow-hidden rounded-[26px] border border-[#e0e3f3] bg-white shadow-[0_9px_24px_rgba(44,48,100,.07)]`}>
                 <div className={`relative bg-gradient-to-br ${game.tone} px-6 py-6 ${game.ink} sm:px-7`}>
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <span className="rounded-full bg-white/75 px-3 py-1 text-xs font-black uppercase tracking-wider">
@@ -114,6 +114,33 @@ export default function SpellingGamesLanding({ faqs }: SpellingGamesLandingProps
               </article>
             ))}
           </div>
+        </section>
+
+        <section aria-labelledby="spelling-choose-by-skill" className="mt-7 rounded-[24px] border border-[#e3e4f2] bg-white px-5 py-6 sm:px-7">
+          <h2 id="spelling-choose-by-skill" className="text-xl font-black tracking-tight sm:text-2xl">Which spelling game fits my child's current skills?</h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-[#515773]">
+            Choose by the words your child can already read and write, not age alone. Both games are free, work without sound and give feedback after each attempt.
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-2xl bg-[#fff6eb] p-4">
+              <h3 className="text-base font-black text-[#633f4d]">Learning to build and check words</h3>
+              <p className="mt-2 text-sm leading-6 text-[#554757]">
+                Try Spelling Adventure for letter-order practice, word families, missing letters and correcting common mistakes.
+                The optional two-letter warm-up comes before six spelling activities. Start with a short six-question set.
+              </p>
+            </div>
+            <div className="rounded-2xl bg-[#edf6ff] p-4">
+              <h3 className="text-base font-black text-[#2a4863]">Ready for longer spelling patterns</h3>
+              <p className="mt-2 text-sm leading-6 text-[#3d536e]">
+                Choose Spelling Puzzle Lab for vowel patterns, syllables, plurals, prefixes and word roots.
+                Its ten levels use eight-puzzle rounds with a final word-from-memory check. For example, children compare spellings in words such as running and photograph.
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-6 text-[#515773]">
+            <strong>Parent tip:</strong> Read the written clue aloud together if needed, let the child make their own attempt, then discuss one spelling pattern and try the word in a sentence.
+            These are independent practice activities, not a phonics assessment or a substitute for explicit teaching.
+          </p>
         </section>
 
         <section aria-labelledby="spelling-quick-guide" className="mt-7 rounded-[24px] border border-[#e3e4f2] bg-white px-5 py-5 sm:px-7">
