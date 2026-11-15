@@ -52,6 +52,7 @@ jobs:
               src/pages/admin/LeadAdminToolsMenu.tsx|\
               src/pages/admin/LeadSourceAnalysis.tsx|\
               src/pages/admin/LeadsInquiriesWorkspaceV2.tsx|\
+              src/pages/teacher/components/demo/LegacyDemoAssignmentsView.tsx|\
               src/pages/admin/leadsWorkflowBuckets.ts|\
               src/pages/admin/leadsWorkflowBuckets.spec.ts|\
               src/services/leadsAdminService.ts|\
