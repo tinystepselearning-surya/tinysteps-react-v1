@@ -113,6 +113,23 @@ For very young or struggling children use shorter, fewer-turn sessions without r
 - No cross-child leaderboard, microphone upload, payment changes or unnecessary personal information.
 - Audio needs controls, accessibility and a no-audio alternative; do not depend on automatic browser speech that may mispronounce phonemes.
 
+
+## Parallel visual-only pathway for older learners (15 Nov owner refinement)
+
+For children around **8–10+**, offer an independent **Spelling Puzzle Lab** without sound exercises, phonics prompts, autoplay, microphone use or audio dependencies. This is a **parallel optional instructional route**, not a replacement for the earlier sound-to-print foundation. A child who needs foundational intervention can still access that separately.
+
+Four untimed puzzle tasks reuse the existing Kids Games Hub protected access:
+1. Arrange shuffled letter and word-part tiles, via desktop drag/drop or accessible tap fallback.
+2. Spot correctly spelled words among plausible common misspellings.
+3. Insert missing letters or grapheme groups into a meaningful word.
+4. Sort written words into spelling-ending/prefix/suffix categories by drag/drop or tap.
+
+Prototype content: four levels × four tasks = **16 authored seed puzzles**, progressing from `journey` and `friend` to `unhappiness` and `misunderstanding`. Each word has a child-friendly meaning clue, optional help, and a note about its spelling/structure. A correct first attempt without hints is tracked separately from answers reached after feedback. No timer, no ranking, and **no new backend writes**.
+
+**Prototype entry:** `/kids/games/spelling-puzzle-lab` (role-gated under existing `kids` routes). The existing public `/free-spelling-game-for-kids` is unchanged. This initial route is an authenticated prototype, not a public SEO launch.
+
+**Limitations:** It is a starter set, not an extensive curriculum. Some sorting items demonstrate pattern identification rather than independent spelling retrieval. Word lists, meaningful transfer to new words, repeat-session retention, mobile touch affordances and teacher pilot review must mature before asserting effectiveness or mastery.
+
 ## Design quality and performance
 
 - Large tap areas and high contrast; no unnecessary distraction/over-animation.
