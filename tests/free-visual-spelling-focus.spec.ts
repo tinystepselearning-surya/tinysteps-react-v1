@@ -32,12 +32,17 @@ for (const viewport of [
 
     await page.getByRole('button', { name: /Word Explorer/ }).click();
     await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
-    await page.getByRole('button', { name: 'Change level' }).click();
-    await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
-    await page.getByRole('button', { name: /Word Explorer/ }).click();
 
-    await page.getByRole('button', { name: 'Exit to Free Games' }).click();
-    await expect(page).toHaveURL(/\/free-english-games-for-kids$/);
+    // In-level back stays inside the spelling game, not the unrelated
+    // English Excellence Games directory, and preserves the puzzle URL.
+    await page.getByRole('button', { name: 'All Spelling Levels' }).click();
+    await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+    await expect(page).toHaveURL(/\/free-spelling-game-for-kids\?play=1&mode=puzzles$/);
+
+    // A separate, explicitly labelled exit is available only on the chooser.
+    await page.getByRole('button', { name: 'Spelling Game Page' }).click();
+    await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
+    await expect(page).not.toHaveURL(/\/free-english-games-for-kids$/);
   });
 }
 
