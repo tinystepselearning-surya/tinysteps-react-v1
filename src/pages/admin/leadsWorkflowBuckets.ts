@@ -84,7 +84,7 @@ export function resolveLeadTriage(input: LeadTriageInput): {
   if (contactDigits.length < 7 || contactDigits.length > 15) detailGaps.push('contact number');
   if (!isRecordedTriageValue(input.childName)) detailGaps.push('child name');
   const age = Number(input.childAge);
-  if (!Number.isInteger(age) || age < 3 || age > 12) detailGaps.push('child age');
+  if (normalize(input.childAge) !== '13+' && (!Number.isInteger(age) || age < 3 || age > 12)) detailGaps.push('child age');
   if (!isRecordedTriageValue(input.course) && !isRecordedTriageValue(input.mainConcern)) {
     detailGaps.push('learning goal');
   }

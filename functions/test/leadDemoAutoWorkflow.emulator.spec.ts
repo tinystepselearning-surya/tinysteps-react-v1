@@ -141,6 +141,34 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await leadRef.get()).data()?.demoSessionId).toBe(expectedDemoId);
   });
 
+  it('retains the 13+ age band in the linked demo without inventing an exact age', async () => {
+    const leadId = 'website-older-child';
+    const leadRef = db.collection('leads').doc(leadId);
+    const before = await leadRef.get();
+    await leadRef.set({
+      parentName: 'Parent One', childName: 'Teen Learner',
+      childAge: null, childAgeBand: '13+',
+      primaryPhone: '9440436399',
+      source: 'website', sourceDetail: 'public_assessment_form',
+      status: 'new', programInterest: 'Speaking',
+      mainConcern: 'Speaking English with confidence',
+      dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'older-child-key',
+      createdAt: admin.firestore.Timestamp.now(),
+    });
+    const after = await leadRef.get();
+    await onLeadEnsureDemoRequest.run({
+      params: { leadId }, data: { before, after },
+    } as never);
+    const demo = (await db.collection('demoSessions').doc(`lead_${leadId}`).get()).data();
+    expect(demo).toMatchObject({
+      status: 'open', childAge: null, childGrade: 'Age 13+',
+      childName: 'Teen Learner', leadId,
+    });
+    expect((await leadRef.get()).data()).toMatchObject({
+      demoSessionId: `lead_${leadId}`, childAgeBand: '13+',
+    });
+  });
+
   it('automatically creates open requests for group and undecided new website leads', async () => {
     for (const [index, format] of ['small_group', 'unsure'].entries()) {
       const leadId = `auto-format-${index}`;

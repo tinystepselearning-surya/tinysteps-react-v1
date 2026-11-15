@@ -59,6 +59,26 @@ describe('publicLeadForm helpers', () => {
     });
   });
 
+  it('records 13+ as a range rather than inventing an exact age', () => {
+    const olderChild = {
+      parentName: 'Parent', childName: 'Learner', whatsapp: '+919999999999',
+      childAge: '13+', mainConcern: 'Speaking English with confidence' as const,
+      classFormatPreference: 'one_to_one' as const,
+      contactPreference: 'phone' as const, urgency: '' as const,
+    };
+    const lead = buildPublicLeadPayload(olderChild);
+    expect(lead).toMatchObject({
+      childAge: null,
+      childAgeBand: '13+',
+      contactPreference: 'phone',
+      contactPermission: true,
+    });
+    expect(buildPublicWhatsappMessage(olderChild)).toContain('Child age: 13+');
+    const ageTwelve = buildPublicLeadPayload({ ...olderChild, childAge: '12' });
+    expect(ageTwelve.childAge).toBe(12);
+    expect(ageTwelve).not.toHaveProperty('childAgeBand');
+  });
+
   it('preserves group preference and does not promise an immediately booked demo', () => {
     const lead = {
       parentName: 'Parent', childName: 'Child', whatsapp: '919999999999',

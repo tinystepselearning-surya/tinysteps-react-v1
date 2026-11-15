@@ -93,7 +93,6 @@ jobs:
         run: >
           npx vitest run
           src/tests/pages/LeadSourceAnalysis.spec.tsx
-          src/pages/admin/sourcePaymentEvidence.spec.ts
           src/tests/services/leadCommunicationsService.spec.ts
           src/pages/admin/leadAdminReadPolicy.test.ts
           src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx

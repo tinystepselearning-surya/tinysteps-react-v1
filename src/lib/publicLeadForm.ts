@@ -170,7 +170,9 @@ export function buildPublicLeadPayload(
     timezone?: string;
   } = {},
 ) {
-  const parsedChildAge = Number(form.childAge);
+  // 13+ is an open-ended enquiry category, not an exact 13-year-old age.
+  const isOlderChild = form.childAge === '13+';
+  const parsedChildAge = isOlderChild ? null : Number(form.childAge);
   const attribution = opts.attribution || getPublicLeadAttribution();
   const normalizedWhatsapp = form.whatsapp.trim();
   const derivedInterest = deriveInterestFromConcern(form.mainConcern);
@@ -183,7 +185,8 @@ export function buildPublicLeadPayload(
     primaryPhone: normalizedWhatsapp,
     phoneNormalized: normalizedWhatsapp.replace(/[^\d+]/g, ''),
     childName: form.childName.trim(),
-    childAge: Number.isFinite(parsedChildAge) ? parsedChildAge : null,
+    childAge: parsedChildAge !== null && Number.isFinite(parsedChildAge) ? parsedChildAge : null,
+    ...(isOlderChild ? { childAgeBand: '13+' as const } : {}),
     interestTrack: derivedInterest ? INTEREST_TRACK_BY_OPTION[derivedInterest] ?? null : null,
     programInterest: derivedInterest,
     source: 'website',
