@@ -47,11 +47,11 @@ describe('AssessmentRequestModal', () => {
       const panel = screen.getByRole('dialog').querySelector('.overflow-hidden') as HTMLElement;
       const scrollArea = screen.getByRole('dialog').querySelector('.overflow-y-auto') as HTMLElement;
       expect(panel.style.maxHeight).toBe('464px');
-      expect(scrollArea.style.maxHeight).toBe('464px');
+      expect(scrollArea.style.maxHeight).toBe('404px');
       mobileViewport.height = 300;
       fireEvent.resize(window);
       expect(panel.style.maxHeight).toBe('284px');
-      expect(scrollArea.style.maxHeight).toBe('284px');
+      expect(scrollArea.style.maxHeight).toBe('224px');
       unmount();
       expect(mobileViewport.removeEventListener).toHaveBeenCalled();
     } finally {
@@ -67,7 +67,11 @@ describe('AssessmentRequestModal', () => {
     const scrollArea = dialog.querySelector('.overflow-y-auto');
     expect(scrollArea).toHaveClass('overscroll-contain');
     expect(scrollArea).toHaveClass('scroll-pb-24');
-    expect(screen.getByRole('button', { name: 'Close assessment form' })).toHaveClass('absolute');
+    const close = screen.getByRole('button', { name: 'Close assessment form' });
+    expect(close).not.toHaveClass('absolute');
+    expect(scrollArea).not.toContainElement(close);
+    expect(close.parentElement).toHaveClass('shrink-0', 'border-b');
+    expect(close).toBeVisible();
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(1);
   });
