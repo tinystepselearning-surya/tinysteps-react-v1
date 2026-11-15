@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T18:42:00.071Z UTC (16 November 2026 IST, slot 1)
+
+- Tracker validated before audit: **202 selected rows, 202 unique URLs, 22 columns, correct slots 1–19 × 10 and slot 20 × 12**. Prior-day timestamps excluded from new coverage. Today: **10/202 distinct URLs attempted (rows 1–10)**; **192 not yet attempted today**; **0/202 fully origin-verified**.
+- Exact-URL live web retrieval returned page-specific extracted text for all ten URLs (web refs `turn282924view0` through `turn282924view9`). This is **provider-extracted text only**; the provider reported pages crawled today. Example: home H1 “Online English Classes for Kids.”; CK rule H1 “When should a child use ck instead of k at the end of a word?”. These do not establish direct origin HTTP status, final URL, canonical, robots/noindex, raw HTML, structured data or bot accessibility. All ten technical statuses are **UNVERIFIED**. Batch evidence-handling timestamp 2026-11-15T18:42:00.071Z UTC is not a measured origin request time.
+- GitHub Actions in-progress runs query showed one unrelated **Parent Worksheet Read Regression** run (ID 43748148964), not the rolling SEO audit. Legacy workflow administrative disablement remains independently unverified; user's explicit UI disable confirmation is the operating basis. No GitHub workflow triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. Only tracker and summary were written; no source, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 2, rows 11–20**. Do not treat provider text retrieval as verified production readiness.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T17:43:06Z UTC (15 November 2026, 23:13 IST, slot 24 catch-up/recovery)
 
 - Revalidated tracker using CSV quote-aware parsing: **202 rows, 202 unique selected URLs, 22 columns with no malformed records**, slots **1–19 × 10** and **20 × 12**. All 202 rows carry **2026-11-15 IST** and parseable UTC evidence-handling markers (**130 distinct timestamp values**). These are not origin HTTP request timestamps. **202/202 distinct URLs attempted today; 0/202 fully origin-verified; 0 unchecked rows**. All current technical statuses remain `UNVERIFIED`.
