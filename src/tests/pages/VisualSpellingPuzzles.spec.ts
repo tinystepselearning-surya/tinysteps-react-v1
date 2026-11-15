@@ -53,6 +53,9 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     );
     expect(advanced.length).toBe(16);
     expect(advanced.some(puzzle => puzzle.word.length >= 15)).toBe(true);
+    expect(VISUAL_SPELLING_PUZZLES
+      .filter(puzzle => puzzle.stage === 'master')
+      .every(puzzle => puzzle.word.length >= 10)).toBe(true);
     expect(new Set(advanced.map(puzzle => puzzle.kind))).toEqual(
       new Set(['arrange', 'correct', 'missing', 'sort'])
     );
@@ -83,5 +86,11 @@ describe('sound-free visual spelling puzzle curriculum', () => {
       { ...arrange, tiles: ['x', 'y'] },
       { ...missing, missing: 'wrong' },
     ] as VisualSpellingPuzzle[]).length).toBeGreaterThanOrEqual(3);
+
+    const sort = VISUAL_SPELLING_PUZZLES.find(p => p.kind === 'sort');
+    if (sort?.kind === 'sort') {
+      expect(validateVisualSpellingPuzzles([{ ...sort, pair: { ...sort.pair, clue: '' } }]))
+        .toEqual([sort.id + ': invalid paired sorting categories']);
+    }
   });
 });
