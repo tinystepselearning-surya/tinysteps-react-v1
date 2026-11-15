@@ -131,6 +131,10 @@ describe('free visual spelling puzzle lab', () => {
     fireEvent.click(screen.getByRole('button', { name: /check spelling/i }));
     fireEvent.click(screen.getByRole('button', { name: /see results/i }));
     expect(screen.getByText(/final word recall: correct after practising/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /next level: vowel spelling patterns/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /next level: vowel spelling patterns/i }));
+    expect(screen.getByRole('heading', { name: 'Vowel Spelling Patterns', level: 2 })).toBeTruthy();
+    expect(screen.getByText('A coat worn to stay dry in the rain.')).toBeTruthy();
     expect(save).not.toHaveBeenCalled();
   });
 
