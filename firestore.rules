@@ -1589,6 +1589,7 @@ function teacherProgressIdentityUnchanged() {
           'phoneNormalized',
           'childName',
           'childAge',
+          'childAgeBand',
           'interestTrack',
           'programInterest',
           'source',
@@ -1639,10 +1640,21 @@ function teacherProgressIdentityUnchanged() {
         && request.resource.data.childName is string
         && request.resource.data.childName.size() >= 1
         && request.resource.data.childName.size() <= 80
-        && request.resource.data.childAge is number
-        && request.resource.data.childAge >= 3
-        && request.resource.data.childAge <= 12
-        && request.resource.data.childAge % 1 == 0
+        // Preserve exact ages 3–12. A 13+ public enquiry has no fabricated
+        // exact age; only the special bounded age band is accepted.
+        && (
+          (
+            request.resource.data.childAge is number
+            && request.resource.data.childAge >= 3
+            && request.resource.data.childAge <= 12
+            && request.resource.data.childAge % 1 == 0
+            && !('childAgeBand' in request.resource.data)
+          )
+          || (
+            request.resource.data.childAge == null
+            && request.resource.data.childAgeBand == '13+'
+          )
+        )
         && (
           !('interestTrack' in request.resource.data)
           || request.resource.data.interestTrack == null
