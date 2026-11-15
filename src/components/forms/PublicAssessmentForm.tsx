@@ -20,6 +20,7 @@ import {
 } from '../../lib/publicLeadForm';
 
 const WHATSAPP_NUMBER = '919618398383';
+const PHONE_URL = 'tel:+919618398383';
 const SUN_ORANGE = '#ff6a00';
 const PREFILL_STORAGE_KEY = 'ts_public_assessment_prefill_v1';
 const PENDING_LEAD_ID_STORAGE_KEY = 'ts_public_assessment_pending_lead_id_v1';
@@ -88,6 +89,7 @@ export default function PublicAssessmentForm({
 
   const [form, setForm] = useState<PublicAssessmentFormState>(initialState);
   const [submitted, setSubmitted] = useState(false);
+  const [whatsappHandoffAttempted, setWhatsappHandoffAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
@@ -193,26 +195,25 @@ export default function PublicAssessmentForm({
     }
   };
 
-  const navigateToWhatsapp = (popup: Window | null, url: string) => {
-    if (popup && !popup.closed) {
-      try {
-        if (typeof popup.location.replace === 'function') {
-          popup.location.replace(url);
-          return;
-        }
-      } catch {
-        // Fall through to assignment on the same popup if replace is unavailable.
+  // The lead must remain visibly confirmed on our website even if a browser
+  // blocks WhatsApp. A same-tab redirect can hide confirmation and the call fallback.
+  // This only reports an attempted handoff, never WhatsApp login, send or delivery.
+  const navigateToWhatsapp = (popup: Window | null, url: string): boolean => {
+    if (!popup || popup.closed) return false;
+    try {
+      if (typeof popup.location.replace === 'function') {
+        popup.location.replace(url);
+        return true;
       }
-
-      try {
-        popup.location.href = url;
-        return;
-      } catch {
-        // Fall through to same-tab navigation below.
-      }
+    } catch {
+      // The parent's browser may deny popup navigation.
     }
-
-    window.location.assign(url);
+    try {
+      popup.location.href = url;
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const validate = () => {
@@ -226,8 +227,16 @@ export default function PublicAssessmentForm({
       nextErrors.childName = 'Please enter child name.';
     }
 
-    if (!form.whatsapp.trim()) {
-      nextErrors.whatsapp = 'Please enter WhatsApp number.';
+    const contactNumber = form.whatsapp.trim();
+    const contactDigits = contactNumber.replace(/\D/g, '');
+    if (!contactNumber) {
+      nextErrors.whatsapp = 'Please enter a mobile number so we can reach you.';
+    } else if (
+      !/^\+?[0-9\s()-]+$/.test(contactNumber) ||
+      contactDigits.length < 8 || contactDigits.length > 15 ||
+      contactNumber.length > 24
+    ) {
+      nextErrors.whatsapp = 'Enter a valid mobile number (8–15 digits, including country code where needed).';
     }
 
     if (!form.childAge) {
@@ -250,6 +259,7 @@ export default function PublicAssessmentForm({
     if (submitLockRef.current || isSubmitting) return;
 
     setSubmitted(false);
+    setWhatsappHandoffAttempted(false);
     setSubmitError('');
 
     const { isValid, nextErrors } = validate();
@@ -366,8 +376,11 @@ export default function PublicAssessmentForm({
           source_context: source || 'public_assessment_form',
         });
       }
-      navigateToWhatsapp(whatsappWindow, whatsappUrl);
-      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      const handoffAttempted = navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      setWhatsappHandoffAttempted(handoffAttempted);
+      if (handoffAttempted) {
+        trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      }
       setLastOpenedWaLink(whatsappUrl);
       setSubmitted(true);
       onSuccess?.();
@@ -378,10 +391,13 @@ export default function PublicAssessmentForm({
         error_fields: ['save'],
         error_message: 'lead_save_failed',
       });
-      navigateToWhatsapp(whatsappWindow, whatsappUrl);
-      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      const handoffAttempted = navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      setWhatsappHandoffAttempted(handoffAttempted);
+      if (handoffAttempted) {
+        trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      }
       setLastOpenedWaLink(whatsappUrl);
-      setSubmitError('We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.');
+      setSubmitError('We could not confirm that your enquiry was saved. Please retry the form or contact Tiny Steps directly using the options below.');
     } finally {
       submitLockRef.current = false;
       setIsSubmitting(false);
@@ -623,32 +639,56 @@ export default function PublicAssessmentForm({
 
         <div className="space-y-1 text-center">
           <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
+          <p className="text-xs text-slate-600">
+            We save your enquiry before opening WhatsApp. If WhatsApp does not work, you can still contact Tiny Steps by phone.
+          </p>
           {secondaryHelperText && form.classFormatPreference === 'one_to_one' ? (
             <p className="text-xs text-slate-600">{secondaryHelperText}</p>
           ) : null}
         </div>
 
         {submitError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
-            {submitError}
+          <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+            <p>{submitError}</p>
+            <div className="flex flex-wrap gap-2">
+              <a href={lastOpenedWaLink || waLink} target="_blank" rel="noopener noreferrer"
+                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
+                className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
+                Send enquiry on WhatsApp
+              </a>
+              <a href={PHONE_URL}
+                className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
+                Call Tiny Steps
+              </a>
+            </div>
           </div>
         ) : null}
 
         {submitted ? (
           <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status" aria-live="polite">
             <p className="font-medium">
-              Thank you! We received your request. Our team will reply on WhatsApp with the recommended starting path,
-              available slots, and pricing details.
+              Thank you! Tiny Steps has received your enquiry. You do not need to send a WhatsApp message for us to receive it.
             </p>
-            <p>WhatsApp should also open in a new tab now. If it did not open, use the options below.</p>
+            <p>
+              {whatsappHandoffAttempted
+                ? 'We tried to open WhatsApp in a new tab. If you cannot log in or send a message, you can use the options below.'
+                : 'WhatsApp was not opened automatically. Your enquiry is saved; use the options below if you would like to contact us directly.'}
+            </p>
             <div className="flex flex-wrap gap-2">
               <a
                 href={lastOpenedWaLink || waLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
                 className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
               >
                 Open WhatsApp again
+              </a>
+              <a
+                href={PHONE_URL}
+                className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+              >
+                Call Tiny Steps
               </a>
               <a
                 href="/class-samples"
