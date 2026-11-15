@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T06:49:15.633Z UTC (15 November 2026 IST, slot 13 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **15 November IST: 130/202 distinct exact-URL retrieval attempts (64.36%); 72 unattempted.** Previous-day timestamps excluded.
+- Slot 13 rows 121–130: **9/10** provider retrievals returned page-specific extracted content (five grammar and four phonics guides). Row 126, `/blog/how-children-recognise-words-automatically-after-phonics`, returned **Internal Error** from retrieval provider. Evidence: `turn896156view0`–`turn896156view9`. This is a blocked verification, not a confirmed production failure.
+- **Fully origin-verified: 0/202 today.** Independent HTTPS curl failed DNS resolution in the audit environment. Origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider-extracted text does not establish production health.
+- UTC marker `2026-11-15T06:49:15.633Z` records evidence handling, not individual HTTP request times.
+- GitHub Actions administrative disablement and concurrent execution could not be independently retrieved this run. User's explicit disable confirmation remains the operating basis; no workflow was run or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No source, workflow or production changes.
+- Next eligible batch: slot 14, rows 131–140, subject to earlier eligible recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T05:48:44.533Z UTC (15 November 2026 IST, slot 12 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each, slot 20 at 12.
