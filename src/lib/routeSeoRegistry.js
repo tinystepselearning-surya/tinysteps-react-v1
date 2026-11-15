@@ -682,9 +682,9 @@ export const ROUTE_SEO_REGISTRY = {
     ogType: 'website',
   },
   '/slow-reader-child-help': {
-    title: 'Slow Reader Child Help & Reading Support | Tiny Steps',
+    title: 'Child Reads Slowly? Causes & Reading Help | Tiny Steps',
     description:
-      'Get parent-friendly guidance for slow readers by identifying decoding, blending, fluency, comprehension, and confidence gaps before choosing support.',
+      'Why does my child read so slowly? Try a gentle at-home reading check, learn what helps word-by-word reading, and explore live support at Tiny Steps.',
     canonicalPath: '/slow-reader-child-help',
     ogType: 'website',
   },
