@@ -4,6 +4,15 @@ on:
   pull_request:
     paths:
       - 'functions/src/getParentWorksheetResources.ts'
+      - 'functions/src/helpers/parentWorksheetBundle.ts'
+      - 'functions/src/parentWorksheetBundleTrigger.ts'
+      - 'functions/src/index.ts'
+      - 'src/lib/parentWorksheetBundle.ts'
+      - 'src/pages/admin/ParentWorksheetLibraryManagement.tsx'
+      - 'src/pages/parent/components/classes/ParentWorksheetLibrary.tsx'
+      - 'src/tests/pages/parent/ParentWorksheetLibrary.spec.tsx'
+      - 'src/tests/lib/parentWorksheetBundle.spec.ts'
+      - 'firestore.rules'
       - 'functions/test/getParentWorksheetResources.spec.ts'
       - 'functions/test/identityShadowCanary.spec.ts'
       - 'src/pages/parent/ParentDashboard.tsx'
@@ -35,8 +44,11 @@ jobs:
         run: |
           npx vitest run --config functions/vitest.config.ts \
             functions/test/getParentWorksheetResources.spec.ts \
+            functions/test/parentWorksheetBundle.spec.ts \
             functions/test/identityShadowCanary.spec.ts
-          npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts
+          npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts src/tests/pages/parent/ParentWorksheetLibrary.spec.tsx src/tests/lib/parentWorksheetBundle.spec.ts
+      - name: Frontend TypeScript check
+        run: npm run typecheck
       - name: Full backend regression suite
         run: npm --prefix functions test
       - name: Backend lint

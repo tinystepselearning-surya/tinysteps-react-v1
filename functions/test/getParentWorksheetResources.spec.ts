@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { describe, expect, it } from 'vitest';
-import { fetchParentWorksheetCandidates, loadParentWorksheetResources, parentWorksheetIsAllowed, sanitizeWorksheetUrl } from '../src/getParentWorksheetResources';
+import { parentWorksheetIsGenerallyBrowseable, loadParentWorksheetResources, parentWorksheetIsAllowed, sanitizeWorksheetUrl } from '../src/getParentWorksheetResources';
 
 const context = { parentId: 'parent-a', kidId: 'kid-a', courseIds: new Set(['course-a']), enrollmentIds: new Set(['enrollment-a']) };
 
@@ -42,118 +42,66 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('getParentWorksheetResourc
     batch.set(db.collection('enrollments').doc(`enrollment-a-${suffix}`), { kidId: kidA, courseId: courseA, status: 'active' });
     batch.set(db.collection('parentWorksheetLibrary').doc(`allowed-${suffix}`), { title: 'Allowed', url: 'https://example.com/a.pdf', targetCourseIds: [courseA], teacherScript: 'never return' });
     batch.set(db.collection('parentWorksheetLibrary').doc(`denied-${suffix}`), { title: 'Denied', url: 'https://example.com/b.pdf', targetCourseIds: [courseB] });
+    // Force a cold bootstrap even if another isolated emulator test has
+    // already populated its catalogue.
+    batch.set(db.collection('worksheetBundles').doc('parentLibraryV1'), { schemaVersion: 1, ready: false, entriesJson: '' });
     await batch.commit();
 
-    const resources = await loadParentWorksheetResources(db, parentA, kidA);
-    expect(resources).toHaveLength(1);
-    expect(resources[0]).toMatchObject({ title: 'Allowed' });
-    expect(resources[0]).not.toHaveProperty('teacherScript');
-    expect(resources[0]).not.toHaveProperty('targetCourseIds');
-    expect(resources[0]).not.toHaveProperty('targetKidIds');
-    expect(resources[0]).not.toHaveProperty('targetEnrollmentIds');
-    expect(resources[0]).not.toHaveProperty('targetParentIds');
-    expect(resources[0]?.id).not.toContain(`allowed-${suffix}`);
+    const result = await loadParentWorksheetResources(db, parentA, kidA);
+    // General course resources are browseable even outside enrolment;
+    // child-targeted and other family's private worksheets remain denied.
+    expect(result.resources).toHaveLength(2);
+    expect(result.resources.map((row) => row.title).sort()).toEqual(['Allowed', 'Denied']);
+    expect(result.resources[0]).not.toHaveProperty('teacherScript');
+    expect(result.resources[0]).not.toHaveProperty('targetCourseIds');
+    expect(result.resources[0]).not.toHaveProperty('targetKidIds');
+    expect(result.resources[0]).not.toHaveProperty('targetEnrollmentIds');
+    expect(result.resources[0]).not.toHaveProperty('targetParentIds');
+    expect(result.resources[0]?.id).not.toContain(`allowed-${suffix}`);
+    expect(result.enrolledCourseIds).toHaveLength(1);
     await expect(loadParentWorksheetResources(db, parentB, kidA)).rejects.toMatchObject({ code: 'permission-denied' });
   });
 });
 
-type WorksheetRow = { id: string; data: Record<string, unknown> };
 
-function fakeWorksheetLibrary(rows: WorksheetRow[]) {
-  const queries: Array<{ field: string; op: string; values: string[] }> = [];
-  const db = {
-    collection(name: string) {
-      if (name !== 'parentWorksheetLibrary') throw new Error('Unexpected collection: ' + name);
-      return {
-        where(field: string, op: string, values: string[]) {
-          if (op !== 'array-contains-any') throw new Error('Unexpected query operator: ' + op);
-          queries.push({ field, op, values });
-          return {
-            async get() {
-              const docs = rows.filter((row) => {
-                const targets = row.data[field];
-                return Array.isArray(targets) && values.some((value) => targets.includes(value));
-              }).map((row) => ({ id: row.id, data: () => row.data }));
-              return { docs };
-            },
-          };
-        },
-        get() {
-          throw new Error('Full worksheet-library scans are forbidden');
-        },
-      };
-    },
-  } as unknown as admin.firestore.Firestore;
-
-  return { db, queries };
-}
-
-describe('parent worksheet targeted Firestore reads', () => {
-  const auth = {
-    parentId: 'parent-a',
-    kidId: 'kid-a',
-    courseIds: new Set(['course-a']),
-    enrollmentIds: new Set(['enrollment-a']),
-  };
-
-  it('reads only course and legacy-parent candidates, never the whole library', async () => {
-    const rows: WorksheetRow[] = [];
-    for (let i = 0; i < 100; i++) {
-      rows.push({ id: 'unrelated-' + String(i).padStart(3, '0'),
-        data: { targetCourseIds: ['course-other'], title: 'Unrelated' } });
-    }
-    rows.push(
-      { id: 'course', data: { title: 'Course', targetCourseIds: ['course-a'] } },
-      { id: 'legacy-parent', data: { title: 'Parent', targetParentIds: ['parent-a'] } },
-      { id: 'legacy-all', data: { title: 'All', targetParentIds: ['all_parents'] } },
-      { id: 'different-parent', data: { targetParentIds: ['parent-b'] } },
-    );
-    const fake = fakeWorksheetLibrary(rows);
-    const docs = await fetchParentWorksheetCandidates(fake.db, auth.parentId, auth.courseIds);
-    expect(docs.map((doc) => doc.id)).toEqual(['course', 'legacy-all', 'legacy-parent']);
-    expect(fake.queries).toEqual([
-      { field: 'targetCourseIds', op: 'array-contains-any', values: ['course-a'] },
-      { field: 'targetParentIds', op: 'array-contains-any', values: ['parent-a', 'all_parents'] },
-    ]);
+describe('parent worksheet course browsing access policy', () => {
+  it('permits general resources across courses but never child, parent or enrolment overrides', () => {
+    expect(parentWorksheetIsGenerallyBrowseable({
+      active: true, targetCourseIds: ['other-course'],
+    })).toBe(true);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetParentIds: ['all_parents'],
+    })).toBe(true);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetKidIds: ['other-child'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetChildIds: ['other-child'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetEnrollmentIds: ['other-enrollment'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetParentIds: ['another-family'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], active: false,
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], isArchived: true,
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetParentIds: ['all_parents'],
+    })).toBe(false);
   });
 
-  it('deduplicates matching course and parent targets but still denies unauthorized course overrides', async () => {
-    const fake = fakeWorksheetLibrary([
-      { id: 'both', data: { targetCourseIds: ['course-a'], targetParentIds: ['parent-a'] } },
-      { id: 'foreign-course', data: { targetCourseIds: ['course-other'], targetParentIds: ['parent-a'] } },
-      { id: 'wrong-child', data: { targetCourseIds: ['course-a'], targetKidIds: ['kid-b'] } },
-      { id: 'wrong-enrollment', data: { targetParentIds: ['all_parents'], targetEnrollmentIds: ['enrollment-b'] } },
-      { id: 'archived', data: { targetCourseIds: ['course-a'], archived: true } },
-      { id: 'inactive', data: { targetCourseIds: ['course-a'], active: false } },
-    ]);
-    const docs = await fetchParentWorksheetCandidates(fake.db, auth.parentId, auth.courseIds);
-    expect(docs.filter((doc) => parentWorksheetIsAllowed(doc.data(), auth)).map((doc) => doc.id)).toEqual(['both']);
-    expect(docs.filter((doc) => doc.id === 'both')).toHaveLength(1);
-  });
-
-  it('batches more than 30 active course IDs without losing worksheets', async () => {
-    const courseIds = new Set(Array.from({ length: 32 }, (_, i) => 'course-' + String(i).padStart(2, '0')));
-    const fake = fakeWorksheetLibrary([
-      { id: 'first', data: { targetCourseIds: ['course-00'] } },
-      { id: 'last', data: { targetCourseIds: ['course-31'] } },
-      { id: 'parent-only', data: { targetParentIds: ['all_parents'] } },
-    ]);
-    const docs = await fetchParentWorksheetCandidates(fake.db, auth.parentId, courseIds);
-    expect(docs.map((doc) => doc.id)).toEqual(['first', 'last', 'parent-only']);
-    expect(fake.queries).toHaveLength(3);
-    expect(fake.queries[0].values).toHaveLength(30);
-    expect(fake.queries[1].values).toHaveLength(2);
-    expect(fake.queries[2].field).toBe('targetParentIds');
-  });
-
-  it('queries legacy parent assignments even when there are no active courses', async () => {
-    const fake = fakeWorksheetLibrary([
-      { id: 'legacy', data: { targetParentIds: ['parent-a'] } },
-      { id: 'course', data: { targetCourseIds: ['course-a'] } },
-    ]);
-    const docs = await fetchParentWorksheetCandidates(fake.db, auth.parentId, new Set());
-    expect(docs.map((doc) => doc.id)).toEqual(['legacy']);
-    expect(fake.queries).toHaveLength(1);
-    expect(fake.queries[0].field).toBe('targetParentIds');
+  it('does not expose child-specific worksheets for parents in other courses', () => {
+    const otherFamily = {
+      targetCourseIds: ['other-course'],
+      targetKidIds: ['other-child'],
+      targetEnrollmentIds: ['other-enrollment'],
+    };
+    expect(parentWorksheetIsAllowed(otherFamily, context)).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable(otherFamily)).toBe(false);
   });
 });
