@@ -1253,9 +1253,15 @@ export const claimDemoSession = onCall<ClaimDemoSessionRequest>(
         status?: string;
         history?: unknown;
         courseInterested?: string | null;
+        classFormatPreference?: string | null;
+        assessmentFormat?: string | null;
       };
       if (normalizeDemoStatus(demo.status) !== 'open') {
         throw new HttpsError('failed-precondition', 'Demo is no longer available');
+      }
+      if ((demo.classFormatPreference === 'small_group' || demo.classFormatPreference === 'unsure') &&
+        !demo.assessmentFormat) {
+        throw new HttpsError('failed-precondition', 'Admin must choose assessment delivery before a teacher can claim this enquiry.');
       }
 
       const demoTrack = normalizeTrack(demo.courseInterested || '');
@@ -1694,6 +1700,7 @@ interface ReassignDemoSessionRequest {
   demoId: string;
   assignedTeacherId: string;
   assignedTeacherName?: string;
+  assessmentFormat?: 'one_to_one' | 'small_group';
 }
 
 async function resolveTeacherProfile(
@@ -1737,6 +1744,11 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
       120,
     );
 
+    const assessmentFormat = pickOptionalText(request.data?.assessmentFormat, 40);
+    if (assessmentFormat && assessmentFormat !== 'one_to_one' && assessmentFormat !== 'small_group') {
+      throw new HttpsError('invalid-argument', 'Invalid assessment format');
+    }
+
     const db = admin.firestore();
     const nextTeacherName = await resolveTeacherProfile(
       db,
@@ -1768,6 +1780,10 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
 
       tx.update(demoRef, {
         status: 'assigned',
+        ...(assessmentFormat ? {
+          assessmentFormat,
+          leadType: assessmentFormat === 'small_group' ? 'Group Class' : '1:1',
+        } : {}),
         assignedTeacherId,
         assignedTeacherName: nextTeacherName,
         assignedAt: admin.firestore.FieldValue.serverTimestamp(),

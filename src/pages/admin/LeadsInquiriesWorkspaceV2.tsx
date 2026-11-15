@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { collection, getDocs, query, Timestamp, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, Timestamp, where } from 'firebase/firestore';
 import {
   CheckCircle2,
   CircleDot,
@@ -372,6 +372,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const [teachersLoading, setTeachersLoading] = useState(false);
   const [assignRow, setAssignRow] = useState<SimpleRow | null>(null);
   const [assignTeacherId, setAssignTeacherId] = useState('');
+  const [assignAssessmentFormat, setAssignAssessmentFormat] = useState<'one_to_one' | 'small_group' | ''>('');
   const [assignSaving, setAssignSaving] = useState(false);
   const [retryingLeadId, setRetryingLeadId] = useState<string | null>(null);
   const [outcomeRow, setOutcomeRow] = useState<SimpleRow | null>(null);
@@ -682,7 +683,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const sortedRows = useMemo(() => {
     const list = filteredRows.filter((row) =>
       row.bucket === bucket && (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)));
-    const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, awaiting_demo: 2, wait_teacher: 3, view_outcome: 4 };
+    const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, wait_teacher: 3, view_outcome: 4 };
     return [...list].sort((a, b) => {
       if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
@@ -768,21 +769,48 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     setMonthFilter(value || dateFrom ? 'custom' : 'today');
   };
 
-  const openAssign = (row: SimpleRow) => {
-    if (!row.demo) return;
-    setAssignRow(row);
-    setAssignTeacherId(row.demo.assignedTeacherId || '');
+  const openAssign = async (row: SimpleRow) => {
+    if (retryingLeadId || assignSaving) return;
+    let demo = row.demo;
+    if (!demo) {
+      // Existing unresolved enquiries are repaired only on an explicit admin action.
+      // No page-load backfill or unguarded client-side Firestore write is permitted.
+      const leadId = row.lead?.id;
+      if (!leadId) {
+        toast({ title: 'Cannot assign yet', description: 'The enquiry has no canonical lead record.', variant: 'destructive' });
+        return;
+      }
+      setRetryingLeadId(leadId);
+      try {
+        const result = await adminRetryLeadDemoRequest(leadId);
+        const demoSnap = await getDoc(doc(db, 'demoSessions', result.demoId));
+        if (!demoSnap.exists()) throw new Error('The demo request was linked but cannot be loaded. Refresh and retry.');
+        demo = { id: demoSnap.id, ...demoSnap.data() } as DemoSession;
+        if (!['open', 'assigned'].includes(normalizeDemoStatus(demo.status))) {
+          throw new Error('This demo is no longer open for assignment. Review its current status.');
+        }
+        reloadPage();
+      } catch (error: any) {
+        toast({ title: 'Cannot prepare demo request', description: error?.message || 'Please review lead identity and demo ownership.', variant: 'destructive' });
+        return;
+      } finally {
+        setRetryingLeadId(null);
+      }
+    }
+    setAssignRow({ ...row, demo });
+    setAssignTeacherId(demo.assignedTeacherId || '');
+    setAssignAssessmentFormat(demo.assessmentFormat || (demo.leadType === '1:1' ? 'one_to_one' : demo.leadType === 'Group Class' ? 'small_group' : ''));
     void loadTeachersIfNeeded();
   };
 
   const submitAssign = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!assignRow?.demo || !assignTeacherId) return;
+    if (!assignRow?.demo || !assignTeacherId || !assignAssessmentFormat) return;
     const teacher = teachers.find((item) => item.id === assignTeacherId);
     if (!teacher) return;
     setAssignSaving(true);
     try {
-      await reassignDemoSession({ demoId: assignRow.demo.id, assignedTeacherId: teacher.id, assignedTeacherName: teacher.name });
+      await reassignDemoSession({ demoId: assignRow.demo.id, assignedTeacherId: teacher.id, assignedTeacherName: teacher.name, assessmentFormat: assignAssessmentFormat });
       const wasAssigned = rowTeacherWasAssigned(assignRow);
       setAssignRow(null);
       refreshWorkflowSoon();
@@ -888,39 +916,9 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     } finally { setDeletingRowId(null); }
   };
 
-  const retryDemoRequest = async (row: SimpleRow) => {
-    const leadId = row.lead?.id;
-    if (!leadId || retryingLeadId) return;
-    if (!window.confirm(`Safely check and link or create a 1:1 demo request for ${row.childName}? No teacher will be assigned automatically.`)) return;
-    setRetryingLeadId(leadId);
-    try {
-      const result = await adminRetryLeadDemoRequest(leadId);
-      reloadPage();
-      toast({
-        title: 'Demo request linked',
-        description: result.action === 'created'
-          ? 'A new open demo request is ready for teacher assignment.'
-          : 'Existing open/demo workflow was linked. Review its status before assignment.',
-      });
-    } catch (error: any) {
-      toast({
-        title: 'Demo request needs admin review',
-        description: error?.message || 'The safe retry was blocked; check class format, canonical identity and existing demo ownership.',
-        variant: 'destructive',
-      });
-    } finally {
-      setRetryingLeadId(null);
-    }
-  };
-
   const renderAction = (row: SimpleRow) => {
     const action = actionForRow(row);
-    if (action === 'awaiting_demo') return row.lead
-      ? <Button size="sm" variant="outline" disabled={Boolean(retryingLeadId)} onClick={() => void retryDemoRequest(row)}>
-          {retryingLeadId === row.lead.id ? 'Checking demo…' : 'Retry demo request'}
-        </Button>
-      : <Badge variant="outline">Demo link missing — review</Badge>;
-    if (action === 'assign_teacher') return <Button size="sm" onClick={() => openAssign(row)}>Assign teacher</Button>;
+    if (action === 'assign_teacher') return <Button size="sm" disabled={Boolean(retryingLeadId)} onClick={() => void openAssign(row)}>{retryingLeadId && retryingLeadId === row.lead?.id ? 'Preparing demo…' : 'Assign teacher'}</Button>;
     if (action === 'wait_teacher') return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
     if (action === 'follow_up_lead') return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>{row.classFormatPreference === 'small_group' || row.classFormatPreference === 'unsure' ? 'Review enquiry' : 'Open details'}</Button>;
     if (action === 'review_outcome') return <Button size="sm" onClick={() => openOutcome(row)}>{isSimpleFollowUpDecision(row.demo?.conversionStatus) ? 'Update follow-up' : 'Review & update'}</Button>;
@@ -1027,7 +1025,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
             {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" title="Open WhatsApp; this does not confirm a sent or received message" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> Open WhatsApp</Button>}
             {renderAction(row)}
-            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} showQuickLogButton={row.bucket !== 'closed'} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
+            <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} showQuickLogButton={row.bucket !== 'closed'} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => void openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
           </div>
         </div>)}</div>}
         {currentTotal > 0 && <div className="flex flex-wrap items-center justify-between gap-3 border-t bg-slate-50/60 px-4 py-3">
@@ -1037,7 +1035,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       </>}
     </Card>
 
-    <Dialog open={Boolean(assignRow)} onOpenChange={(open) => !open && setAssignRow(null)}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</DialogTitle><DialogDescription>Teacher options load only when this dialog is opened; there is no background teacher listener.</DialogDescription></DialogHeader><form onSubmit={submitAssign} className="space-y-4"><div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}</div><div><Label>Teacher *</Label><Select value={assignTeacherId} onValueChange={setAssignTeacherId}><SelectTrigger className="mt-1"><SelectValue placeholder={teachersLoading ? 'Loading teachers…' : teachersLoaded ? 'Select active teacher' : 'Teacher list not loaded'} /></SelectTrigger><SelectContent>{teachers.map((teacher) => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setAssignRow(null)}>Cancel</Button><Button type="submit" disabled={teachersLoading || !teachersLoaded || !assignTeacherId || assignSaving}>{assignSaving ? 'Saving…' : assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</Button></div></form></DialogContent></Dialog>
+    <Dialog open={Boolean(assignRow)} onOpenChange={(open) => !open && setAssignRow(null)}><DialogContent className="max-w-md"><DialogHeader><DialogTitle>{assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</DialogTitle><DialogDescription>Teacher options load only when this dialog is opened; there is no background teacher listener. Choose the assessment delivery separately from the parent's class preference; no session is scheduled automatically.</DialogDescription></DialogHeader><form onSubmit={submitAssign} className="space-y-4"><div className="rounded-lg bg-slate-50 p-3 text-sm"><span className="font-semibold">{assignRow?.childName}</span> · {assignRow?.course}<div className="mt-1 text-xs text-slate-600">Parent preference: {assignRow?.classFormatPreference === 'small_group' ? 'Group classes' : assignRow?.classFormatPreference === 'unsure' ? 'Help me choose' : 'One-to-one classes'}</div></div><div><Label>Assessment delivery *</Label><Select value={assignAssessmentFormat} onValueChange={(value) => setAssignAssessmentFormat(value as 'one_to_one' | 'small_group')}><SelectTrigger className="mt-1"><SelectValue placeholder="Choose assessment delivery" /></SelectTrigger><SelectContent><SelectItem value="one_to_one">Individual assessment</SelectItem><SelectItem value="small_group">Small-group assessment</SelectItem></SelectContent></Select></div><div><Label>Teacher *</Label><Select value={assignTeacherId} onValueChange={setAssignTeacherId}><SelectTrigger className="mt-1"><SelectValue placeholder={teachersLoading ? 'Loading teachers…' : teachersLoaded ? 'Select active teacher' : 'Teacher list not loaded'} /></SelectTrigger><SelectContent>{teachers.map((teacher) => <SelectItem key={teacher.id} value={teacher.id}>{teacher.name}</SelectItem>)}</SelectContent></Select></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setAssignRow(null)}>Cancel</Button><Button type="submit" disabled={teachersLoading || !teachersLoaded || !assignTeacherId || !assignAssessmentFormat || assignSaving}>{assignSaving ? 'Saving…' : assignRow && rowTeacherWasAssigned(assignRow) ? 'Reassign teacher' : 'Assign teacher'}</Button></div></form></DialogContent></Dialog>
 
     <Dialog open={Boolean(outcomeRow)} onOpenChange={(open) => !open && setOutcomeRow(null)}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>{outcomeRow?.bucket === 'closed' ? 'Outcome' : 'Review teacher response & update'}</DialogTitle><DialogDescription>{outcomeRow?.bucket === 'closed' ? 'The final workflow decision is read-only here. Admin tools remain available from the row menu.' : 'Teacher completion is in Admin Review. Save a final decision to close, or a follow-up decision to keep it here.'}</DialogDescription></DialogHeader>
       {outcomeRow?.demo && <div className="rounded-xl border bg-slate-50 p-4 text-sm"><div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Teacher response</div><div className="mt-2 grid gap-2 sm:grid-cols-2"><div><span className="text-slate-500">Remarks:</span> {outcomeRow.demo.teacherRemarks || 'Not submitted yet'}</div><div><span className="text-slate-500">Recommendation:</span> {outcomeRow.demo.teacherRecommendation || '—'}</div><div><span className="text-slate-500">Next step:</span> {formatTrack(outcomeRow.demo.recommendedNextStep) || '—'}</div><div><span className="text-slate-500">Demo outcome:</span> {formatTrack(outcomeRow.demo.outcome) || '—'}</div></div></div>}

@@ -163,6 +163,8 @@ export interface DemoSession {
   id: string;
   leadId?: string | null;
   leadType?: '1:1' | 'Group Class' | null;
+  classFormatPreference?: 'one_to_one' | 'small_group' | 'unsure' | null;
+  assessmentFormat?: 'one_to_one' | 'small_group' | null;
   parentName: string;
   childName: string;
   childGrade: string;

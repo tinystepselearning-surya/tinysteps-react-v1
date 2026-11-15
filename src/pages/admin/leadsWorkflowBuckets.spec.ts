@@ -10,19 +10,19 @@ import {
 describe('four-stage leads workflow buckets', () => {
   it('treats a new enquiry without a linked demo as a short-lived open sync state', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'new', hasDemo: false })).toBe('open');
-    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('awaiting_demo');
+    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('assign_teacher');
     expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('Demo request not linked');
   });
 
-  it('never treats group or undecided enquiries as failed 1:1 demo creation', () => {
+  it('keeps group and undecided enquiries assignable even when a demo link is missing', () => {
     for (const format of ['small_group', 'unsure']) {
       const input = { leadStatus: 'new', hasDemo: false, classFormatPreference: format };
       expect(resolveSimpleLeadBucket(input)).toBe('open');
-      expect(resolveSimpleLeadAction(input)).toBe('follow_up_lead');
+      expect(resolveSimpleLeadAction(input)).toBe('assign_teacher');
     }
-    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'small_group' })).toBe('Small-group enquiry — review');
-    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'unsure' })).toBe('Class format undecided');
-    expect(resolveSimpleLeadAction({ hasDemo: false, classFormatPreference: 'one_to_one' })).toBe('awaiting_demo');
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'small_group' })).toBe('Demo request not linked');
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'unsure' })).toBe('Demo request not linked');
+    expect(resolveSimpleLeadAction({ hasDemo: false, classFormatPreference: 'one_to_one' })).toBe('assign_teacher');
   });
 
   it('keeps an unassigned demo in Open', () => {
