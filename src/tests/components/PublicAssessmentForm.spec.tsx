@@ -91,7 +91,7 @@ describe('PublicAssessmentForm analytics', () => {
   it('tracks a single form_error event when validation fails', () => {
     render(<PublicAssessmentForm />);
 
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     expect(trackingMocks.trackLeadFormError).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
@@ -106,7 +106,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: '+919999999999' } });
     fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
 
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     expect(screen.getByText(/please select the support area/i)).toBeInTheDocument();
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe('PublicAssessmentForm analytics', () => {
     render(<PublicAssessmentForm />);
     fillValidForm();
     fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: 'not-a-number' } });
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
     expect(screen.getByText(/enter a valid mobile number/i)).toBeInTheDocument();
     expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
     expect(globalThis.open).not.toHaveBeenCalled();
@@ -129,7 +129,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(screen.getByRole('button', { name: 'Call me' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: 'Reply on WhatsApp' })).toHaveAttribute('aria-pressed', 'false');
     expect(screen.getByRole('button', { name: 'Either is fine' })).toHaveAttribute('aria-pressed', 'false');
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
     expect(screen.getByText(/please choose how tiny steps may reply/i)).toBeInTheDocument();
     expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
     expect(globalThis.open).not.toHaveBeenCalled();
@@ -164,7 +164,7 @@ describe('PublicAssessmentForm analytics', () => {
     render(<PublicAssessmentForm />);
     fillValidForm();
     fireEvent.click(screen.getByRole('button', { name: 'Reply on WhatsApp' }));
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).toMatchObject({
       contactPreference: 'whatsapp', contactPermission: true,
@@ -181,7 +181,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     const supportArea = screen.getByLabelText(/choose the area where your child needs support/i);
     expect(supportArea).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'Choose the area where your child needs support' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Choose a learning need' })).toBeInTheDocument();
 
     PUBLIC_MAIN_CONCERN_OPTIONS.forEach((option) => {
       expect(screen.getByRole('option', { name: option })).toBeInTheDocument();
@@ -192,7 +192,7 @@ describe('PublicAssessmentForm analytics', () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
     const optionGroup = screen.getByRole('group', { name: /choose a class format/i });
-    expect(optionGroup).toHaveClass('grid-cols-3');
+    expect(optionGroup).toHaveClass('grid-cols-2', 'sm:grid-cols-3');
     expect(optionGroup.querySelectorAll('button')).toHaveLength(3);
     const privateButton = screen.getByRole('button', { name: 'One-to-One Classes' });
     const groupButton = screen.getByRole('button', { name: 'Group Classes' });
@@ -214,6 +214,26 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.click(undecidedButton);
     expect(undecidedButton).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('button', { name: /request class-format guidance on whatsapp/i })).toBeInTheDocument();
+  });
+
+  it('keeps the mobile selections readable and describes the chosen learning need in full', () => {
+    render(<PublicAssessmentForm />);
+
+    expect(screen.getByText('Parent name *')).toBeInTheDocument();
+    expect(screen.getByText('Where does your child need help? *')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Request Free 35-Minute Demo' })).toBeInTheDocument();
+    const contactGroup = screen.getByRole('group', { name: 'Choose your contact preference' });
+    expect(contactGroup).toHaveClass('grid-cols-2', 'sm:grid-cols-3');
+    expect(screen.getByRole('button', { name: 'Either is fine' })).toHaveClass('col-span-2', 'sm:col-span-1');
+    expect(screen.getByRole('button', { name: 'Help Me Choose' })).toHaveClass('col-span-2', 'sm:col-span-1');
+
+    fireEvent.change(screen.getByLabelText(/choose the area where your child needs support/i), {
+      target: { value: 'Starting to read words after learning ABC/sounds' },
+    });
+    expect(screen.getByText('Selected: Starting to read words after learning ABC/sounds')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Call me' }));
+    expect(screen.getByRole('button', { name: 'Request a Phone Callback' })).toBeInTheDocument();
+    expect(screen.getByText(/WhatsApp is not required/i)).toBeInTheDocument();
   });
 
   it('preselects group programme and saves a group-interest enquiry without a demo claim', async () => {
@@ -245,7 +265,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(firestoreMocks.setDoc).toHaveBeenCalledWith(
@@ -331,7 +351,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
@@ -358,7 +378,7 @@ describe('PublicAssessmentForm analytics', () => {
     render(<PublicAssessmentForm />);
 
     fillValidForm();
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     await waitFor(() => expect(functionsMocks.enrichPublicLeadAttribution).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(warnSpy).toHaveBeenCalledTimes(1));
@@ -378,7 +398,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    fireEvent.submit(screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i }));
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(trackingMocks.trackLeadFormSubmit).toHaveBeenCalledTimes(1);
@@ -410,7 +430,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fillValidForm();
 
-    const submitButton = screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i });
+    const submitButton = screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i });
     fireEvent.click(submitButton);
     fireEvent.click(submitButton);
 
@@ -432,7 +452,7 @@ describe('PublicAssessmentForm analytics', () => {
     render(<PublicAssessmentForm />);
     fillValidForm();
 
-    const submitButton = screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i });
+    const submitButton = screen.getByRole('button', { name: /(?:book free 35-minute demo on whatsapp|request free 35-minute demo)/i });
     fireEvent.click(submitButton);
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(window.sessionStorage.getItem('ts_public_assessment_pending_lead_id_v1')).toBe('lead-123');
