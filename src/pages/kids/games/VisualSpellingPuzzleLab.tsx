@@ -247,37 +247,37 @@ export default function VisualSpellingPuzzleLab() {
                   <span className="mb-2 block text-sm font-bold">Your spelling</span>
                   <input type="text" value={recallValue} autoComplete="off" autoCapitalize="none" spellCheck={false}
                     onChange={event => setRecallValue(event.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg font-semibold text-slate-950 focus:border-indigo-700 focus:outline-none"
+                    className="w-full rounded-xl border-2 border-[#d1cafb] bg-[#faf9ff] px-4 py-3 text-lg font-bold text-[#27245b] focus:border-[#7759e6] focus:outline-none"
                     aria-label="Type the spelling from memory" />
                 </label>
                 <button type="submit" disabled={!recallValue.trim()}
-                  className="self-end rounded-xl bg-indigo-700 px-6 py-3.5 font-bold text-white disabled:opacity-50">Check spelling</button>
+                  className="ts-spelling-primary self-end px-6 py-3.5 font-black">Check spelling</button>
               </form>
             )}
             {recallAttempted && !recallCorrect && !recallRevealed && (
-              <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+              <p role="status" className="ts-spelling-hint mt-3 p-3 text-sm font-medium">
                 Not quite. Check the order of the letters, then try again.
               </p>
             )}
             {!recallCorrect && !recallRevealed && (
               <div className="mt-5 flex flex-wrap gap-3">
                 <button type="button" onClick={() => setRecallHintUsed(true)} disabled={recallHintUsed}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">Need a hint?</button>
+                  className="ts-spelling-secondary min-h-11 px-5 py-2.5 text-sm font-black">Need a hint?</button>
                 {(recallAttempted || recallHintUsed) && (
                   <button type="button" onClick={() => setRecallRevealed(true)}
-                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Show answer &amp; finish</button>
+                    className="ts-spelling-secondary min-h-11 px-5 py-2.5 text-sm font-black">Show answer &amp; finish</button>
                 )}
               </div>
             )}
             {recallHintUsed && !recallCorrect && !recallRevealed && (
-              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">Hint: The word starts with <strong>{recallWord.word.charAt(0).toUpperCase()}</strong>.</p>
+              <p className="ts-spelling-hint mt-3 p-3 text-sm font-medium">Hint: The word starts with <strong>{recallWord.word.charAt(0).toUpperCase()}</strong>.</p>
             )}
             {(recallCorrect || recallRevealed) && (
-              <div role="status" className="mt-5 rounded-xl bg-emerald-50 p-5 text-emerald-950">
+              <div role="status" className="ts-spelling-message mt-5 p-5 text-[#15533f]">
                 <h3 className="text-xl font-black">{recallRevealed ? 'Answer: ' : 'Correct! '}{recallWord.word}</h3>
                 <p className="mt-2 text-sm">{recallWord.learningNote}</p>
                 <button type="button" onClick={() => setFinished(true)}
-                  className="mt-4 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white">See results</button>
+                  className="ts-spelling-primary mt-4 px-6 py-3 font-black">See results</button>
               </div>
             )}
           </section>
@@ -326,10 +326,10 @@ export default function VisualSpellingPuzzleLab() {
                     const raw = event.dataTransfer.getData('text/plain');
                     if (/^\d+$/.test(raw)) pickTile(Number(raw));
                   }}
-                  className="flex min-h-20 flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50 p-3">
+                  className="ts-spelling-slot flex min-h-24 flex-wrap items-center gap-2 p-3 sm:p-4">
                   {chosenIndices.length ? chosenIndices.map((tileIndex, position) => (
-                    <span key={position} className="rounded-lg bg-indigo-700 px-4 py-3 text-xl font-bold text-white">{puzzle.tiles[tileIndex]}</span>
-                  )) : <span className="text-sm text-slate-500">Drop tiles here or tap them below</span>}
+                    <span key={position} className="rounded-xl bg-[#5d4bce] px-4 py-3 text-xl font-black text-white shadow-sm">{puzzle.tiles[tileIndex]}</span>
+                  )) : <span className="text-sm font-medium text-[#69658f]">Your word goes here · Tap or drop tiles</span>}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {puzzle.tiles.map((tile, tileIndex) => (
@@ -340,7 +340,7 @@ export default function VisualSpellingPuzzleLab() {
                       draggable={!chosenIndices.includes(tileIndex)}
                       onDragStart={event => event.dataTransfer.setData('text/plain', String(tileIndex))}
                       onClick={() => pickTile(tileIndex)}
-                      className="min-h-14 min-w-14 rounded-xl border-2 border-indigo-200 bg-white px-4 py-3 text-xl font-bold shadow-sm hover:border-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:cursor-not-allowed disabled:opacity-25"
+                      className="ts-spelling-tile min-h-14 min-w-14 px-4 py-3 text-xl font-black disabled:cursor-not-allowed disabled:opacity-25"
                       aria-label={'Add tile ' + tile + ', position ' + (tileIndex + 1)}>
                       {tile}
                     </button>
@@ -349,13 +349,13 @@ export default function VisualSpellingPuzzleLab() {
                 <div className="mt-5 flex flex-wrap gap-2">
                   <button type="button" disabled={!chosenIndices.length || feedback === 'correct'}
                     onClick={() => { setChosenIndices(old => old.slice(0, -1)); setFeedback(null); }}
-                    className="rounded-lg border border-slate-300 px-4 py-2 font-semibold disabled:opacity-40">Undo</button>
+                    className="ts-spelling-secondary min-h-11 px-5 py-2.5 font-bold">Undo</button>
                   <button type="button" disabled={!chosenIndices.length || feedback === 'correct'}
                     onClick={() => { setChosenIndices([]); setFeedback(null); }}
-                    className="rounded-lg border border-slate-300 px-4 py-2 font-semibold disabled:opacity-40">Clear</button>
+                    className="ts-spelling-secondary min-h-11 px-5 py-2.5 font-bold">Clear</button>
                   <button type="button" disabled={!complete || feedback === 'correct'}
                     onClick={() => submit(assembledWord)}
-                    className="rounded-lg bg-indigo-700 px-5 py-2 font-bold text-white hover:bg-indigo-800 disabled:opacity-40">Check spelling</button>
+                    className="ts-spelling-primary min-h-11 px-6 py-3 font-black">Check spelling</button>
                 </div>
               </div>
             )}
@@ -365,7 +365,7 @@ export default function VisualSpellingPuzzleLab() {
                 {puzzle.options.map(option => (
                   <button type="button" key={option} disabled={feedback === 'correct'}
                     onClick={() => submit(option)}
-                    className="min-h-16 rounded-xl border-2 border-slate-200 px-5 py-4 text-left text-xl font-bold hover:border-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:opacity-60">
+                    className="ts-spelling-choice min-h-16 px-5 py-4 text-left text-xl font-black disabled:opacity-60">
                     {option}
                   </button>
                 ))}
@@ -374,14 +374,14 @@ export default function VisualSpellingPuzzleLab() {
 
             {puzzle.kind === 'missing' && (
               <div className="mt-6">
-                <div className="mb-6 rounded-xl bg-indigo-50 p-5 text-center text-2xl font-black tracking-wide text-indigo-950">
+                <div className="mb-6 rounded-2xl border border-[#dad8fc] bg-[#f3f1ff] p-5 text-center text-2xl font-black tracking-wide text-[#3e358d] sm:text-3xl">
                   {puzzle.before}<span className="mx-1 inline-block min-w-8 border-b-4 border-indigo-500">?</span>{puzzle.after}
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {puzzle.choices.map(option => (
                     <button type="button" key={option} disabled={feedback === 'correct'}
                       onClick={() => submit(option)}
-                      className="min-h-16 rounded-xl border-2 border-slate-200 bg-white p-3 text-xl font-black hover:border-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:opacity-60">{option}</button>
+                      className="ts-spelling-choice min-h-16 p-3 text-xl font-black disabled:opacity-60">{option}</button>
                   ))}
                 </div>
               </div>
@@ -397,7 +397,7 @@ export default function VisualSpellingPuzzleLab() {
                     aria-live="polite"
                     draggable={feedback !== 'correct'}
                     onDragStart={event => event.dataTransfer.setData('text/plain', activeSortWord)}
-                    className="inline-block max-w-full cursor-grab break-words rounded-xl border-2 border-indigo-300 bg-white px-4 py-4 text-2xl font-black text-indigo-950 shadow-sm sm:px-6 sm:text-3xl"
+                    className="ts-spelling-tile inline-block max-w-full cursor-grab break-words px-4 py-4 text-2xl font-black sm:px-6 sm:text-3xl"
                     aria-label={'Word to sort: ' + activeSortWord}
                   >{activeSortWord}</span>
                 </div>
@@ -410,7 +410,7 @@ export default function VisualSpellingPuzzleLab() {
                         event.preventDefault();
                         if (event.dataTransfer.getData('text/plain') === activeSortWord) submit(category);
                       }}
-                      className="min-h-20 rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-4 py-4 text-lg font-bold hover:border-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:opacity-60">{category}</button>
+                      className="ts-spelling-choice min-h-20 px-4 py-4 text-lg font-black disabled:opacity-60">{category}</button>
                   ))}
                 </div>
               </div>
@@ -419,19 +419,19 @@ export default function VisualSpellingPuzzleLab() {
             <div className="mt-6">
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setShowHint(true)} disabled={showHint || feedback === 'correct'}
-                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">Need a hint?</button>
+                  className="ts-spelling-secondary min-h-11 px-5 py-2.5 text-sm font-black">Need a hint?</button>
                 {(feedback === 'retry' || showHint) && (
                   <button type="button" onClick={revealAnswer} disabled={feedback === 'correct'}
-                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">
+                    className="ts-spelling-secondary min-h-11 px-5 py-2.5 text-sm font-black">
                     Show answer &amp; learn
                   </button>
                 )}
               </div>
-              {showHint && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950"><strong>Hint:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? 'Compare the ending or prefix with the two category names.' : puzzle.hint}</p>}
+              {showHint && <p className="ts-spelling-hint mt-3 p-4 text-sm font-medium"><strong>Hint:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? 'Compare the ending or prefix with the two category names.' : puzzle.hint}</p>}
             </div>
 
             {feedback === 'retry' && (
-              <p role="status" className="mt-5 rounded-xl bg-amber-50 p-4 font-medium text-amber-900">
+              <p role="status" className="ts-spelling-hint mt-5 p-4 font-medium">
                 {puzzle.kind === 'arrange'
                   ? 'Those tiles are not in the correct order. Use Undo or Clear and try again.'
                   : puzzle.kind === 'correct'
@@ -443,9 +443,9 @@ export default function VisualSpellingPuzzleLab() {
               </p>
             )}
             {feedback === 'correct' && (
-              <div role="status" className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
+              <div role="status" className="ts-spelling-message mt-5 p-5 text-[#15533f]">
                 <h3 className="text-xl font-black">
-                  {revealed
+                  <span aria-hidden="true" className="mr-2">{revealed ? '✦' : '★'}</span>{revealed
                     ? puzzle.kind === 'sort'
                       ? `Answers: ${puzzle.word} → ${puzzle.answer}; ${puzzle.pair.word} → ${puzzle.pair.answer}`
                       : `Answer: ${puzzle.word}`
@@ -457,7 +457,7 @@ export default function VisualSpellingPuzzleLab() {
                 <p className="mt-2 text-sm">{puzzle.learningNote}</p>
                 {puzzle.kind === 'sort' && <p className="mt-2 text-sm">{puzzle.pair.learningNote}</p>}
                 <button type="button" onClick={nextPuzzle}
-                  className="mt-5 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white hover:bg-emerald-800">
+                  className="ts-spelling-primary mt-5 px-6 py-3 font-black">
                   {index + 1 < puzzles.length ? 'Next puzzle' : 'Final spelling challenge'}
                 </button>
               </div>
