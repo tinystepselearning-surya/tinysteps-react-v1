@@ -677,7 +677,7 @@ export default function PublicAssessmentForm({
 
         <button
           type="submit"
-          aria-label={form.contactPreference === 'phone' ? displayedSubmitLabel : form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
+          aria-label={!form.contactPreference || form.contactPreference === 'phone' ? displayedSubmitLabel : form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
           disabled={isSubmitting}
           className={submitClassName}
           style={{
@@ -690,7 +690,9 @@ export default function PublicAssessmentForm({
         <div className="space-y-1 text-center">
           <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
           <p className="text-xs leading-4 text-slate-600">
-            Your enquiry is saved before WhatsApp opens. Our team can contact you even if WhatsApp does not work.
+            {form.contactPreference === 'phone'
+              ? 'Your enquiry is saved for a phone callback. WhatsApp is not required.'
+              : 'Your enquiry is saved before WhatsApp opens. We can contact you even if it does not work.'}
           </p>
           {secondaryHelperText && form.classFormatPreference === 'one_to_one' && form.contactPreference !== 'phone' ? (
             <p className="hidden text-xs text-slate-600 sm:block">{secondaryHelperText}</p>
