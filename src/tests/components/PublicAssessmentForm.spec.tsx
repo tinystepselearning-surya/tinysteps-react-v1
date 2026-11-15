@@ -188,6 +188,27 @@ describe('PublicAssessmentForm analytics', () => {
     });
   });
 
+  it('offers 13 or older while retaining exact ages up to 12', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    const select = screen.getByLabelText('Child Age');
+    expect(screen.getByRole('option', { name: '12' })).toHaveAttribute('value', '12');
+    expect(screen.getByRole('option', { name: '13 or older' })).toHaveAttribute('value', '13+');
+    expect(screen.queryByRole('option', { name: '12+' })).not.toBeInTheDocument();
+
+    fillValidForm();
+    fireEvent.change(select, { target: { value: '13+' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Call me' }));
+    fireEvent.submit(screen.getByRole('button', { name: 'Request a Phone Callback' }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0][1]).toMatchObject({
+      childAge: null,
+      childAgeBand: '13+',
+      contactPreference: 'phone',
+    });
+    expect(globalThis.open).not.toHaveBeenCalled();
+  });
+
   it('renders responsive class-format choices and updates conversion intent', async () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
