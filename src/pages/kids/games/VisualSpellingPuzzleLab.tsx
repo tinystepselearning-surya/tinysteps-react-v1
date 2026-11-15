@@ -206,7 +206,13 @@ export default function VisualSpellingPuzzleLab() {
 
         {stageId && !finished && recallMode && recallWord && (
           <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="recall-heading">
-            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">Final challenge · Remember and spell</span>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">Final challenge · Remember and spell</span>
+              <button type="button" onClick={() => setStageId(null)}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-indigo-900">
+                Change level
+              </button>
+            </div>
             <h2 id="recall-heading" ref={focusHeadingRef} tabIndex={-1} className="mt-5 text-2xl font-black focus:outline-none">Can you spell it without the tiles?</h2>
             <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {recallWord.clue}</p>
             <p className="mt-3 text-sm text-slate-600">Type the complete word from memory. No sound or picture is needed.</p>
@@ -258,7 +264,13 @@ export default function VisualSpellingPuzzleLab() {
               <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">
                 {VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId)?.title}
               </span>
-              <span className="text-sm font-semibold text-slate-600">Puzzle {index + 1} of {puzzles.length}</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-semibold text-slate-600">Puzzle {index + 1} of {puzzles.length}</span>
+                <button type="button" onClick={() => setStageId(null)}
+                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-indigo-900">
+                  Change level
+                </button>
+              </div>
             </div>
             <div aria-hidden="true" className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100">
               <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: ((index + (feedback === 'correct' ? 1 : 0)) / puzzles.length * 100) + '%' }} />
@@ -350,6 +362,7 @@ export default function VisualSpellingPuzzleLab() {
                 </p>
                 <div className="mb-5 text-center">
                   <span
+                    aria-live="polite"
                     draggable={feedback !== 'correct'}
                     onDragStart={event => event.dataTransfer.setData('text/plain', activeSortWord)}
                     className="inline-block max-w-full cursor-grab break-words rounded-xl border-2 border-indigo-300 bg-white px-4 py-4 text-2xl font-black text-indigo-950 shadow-sm sm:px-6 sm:text-3xl"
