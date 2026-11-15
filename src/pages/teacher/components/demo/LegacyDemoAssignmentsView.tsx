@@ -583,7 +583,9 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
             <span className="ml-1 font-normal text-slate-500">({demo.childGrade || '—'})</span>
           </div>
           <div className="text-sm text-slate-900">{demo.preferredDateTimeText || '—'}</div>
-          <div className="text-sm text-slate-900">{demo.courseInterested || '—'}</div>
+          <div className="text-sm text-slate-900">{demo.courseInterested || '—'}
+            {demo.assessmentFormat ? <div className="mt-1 text-xs text-slate-500">Assessment: {demo.assessmentFormat === 'small_group' ? 'Small group' : 'Individual'}</div> : null}
+          </div>
           <div className="text-sm text-slate-900">
             {typeof demo.childAge === 'number' ? demo.childAge : '—'}
           </div>
@@ -633,6 +635,12 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
             {demo.assignedAt ? (
               <div>
                 <span className="font-medium text-slate-800">Assigned at:</span> {formatTs(demo.assignedAt)}
+              </div>
+            ) : null}
+            {demo.classFormatPreference ? (
+              <div>
+                <span className="font-medium text-slate-800">Parent class preference:</span>{' '}
+                {demo.classFormatPreference === 'small_group' ? 'Group classes' : demo.classFormatPreference === 'unsure' ? 'Help choosing' : 'One-to-one classes'}
               </div>
             ) : null}
             {demo.adminNotes ? (
