@@ -1,5 +1,20 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T10:44:41.331Z UTC (15 November 2026 IST, slot 17 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **15 November IST: 170/202 distinct exact-URL provider retrieval attempts (84.16%); 32 unattempted.** Previous-day timestamps excluded.
+- Slot 17 rows 161–170: **9/10** exact-URL provider retrievals returned relevant page-specific extracted content; row 162 (`/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics`) returned a retrieval-provider internal error, as on 14 November. Evidence: `turn244891view0`–`turn244891view9`; nine returned pages labelled text/html, crawled yesterday. This is a blocked audit, **not a confirmed website failure**.
+- **Fully origin-verified: 0/202 today.** Independent curl failed DNS resolution (exit 6) at 2026-11-15T10:44:29Z UTC. Provider-extracted text cannot establish origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD or bot accessibility; all remain UNVERIFIED.
+- Individual UTC evidence-recording markers were stored in the tracker, **not independently measured origin request times**.
+- GitHub Actions: repository in-progress run query returned zero; legacy workflow administrative disabled state could not be independently retrieved. User's explicit disable confirmation remains the operating basis. No workflow run or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No source, workflow or production changes.
+- Next eligible batch: slot 18, rows 171–180, subject to earlier eligible recovery.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T09:49:29.684Z UTC (15 November 2026 IST, slot 16 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
