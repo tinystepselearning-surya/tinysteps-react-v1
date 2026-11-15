@@ -97,4 +97,39 @@ describe('free visual spelling puzzle lab', () => {
     expect(save).not.toHaveBeenCalled();
   });
 
+  it('does not award independent sorting credit after hinting the first word', () => {
+    render(
+      <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
+        <VisualSpellingPuzzleLab />
+      </MemoryRouter>
+    );
+    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    // Reveal the first three puzzles so independent score starts at zero.
+    for (let i = 0; i < 3; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
+      fireEvent.click(screen.getByRole('button', { name: /show answer & learn/i }));
+      fireEvent.click(screen.getByRole('button', { name: /next puzzle/i }));
+    }
+
+    // A hint on hopeful must also mark the paired hopeless answer as assisted.
+    fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Ends in -ful' }));
+    expect(screen.getByText('hopeless')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Ends in -less' }));
+    fireEvent.click(screen.getByRole('button', { name: /next puzzle/i }));
+
+    for (let i = 4; i < 8; i += 1) {
+      fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
+      fireEvent.click(screen.getByRole('button', { name: /show answer & learn/i }));
+      fireEvent.click(screen.getByRole('button', {
+        name: i === 7 ? /final spelling challenge/i : /next puzzle/i,
+      }));
+    }
+    fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show answer & finish/i }));
+    fireEvent.click(screen.getByRole('button', { name: /see results/i }));
+    expect(screen.getByText(/independent first-try puzzles: 0 of 8/i)).toBeTruthy();
+    expect(screen.getByRole('button', { name: /replay mixed puzzles/i })).toBeTruthy();
+  });
+
 });
