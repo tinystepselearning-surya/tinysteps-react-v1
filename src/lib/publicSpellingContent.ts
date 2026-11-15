@@ -1,4 +1,5 @@
 import { PUBLIC_SPELLING_EXTRA_CHALLENGES } from './publicSpellingCurriculumExpansion';
+import { PUBLIC_SPELLING_FURTHER_CHALLENGES } from './publicSpellingFurtherPractice';
 
 export type PublicSpellingMode = "build" | "family" | "missing" | "choice" | "fix" | "spell";
 
@@ -156,10 +157,11 @@ export const PUBLIC_SPELLING_LEVELS: PublicSpellingLevel[] = [
   },
 ];
 
-// Keep the original six-question introduction intact and extend every mode to
-// eighteen reviewed words. Each replay rotates to a different six-word set.
+// Preserve the reviewed introductory challenges and expand each of the six
+// spelling activities to 30 curated tasks in five short six-word rounds.
 for (const level of PUBLIC_SPELLING_LEVELS) {
   level.challenges.push(...PUBLIC_SPELLING_EXTRA_CHALLENGES.filter(challenge => challenge.mode === level.mode));
+  level.challenges.push(...PUBLIC_SPELLING_FURTHER_CHALLENGES.filter(challenge => challenge.mode === level.mode));
 }
 
 export const PUBLIC_SPELLING_SESSION_SIZE = 6;
