@@ -48,6 +48,10 @@
   box-shadow: 0 8px 0 rgba(5,15,43,.16), 0 15px 36px rgba(6,12,43,.18);
   transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
 }
+.ts-spelling-stage-card:nth-child(1) { background: linear-gradient(135deg,#ffe2b7 0%,#ffc8b2 100%); color: #5b2e3c; }
+.ts-spelling-stage-card:nth-child(2) { background: linear-gradient(135deg,#d7f6f0 0%,#aaf0e9 100%); color: #124c53; }
+.ts-spelling-stage-card:nth-child(3) { background: linear-gradient(135deg,#e7deff 0%,#c6c4ff 100%); color: #342b70; }
+.ts-spelling-stage-card:nth-child(4) { background: linear-gradient(135deg,#ffe6ae 0%,#ffd476 100%); color: #624019; }
 .ts-spelling-stage-card::after {
   content: "";
   position: absolute;
