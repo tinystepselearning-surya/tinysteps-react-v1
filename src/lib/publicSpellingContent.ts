@@ -1,3 +1,6 @@
+import { PUBLIC_SPELLING_EXTRA_CHALLENGES } from './publicSpellingCurriculumExpansion';
+import { PUBLIC_SPELLING_FURTHER_CHALLENGES } from './publicSpellingFurtherPractice';
+
 export type PublicSpellingMode = "build" | "family" | "missing" | "choice" | "fix" | "spell";
 
 export type PublicSpellingDifficulty = "foundation" | "developing" | "confident";
@@ -153,6 +156,27 @@ export const PUBLIC_SPELLING_LEVELS: PublicSpellingLevel[] = [
     ],
   },
 ];
+
+// Preserve the reviewed introductory challenges and expand each of the six
+// spelling activities to 30 curated tasks in five short six-word rounds.
+for (const level of PUBLIC_SPELLING_LEVELS) {
+  level.challenges.push(...PUBLIC_SPELLING_EXTRA_CHALLENGES.filter(challenge => challenge.mode === level.mode));
+  level.challenges.push(...PUBLIC_SPELLING_FURTHER_CHALLENGES.filter(challenge => challenge.mode === level.mode));
+}
+
+export const PUBLIC_SPELLING_SESSION_SIZE = 6;
+
+export function publicSpellingPracticeRound(
+  level: PublicSpellingLevel,
+  round: number,
+): PublicSpellingChallenge[] {
+  if (!level.challenges.length) return [];
+  const start = (Math.max(0, Math.floor(round)) * PUBLIC_SPELLING_SESSION_SIZE) % level.challenges.length;
+  return Array.from(
+    { length: Math.min(PUBLIC_SPELLING_SESSION_SIZE, level.challenges.length) },
+    (_, i) => level.challenges[(start + i) % level.challenges.length],
+  );
+}
 
 export const normalizePublicSpellingAnswer = (answer: string) => answer.trim().toLocaleLowerCase("en");
 

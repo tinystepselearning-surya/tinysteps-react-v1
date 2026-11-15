@@ -3,14 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   VISUAL_SPELLING_PUZZLES,
   VISUAL_SPELLING_STAGES,
-  shuffleVisualSpellingPuzzles,
+  visualSpellingPracticeRound,
   visualSpellingAnswer,
   type VisualSpellingPuzzle,
   type VisualSpellingStage,
 } from '../../../lib/visualSpellingPuzzles';
 import './VisualSpellingPuzzleLab.css';
 
-const STAGE_SYMBOLS = ['🧭', '🧩', '🔎', '🏆'] as const;
+const STAGE_SYMBOLS = ['🧭', '🌊', '🧩', '📚', '🔡', '✏️', '🔎', '🧱', '🔬', '🏆'] as const;
 
 type Feedback = 'correct' | 'retry' | null;
 
@@ -38,10 +38,9 @@ export default function VisualSpellingPuzzleLab() {
   const [recallFirstTry, setRecallFirstTry] = useState(false);
   const [recallRevealed, setRecallRevealed] = useState(false);
 
-  const puzzles = useMemo(() => {
-    const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stageId);
-    return practiceRound ? shuffleVisualSpellingPuzzles(selected) : selected;
-  }, [stageId, practiceRound]);
+  const puzzles = useMemo(() =>
+    stageId ? visualSpellingPracticeRound(stageId, practiceRound) : [],
+  [stageId, practiceRound]);
   const puzzle = puzzles[index] as VisualSpellingPuzzle | undefined;
   const selectedStage = VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId);
   const selectedStageNumber = VISUAL_SPELLING_STAGES.findIndex(stage => stage.id === stageId) + 1;
@@ -50,9 +49,11 @@ export default function VisualSpellingPuzzleLab() {
       ? puzzle.tiles.some(tile => tile.length > 1) ? 'Build from Word Parts' : 'Build the Word'
       : puzzle.kind === 'correct' ? 'Choose the Correct Spelling'
       : puzzle.kind === 'missing' ? 'Fill the Missing Letters'
-      : puzzle.categories.every(category => category.startsWith('Ends in')) ? 'Sort by Word Ending'
-      : puzzle.categories.every(category => category.startsWith('Begins with') || category.startsWith('Has prefix')) ? 'Sort by Prefix'
-      : 'Find the Prefix or Suffix';
+      : puzzle.categories.every(category => category.startsWith('Contains')) ? 'Compare Vowel Patterns'
+      : puzzle.categories.every(category => category.includes('syllables')) ? 'Count the Syllables'
+      : puzzle.categories.every(category => category.startsWith('Ends in') || category.startsWith('Plural ends')) ? 'Sort by Word Ending'
+      : puzzle.categories.every(category => category.startsWith('Starts') || category.startsWith('Begins with') || category.startsWith('Has prefix')) ? 'Sort by Word Beginning'
+      : 'Compare the Word Patterns';
   const recallWord = puzzles.find(p => p.kind === 'arrange') || puzzles[0];
   const activeSortWord = puzzle?.kind === 'sort'
     ? sortIndex === 0 ? puzzle.word : puzzle.pair.word
@@ -178,17 +179,17 @@ export default function VisualSpellingPuzzleLab() {
     : '';
 
   return (
-    <section aria-label="Spelling Puzzle Lab" className={`ts-spelling-surface px-3 text-white sm:px-5 ${stageId ? 'pb-8 pt-3 sm:pb-10 sm:pt-5' : 'pb-10 pt-6 sm:pb-14 sm:pt-9'}`}>
+    <section aria-label="Spelling Puzzle Lab" className={`ts-spelling-surface px-3 text-white sm:px-5 ${stageId ? 'pb-5 pt-2 sm:pb-6 sm:pt-3' : 'pb-10 pt-6 sm:pb-14 sm:pt-9'}`}>
       <span aria-hidden="true" className="ts-spelling-glow ts-spelling-glow--coral" />
       <span aria-hidden="true" className="ts-spelling-glow ts-spelling-glow--aqua" />
       <div className="relative z-10 mx-auto max-w-5xl">
-        <header className={`flex flex-wrap items-start justify-between gap-3 ${stageId ? 'mb-4 sm:mb-5' : 'mb-7 sm:mb-9'}`}>
+        <header className={`flex flex-wrap items-center justify-between gap-2 ${stageId ? 'mb-2' : 'mb-5 sm:mb-7'}`}>
           <div className="max-w-2xl">
-            <div className={`flex items-center gap-2 ${stageId ? 'mb-1' : 'mb-3'}`}>
-              <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-300 text-xl text-indigo-950 shadow-lg">✦</span>
-              <p className="text-xs font-extrabold uppercase tracking-[.20em] text-cyan-100">Tiny Steps · Word Games</p>
-            </div>
-            <h1 className={`font-black tracking-tight ${stageId ? 'text-2xl sm:text-3xl' : 'text-3xl sm:text-5xl'}`}>Spelling <span className="text-amber-300">Puzzle Lab</span></h1>
+            {!stageId && <div className="mb-2 flex items-center gap-2">
+              <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-300 text-xl text-indigo-950 shadow-lg">✦</span>
+              <p className="text-xs font-extrabold uppercase tracking-[.14em] text-cyan-100">Tiny Steps · Word Games</p>
+            </div>}
+            <h1 className={`font-black tracking-tight ${stageId ? 'text-lg sm:text-xl' : 'text-3xl sm:text-5xl'}`}>Spelling <span className="text-amber-300">Puzzle Lab</span></h1>
             <p className={`font-medium text-indigo-100 ${stageId ? 'mt-1 text-xs sm:text-sm' : 'mt-2 text-sm sm:text-base'}`}>
               {stageId ? `Now playing: ${selectedStage?.title}` : 'Free for ages 8–10+ · No login · No sound · Nothing saved'}
             </p>
@@ -204,49 +205,55 @@ export default function VisualSpellingPuzzleLab() {
             <div className="mb-6 rounded-3xl border border-white/25 bg-white/10 px-5 py-5 shadow-lg sm:px-7">
               <p className="mb-1 text-xs font-extrabold uppercase tracking-[.18em] text-amber-200">Your next word adventure</p>
               <h2 id="choose-stage-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black outline-none sm:text-3xl">Choose your spelling level</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100 sm:text-base">Each level includes word building, correct-spelling choices, missing letters and sorting. Start with everyday words or choose a harder challenge. No timers.</p>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100 sm:text-base">Ten linked spelling skills, from familiar words through vowels, syllables and word endings to meaningful roots. Begin at Level 1 or choose a skill you know. Every level uses four different puzzle activities. No timers.</p>
             </div>
-            <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {VISUAL_SPELLING_STAGES.map((stage, i) => (
                 <button key={stage.id} type="button" onClick={() => startStage(stage.id)}
-                  className="ts-spelling-stage-card group flex min-h-56 flex-col p-5 text-left text-[#222052] sm:min-h-64 sm:p-7">
-                  <span className="relative z-10 mb-4 flex items-start justify-between gap-3">
+                  className="ts-spelling-stage-card group flex min-h-44 flex-col p-4 text-left text-[#222052] sm:min-h-48 sm:p-5">
+                  <span className="relative z-10 mb-2 flex items-start justify-between gap-3">
                     <span className="rounded-full bg-white/75 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#423477]">Level {i + 1}</span>
                     <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/55 text-3xl shadow-sm transition-transform group-hover:rotate-6">{STAGE_SYMBOLS[i]}</span>
                   </span>
-                  <span className="relative z-10 block text-2xl font-black tracking-tight sm:text-3xl">{stage.title}</span>
+                  <span className="relative z-10 block text-xl font-black tracking-tight sm:text-2xl">{stage.title}</span>
                   <span className="relative z-10 mt-2 block max-w-sm text-sm font-semibold leading-6">{stage.subtitle}</span>
                   <span className="relative z-10 mt-3 block text-xs font-bold opacity-80">Example words: {stage.examples}</span>
-                  <span className="relative z-10 mt-auto flex items-center justify-between gap-2 pt-5">
-                    <span className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-extrabold">{VISUAL_SPELLING_PUZZLES.filter(p => p.stage === stage.id).length} puzzles · untimed</span>
+                  <span className="relative z-10 mt-auto flex items-center justify-between gap-2 pt-3">
+                    <span className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-extrabold">{VISUAL_SPELLING_PUZZLES.filter(p => p.stage === stage.id).length} puzzles · 8 per round</span>
                     <span className="text-sm font-black">Let's play <span aria-hidden="true">→</span></span>
                   </span>
                 </button>
               ))}
             </div>
-            <p className="mt-7 text-center text-sm font-medium text-indigo-100">No timers. No pressure. Just clever word puzzles and a little discovery.</p>
+            <p className="mt-5 text-center text-sm font-medium text-indigo-100">Complete eight puzzles and one recall challenge per round. Continue to the next level when ready. Each level offers three distinct rounds; nothing is saved.</p>
           </section>
         )}
 
         {stageId && finished && (
-          <section className="ts-spelling-board p-5 text-slate-900 sm:p-10" aria-live="polite">
+          <section className="ts-spelling-board ts-spelling-gameplay p-4 text-slate-900 sm:p-7" aria-live="polite">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-200 text-4xl shadow-sm" aria-hidden="true">🏆</div>
             <p className="text-xs font-black uppercase tracking-widest text-indigo-700">{selectedStage?.title} · Level complete</p>
             <h2 ref={focusHeadingRef} tabIndex={-1} className="mt-2 text-3xl font-black tracking-tight text-[#29235a] focus:outline-none">Nice word work!</h2>
-            <p className="mt-3 text-lg">You completed {puzzles.length} visual spelling puzzles.</p>
+            <p className="mt-3 text-lg">You completed {puzzles.length} visual spelling puzzles this round.</p>
             <p className="mt-2 text-sm">Independent first-try puzzles: {independentCorrect} of {puzzles.length}.</p>
             <p className="mt-2 text-sm">Final word recall: {recallFirstTry ? 'Correct independently on the first try' : recallCorrect ? 'Correct after practising' : 'Answer studied with help'}.</p>
             <p className="mt-2 text-sm">Hints and retries are part of learning. These results are not saved.</p>
             <p className="mt-4 text-sm text-slate-600">For lasting spelling confidence, return to these words later and try writing them in your own sentences without looking.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={() => startStage(stageId, true)} className="ts-spelling-primary px-6 py-3.5 font-black">Replay mixed puzzles</button>
+              <button type="button" onClick={() => startStage(stageId, true)} className="ts-spelling-primary px-6 py-3.5 font-black">Play another set</button>
+              {selectedStageNumber < VISUAL_SPELLING_STAGES.length && (
+                <button type="button" onClick={() => startStage(VISUAL_SPELLING_STAGES[selectedStageNumber].id)}
+                  className="ts-spelling-primary px-6 py-3.5 font-black">
+                  Next level: {VISUAL_SPELLING_STAGES[selectedStageNumber].title}
+                </button>
+              )}
               <button type="button" onClick={() => setStageId(null)} className="ts-spelling-secondary px-5 py-3 font-bold">Choose another level</button>
             </div>
           </section>
         )}
 
         {stageId && !finished && recallMode && recallWord && (
-          <section className="ts-spelling-board p-5 text-slate-900 sm:p-9" aria-labelledby="recall-heading">
+          <section className="ts-spelling-board ts-spelling-gameplay p-4 text-slate-900 sm:p-6" aria-labelledby="recall-heading">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 rounded-full bg-[#efeaff] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#4e3dac]"><span aria-hidden="true">★</span> {selectedStage?.title} · Final challenge</span>
               <span className="rounded-full bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800">Bonus round</span>
@@ -286,7 +293,7 @@ export default function VisualSpellingPuzzleLab() {
               <p className="ts-spelling-hint mt-3 p-3 text-sm font-medium">Hint: The word starts with <strong>{recallWord.word.charAt(0).toUpperCase()}</strong>.</p>
             )}
             {(recallCorrect || recallRevealed) && (
-              <div role="status" className="ts-spelling-message mt-5 p-5 text-[#15533f]">
+              <div role="status" className="ts-spelling-message mt-3 p-3 text-[#15533f]">
                 <h3 className="text-xl font-black">{recallRevealed ? 'Answer: ' : 'Correct! '}{recallWord.word}</h3>
                 <p className="mt-2 text-sm">{recallWord.learningNote}</p>
                 <button type="button" onClick={() => setFinished(true)}
@@ -297,7 +304,7 @@ export default function VisualSpellingPuzzleLab() {
         )}
 
         {stageId && puzzle && !recallMode && !finished && (
-          <section className="ts-spelling-board p-4 text-slate-900 sm:p-6" aria-labelledby="puzzle-heading">
+          <section className="ts-spelling-board ts-spelling-gameplay p-3 text-slate-900 sm:p-5" aria-labelledby="puzzle-heading">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
               <span className="rounded-full bg-[#efeaff] px-3 py-1.5 text-xs font-black uppercase tracking-wide text-[#4d3db0]">
                 Level {selectedStageNumber} of {VISUAL_SPELLING_STAGES.length}
@@ -307,10 +314,10 @@ export default function VisualSpellingPuzzleLab() {
             <h2 id="current-spelling-level" className="text-2xl font-black leading-tight tracking-tight text-[#28245f] sm:text-3xl">
               {selectedStage?.title}
             </h2>
-            <p className="mt-1 mb-3 text-sm font-medium text-[#5e6080]">{selectedStage?.subtitle}</p>
+            <p className="mt-0.5 mb-2 text-sm font-medium text-[#5e6080]">{selectedStage?.subtitle}</p>
             <div aria-label="Puzzle progress" role="progressbar" aria-valuemin={0} aria-valuemax={puzzles.length}
               aria-valuenow={index + (feedback === 'correct' ? 1 : 0)}
-              className="mb-3 flex gap-1.5">
+              className="ts-spelling-progress-row mb-2 flex gap-1">
               {puzzles.map((item, progressIndex) => (
                 <span key={item.id} aria-hidden="true"
                   className={`ts-spelling-progress ${progressIndex < index || (progressIndex === index && feedback === 'correct')
@@ -324,11 +331,11 @@ export default function VisualSpellingPuzzleLab() {
             <h3 id="puzzle-heading" ref={focusHeadingRef} tabIndex={-1} className="text-xl font-black leading-tight tracking-tight text-[#28245f] focus:outline-none sm:text-2xl">
               {activityTitle}
             </h3>
-            <p className="ts-spelling-clue mt-3 p-3 text-base font-medium text-[#293d64] sm:p-4 sm:text-lg"><strong className="text-[#24668a]">Clue:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? puzzle.pair.clue : puzzle.clue}</p>
+            <p className="ts-spelling-clue mt-2 p-2.5 text-base font-medium text-[#293d64] sm:p-2.5 sm:text-lg"><strong className="text-[#24668a]">Clue:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? puzzle.pair.clue : puzzle.clue}</p>
 
             {puzzle.kind === 'arrange' && (
-              <div className="mt-4">
-                <p className="mb-3 text-sm font-semibold text-slate-600">Tap or drag tiles into the answer. Use Undo to change a choice.</p>
+              <div className="mt-3">
+                <p className="mb-1.5 text-sm font-semibold text-slate-600">Tap or drag tiles to build the word. Use Undo to change an answer.</p>
                 <div
                   aria-label="Word assembly area"
                   onDragOver={event => event.preventDefault()}
@@ -337,12 +344,12 @@ export default function VisualSpellingPuzzleLab() {
                     const raw = event.dataTransfer.getData('text/plain');
                     if (/^\d+$/.test(raw)) pickTile(Number(raw));
                   }}
-                  className="ts-spelling-slot flex min-h-24 flex-wrap items-center gap-2 p-3 sm:p-4">
+                  className="ts-spelling-slot flex min-h-16 flex-wrap items-center gap-1.5 p-2.5 sm:p-3">
                   {chosenIndices.length ? chosenIndices.map((tileIndex, position) => (
-                    <span key={position} className="rounded-xl bg-[#5d4bce] px-4 py-3 text-xl font-black text-white shadow-sm">{puzzle.tiles[tileIndex]}</span>
+                    <span key={position} className="rounded-lg bg-[#5d4bce] px-3 py-2 text-lg font-black text-white shadow-sm">{puzzle.tiles[tileIndex]}</span>
                   )) : <span className="text-sm font-medium text-[#69658f]">Your word goes here · Tap or drop tiles</span>}
                 </div>
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-2.5 flex flex-wrap gap-2">
                   {puzzle.tiles.map((tile, tileIndex) => (
                     <button
                       key={tileIndex}
@@ -351,13 +358,13 @@ export default function VisualSpellingPuzzleLab() {
                       draggable={!chosenIndices.includes(tileIndex)}
                       onDragStart={event => event.dataTransfer.setData('text/plain', String(tileIndex))}
                       onClick={() => pickTile(tileIndex)}
-                      className="ts-spelling-tile min-h-14 min-w-14 px-4 py-3 text-xl font-black disabled:cursor-not-allowed disabled:opacity-25"
+                      className="ts-spelling-tile min-h-11 min-w-11 px-3 py-2 text-lg font-black disabled:cursor-not-allowed disabled:opacity-25"
                       aria-label={'Add tile ' + tile + ', position ' + (tileIndex + 1)}>
                       {tile}
                     </button>
                   ))}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" disabled={!chosenIndices.length || feedback === 'correct'}
                     onClick={() => { setChosenIndices(old => old.slice(0, -1)); setFeedback(null); }}
                     className="ts-spelling-secondary min-h-11 px-5 py-2.5 font-bold">Undo</button>
@@ -372,11 +379,11 @@ export default function VisualSpellingPuzzleLab() {
             )}
 
             {puzzle.kind === 'correct' && (
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {puzzle.options.map(option => (
                   <button type="button" key={option} disabled={feedback === 'correct'}
                     onClick={() => submit(option)}
-                    className="ts-spelling-choice min-h-16 px-5 py-4 text-left text-xl font-black disabled:opacity-60">
+                    className="ts-spelling-choice min-h-12 break-words px-3 py-2.5 text-left text-base font-black disabled:opacity-60 sm:text-lg">
                     {option}
                   </button>
                 ))}
@@ -384,31 +391,31 @@ export default function VisualSpellingPuzzleLab() {
             )}
 
             {puzzle.kind === 'missing' && (
-              <div className="mt-6">
-                <div className="mb-6 rounded-2xl border border-[#dad8fc] bg-[#f3f1ff] p-5 text-center text-2xl font-black tracking-wide text-[#3e358d] sm:text-3xl">
+              <div className="mt-3">
+                <div className="mb-3 rounded-2xl border border-[#dad8fc] bg-[#f3f1ff] p-3 text-center text-xl font-black tracking-wide text-[#3e358d] sm:text-3xl">
                   {puzzle.before}<span className="mx-1 inline-block min-w-8 border-b-4 border-indigo-500">?</span>{puzzle.after}
                 </div>
                 <div className="grid grid-cols-4 gap-2">
                   {puzzle.choices.map(option => (
                     <button type="button" key={option} disabled={feedback === 'correct'}
                       onClick={() => submit(option)}
-                      className="ts-spelling-choice min-h-16 p-3 text-xl font-black disabled:opacity-60">{option}</button>
+                      className="ts-spelling-choice min-h-12 p-2.5 text-lg font-black disabled:opacity-60">{option}</button>
                   ))}
                 </div>
               </div>
             )}
 
             {puzzle.kind === 'sort' && (
-              <div className="mt-6">
-                <p className="mb-3 text-center text-sm text-slate-600">
+              <div className="mt-3">
+                <p className="mb-2 text-center text-sm text-slate-600">
                   Sort both words to complete this puzzle ({sortIndex + 1} of 2). Drag into a group or tap the matching group.
                 </p>
-                <div className="mb-5 text-center">
+                <div className="mb-3 text-center">
                   <span
                     aria-live="polite"
                     draggable={feedback !== 'correct'}
                     onDragStart={event => event.dataTransfer.setData('text/plain', activeSortWord)}
-                    className="ts-spelling-tile inline-block max-w-full cursor-grab break-words px-4 py-4 text-2xl font-black sm:px-6 sm:text-3xl"
+                    className="ts-spelling-tile inline-block max-w-full cursor-grab break-words px-4 py-2.5 text-xl font-black sm:px-5 sm:text-2xl"
                     aria-label={'Word to sort: ' + activeSortWord}
                   >{activeSortWord}</span>
                 </div>
@@ -421,13 +428,13 @@ export default function VisualSpellingPuzzleLab() {
                         event.preventDefault();
                         if (event.dataTransfer.getData('text/plain') === activeSortWord) submit(category);
                       }}
-                      className="ts-spelling-choice min-h-20 px-4 py-4 text-lg font-black disabled:opacity-60">{category}</button>
+                      className="ts-spelling-choice min-h-14 break-words px-2 py-2.5 text-sm font-black disabled:opacity-60 sm:text-base">{category}</button>
                   ))}
                 </div>
               </div>
             )}
 
-            <div className="mt-6">
+            <div className="mt-3">
               <div className="flex flex-wrap gap-2">
                 <button type="button" onClick={() => setShowHint(true)} disabled={showHint || feedback === 'correct'}
                   className="ts-spelling-secondary min-h-11 px-5 py-2.5 text-sm font-black">Need a hint?</button>
@@ -442,7 +449,7 @@ export default function VisualSpellingPuzzleLab() {
             </div>
 
             {feedback === 'retry' && (
-              <p role="status" className="ts-spelling-hint mt-5 p-4 font-medium">
+              <p role="status" className="ts-spelling-hint mt-3 p-3 font-medium">
                 {puzzle.kind === 'arrange'
                   ? 'Those tiles are not in the correct order. Use Undo or Clear and try again.'
                   : puzzle.kind === 'correct'
@@ -454,7 +461,7 @@ export default function VisualSpellingPuzzleLab() {
               </p>
             )}
             {feedback === 'correct' && (
-              <div role="status" className="ts-spelling-message mt-5 p-5 text-[#15533f]">
+              <div role="status" className="ts-spelling-message mt-3 p-3 text-[#15533f]">
                 <h3 className="text-xl font-black">
                   <span aria-hidden="true" className="mr-2">{revealed ? '✦' : '★'}</span>{revealed
                     ? puzzle.kind === 'sort'
@@ -468,7 +475,7 @@ export default function VisualSpellingPuzzleLab() {
                 <p className="mt-2 text-sm">{puzzle.learningNote}</p>
                 {puzzle.kind === 'sort' && <p className="mt-2 text-sm">{puzzle.pair.learningNote}</p>}
                 <button type="button" onClick={nextPuzzle}
-                  className="ts-spelling-primary mt-5 px-6 py-3 font-black">
+                  className="ts-spelling-primary mt-3 px-5 py-2.5 font-black">
                   {index + 1 < puzzles.length ? 'Next puzzle' : 'Final spelling challenge'}
                 </button>
               </div>

@@ -1,8 +1,12 @@
 /**
- * Ages 8–10+ visual spelling prototype: deliberately silent, with contextual word work.
- * Reviewed examples only; no phoneme inference, speech APIs, or backend writes.
+ * Ages 8–10+ silent spelling lab: editor-curated written word practice.
+ * Twenty-four puzzles per level, served in eight-item mini-rounds.
+ * No phoneme inference, speech APIs, child profiles or backend writes.
  */
-export type VisualSpellingStage = 'explorer' | 'builder' | 'expert' | 'master';
+import { VISUAL_SPELLING_EXTRA_PUZZLES } from './visualSpellingCurriculumExpansion';
+import { VISUAL_SPELLING_BRIDGE_PUZZLES } from './visualSpellingBridgeCurriculum';
+import { VISUAL_SPELLING_MORE_LEVELS } from './visualSpellingMoreLevels';
+export type VisualSpellingStage = 'explorer' | 'vowels' | 'builder' | 'syllables' | 'syllable-spelling' | 'inflections' | 'expert' | 'morphology' | 'roots' | 'master';
 type BasePuzzle = {
   id: string;
   stage: VisualSpellingStage;
@@ -30,8 +34,14 @@ export const VISUAL_SPELLING_STAGES: readonly {
   examples: string;
 }[] = [
   { id: 'explorer', title: 'Everyday Words', subtitle: 'Build familiar words, spot mistakes and fill missing letters.', examples: 'friend · school · planet' },
+  { id: 'vowels', title: 'Vowel Spelling Patterns', subtitle: 'Compare ea, ee, ai, ay, oa, ow and other vowel patterns.', examples: 'rain · beach · night' },
   { id: 'builder', title: 'Patterns & Endings', subtitle: 'Match word endings, prefixes and tricky letter patterns.', examples: 'careful · receive · happiness' },
+  { id: 'syllables', title: 'Longer & Compound Words', subtitle: 'Build compound words and practise longer written word patterns.', examples: 'sunflower · basketball · umbrella' },
+  { id: 'syllable-spelling', title: 'Syllable Spelling', subtitle: 'Break longer written words into parts and count spoken syllables.', examples: 'picnic · animal · computer' },
+  { id: 'inflections', title: 'Plural & Word Changes', subtitle: 'Learn adding -s, -es, -ed, -ing and when letters change.', examples: 'running · babies · making' },
   { id: 'expert', title: 'Tricky Spellings', subtitle: 'Practise double letters, spelling changes and longer words.', examples: 'necessary · calendar · opportunity' },
+  { id: 'morphology', title: 'Prefixes & Word Parts', subtitle: 'Build and recognise words using meaningful beginnings and endings.', examples: 'unhappiness · disapproval · rearrangement' },
+  { id: 'roots', title: 'Word Roots & Meanings', subtitle: 'Notice meaningful roots in familiar science and study words.', examples: 'telephone · biology · photograph' },
   { id: 'master', title: 'Long Word Challenge', subtitle: 'Build and check long words using meaningful word parts.', examples: 'international · accommodation · misunderstanding' },
 ];
 
@@ -278,6 +288,9 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     hint: 'Compare the first three letters of the words.',
     learningNote: 'Misinterpretation begins with mis-, meaning wrongly, followed by interpretation.',
   },
+  ...VISUAL_SPELLING_EXTRA_PUZZLES,
+  ...VISUAL_SPELLING_BRIDGE_PUZZLES,
+  ...VISUAL_SPELLING_MORE_LEVELS,
 ];
 
 /**
@@ -295,6 +308,35 @@ export function shuffleVisualSpellingPuzzles(
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;
+}
+
+/**
+ * Every level has 24 curated puzzles (six of each of four activity kinds).
+ * Deliver a child-sized eight-puzzle round rather than an exhausting 24-item
+ * page. Round 0 preserves the original reviewed introduction; rounds 1 and 2
+ * expose the remaining sixteen without repeats. No progress is persisted.
+ */
+export function visualSpellingPracticeRound(
+  stage: VisualSpellingStage,
+  round: number,
+): VisualSpellingPuzzle[] {
+  const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage);
+  const normalizedRound = Math.max(0, Math.floor(round)) % 3;
+  // The four established stages retain their approved first-eight order.
+  if (normalizedRound === 0 && ['explorer', 'builder', 'expert', 'master'].includes(stage)) {
+    return selected.slice(0, 8);
+  }
+  const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
+  const offset = normalizedRound * 2;
+  const groups = activityKinds.map(kind =>
+    selected.filter(puzzle => puzzle.kind === kind).slice(offset, offset + 2)
+  );
+  const next = [0, 1].flatMap(i => groups.map(group => group[i]).filter(
+    (item): item is VisualSpellingPuzzle => Boolean(item)
+  ));
+  // Preserve the original eight-puzzle introduction for existing learners,
+  // but interleave categories in newly added stages as well.
+  return normalizedRound === 0 ? next : shuffleVisualSpellingPuzzles(next);
 }
 
 export const visualSpellingAnswer = (puzzle: VisualSpellingPuzzle): string => {

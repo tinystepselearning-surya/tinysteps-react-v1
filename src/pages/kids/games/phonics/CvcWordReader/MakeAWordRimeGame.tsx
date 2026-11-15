@@ -4,9 +4,12 @@ import { buildMissionReturnHref } from "../missionNavigation";
 import { recordLevelResult } from "../../../../../games/engine/recordLevelResult";
 import {
   PUBLIC_SPELLING_LEVELS,
+  PUBLIC_SPELLING_SESSION_SIZE,
+  publicSpellingPracticeRound,
   normalizePublicSpellingAnswer,
   type PublicSpellingChallenge,
 } from "../../../../../lib/publicSpellingContent";
+import { twoLetterPracticeRound, TWO_LETTER_ROUND_SIZE } from "../../../../../lib/publicSpellingTwoLetterWords";
 
 type Item = {
   onset: string; // c
@@ -498,8 +501,11 @@ function PublicSpellingAdventure({
   // remain available for children who wish to start at another difficulty.
   const [screen, setScreen] = useState<"intro" | "play" | "complete">("play");
   const [levelIndex, setLevelIndex] = useState(0);
-  const [queue, setQueue] = useState<PublicSpellingChallenge[]>(() => [...PUBLIC_SPELLING_LEVELS[0].challenges]);
+  const [queue, setQueue] = useState<PublicSpellingChallenge[]>(() => publicSpellingPracticeRound(PUBLIC_SPELLING_LEVELS[0], 0));
+  const [sessionRound, setSessionRound] = useState(0);
+  const [twoLetterMode, setTwoLetterMode] = useState(false);
   const [builtLetters, setBuiltLetters] = useState<string[]>([]);
+  const [usedBuildTileIndices, setUsedBuildTileIndices] = useState<number[]>([]);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
   const [isAdvancing, setIsAdvancing] = useState(false);
@@ -518,8 +524,10 @@ function PublicSpellingAdventure({
 
   const currentLevel = PUBLIC_SPELLING_LEVELS[levelIndex] ?? PUBLIC_SPELLING_LEVELS[0];
   const current = queue[0] ?? currentLevel.challenges[0];
-  const sessionTotalChallenges = PUBLIC_SPELLING_LEVELS.slice(sessionStartLevelIndex)
-    .reduce((sum, level) => sum + level.challenges.length, 0);
+  const sessionTotalChallenges = twoLetterMode
+    ? TWO_LETTER_ROUND_SIZE
+    : PUBLIC_SPELLING_LEVELS.slice(sessionStartLevelIndex)
+      .reduce((sum, level) => sum + Math.min(PUBLIC_SPELLING_SESSION_SIZE, level.challenges.length), 0);
   const displayedProgress = Math.min(sessionTotalChallenges, completedCoreChallenges);
   const accuracy = scoredCoreChallenges > 0
     ? Math.round((correctChallenges / scoredCoreChallenges) * 100)
@@ -528,6 +536,7 @@ function PublicSpellingAdventure({
   useEffect(() => {
     setImgOk(true);
     setBuiltLetters([]);
+    setUsedBuildTileIndices([]);
     setTypedAnswer("");
     typedSubmissionLockRef.current = false;
     setFeedback("idle");
@@ -543,7 +552,7 @@ function PublicSpellingAdventure({
     navigate(missionReturnHref, { replace: true });
   };
 
-  const startLevel = (index: number) => {
+  const startLevel = (index: number, round = sessionRound) => {
     if (advanceTimeoutRef.current !== null) window.clearTimeout(advanceTimeoutRef.current);
     if (feedbackTimeoutRef.current !== null) window.clearTimeout(feedbackTimeoutRef.current);
     advanceTimeoutRef.current = null;
@@ -552,8 +561,9 @@ function PublicSpellingAdventure({
     const safeIndex = Math.max(0, Math.min(index, PUBLIC_SPELLING_LEVELS.length - 1));
     const level = PUBLIC_SPELLING_LEVELS[safeIndex];
     setLevelIndex(safeIndex);
-    setQueue(level.challenges);
+    setQueue(publicSpellingPracticeRound(level, round));
     setBuiltLetters([]);
+    setUsedBuildTileIndices([]);
     setTypedAnswer("");
     setFeedback("idle");
     setIsAdvancing(false);
@@ -561,22 +571,34 @@ function PublicSpellingAdventure({
     setScreen("play");
   };
 
-  const startFreshAtLevel = (index: number) => {
+  const startFreshAtLevel = (index: number, round = sessionRound) => {
     const safeIndex = Math.max(0, Math.min(index, PUBLIC_SPELLING_LEVELS.length - 1));
     setSessionStartLevelIndex(safeIndex);
+    setTwoLetterMode(false);
+    setSessionRound(round);
     setCorrectChallenges(0);
     setScoredCoreChallenges(0);
     setCompletedCoreChallenges(0);
     setCompletedChallenges(0);
-    startLevel(safeIndex);
+    startLevel(safeIndex, round);
+  };
+
+  const startTwoLetterWords = (round = 0) => {
+    startFreshAtLevel(0, round);
+    setTwoLetterMode(true);
+    setQueue(twoLetterPracticeRound(round));
   };
 
   const startJourney = () => {
-    startFreshAtLevel(0);
+    startFreshAtLevel(0, 0);
   };
 
   const replayJourney = () => {
-    startFreshAtLevel(0);
+    if (twoLetterMode) {
+      startTwoLetterWords(sessionRound + 1);
+    } else {
+      startFreshAtLevel(0, sessionRound + 1);
+    }
   };
 
   const goToNextChallenge = (hadError: boolean) => {
@@ -597,16 +619,17 @@ function PublicSpellingAdventure({
         if (nextQueue.length > 0) return nextQueue;
 
         const nextLevelIndex = levelIndex + 1;
-        if (nextLevelIndex < PUBLIC_SPELLING_LEVELS.length) {
+        if (!twoLetterMode && nextLevelIndex < PUBLIC_SPELLING_LEVELS.length) {
           const nextLevel = PUBLIC_SPELLING_LEVELS[nextLevelIndex];
           setLevelIndex(nextLevelIndex);
-          return nextLevel.challenges;
+          return publicSpellingPracticeRound(nextLevel, sessionRound);
         }
 
         setScreen("complete");
         return [];
       });
       setBuiltLetters([]);
+      setUsedBuildTileIndices([]);
       setTypedAnswer("");
       setFeedback("idle");
       setIsAdvancing(false);
@@ -640,14 +663,16 @@ function PublicSpellingAdventure({
     }, 520);
   };
 
-  const handleBuildLetter = (letter: string) => {
-    if (!current || current.mode !== "build" || isAdvancing) return;
+  const handleBuildLetter = (letter: string, tileIndex: number) => {
+    if (!current || current.mode !== "build" || isAdvancing ||
+        usedBuildTileIndices.includes(tileIndex)) return;
     const expected = current.word[builtLetters.length];
     if (letter !== expected) {
       markWrong();
       return;
     }
     const nextLetters = [...builtLetters, letter];
+    setUsedBuildTileIndices(indices => [...indices, tileIndex]);
     setBuiltLetters(nextLetters);
     if (nextLetters.join("") === current.word) {
       markCorrect();
@@ -689,34 +714,37 @@ function PublicSpellingAdventure({
     checkTypedAnswer();
   };
 
-  const renderPicture = (challenge: PublicSpellingChallenge) => (
-    <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-white/35 bg-white/25 shadow-inner sm:h-36 sm:w-36">
-      {challenge.img && imgOk ? (
-        <img
-          src={challenge.img}
-          alt={challenge.word}
-          draggable={false}
-          className="h-24 w-24 object-contain sm:h-32 sm:w-32"
-          onError={() => setImgOk(false)}
-        />
-      ) : (
-        <div className="text-6xl sm:text-7xl" aria-label={challenge.word}>
-          {challenge.emojiFallback ?? EMOJI[challenge.word] ?? "⭐"}
-        </div>
-      )}
-    </div>
-  );
+  const renderPicture = (challenge: PublicSpellingChallenge) => {
+    // Only editor-mapped, word-specific artwork is shown. Never invent a
+    // generic cloud/thought-bubble for a meaning-only clue such as "friend".
+    // Text clues stand on their own for children using a screen reader.
+    const symbol = challenge.emojiFallback ?? (challenge.clueType === "picture" ? EMOJI[challenge.word] : undefined);
+    if ((!challenge.img || !imgOk) && !symbol) return null;
+    return (
+      <div aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/35 bg-white/25 shadow-inner sm:h-20 sm:w-20">
+        {challenge.img && imgOk ? (
+          <img
+            src={challenge.img}
+            alt=""
+            draggable={false}
+            className="h-14 w-14 object-contain sm:h-16 sm:w-16"
+            onError={() => setImgOk(false)}
+          />
+        ) : <span className="text-4xl sm:text-5xl">{symbol}</span>}
+      </div>
+    );
+  };
 
   const renderBuildChallenge = (challenge: Extract<PublicSpellingChallenge, { mode: "build" }>) => {
     const letters = challenge.word.split("");
     return (
       <>
-        <div className="flex justify-center gap-2" aria-label={`Build ${challenge.word}`}>
+        <div className="flex flex-wrap justify-center gap-1.5" aria-label={`Build ${challenge.word}`}>
           {letters.map((letter, index) => (
             <div
               key={`${challenge.id}-slot-${index}`}
               className={[
-                "flex h-12 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black sm:h-16 sm:w-16 sm:rounded-2xl sm:text-3xl",
+                "flex h-10 w-10 items-center justify-center rounded-xl border-2 text-xl font-black sm:h-14 sm:w-14 sm:rounded-2xl sm:text-3xl",
                 builtLetters[index]
                   ? "border-emerald-300 bg-emerald-100 text-emerald-900"
                   : "border-sky-300 bg-white/85 text-slate-400",
@@ -726,14 +754,14 @@ function PublicSpellingAdventure({
             </div>
           ))}
         </div>
-        <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <div className="mt-3 flex flex-wrap justify-center gap-2">
           {(challenge.tiles ?? letters).map((letter, index) => (
             <button
               key={`${challenge.id}-tile-${letter}-${index}`}
               type="button"
-              disabled={isAdvancing}
-              onClick={() => handleBuildLetter(letter)}
-              className="flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-3xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55 sm:h-16 sm:w-16 sm:text-4xl"
+              disabled={isAdvancing || usedBuildTileIndices.includes(index)}
+              onClick={() => handleBuildLetter(letter, index)}
+              className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55 sm:h-16 sm:w-16 sm:text-4xl"
               aria-label={`Letter ${letter}`}
             >
               {letter}
@@ -750,16 +778,16 @@ function PublicSpellingAdventure({
         <div className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-white/85 text-3xl font-black text-slate-400">
           ?
         </div>
-        <div className="text-6xl font-black text-slate-950">{challenge.rime}</div>
+        <div className="text-4xl font-black text-slate-950 sm:text-5xl">{challenge.rime}</div>
       </div>
-      <div className="mt-5 flex flex-wrap justify-center gap-3">
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
         {(challenge.tiles ?? []).map((letter) => (
           <button
             key={`${challenge.id}-${letter}`}
             type="button"
             disabled={isAdvancing}
             onClick={() => handleOption(letter)}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-4xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
             aria-label={`Letter ${letter}`}
           >
             {letter}
@@ -771,17 +799,17 @@ function PublicSpellingAdventure({
 
   const renderMissingChallenge = (challenge: Extract<PublicSpellingChallenge, { mode: "missing" }>) => (
     <>
-      <div className="text-center text-6xl font-black tracking-wide text-slate-950">
+      <div className="break-words text-center text-3xl font-black tracking-wide text-slate-950 sm:text-5xl">
         {challenge.pattern}
       </div>
-      <div className="mt-5 flex flex-wrap justify-center gap-3">
+      <div className="mt-3 flex flex-wrap justify-center gap-2">
         {(challenge.tiles ?? []).map((letter) => (
           <button
             key={`${challenge.id}-${letter}`}
             type="button"
             disabled={isAdvancing}
             onClick={() => handleOption(letter)}
-            className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-4xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+            className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-sky-300 bg-sky-100 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
             aria-label={`Missing letter ${letter}`}
           >
             {letter}
@@ -792,14 +820,14 @@ function PublicSpellingAdventure({
   );
 
   const renderChoiceChallenge = (challenge: Extract<PublicSpellingChallenge, { mode: "choice" }>) => (
-    <div className="grid gap-3 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
       {(challenge.choices ?? []).map((choice) => (
         <button
           key={`${challenge.id}-${choice}`}
           type="button"
           disabled={isAdvancing}
           onClick={() => handleOption(choice)}
-          className="rounded-2xl border-2 border-sky-300 bg-white px-4 py-4 text-2xl font-black text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
+          className="min-h-12 break-words rounded-xl border-2 border-sky-300 bg-white px-2 py-2 text-base font-black sm:text-xl text-slate-950 shadow-sm transition hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-yellow-300 disabled:opacity-55"
           aria-label={`Spelling ${choice}`}
         >
           {choice}
@@ -866,7 +894,7 @@ function PublicSpellingAdventure({
 
   return (
     <div
-      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden bg-[radial-gradient(circle_at_50%_30%,#b2e9ff_0%,#7ed7fd_40%,#e9b9e8_100%)] px-2 pb-8 pt-16 text-slate-950 sm:px-4 sm:pt-20"
+      className={`relative flex min-h-[100dvh] w-full flex-col items-center ${screen === "complete" ? "justify-center pb-16 pt-16" : "justify-start pb-4 pt-14"} overflow-x-hidden bg-[radial-gradient(circle_at_50%_30%,#b2e9ff_0%,#7ed7fd_40%,#e9b9e8_100%)] px-2 text-slate-950 sm:px-4 sm:pt-16`}
       data-testid="public-spelling-adventure"
     >
       <div className="absolute left-2 top-2 right-2 z-10 flex min-w-0 items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
@@ -924,29 +952,35 @@ function PublicSpellingAdventure({
 
       {screen === "play" && current && (
         <main className="flex w-[min(1040px,100%)] flex-col rounded-[22px] border border-white/55 bg-white/95 p-3 shadow-2xl sm:rounded-[28px] sm:p-5">
-          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+          <div className="flex min-w-0 flex-col gap-2 lg:flex-row lg:items-center lg:justify-between lg:gap-3">
             <div>
               <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-indigo-700">Your spelling activity</p>
               <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
-                Step {levelIndex + 1} of {PUBLIC_SPELLING_LEVELS.length}
+                {twoLetterMode ? "Optional written-word warm-up" : `Step ${levelIndex + 1} of ${PUBLIC_SPELLING_LEVELS.length}`}
               </div>
-              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{currentLevel.title}</h2>
+              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{twoLetterMode ? "Two-Letter Words" : currentLevel.title}</h2>
+              {!twoLetterMode && (
+                <button type="button" onClick={() => startTwoLetterWords(0)}
+                  className="mt-1 min-h-9 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-800 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                  Try two-letter words
+                </button>
+              )}
             </div>
-            <div className="flex max-w-full items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label="Spelling adventure steps">
+            <div className="grid w-full grid-cols-3 gap-1.5 pb-1 sm:grid-cols-6 lg:w-auto" role="tablist" aria-label="Spelling adventure steps">
               {PUBLIC_SPELLING_LEVELS.map((level, index) => (
                 <button
                   key={level.id}
                   type="button"
                   onClick={() => startFreshAtLevel(index)}
                   className={[
-                    "shrink-0 rounded-full px-3 py-2 text-xs font-black transition focus:outline-none focus:ring-4 focus:ring-yellow-300",
-                    index === levelIndex
+                    "min-w-0 whitespace-normal rounded-full px-1.5 py-2 text-[10px] font-black leading-tight transition focus:outline-none focus:ring-4 focus:ring-yellow-300 sm:px-2 sm:text-xs",
+                    !twoLetterMode && index === levelIndex
                       ? "bg-slate-950 text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200",
                   ].join(" ")}
                   aria-label={`Go to ${level.title}`}
                   role="tab"
-                  aria-selected={index === levelIndex}
+                  aria-selected={!twoLetterMode && index === levelIndex}
                 >
                   {level.shortTitle}
                 </button>
@@ -963,18 +997,17 @@ function PublicSpellingAdventure({
             />
           </div>
           <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
-            <span>{Math.min(queue.length, currentLevel.challenges.length)} left in this step</span>
+            <span>{Math.min(queue.filter(item => !item.review).length, twoLetterMode ? TWO_LETTER_ROUND_SIZE : PUBLIC_SPELLING_SESSION_SIZE)} left in this step</span>
             <span>{displayedProgress}/{sessionTotalChallenges} completed this round</span>
           </div>
 
-          <div className="grid flex-1 items-stretch gap-3 py-3 sm:gap-4 lg:grid-cols-[0.42fr_0.58fr]">
-            <section className="flex flex-col items-center justify-center rounded-3xl bg-sky-100/80 p-4 text-center">
-              {current.mode === "spell" && !current.img ? (
-                <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-white/35 bg-white/25 text-6xl shadow-inner sm:h-36 sm:w-36" aria-hidden="true">
-                  💭
-                </div>
-              ) : renderPicture(current)}
-              <p className="mt-4 text-lg font-black text-slate-950">{current.clue}</p>
+          <div className="grid min-w-0 flex-1 items-start gap-2 py-2 md:grid-cols-[0.36fr_0.64fr]">
+            <section className="flex min-w-0 flex-row items-center justify-start gap-3 rounded-2xl bg-sky-100/80 p-3 text-left md:flex-col md:items-start md:text-left">
+              {renderPicture(current)}
+              <div className="min-w-0">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-sky-900">{current.clueType === "picture" ? "Picture and meaning clue" : current.clueType === "sentence" ? "Sentence clue" : "Meaning clue"}</p>
+                <p className="text-base font-black leading-relaxed text-slate-950 md:text-lg">{current.clue}</p>
+              </div>
               {current.review ? (
                 <span className="mt-3 rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-800">
                   Review
@@ -984,7 +1017,7 @@ function PublicSpellingAdventure({
 
             <section
               className={[
-                "relative rounded-3xl border-2 p-4 text-center shadow-inner sm:p-6",
+                "relative min-w-0 rounded-2xl border-2 p-3 text-center shadow-inner sm:p-4",
                 feedback === "wrong"
                   ? "border-rose-300 bg-rose-50"
                   : feedback === "correct"
@@ -992,15 +1025,15 @@ function PublicSpellingAdventure({
                     : "border-sky-200 bg-white",
               ].join(" ")}
             >
-              <p className="mb-5 text-sm font-black uppercase tracking-[0.14em] text-slate-500">
-                {currentLevel.instruction}
+              <p className="mb-3 text-xs font-black uppercase tracking-[0.10em] text-slate-500 sm:text-sm">
+                {twoLetterMode ? "Read the sentence. Tap the two letters in the correct order." : currentLevel.instruction}
               </p>
               {renderCurrentChallenge()}
-              <div className="mt-5 min-h-[34px] text-lg font-black">
+              <div className="mt-3 min-h-[26px] text-base font-black">
                 {feedback === "wrong" ? (
                   <span className="text-rose-700">Try again.</span>
                 ) : feedback === "correct" ? (
-                  <span className="text-emerald-700">Correct: {current.word}</span>
+                  <span className="text-emerald-700">Correct: {current.word}{current.spellingPattern ? ` · Pattern: ${current.spellingPattern}` : ""}</span>
                 ) : (
                   <span className="text-slate-500">
                     {current.mode === "fix" || current.mode === "spell" ? "Type carefully." : "Choose carefully."}
@@ -1014,9 +1047,9 @@ function PublicSpellingAdventure({
 
       {screen === "complete" && (
         <section className="w-[min(680px,100%)] rounded-[28px] border border-white/55 bg-white/95 p-6 text-center shadow-2xl sm:p-8">
-          <h2 className="text-4xl font-black text-slate-950">Spelling Journey Complete!</h2>
+          <h2 className="text-3xl font-black text-slate-950 sm:text-4xl">{twoLetterMode ? "Two-Letter Word Warm-up Complete!" : "Spelling Journey Complete!"}</h2>
           <p className="mt-3 text-base font-semibold text-slate-600">
-            You completed the spelling journey. First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
+            {twoLetterMode ? "You completed six two-letter words." : "You completed the spelling journey."} First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
@@ -1024,7 +1057,7 @@ function PublicSpellingAdventure({
               onClick={replayJourney}
               className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-yellow-300"
             >
-              Replay
+              {twoLetterMode ? "Try six more tiny words" : "Replay new word set"}
             </button>
             <button
               type="button"

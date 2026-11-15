@@ -54,8 +54,14 @@ test('every puzzle level opens an appropriately different child-readable challen
   await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
   const cases = [
     { level: /everyday words/i, title: 'Everyday Words', heading: 'Build the Word', clue: 'A trip from one place to another.' },
+    { level: /vowel spelling patterns/i, title: 'Vowel Spelling Patterns', heading: 'Build from Word Parts', clue: 'A coat worn to stay dry in the rain.' },
     { level: /patterns & endings/i, title: 'Patterns & Endings', heading: 'Sort by Word Ending', clue: 'Not paying enough attention or care.' },
+    { level: /longer & compound words/i, title: 'Longer & Compound Words', heading: 'Build from Word Parts', clue: 'A tall flower with a large yellow head.' },
+    { level: /syllable spelling/i, title: 'Syllable Spelling', heading: 'Build from Word Parts', clue: 'A meal eaten outdoors.' },
+    { level: /plural & word changes/i, title: 'Plural & Word Changes', heading: 'Build from Word Parts', clue: 'Moved off the ground using your legs in the past.' },
     { level: /tricky spellings/i, title: 'Tricky Spellings', heading: 'Fill the Missing Letters', clue: 'Something that is needed or required.' },
+    { level: /prefixes & word parts/i, title: 'Prefixes & Word Parts', heading: 'Build from Word Parts', clue: 'The feeling of not being happy.' },
+    { level: /word roots & meanings/i, title: 'Word Roots & Meanings', heading: 'Build from Word Parts', clue: 'A device used to talk to someone far away.' },
     { level: /long word challenge/i, title: 'Long Word Challenge', heading: 'Build from Word Parts', clue: 'Involving two or more countries.' },
   ];
   for (const item of cases) {
@@ -102,11 +108,20 @@ test('classic spelling opens at a playable word and scrolls as a normal page on 
   await expect(page.getByRole('heading', { name: 'Parent FAQ' })).toHaveCount(0);
   await expect(page.locator('footer')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)).toBe(false);
-  // An ordinary scroll moves the document; there is no fixed overlay or
-  // separate embedded viewport trapping touch/wheel scrolling.
+  // A compact game may fit the entire 667px viewport. Do not require
+  // artificial scrolling when there is nothing below the fold; when content
+  // does overflow, verify it uses ordinary document scrolling.
   expect(await page.evaluate(() => document.querySelector('[data-testid="public-spelling-adventure"]')?.getBoundingClientRect().top)).toBeGreaterThanOrEqual(-1);
-  await page.evaluate(() => window.scrollTo(0, 360));
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  const scrollRoom = await page.evaluate(() => Math.max(
+    document.body.scrollHeight,
+    document.documentElement.scrollHeight,
+  ) - window.innerHeight);
+  if (scrollRoom > 100) {
+    await page.evaluate(() => window.scrollTo(0, 360));
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  } else {
+    await expect(page.getByRole('button', { name: /letter c/i })).toBeInViewport();
+  }
   await page.getByRole('button', { name: /spelling games/i }).click();
   await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
@@ -152,4 +167,142 @@ test('long advanced sorting word fits a compact 320px screen', async ({ page }) 
     document.documentElement.scrollWidth > window.innerWidth + 2
   );
   expect(overflow).toBe(false);
+});
+
+
+test('expanded visual spelling remains usable from 320px phones to wide desktop', async ({ page }) => {
+  const screens = [
+    { width: 320, height: 568 },
+    { width: 375, height: 667 },
+    { width: 390, height: 844 },
+    { width: 768, height: 1024 },
+    { width: 1024, height: 768 },
+    { width: 1366, height: 768 },
+    { width: 1920, height: 1080 },
+  ];
+  for (const screen of screens) {
+    await page.setViewportSize(screen);
+    await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /Everyday Words/ }).click();
+    await expect(page.getByRole('heading', { name: 'Everyday Words', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build the Word', level: 3 })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Check spelling' })).toBeAttached();
+    const { scrollWidth, viewportWidth } = await page.evaluate(() => ({
+      scrollWidth: Math.max(document.body.scrollWidth, document.documentElement.scrollWidth),
+      viewportWidth: window.innerWidth,
+    }));
+    expect(scrollWidth, 'visual overflow at ' + screen.width + 'x' + screen.height)
+      .toBeLessThanOrEqual(viewportWidth + 2);
+    const check = page.getByRole('button', { name: 'Check spelling' });
+    await check.scrollIntoViewIfNeeded();
+    await expect(check).toBeVisible();
+    // Small phones may scroll naturally; never clip or hide the primary action.
+    if (screen.width >= 1024) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const bounds = await check.boundingBox();
+      expect(bounds!.y + bounds!.height, 'gameplay height at ' + screen.width + 'x' + screen.height)
+        .toBeLessThanOrEqual(screen.height + 16);
+    }
+  }
+});
+
+test('classic spelling tabs wrap and meaningless decorative clue icons are omitted', async ({ page }) => {
+  for (const screen of [
+    { width: 320, height: 568 }, { width: 375, height: 667 },
+    { width: 768, height: 1024 }, { width: 1024, height: 768 },
+    { width: 1366, height: 768 },
+  ]) {
+    await page.setViewportSize(screen);
+    await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
+    const game = page.getByTestId('public-spelling-adventure');
+    await expect(game).toBeVisible();
+    await expect(game.getByRole('tab')).toHaveCount(6);
+    const width = await page.evaluate(() => Math.max(
+      document.body.scrollWidth, document.documentElement.scrollWidth,
+    ));
+    expect(width, 'classic overflow at ' + screen.width + 'x' + screen.height)
+      .toBeLessThanOrEqual(screen.width + 2);
+    await game.getByRole('tab', { name: /Go to Fix a Spelling Mistake/ }).click();
+    await expect(game.getByRole('heading', { name: 'Fix a Spelling Mistake' })).toBeVisible();
+    await expect(game.locator('[aria-label="friend"]')).toHaveCount(0);
+    await expect(game.getByRole('textbox', { name: 'Correct spelling' })).toBeVisible();
+  }
+});
+
+test('two-letter warm-up remains optional, compact and separate from classic 6-step spelling', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
+  await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Build a Word' })).toBeVisible();
+  await page.getByRole('button', { name: 'Try two-letter words' }).click();
+  await expect(page.getByRole('heading', { name: 'Two-Letter Words' })).toBeVisible();
+  await expect(page.getByText('I ___ happy to be here.')).toBeVisible();
+  await expect(page.getByText('0/6 completed this round')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)).toBe(false);
+  await page.getByRole('button', { name: 'Letter a' }).click();
+  await page.getByRole('button', { name: 'Letter m' }).click();
+  await expect(page.getByText('Correct: am')).toBeVisible();
+  await expect(page.getByText('She ate ___ apple.')).toBeVisible();
+  await page.getByRole('tab', { name: 'Go to Word Families' }).click();
+  await expect(page.getByRole('heading', { name: 'Word Families' })).toBeVisible();
+  await expect(page.getByText(/0\/30 completed this round/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Build a Word' })).toBeVisible();
+  await expect(page.getByText('A small pet that says meow.')).toBeVisible();
+});
+
+test('tablet touch: puzzles are operable without mouse drag and do not clip at iPad size', async ({ browser }) => {
+  const context = await browser.newContext({
+    viewport: { width: 820, height: 1180 },
+    deviceScaleFactor: 2,
+    hasTouch: true,
+    isMobile: true,
+  });
+  try {
+    const page = await context.newPage();
+    await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+    await page.getByRole('button', { name: /Longer & Compound Words/ }).tap();
+    await expect(page.getByRole('heading', { name: 'Build from Word Parts' })).toBeVisible();
+    // Tap-based placement is a complete alternative to desktop drag-and-drop.
+    await page.getByRole('button', { name: /Add tile sun, position/ }).tap();
+    await page.getByRole('button', { name: /Add tile flower, position/ }).tap();
+    await page.getByRole('button', { name: 'Check spelling' }).tap();
+    await expect(page.getByText(/you got it: sunflower/i)).toBeVisible();
+    const widths = await page.evaluate(() => ({
+      document: document.documentElement.scrollWidth,
+      viewport: window.innerWidth,
+    }));
+    expect(widths.document).toBeLessThanOrEqual(widths.viewport + 2);
+    await page.getByRole('button', { name: /All Spelling Levels/ }).tap();
+    await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+test('1366px laptop shows correct feedback and Next puzzle without a second screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Everyday Words/ }).click();
+  for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
+    await page.getByRole('button', { name: new RegExp('Add tile ' + letter + ', position') }).click();
+  }
+  await page.getByRole('button', { name: 'Check spelling' }).click();
+  const next = page.getByRole('button', { name: 'Next puzzle' });
+  await expect(next).toBeVisible();
+  const bounds = await next.boundingBox();
+  expect(bounds).toBeTruthy();
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y + bounds!.height, 'Next puzzle must fit 1366x768 without another full screen')
+    .toBeLessThanOrEqual(768 + 8);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2)).toBe(false);
+});
+
+test('meaning-only clues do not show a generic cloud or other unrelated icon', async ({ page }) => {
+  await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
+  const game = page.getByTestId('public-spelling-adventure');
+  await game.getByRole('tab', { name: 'Go to Fix a Spelling Mistake' }).click();
+  await expect(page.getByText('A person you like and enjoy spending time with.')).toBeVisible();
+  await expect(page.getByText('Meaning clue')).toBeVisible();
+  await expect(game.locator('img')).toHaveCount(0);
+  await expect(game.getByRole('textbox', { name: 'Correct spelling' })).toBeVisible();
 });

@@ -3,22 +3,23 @@ import {
   VISUAL_SPELLING_PUZZLES,
   VISUAL_SPELLING_STAGES,
   shuffleVisualSpellingPuzzles,
+  visualSpellingPracticeRound,
   validateVisualSpellingPuzzles,
   visualSpellingAnswer,
   type VisualSpellingPuzzle,
 } from '../../lib/visualSpellingPuzzles';
 
 describe('sound-free visual spelling puzzle curriculum', () => {
-  it('provides four complete and validated stages', () => {
+  it('provides ten complete and validated stages', () => {
     expect(validateVisualSpellingPuzzles(VISUAL_SPELLING_PUZZLES)).toEqual([]);
-    expect(VISUAL_SPELLING_STAGES).toHaveLength(4);
-    expect(VISUAL_SPELLING_PUZZLES).toHaveLength(32);
+    expect(VISUAL_SPELLING_STAGES).toHaveLength(10);
+    expect(VISUAL_SPELLING_PUZZLES).toHaveLength(240);
     expect(new Set(VISUAL_SPELLING_PUZZLES.map(puzzle => puzzle.id)).size).toBe(
       VISUAL_SPELLING_PUZZLES.length
     );
     for (const stage of VISUAL_SPELLING_STAGES) {
       const tasks = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage.id);
-      expect(tasks).toHaveLength(8);
+      expect(tasks).toHaveLength(24);
       expect(new Set(tasks.map(task => task.kind))).toEqual(
         new Set(['arrange', 'correct', 'missing', 'sort'])
       );
@@ -26,12 +27,12 @@ describe('sound-free visual spelling puzzle curriculum', () => {
   });
 
   it('introduces each level with an accurate, varied first task', () => {
-    const stageIds = ['explorer', 'builder', 'expert', 'master'] as const;
+    const stageIds = ['explorer', 'vowels', 'builder', 'syllables', 'syllable-spelling', 'inflections', 'expert', 'morphology', 'roots', 'master'] as const;
     expect(stageIds.map(id => VISUAL_SPELLING_PUZZLES.find(p => p.stage === id)?.kind))
-      .toEqual(['arrange', 'sort', 'missing', 'arrange']);
+      .toEqual(['arrange', 'arrange', 'sort', 'arrange', 'arrange', 'arrange', 'missing', 'arrange', 'arrange', 'arrange']);
     const labels = VISUAL_SPELLING_STAGES.map(stage => stage.title);
     expect(labels).toEqual([
-      'Everyday Words', 'Patterns & Endings', 'Tricky Spellings', 'Long Word Challenge',
+      'Everyday Words', 'Vowel Spelling Patterns', 'Patterns & Endings', 'Longer & Compound Words', 'Syllable Spelling', 'Plural & Word Changes', 'Tricky Spellings', 'Prefixes & Word Parts', 'Word Roots & Meanings', 'Long Word Challenge',
     ]);
     expect(VISUAL_SPELLING_STAGES.every(stage =>
       stage.subtitle.length > 35 && stage.examples.includes(' · ')
@@ -71,7 +72,7 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     const advanced = VISUAL_SPELLING_PUZZLES.filter(
       puzzle => ['expert', 'master'].includes(puzzle.stage)
     );
-    expect(advanced.length).toBe(16);
+    expect(advanced.length).toBe(48);
     expect(advanced.some(puzzle => puzzle.word.length >= 15)).toBe(true);
     expect(VISUAL_SPELLING_PUZZLES
       .filter(puzzle => puzzle.stage === 'master')
@@ -88,6 +89,22 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     expect(shuffled.map(p => p.id)).not.toEqual(original.map(p => p.id));
     expect(new Set(shuffled.map(p => p.id))).toEqual(new Set(original.map(p => p.id)));
     expect(original[0].id).toBe('explorer-journey');
+  });
+
+  it('offers all 24 reviewed puzzles in three short, non-overlapping eight-question rounds', () => {
+    for (const stage of VISUAL_SPELLING_STAGES) {
+      const rounds = [0, 1, 2].map(round => visualSpellingPracticeRound(stage.id, round));
+      expect(rounds.every(round => round.length === 8)).toBe(true);
+      const seen = rounds.flatMap(round => round.map(puzzle => puzzle.id));
+      expect(new Set(seen).size).toBe(24);
+      expect(new Set(seen)).toEqual(new Set(
+        VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage.id).map(puzzle => puzzle.id)
+      ));
+      for (const round of rounds) {
+        expect(new Set(round.map(puzzle => puzzle.kind)))
+          .toEqual(new Set(['arrange', 'correct', 'missing', 'sort']));
+      }
+    }
   });
 
   it('refuses ambiguous options and corrupted word parts', () => {

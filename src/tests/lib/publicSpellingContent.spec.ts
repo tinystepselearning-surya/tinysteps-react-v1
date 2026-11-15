@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   PUBLIC_SPELLING_LEVELS,
+  PUBLIC_SPELLING_SESSION_SIZE,
+  publicSpellingPracticeRound,
   normalizePublicSpellingAnswer,
   validatePublicSpellingContent,
   type PublicSpellingChallenge,
@@ -8,7 +10,7 @@ import {
 } from "../../lib/publicSpellingContent";
 
 describe("publicSpellingContent", () => {
-  it("provides a valid six-mode, 36-challenge spelling progression", () => {
+  it("provides a valid six-mode, 180-challenge spelling curriculum", () => {
     expect(validatePublicSpellingContent(PUBLIC_SPELLING_LEVELS)).toEqual([]);
     expect(PUBLIC_SPELLING_LEVELS.map((level) => level.mode)).toEqual([
       "build",
@@ -18,8 +20,21 @@ describe("publicSpellingContent", () => {
       "fix",
       "spell",
     ]);
-    expect(PUBLIC_SPELLING_LEVELS.flatMap((level) => level.challenges)).toHaveLength(36);
-    expect(PUBLIC_SPELLING_LEVELS.every((level) => level.challenges.length === 6)).toBe(true);
+    expect(PUBLIC_SPELLING_LEVELS.flatMap((level) => level.challenges)).toHaveLength(180);
+    expect(PUBLIC_SPELLING_LEVELS.every((level) => level.challenges.length === 30)).toBe(true);
+  });
+
+  it("serves five different six-question sets per activity without saving progress", () => {
+    expect(PUBLIC_SPELLING_SESSION_SIZE).toBe(6);
+    for (const level of PUBLIC_SPELLING_LEVELS) {
+      const rounds = [0, 1, 2, 3, 4].map(round => publicSpellingPracticeRound(level, round));
+      expect(rounds.every(round => round.length === 6)).toBe(true);
+      expect(new Set(rounds.flat().map(item => item.id)).size).toBe(30);
+      expect(new Set(rounds.flat().map(item => item.id)))
+        .toEqual(new Set(level.challenges.map(item => item.id)));
+      expect(publicSpellingPracticeRound(level, 5).map(item => item.id))
+        .toEqual(rounds[0].map(item => item.id));
+    }
   });
 
   it("normalizes only outer whitespace and letter case", () => {
