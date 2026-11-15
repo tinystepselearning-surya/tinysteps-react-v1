@@ -17,6 +17,71 @@ export interface SimpleLeadWorkflowInput {
 
 const normalize = (value: unknown): string => String(value || '').trim().toLowerCase();
 
+/**
+ * Read-only lead triage for the existing bounded admin queue.
+ * This is NOT a verification score, a contact status, or an acquisition KPI.
+ * Never persist or infer a parent's intent from these presentation hints.
+ */
+export type StatedParentUrgency = 'Today' | 'This week' | 'This month' | 'Just exploring';
+
+export type LeadTriageInput = {
+  parentName?: unknown;
+  parentPhone?: unknown;
+  childName?: unknown;
+  childAge?: unknown;
+  course?: unknown;
+  mainConcern?: unknown;
+  source?: unknown;
+  urgency?: unknown;
+};
+
+const isRecordedTriageValue = (value: unknown): boolean => {
+  const text = normalize(value);
+  return Boolean(text) && !['—', '-', 'unknown', 'not specified', 'not recorded'].includes(text);
+};
+
+const STATED_URGENCY_RANK: Record<StatedParentUrgency, number> = {
+  Today: 0,
+  'This week': 1,
+  'This month': 2,
+  'Just exploring': 3,
+};
+
+export function resolveLeadTriage(input: LeadTriageInput): {
+  statedUrgency: StatedParentUrgency | null;
+  urgencyRank: number;
+  needsCourseGuidance: boolean;
+  detailGaps: string[];
+} {
+  const knownUrgencies: readonly StatedParentUrgency[] = [
+    'Today', 'This week', 'This month', 'Just exploring',
+  ];
+  const statedUrgency = knownUrgencies.find((value) => normalize(value) === normalize(input.urgency)) || null;
+  const mainConcern = normalize(input.mainConcern);
+  const needsCourseGuidance = mainConcern === 'not sure where to start';
+
+  const detailGaps: string[] = [];
+  if (!isRecordedTriageValue(input.parentName)) detailGaps.push('parent name');
+  const contactDigits = String(input.parentPhone || '').replace(/\D/g, '');
+  if (contactDigits.length < 7 || contactDigits.length > 15) detailGaps.push('contact number');
+  if (!isRecordedTriageValue(input.childName)) detailGaps.push('child name');
+  const age = Number(input.childAge);
+  if (!Number.isInteger(age) || age < 3 || age > 12) detailGaps.push('child age');
+  if (!isRecordedTriageValue(input.course) && !isRecordedTriageValue(input.mainConcern)) {
+    detailGaps.push('learning goal');
+  }
+  if (!isRecordedTriageValue(input.source)) detailGaps.push('enquiry source');
+  if (needsCourseGuidance) detailGaps.push('course guidance');
+
+  return {
+    statedUrgency,
+    urgencyRank: statedUrgency ? STATED_URGENCY_RANK[statedUrgency] : 4,
+    needsCourseGuidance,
+    detailGaps,
+  };
+}
+
+
 const CLOSED_LEAD_STATUSES = new Set([
   'admitted_confirmed',
   'not_interested',
