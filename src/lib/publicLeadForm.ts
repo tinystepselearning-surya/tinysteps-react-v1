@@ -90,6 +90,7 @@ function deriveInterestFromConcern(mainConcern: MainConcernOption | ''): Interes
     case 'Reading speed and word accuracy':
     case 'Spelling while reading and writing':
     case 'Understanding what they read':
+    case 'Not sure where to start':
       return 'Reading';
     case 'Grammar while speaking or writing':
       return 'Grammar';
