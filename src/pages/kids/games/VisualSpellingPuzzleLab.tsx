@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   VISUAL_SPELLING_PUZZLES,
   VISUAL_SPELLING_STAGES,
@@ -12,8 +12,6 @@ type Feedback = 'correct' | 'retry' | null;
 
 export default function VisualSpellingPuzzleLab() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const kidId = searchParams.get('kidId') || '';
   const [stageId, setStageId] = useState<VisualSpellingStage | null>(null);
   const [index, setIndex] = useState(0);
   const [chosenIndices, setChosenIndices] = useState<number[]>([]);
@@ -40,8 +38,7 @@ export default function VisualSpellingPuzzleLab() {
     setFinished(false);
   };
 
-  const returnToHub = () =>
-    navigate('/kids/games/hub' + (kidId ? '?kidId=' + encodeURIComponent(kidId) : ''));
+  const returnToHub = () => navigate('/free-english-games-for-kids');
 
   const submit = (value: string) => {
     if (!puzzle || feedback === 'correct') return;
@@ -86,7 +83,7 @@ export default function VisualSpellingPuzzleLab() {
           <div>
             <p className="mb-1 text-sm font-semibold uppercase tracking-widest text-cyan-200">Tiny Steps · Learning Games</p>
             <h1 className="text-3xl font-black sm:text-4xl">Spelling Puzzle Lab</h1>
-            <p className="mt-2 text-sm text-slate-200">Ages 8–10+ · Visual word puzzles · No sound or phonics exercises</p>
+            <p className="mt-2 text-sm text-slate-200">Free for ages 8–10+ · No login · No sound · Nothing saved</p>
           </div>
           <button type="button" onClick={returnToHub}
             className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
