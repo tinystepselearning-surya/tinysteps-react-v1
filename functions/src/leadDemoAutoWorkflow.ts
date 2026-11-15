@@ -371,7 +371,7 @@ const ensureDemoRequest = async (leadId: string) => {
           : null;
       const childGrade =
         cleanText(lead.childGrade, 80) ||
-        (childAge !== null ? `Age ${childAge}` : 'Not specified');
+        (cleanText(lead.childAgeBand, 20) === '13+' ? 'Age 13+' : childAge !== null ? `Age ${childAge}` : 'Not specified');
       const preferredTiming =
         cleanText(lead.preferredTimingText, 500) ||
         (cleanText(lead.urgency, 80)
