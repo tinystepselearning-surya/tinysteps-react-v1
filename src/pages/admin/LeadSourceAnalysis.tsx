@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { collection, limit, query, Timestamp, where } from 'firebase/firestore';
+import { collection, query, Timestamp, where } from 'firebase/firestore';
 import { Button } from '@components/ui/button';
 import { Card } from '@components/ui/card';
 import { db } from '../../lib/firebaseConfig';
@@ -15,13 +15,6 @@ import {
 } from '../../lib/speakingAttribution';
 import DemoSessionsManagement from './DemoSessionsManagement';
 import ProspectiveAcquisitionSummary from './ProspectiveAcquisitionSummary';
-import {
-  linkedEnrolmentIdsForEvidence,
-  MAX_PAYMENT_EVIDENCE_ENROLLMENTS,
-  summarizeSourcePaymentEvidence,
-  type PaymentEvidenceCharge,
-  type PaymentEvidenceResult,
-} from './sourcePaymentEvidence';
 import {
   addDaysToDateKey,
   dateKeyInRange,
@@ -61,10 +54,6 @@ type LeadRow = {
   landingPage?: string | null;
   conversionPage?: string | null;
   demoSessionId?: string | null;
-  enrollmentId?: string | null;
-  enrollmentIds?: string[] | null;
-  dedupeCanonicalLeadId?: string | null;
-  dedupeConflict?: string | null;
   archived?: boolean;
   attribution?: LeadAttributionMap | null;
 };
@@ -178,10 +167,6 @@ export default function LeadSourceAnalysis({
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const requestSequenceRef = useRef(0);
-  const paymentRequestSequenceRef = useRef(0);
-  const [paymentEvidence, setPaymentEvidence] = useState<PaymentEvidenceResult | null>(null);
-  const [paymentEvidenceLoading, setPaymentEvidenceLoading] = useState(false);
-  const [paymentEvidenceError, setPaymentEvidenceError] = useState<string | null>(null);
   const controlledRange = Boolean(startDateKey && endDateKey);
 
   const load = useCallback(async () => {
@@ -255,61 +240,6 @@ export default function LeadSourceAnalysis({
     }
     return rows;
   }, [attributionCohort, rows]);
-
-  useEffect(() => {
-    // Payment evidence is scoped to the selected cohort and must never persist
-    // when date range, lead data or cohort selection changes.
-    paymentRequestSequenceRef.current += 1;
-    setPaymentEvidence(null);
-    setPaymentEvidenceError(null);
-    setPaymentEvidenceLoading(false);
-  }, [cohortRows]);
-
-  const loadPaymentEvidence = async () => {
-    const requestNumber = ++paymentRequestSequenceRef.current;
-    setPaymentEvidenceLoading(true);
-    setPaymentEvidence(null);
-    setPaymentEvidenceError(null);
-    try {
-      const ids = linkedEnrolmentIdsForEvidence(cohortRows);
-      if (ids.length > MAX_PAYMENT_EVIDENCE_ENROLLMENTS) {
-        throw new Error('Too many explicitly linked enrolments. Narrow the reporting date range before verifying payments.');
-      }
-      const chunks = Array.from({ length: Math.ceil(ids.length / 10) }, (_, index) =>
-        ids.slice(index * 10, index * 10 + 10));
-      const snapshots = await Promise.all(chunks.map((chunk, index) =>
-        getDocsLogged(
-          `LeadSourceAnalysis:payment-evidence:${index}`,
-          query(collection(db, 'billingCharges'), where('enrollmentId', 'in', chunk), limit(150)),
-          { source: 'src/pages/admin/LeadSourceAnalysis.tsx' },
-        ),
-      ));
-      if (paymentRequestSequenceRef.current !== requestNumber) return;
-      if (snapshots.some((snapshot) => snapshot.docs.length >= 150)) {
-        throw new Error('Payment evidence reached the safe query limit. Narrow the date range; no partial totals will be shown.');
-      }
-      const charges = snapshots.flatMap((snapshot) =>
-        snapshot.docs.map((item) => item.data() as PaymentEvidenceCharge));
-      setPaymentEvidence(summarizeSourcePaymentEvidence(cohortRows, charges));
-    } catch (err: any) {
-      if (paymentRequestSequenceRef.current !== requestNumber) return;
-      setPaymentEvidenceError(err?.message || 'Could not verify payment evidence.');
-    } finally {
-      if (paymentRequestSequenceRef.current === requestNumber) setPaymentEvidenceLoading(false);
-    }
-  };
-
-  const paidSourceCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    if (!paymentEvidence) return counts;
-    const confirmedIds = new Set(paymentEvidence.confirmedLeadIds);
-    cohortRows.forEach((lead) => {
-      if (!confirmedIds.has(lead.id)) return;
-      const channel = resolveChannel(lead).channel;
-      counts.set(channel, (counts.get(channel) || 0) + 1);
-    });
-    return counts;
-  }, [cohortRows, paymentEvidence]);
 
   const analysis = useMemo(() => {
     const byChannel = new Map<string, ChannelSummary>();
@@ -415,7 +345,7 @@ export default function LeadSourceAnalysis({
             <div>
               <h3 className="text-base font-semibold">Marketing Attribution</h3>
               <p className="mt-1 text-xs text-muted-foreground">
-                Lead-row acquisition evidence, demo workflow status and admissions. Demo workflow is not a confirmed booking.
+                Lead-row acquisition evidence, demo workflow and recorded enrolments. Enrolled means the lead was marked admitted; payment is not checked.
               </p>
               {controlledRange ? (
                 <p className="mt-1 text-[11px] font-medium text-slate-500">
@@ -469,7 +399,7 @@ export default function LeadSourceAnalysis({
               ['Leads', analysis.total],
               ['Attribution coverage', `${analysis.attributedCount} (${pct(analysis.attributedCount, analysis.total)})`],
               ['Demo workflow', `${analysis.demoWorkflowCount} (${pct(analysis.demoWorkflowCount, analysis.total)})`],
-              ['Admitted', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
+              ['Enrolled', `${analysis.admittedCount} (${pct(analysis.admittedCount, analysis.total)})`],
             ].map(([label, value]) => (
               <div key={String(label)} className="rounded-lg border border-slate-200 bg-slate-50/50 p-3">
                 <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
@@ -495,14 +425,13 @@ export default function LeadSourceAnalysis({
                     <th className="p-2">Channel</th>
                     <th className="p-2 text-right">Leads</th>
                     <th className="p-2 text-right">Demo stage</th>
-                    <th className="p-2 text-right">Admitted</th>
-                    <th className="p-2 text-right">Lead → admitted</th>
-                    <th className="p-2 text-right" title="Only backed by an explicitly linked enrollment and payment allocation">Paid evidenced</th>
+                    <th className="p-2 text-right">Enrolled</th>
+                    <th className="p-2 text-right">Lead → enrolled</th>
                   </tr>
                 </thead>
                 <tbody>
                   {analysis.channelRows.length === 0 ? (
-                    <tr><td className="p-3 text-muted-foreground" colSpan={6}>{loading ? 'Loading…' : 'No leads in this period.'}</td></tr>
+                    <tr><td className="p-3 text-muted-foreground" colSpan={5}>{loading ? 'Loading…' : 'No leads in this period.'}</td></tr>
                   ) : (
                     analysis.channelRows.map((row) => (
                       <tr key={row.channel} className="border-b last:border-b-0">
@@ -511,7 +440,6 @@ export default function LeadSourceAnalysis({
                         <td className="p-2 text-right">{row.demoWorkflowCount}</td>
                         <td className="p-2 text-right">{row.admittedCount}</td>
                         <td className="p-2 text-right font-semibold">{pct(row.admittedCount, row.count)}</td>
-                        <td className="p-2 text-right">{paymentEvidence ? paidSourceCounts.get(row.channel) || 0 : '—'}</td>
                       </tr>
                     ))
                   )}
@@ -527,7 +455,7 @@ export default function LeadSourceAnalysis({
                     <th className="p-2">Landing page</th>
                     <th className="p-2 text-right">Leads</th>
                     <th className="p-2 text-right">Demo stage</th>
-                    <th className="p-2 text-right">Admitted</th>
+                    <th className="p-2 text-right">Enrolled</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -546,31 +474,6 @@ export default function LeadSourceAnalysis({
                 </tbody>
               </table>
             </div>
-          </div>
-
-          <div className="mt-4 rounded-lg border border-slate-200 px-3 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <h4 className="text-sm font-semibold">Payment-backed admissions — evidence check</h4>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Optional, read-only check for exact lead → enrollment → allocated billing-charge links. No phone/name matching, historic backfill or payment changes.
-                </p>
-              </div>
-              <Button type="button" size="sm" variant="outline" disabled={loading || paymentEvidenceLoading} onClick={() => void loadPaymentEvidence()}>
-                {paymentEvidenceLoading ? 'Checking…' : 'Verify linked payments'}
-              </Button>
-            </div>
-            {paymentEvidenceError ? <p role="alert" className="mt-2 text-xs text-amber-800">{paymentEvidenceError}</p> : null}
-            {paymentEvidence ? (
-              <p role="status" className="mt-2 text-xs text-slate-700">
-                {paymentEvidence.confirmedPaid} payment-evidenced admissions · {paymentEvidence.unknown} admissions with unknown payment evidence
-                ({paymentEvidence.unlinked} lack an exact enrollment link). Unknown does not mean unpaid.
-              </p>
-            ) : (
-              <p className="mt-2 text-xs text-muted-foreground">
-                Payment values remain unverified until checked; lead admission status alone does not prove a paid enrolment.
-              </p>
-            )}
           </div>
 
           <p className="mt-3 text-[11px] text-muted-foreground">
