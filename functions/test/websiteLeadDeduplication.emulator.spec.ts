@@ -105,6 +105,41 @@ describeEmulator('website lead deduplication transaction integrity', () => {
     expect((await canonical.ref.collection('inquiries').get()).size).toBe(2);
   });
 
+  it('preserves latest enquiry-only contact preference without inferring consent from an earlier inquiry', async () => {
+    const firstId = 'CPREF_CANONICAL_00001';
+    const secondId = 'CPREF_DUPLICATE_00002';
+    await db.collection('leads').doc(firstId).set(lead(
+      '9876543210', 'Demo Child', at('2026-11-15T06:00:00Z'),
+      { contactPreference: 'whatsapp', contactPermission: true },
+    ));
+    await runDedupe(firstId);
+    await db.collection('leads').doc(secondId).set(lead(
+      '9876543210', 'Demo Child', at('2026-11-15T06:05:00Z'),
+      { contactPreference: 'phone', contactPermission: true },
+    ));
+    await runDedupe(secondId);
+
+    const canonical = (await db.collection('leads').doc(firstId).get()).data();
+    expect(canonical).toMatchObject({ contactPreference: 'phone', contactPermission: true, inquiryCount: 2 });
+    const inquiries = await db.collection('leads').doc(firstId).collection('inquiries').get();
+    expect(inquiries.docs.find((item) => item.id === firstId)?.data()).toMatchObject({
+      contactPreference: 'whatsapp', contactPermission: true,
+    });
+    expect(inquiries.docs.find((item) => item.id === secondId)?.data()).toMatchObject({
+      contactPreference: 'phone', contactPermission: true,
+    });
+
+    const thirdId = 'CPREF_LEGACY_000003';
+    await db.collection('leads').doc(thirdId).set(lead(
+      '9876543210', 'Demo Child', at('2026-11-15T06:10:00Z'),
+    ));
+    await runDedupe(thirdId);
+    const afterLegacy = (await db.collection('leads').doc(firstId).get()).data();
+    expect(afterLegacy).toMatchObject({ contactPreference: null, contactPermission: false, inquiryCount: 3 });
+    expect((await db.collection('leads').doc(firstId).collection('inquiries').doc(thirdId).get()).data())
+      .toMatchObject({ contactPreference: null, contactPermission: false });
+  });
+
   it('keeps siblings with the same phone as distinct canonical leads', async () => {
     const firstId = 'CCCCCCCCCCCCCCCCCCCC';
     const secondId = 'DDDDDDDDDDDDDDDDDDDD';
