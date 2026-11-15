@@ -15,7 +15,7 @@ describe('free visual spelling puzzle lab', () => {
     );
 
     expect(screen.getByText(/no login.*nothing saved/i)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    fireEvent.click(screen.getByRole('button', { name: /everyday words/i }));
     expect(screen.getByText('A trip from one place to another.')).toBeTruthy();
 
     for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
@@ -36,10 +36,11 @@ describe('free visual spelling puzzle lab', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('button', { name: /word explorer/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /pattern builder/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /spelling expert/i })).toBeTruthy();
-    expect(screen.getByRole('button', { name: /word architect/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /everyday words/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /patterns & endings/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /tricky spellings/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /long word challenge/i })).toBeTruthy();
+    expect(screen.getByText(/example words: friend · school · planet/i)).toBeTruthy();
   });
   it('requires sorting two contrasting words before counting the puzzle complete', () => {
     render(
@@ -48,7 +49,7 @@ describe('free visual spelling puzzle lab', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    fireEvent.click(screen.getByRole('button', { name: /everyday words/i }));
     for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp('Add tile ' + letter + ', position') }));
     }
@@ -77,7 +78,7 @@ describe('free visual spelling puzzle lab', () => {
       </MemoryRouter>
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    fireEvent.click(screen.getByRole('button', { name: /everyday words/i }));
     for (let i = 0; i < 8; i += 1) {
       fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
       fireEvent.click(screen.getByRole('button', { name: /show answer & learn/i }));
@@ -104,7 +105,7 @@ describe('free visual spelling puzzle lab', () => {
         <VisualSpellingPuzzleLab />
       </MemoryRouter>
     );
-    fireEvent.click(screen.getByRole('button', { name: /word explorer/i }));
+    fireEvent.click(screen.getByRole('button', { name: /everyday words/i }));
     // Reveal the first three puzzles so independent score starts at zero.
     for (let i = 0; i < 3; i += 1) {
       fireEvent.click(screen.getByRole('button', { name: /need a hint/i }));
