@@ -1,1 +1,0 @@
-export { adminArchiveUser } from './adminArchiveUserCanonical';
