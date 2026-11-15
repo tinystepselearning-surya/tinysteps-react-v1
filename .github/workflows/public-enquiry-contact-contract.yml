@@ -9,6 +9,8 @@ on:
       - 'src/components/forms/PublicAssessmentForm.tsx'
       - 'src/tests/lib/publicLeadForm.spec.ts'
       - 'src/tests/components/PublicAssessmentForm.spec.tsx'
+      - 'functions/src/websiteLeadDeduplication.ts'
+      - 'functions/test/websiteLeadDeduplication.emulator.spec.ts'
       - '.github/workflows/public-enquiry-contact-contract.yml'
   workflow_dispatch:
 
@@ -44,6 +46,10 @@ jobs:
           test -z "${FIREBASE_TOKEN:-}"
       - name: Install locked dependencies
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Install Functions dependencies and compile
+        run: |
+          npm ci --prefix functions --include=dev --ignore-scripts --no-audit --no-fund
+          npm --prefix functions run build
       - name: Verify exact public form and immutable payload semantics
         run: npx vitest run src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx
       - name: Real Firestore rules emulator
@@ -52,5 +58,11 @@ jobs:
             --project demo-tinysteps-public-contact \
             --only firestore \
             'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts'
+      - name: Canonical duplicate-identity transaction emulator
+        run: |
+          npx --yes firebase-tools@15.30.0 emulators:exec \
+            --project demo-tinysteps-public-contact \
+            --only firestore \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 GCLOUD_PROJECT=demo-tinysteps-public-contact GOOGLE_CLOUD_PROJECT=demo-tinysteps-public-contact npx vitest run --config functions/vitest.config.ts functions/test/websiteLeadDeduplication.emulator.spec.ts'
       - name: Check TypeScript
         run: npm run typecheck
