@@ -1071,7 +1071,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" onClick={applyFilters} disabled={leadsLoading}>{leadsLoading ? 'Applying…' : 'Apply filter'}</Button>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today. A returning website enquiry from another IST date appears in Open as a new task, without creating a duplicate lead. Same-day submissions count once per parent and child. Historical first-touch attribution remains unchanged; the selected range shows unique active parent-child records, not the number of form submissions.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. A returning website enquiry from another IST date appears in Open as a new task, without creating a duplicate lead. Same-day submissions count once per parent and child. Historical first-touch attribution remains unchanged; the selected range shows unique active parent-child records, not the number of form submissions.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
