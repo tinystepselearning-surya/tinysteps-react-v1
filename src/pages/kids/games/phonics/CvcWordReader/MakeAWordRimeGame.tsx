@@ -868,8 +868,11 @@ function PublicSpellingAdventure({
       data-testid="public-spelling-adventure"
     >
       <div className="absolute left-2 top-2 right-2 z-10 flex min-w-0 items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
-        <div className="min-w-0 truncate rounded-full border border-white/40 bg-white/25 px-3 py-2 text-[10px] font-black uppercase tracking-[0.1em] text-white shadow-sm sm:px-4 sm:text-xs sm:tracking-[0.14em]">
-          {activityContextLabel ?? "Guest Play Mode • Spelling Adventure"}
+        <div className="min-w-0 rounded-2xl border border-white/40 bg-white/30 px-4 py-2 text-slate-950 shadow-sm">
+          <p className="text-[10px] font-black uppercase tracking-[0.12em] text-indigo-900">
+            {activityContextLabel ?? "Guest Play Mode • Spelling Adventure"}
+          </p>
+          <h1 className="text-base font-black leading-tight sm:text-xl">Spelling Adventure</h1>
         </div>
         <button
           type="button"
