@@ -281,7 +281,7 @@ export default function VisualSpellingPuzzleLab() {
                puzzle.kind === 'missing' ? 'Fill the missing letters' :
                'Sort the word'}
             </h2>
-            <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {puzzle.clue}</p>
+            <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? puzzle.pair.clue : puzzle.clue}</p>
 
             {puzzle.kind === 'arrange' && (
               <div className="mt-6">
