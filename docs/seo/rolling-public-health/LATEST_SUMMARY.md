@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T08:46:02.517Z UTC (15 November 2026 IST, slot 15 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **15 November IST: 150/202 distinct exact-URL provider retrieval attempts (74.26%); 52 unattempted.** Previous-day timestamps excluded.
+- Slot 15 rows 141–150: **10/10** exact-URL retrievals returned page-specific extracted content, covering school reopening readiness, long vowels, online English/phonics, phonics games, home activities, blending, comprehension and assessment. Evidence: `turn199556view0`–`turn199556view9`; provider labelled content text/html, crawled yesterday.
+- **Fully origin-verified: 0/202 today.** Direct HTTPS probe failed DNS resolution in the audit environment. Provider-extracted content does not verify origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD or bot accessibility; all remain UNVERIFIED.
+- UTC evidence-handling marker `2026-11-15T08:46:02.517Z` is **not an independently measured request time for each URL**.
+- GitHub Actions: one in-progress repository run, `Deploy to Firebase` (unrelated); no concurrently running rolling SEO audit observed among in-progress runs. Legacy workflow administrative disabled state could not be independently read; user's explicit disable confirmation remains operating basis. No workflow run or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No source, workflow or production changes.
+- Next eligible batch: slot 16, rows 151–160, subject to earlier eligible recovery.
+
+## Prior summary
+
 Updated: 2026-11-15T07:39:49.420Z UTC (15 November 2026 IST, slot 14 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
