@@ -482,9 +482,9 @@ export const PUBLIC_ENGLISH_GAME_LANDING_CONFIGS: PublicEnglishGameLandingConfig
   {
     publicPath: "/free-spelling-game-for-kids",
     categoryPath: "/free-word-building-games-for-kids",
-    seoTitle: "Free Spelling Game for Kids | Online Word & Spelling Practice",
+    seoTitle: "Free Spelling Games for Kids | Adventure & Puzzle Lab",
     seoDescription:
-      "Play two free spelling games for kids at Tiny Steps. Practise short-word spelling or challenge yourself with visual word puzzles, patterns and spelling corrections. No login required.",
+      "Play Spelling Adventure (ages 5–8) or Spelling Puzzle Lab (ages 8–10+) for free. Build words, practise spelling patterns and correct mistakes. No login or sound.",
     h1: "Free Spelling Game for Kids",
     intro:
       "Choose between Spelling Adventure for shorter words and guided spelling (approximately ages 5–8), or Spelling Puzzle Lab for older children to arrange, sort and recall trickier words (approximately ages 8–10+). Both are free and sound-free.",
