@@ -1,5 +1,21 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T01:41:16.966Z UTC (15 November 2026 IST, slot 8 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
+- **15 November IST: 80/202 distinct exact-URL provider retrieval attempts (39.60%); 122 unattempted.** Previous-day timestamps excluded.
+- Slot 8 rows 71–80: **9/10 exact-URL provider retrievals returned page-specific extracted text** for letter tracing with sounds, balloon-pop phonics, vocabulary adventure, phonics, grammar, public speaking, school phonics, demo booking and reading classes. Evidence: `turn634444view0`–`turn634444view9` (provider labelled successful snapshots crawled yesterday).
+- **Blocked verification:** row 77 `https://tinystepslearning.com/speaking-progress-framework` returned provider **Internal Error / URL not accessible via this tool** (`turn634444view6`). This is not a confirmed production failure.
+- UTC marker `2026-11-15T01:41:16.966Z` is **batch evidence-handling time**, not ten individually measured origin request times.
+- **Fully origin-verified: 0/202 today.** Origin HTTP status, final redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider text cannot establish production health.
+- GitHub Actions administrative disabled state and concurrent run state could not be independently retrieved with available read methods in this run; user's confirmed disablement remains operating basis. No workflow was executed or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No production/workflow changes.
+- Next eligible batch: slot 9, rows 81–90, subject to recovery of earlier eligible unchecked URLs.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T00:46:21.087Z UTC (15 November 2026 IST, slot 7 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
