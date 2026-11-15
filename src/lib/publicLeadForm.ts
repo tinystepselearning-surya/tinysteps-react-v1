@@ -3,6 +3,7 @@ import { captureLeadAttribution } from './leadAttribution';
 
 export type InterestOption = 'Phonics' | 'Reading' | 'Grammar' | 'Speaking';
 export type ClassFormatPreference = 'one_to_one' | 'small_group' | 'unsure';
+export type EnquiryContactPreference = 'phone' | 'whatsapp' | 'either';
 export type MainConcernOption =
   | 'Starting to read words after learning ABC/sounds'
   | 'Blending sounds to read words'
@@ -35,6 +36,8 @@ export type PublicAssessmentFormState = {
   childAge: string;
   mainConcern: MainConcernOption | '';
   classFormatPreference?: ClassFormatPreference;
+  // Chosen by the parent for this enquiry only; no opt-in is preselected.
+  contactPreference?: EnquiryContactPreference | '';
   urgency: '' | 'Today' | 'This week' | 'This month' | 'Just exploring';
 };
 
@@ -171,6 +174,8 @@ export function buildPublicLeadPayload(
   const attribution = opts.attribution || getPublicLeadAttribution();
   const normalizedWhatsapp = form.whatsapp.trim();
   const derivedInterest = deriveInterestFromConcern(form.mainConcern);
+  const explicitContactPreference = ['phone', 'whatsapp', 'either'].includes(form.contactPreference || '')
+    ? form.contactPreference as EnquiryContactPreference : null;
 
   return {
     parentName: form.parentName.trim(),
@@ -187,6 +192,9 @@ export function buildPublicLeadPayload(
     initialMessageSnippet: null,
     mainConcern: form.mainConcern,
     classFormatPreference: form.classFormatPreference || 'one_to_one',
+    // A parent explicitly requests this method while submitting the enquiry.
+    // Never interpret it as WhatsApp account verification or marketing consent.
+    ...(explicitContactPreference ? { contactPreference: explicitContactPreference, contactPermission: true } : {}),
     timezone: opts.timezone || null,
     sourcePath: attribution.sourcePath,
     // Keep the anonymous Firestore create schema intentionally narrow.
@@ -213,10 +221,11 @@ export function buildPublicWhatsappMessage(form: PublicAssessmentFormState) {
     '',
     `Parent name: ${form.parentName || '-'}`,
     `Child name: ${form.childName || '-'}`,
-    `WhatsApp number: ${form.whatsapp || '-'}`,
+    `${form.contactPreference === 'phone' ? 'Contact number' : 'WhatsApp number'}: ${form.whatsapp || '-'}`,
     `Child age: ${form.childAge || '-'}`,
     `Support area: ${form.mainConcern || '-'}`,
     `Preferred class format: ${form.classFormatPreference === 'small_group' ? 'Small group' : form.classFormatPreference === 'unsure' ? 'Help me choose' : 'Premium one-to-one'}`,
+    ...(form.contactPreference ? [`Preferred contact for this enquiry: ${form.contactPreference === 'phone' ? 'Phone callback' : form.contactPreference === 'whatsapp' ? 'WhatsApp reply' : 'Phone or WhatsApp'}`] : []),
     '',
   ];
 
