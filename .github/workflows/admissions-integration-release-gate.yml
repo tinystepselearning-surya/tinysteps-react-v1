@@ -10,7 +10,10 @@ on:
       - 'functions/src/leadDemoAutoWorkflow.ts'
       - 'functions/src/index.ts'
       - 'functions/test/leadDemoAutoWorkflow.emulator.spec.ts'
-      - 'src/tests/pages/**'
+      # Only admissions tests should trigger this admissions-only scope gate.
+      # Other public game/page tests have their own dedicated quality gates.
+      - 'src/tests/pages/admin/**'
+      - 'src/tests/pages/LeadSourceAnalysis.spec.tsx'
       - 'src/tests/services/leadCommunicationsService.spec.ts'
       - 'docs/acquisition/**'
       - '.github/workflows/admissions-*.yml'
