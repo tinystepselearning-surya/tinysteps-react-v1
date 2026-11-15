@@ -16,6 +16,7 @@ export default function VisualSpellingPuzzleLab() {
   const [index, setIndex] = useState(0);
   const [chosenIndices, setChosenIndices] = useState<number[]>([]);
   const [feedback, setFeedback] = useState<Feedback>(null);
+  const [revealed, setRevealed] = useState(false);
   const [showHint, setShowHint] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [independentCorrect, setIndependentCorrect] = useState(0);
@@ -32,6 +33,7 @@ export default function VisualSpellingPuzzleLab() {
     setIndex(0);
     setChosenIndices([]);
     setFeedback(null);
+    setRevealed(false);
     setShowHint(false);
     setAttempted(false);
     setIndependentCorrect(0);
@@ -52,6 +54,13 @@ export default function VisualSpellingPuzzleLab() {
     }
   };
 
+  const revealAnswer = () => {
+    if (!puzzle || feedback === 'correct') return;
+    setAttempted(true);
+    setRevealed(true);
+    setFeedback('correct');
+  };
+
   const pickTile = (tileIndex: number) => {
     if (!puzzle || puzzle.kind !== 'arrange' || feedback === 'correct') return;
     if (chosenIndices.includes(tileIndex) || tileIndex < 0 || tileIndex >= puzzle.tiles.length) return;
@@ -67,6 +76,7 @@ export default function VisualSpellingPuzzleLab() {
     setIndex(current => current + 1);
     setChosenIndices([]);
     setFeedback(null);
+    setRevealed(false);
     setShowHint(false);
     setAttempted(false);
   };
@@ -241,8 +251,16 @@ export default function VisualSpellingPuzzleLab() {
             )}
 
             <div className="mt-6">
-              <button type="button" onClick={() => setShowHint(true)} disabled={showHint || feedback === 'correct'}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">Need a hint?</button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => setShowHint(true)} disabled={showHint || feedback === 'correct'}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">Need a hint?</button>
+                {(feedback === 'retry' || showHint) && (
+                  <button type="button" onClick={revealAnswer} disabled={feedback === 'correct'}
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">
+                    Show answer &amp; learn
+                  </button>
+                )}
+              </div>
               {showHint && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950"><strong>Hint:</strong> {puzzle.hint}</p>}
             </div>
 
@@ -253,7 +271,10 @@ export default function VisualSpellingPuzzleLab() {
             )}
             {feedback === 'correct' && (
               <div role="status" className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
-                <h3 className="text-xl font-black">You got it: {puzzle.word}!</h3>
+                <h3 className="text-xl font-black">
+                  {revealed ? `Answer: ${puzzle.kind === 'sort' ? puzzle.answer : puzzle.word}` : `You got it: ${puzzle.word}!`}
+                </h3>
+                {revealed && <p className="mt-2 text-sm font-semibold">This was a learning turn, not an independent correct answer.</p>}
                 <p className="mt-2 text-sm">{puzzle.learningNote}</p>
                 <button type="button" onClick={nextPuzzle}
                   className="mt-5 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white hover:bg-emerald-800">
