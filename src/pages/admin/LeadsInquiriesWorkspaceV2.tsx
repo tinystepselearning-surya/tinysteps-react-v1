@@ -53,7 +53,7 @@ import {
 } from './leadsPaged';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import LeadAdminToolsMenu from './LeadAdminToolsMenu';
-import { isAdminFollowUpDue } from './leadsDueFollowUps';
+import { isAdminFollowUpDue, parseAdminFollowUpDateIstMs } from './leadsDueFollowUps';
 import {
   isSimpleFollowUpDecision,
   resolveSimpleLeadAction,
@@ -236,14 +236,6 @@ const toMs = (value: unknown): number => {
     if (typeof candidate.seconds === 'number') return candidate.seconds * 1000;
   }
   return 0;
-};
-
-const parseDateInputMs = (value: unknown): number => {
-  const raw = normalizeText(value);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return 0;
-  const [year, month, day] = raw.split('-').map(Number);
-  const date = new Date(year, month - 1, day, 12, 0, 0, 0);
-  return Number.isFinite(date.getTime()) ? date.getTime() : 0;
 };
 
 const dateBoundaryMs = (value: string, endOfDay = false): number => {
@@ -530,7 +522,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
     const buildRow = (lead: LeadRecord | null, demo: DemoSession | null, id: string): SimpleRow => {
       const demoStatus = demo ? normalizeDemoStatus(demo.status) : '';
-      const followUpAtMs = (demo ? parseDateInputMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
+      const followUpAtMs = (demo ? parseAdminFollowUpDateIstMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
       const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
       const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0, classFormatPreference: lead?.classFormatPreference };
       const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
