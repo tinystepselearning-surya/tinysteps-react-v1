@@ -28,6 +28,18 @@ test('new request and legacy confirmed-booking event have disjoint names', () =>
   assert.match(tracker, /trackEvent\('generate_lead'/);
 });
 
+test('assessment CTA emits only the canonical assessment click event', () => {
+  const tracker = read('src/lib/conversionTracking.ts');
+  const start = tracker.indexOf('export const trackBookDemoClick =');
+  const end = tracker.indexOf('export const trackWhatsappClick =', start);
+  assert.ok(start >= 0 && end > start, 'assessment CTA tracking function must exist');
+  const assessmentClick = tracker.slice(start, end);
+  assert.match(assessmentClick, /trackEvent\('book_assessment_click'/);
+  assert.doesNotMatch(assessmentClick, /trackEvent\('book_demo_click'/);
+  assert.equal((assessmentClick.match(/trackEvent\(/g) || []).length, 1, 'one event per assessment CTA invocation');
+  assert.match(assessmentClick, /buildAttributionEventParams\(pagePath\)/, 'retain original first-touch attribution');
+});
+
 test('existing commercial C5 audit recognizes updated request event in form', () => {
   const gate = read('scripts/audit-commercial-c5-conversion-flow.mjs');
   assert.match(gate, /'trackDemoRequestReceived'/);
