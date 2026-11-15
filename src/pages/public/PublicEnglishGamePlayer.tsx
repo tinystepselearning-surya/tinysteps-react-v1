@@ -5,7 +5,11 @@ import SentenceStepperStage4 from "../kids/games/phonics/SentenceStepperStage4";
 import BuildBetterSentencesChooseBetter from "../kids/games/grammar/BuildBetterSentencesChooseBetter";
 import StoryReadingGame from "../kids/games/reading/StoryReading/StoryReadingGame";
 import MakeAWordRimeGame from "../kids/games/phonics/CvcWordReader/MakeAWordRimeGame";
-import VisualSpellingPuzzleLab from "../kids/games/VisualSpellingPuzzleLab";
+import { lazy, Suspense } from "react";
+
+// Keep older-child visual puzzles out of the initial public SEO/classic game
+// bundle. This route only loads the additional code when explicitly requested.
+const VisualSpellingPuzzleLab = lazy(() => import("../kids/games/VisualSpellingPuzzleLab"));
 
 type PublicEnglishGamePlayerProps = {
   publicPath: string;
@@ -42,7 +46,13 @@ export default function PublicEnglishGamePlayer({
         />
       );
     case "/free-spelling-game-for-kids":
-      if (visualPuzzleMode) return <VisualSpellingPuzzleLab />;
+      if (visualPuzzleMode) {
+        return (
+          <Suspense fallback={<div role="status" className="min-h-screen bg-indigo-950 p-6 text-white">Loading visual spelling puzzles…</div>}>
+            <VisualSpellingPuzzleLab />
+          </Suspense>
+        );
+      }
       return (
         <MakeAWordRimeGame
           forceAnonymousMode
