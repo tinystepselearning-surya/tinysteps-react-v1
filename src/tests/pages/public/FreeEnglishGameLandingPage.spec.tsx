@@ -256,17 +256,17 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 1 })).toBeInTheDocument();
     expect(screen.getByText(/guest play mode • spelling adventure/i)).toBeInTheDocument();
     // First puzzle is playable immediately; no extra landing or intro click.
-    expect(screen.getByRole("heading", { name: "Build It", level: 2 })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /go to spell it/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Build a Word", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /go to spell from memory/i })).toBeInTheDocument();
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids?play=1");
     expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/kidId|synced child tracking|synced per-child tracking/i)).not.toBeInTheDocument();
 
-    expect(screen.getByRole("heading", { name: "Build It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Build a Word" })).toBeInTheDocument();
     expect(screen.queryByText(/listen/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/magnet:/i)).not.toBeInTheDocument();
     expect(screen.getByAltText("cat")).toBeInTheDocument();
-    expect(screen.getByText(/0\/36 done/i)).toBeInTheDocument();
+    expect(screen.getByText(/0\/36 completed this round/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /letter t/i }));
     expect(screen.getByText(/^try again\.$/i)).toBeInTheDocument();
@@ -327,7 +327,7 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseLetter("p", "pig");
     await chooseLetter("r", "ring");
 
-    expect(screen.getByRole("heading", { name: "Complete It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fill Missing Letters" })).toBeInTheDocument();
     expect(screen.getByText("c _ t")).toBeInTheDocument();
     await chooseMissing("a", "cat");
     await chooseMissing("u", "sun");
@@ -336,7 +336,7 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseMissing("i", "fish");
     await chooseMissing("i", "kite");
 
-    expect(screen.getByRole("heading", { name: "Choose It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Choose the Correct Spelling" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /spelling fish/i })).toBeInTheDocument();
     await chooseSpelling("fish", "fish");
     await chooseSpelling("elephant", "elephant");
@@ -345,7 +345,7 @@ describe("FreeEnglishGameLandingPage", () => {
     await chooseSpelling("whale", "whale");
     await chooseSpelling("grape", "grape");
 
-    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fix a Spelling Mistake" })).toBeInTheDocument();
     expect(screen.getByText("frend")).toBeInTheDocument();
     const fixInput = screen.getByRole("textbox", { name: /correct spelling/i });
     expect(fixInput).toHaveAttribute("spellcheck", "false");
@@ -367,7 +367,7 @@ describe("FreeEnglishGameLandingPage", () => {
     await typeAnswer("watch", "watch");
     await typeAnswer("school", "school");
 
-    expect(screen.getByRole("heading", { name: "Spell It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spell from Memory" })).toBeInTheDocument();
     expect(screen.getByText(/the ___ shines brightly during the day/i)).toBeInTheDocument();
     expect(screen.queryByText(/^sun$/i)).not.toBeInTheDocument();
     const spellInput = screen.getByRole("textbox", { name: /your spelling/i });
@@ -398,7 +398,7 @@ describe("FreeEnglishGameLandingPage", () => {
       vi.advanceTimersByTime(1);
     });
 
-    expect(screen.getByRole("heading", { name: "Build It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Build a Word" })).toBeInTheDocument();
     expect(screen.getByAltText("cat")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /letter c/i })).toBeInTheDocument();
 
@@ -424,10 +424,10 @@ describe("FreeEnglishGameLandingPage", () => {
     vi.useFakeTimers();
     renderRoute("/free-spelling-game-for-kids?play=1");
 
-    fireEvent.click(screen.getByRole("tab", { name: /go to spell it/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /go to spell from memory/i }));
 
-    expect(screen.getByRole("heading", { name: "Spell It" })).toBeInTheDocument();
-    expect(screen.getByText(/30\/36 done/i)).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spell from Memory" })).toBeInTheDocument();
+    expect(screen.getByText(/0\/6 completed this round/i)).toBeInTheDocument();
     expect(screen.getByText(/the ___ shines brightly during the day/i)).toBeInTheDocument();
 
     fireEvent.change(screen.getByRole("textbox", { name: /your spelling/i }), {
@@ -436,16 +436,16 @@ describe("FreeEnglishGameLandingPage", () => {
     fireEvent.click(screen.getByRole("button", { name: /check answer/i }));
     expect(screen.getByText(/correct: sun/i)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /go to fix it/i }));
-    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("tab", { name: /go to fix a spelling mistake/i }));
+    expect(screen.getByRole("heading", { name: "Fix a Spelling Mistake" })).toBeInTheDocument();
     expect(screen.getByText("frend")).toBeInTheDocument();
-    expect(screen.getByText(/24\/36 done/i)).toBeInTheDocument();
+    expect(screen.getByText(/0\/12 completed this round/i)).toBeInTheDocument();
 
     await act(async () => {
       vi.advanceTimersByTime(1000);
     });
 
-    expect(screen.getByRole("heading", { name: "Fix It" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Fix a Spelling Mistake" })).toBeInTheDocument();
     expect(screen.getByText("frend")).toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: /correct spelling/i })).toHaveValue("");
 
