@@ -31,7 +31,7 @@ describe('free visual spelling puzzle lab', () => {
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it('opens the four stages without requiring a child ID', () => {
+  it('opens all six stages without requiring a child ID', () => {
     render(
       <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
         <VisualSpellingPuzzleLab />
@@ -40,7 +40,9 @@ describe('free visual spelling puzzle lab', () => {
 
     expect(screen.getByRole('button', { name: /everyday words/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /patterns & endings/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /longer & compound words/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /tricky spellings/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /prefixes & word parts/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /long word challenge/i })).toBeTruthy();
     expect(screen.getByText(/example words: friend · school · planet/i)).toBeTruthy();
   });
