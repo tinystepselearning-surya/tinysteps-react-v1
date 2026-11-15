@@ -42,3 +42,34 @@ test('classic spelling remains accessible from the same canonical page', async (
   await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Spelling Adventure' })).toBeVisible();
 });
+
+
+test('guest puzzle progress resets completely on refresh', async ({ page }) => {
+  await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Word Explorer/ }).click();
+  await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Choose a puzzle challenge' })).toBeVisible();
+  await expect(page.getByText('Puzzle 1 of 8')).toHaveCount(0);
+});
+
+test('long advanced sorting word fits a compact 320px screen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Word Architect/ }).click();
+  for (let index = 0; index < 3; index += 1) {
+    await page.getByRole('button', { name: /need a hint/i }).click();
+    await page.getByRole('button', { name: /show answer & learn/i }).click();
+    await page.getByRole('button', { name: /next puzzle/i }).click();
+  }
+  const word = page.getByText('interdependence', { exact: true });
+  await expect(word).toBeVisible();
+  const bounds = await word.boundingBox();
+  expect(bounds).toBeTruthy();
+  expect(bounds!.x).toBeGreaterThanOrEqual(-1);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(321);
+  const overflow = await page.evaluate(() =>
+    document.documentElement.scrollWidth > window.innerWidth + 2
+  );
+  expect(overflow).toBe(false);
+});
