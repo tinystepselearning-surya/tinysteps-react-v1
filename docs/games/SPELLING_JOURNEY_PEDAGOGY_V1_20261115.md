@@ -3,7 +3,7 @@
 **Date:** 15 November 2026 (IST)  
 **Workstream:** Spelling & Learning Games only  
 **Branch:** `feat/spelling-learning-journey-20261115`  
-**Status:** Design specification, **not** implemented or deployed.
+**Status:** Sound-free visual puzzle prototype implemented on branch; **not merged or deployed**. The broader spelling curriculum is still a design roadmap.
 
 ## Mission
 
@@ -124,9 +124,11 @@ Four untimed puzzle tasks reuse the existing Kids Games Hub protected access:
 3. Insert missing letters or grapheme groups into a meaningful word.
 4. Sort written words into spelling-ending/prefix/suffix categories by drag/drop or tap.
 
-Prototype content: four levels × four tasks = **16 authored seed puzzles**, progressing from `journey` and `friend` to `unhappiness` and `misunderstanding`. Each word has a child-friendly meaning clue, optional help, and a note about its spelling/structure. A correct first attempt without hints is tracked separately from answers reached after feedback. No timer, no ranking, and **no new backend writes**.
+Prototype content: four levels × eight tasks = **32 authored seed puzzles**, progressing from `journey` and `friend` to `unhappiness` and `misunderstanding`. Each word has a child-friendly meaning clue, optional help, and a note about its spelling/structure. A correct first attempt without hints is tracked separately from answers reached after feedback. No timer, no ranking, **no backend writes, no browser storage, and no saved progress**. All score and attempt state exists only in the current React component and resets when the page reloads.
 
-**Prototype entry:** `/kids/games/spelling-puzzle-lab` (role-gated under existing `kids` routes). The existing public `/free-spelling-game-for-kids` is unchanged. This initial route is an authenticated prototype, not a public SEO launch.
+**Free prototype entry:** `/free-spelling-game-for-kids?play=1&mode=puzzles`. No login or child ID; integrated through the existing public spelling landing page and listed in the free English games directory. The older `?play=1` spelling adventure remains available unchanged. Both share the canonical `/free-spelling-game-for-kids` page; no duplicate indexable URL was added. The authenticated Kids Games Hub may link users to this public route, but the game does not depend on any authenticated access.
+
+**No-progress policy (owner, 15 Nov):** The visual puzzle route intentionally does not read/write Firestore, localStorage, sessionStorage, IndexedDB or user profiles. It does not require an account and does not submit progress or scores to site analytics. Scoring only displays in-page before reload. Other pre-existing games and the public hub have independent browser-local completion features; those have not been modified by this isolated spelling change.
 
 **Limitations:** It is a starter set, not an extensive curriculum. Some sorting items demonstrate pattern identification rather than independent spelling retrieval. Word lists, meaningful transfer to new words, repeat-session retention, mobile touch affordances and teacher pilot review must mature before asserting effectiveness or mastery.
 
@@ -168,4 +170,4 @@ Prototype content: four levels × four tasks = **16 authored seed puzzles**, pro
 - 2024 synthesis of spelling instruction outcomes and transfer limitations: https://onlinelibrary.wiley.com/doi/10.1002/pits.23223
 - 2024 meta-analysis of morphology instruction and literacy outcomes: https://link.springer.com/article/10.1007/s10648-024-09953-3
 
-**Approval boundary:** This document authorises design discussion only. It is not an implemented feature, PR, deployment, production data migration, or release approval.
+**Approval boundary:** The new free-game implementation and its draft PR are prepared for validation only. This document is not approval to merge, deploy, change production systems or migrate any records.
