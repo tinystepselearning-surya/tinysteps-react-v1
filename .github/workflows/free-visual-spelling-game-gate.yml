@@ -6,6 +6,7 @@ on:
       - 'src/app/routes.tsx'
       - 'src/lib/visualSpellingPuzzles.ts'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.tsx'
+      - 'src/pages/kids/games/VisualSpellingPuzzleLab.css'
       - 'src/pages/public/PublicEnglishGamePlayer.tsx'
       - 'src/pages/public/FreeEnglishGameLandingPage.tsx'
       - 'src/pages/public/FreeEnglishGamesHubPage.tsx'
