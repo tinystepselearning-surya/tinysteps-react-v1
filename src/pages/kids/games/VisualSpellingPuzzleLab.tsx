@@ -216,32 +216,30 @@ export default function VisualSpellingPuzzleLab() {
         )}
 
         {stageId && finished && (
-          <section className="rounded-3xl bg-white p-6 text-slate-900 shadow-xl sm:p-10" aria-live="polite">
-            <p className="text-xs font-bold uppercase tracking-widest text-indigo-700">Level complete</p>
-            <h2 ref={focusHeadingRef} tabIndex={-1} className="mt-2 text-3xl font-black focus:outline-none">Nice word work!</h2>
+          <section className="ts-spelling-board p-5 text-slate-900 sm:p-10" aria-live="polite">
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-3xl bg-amber-200 text-4xl shadow-sm" aria-hidden="true">🏆</div>
+            <p className="text-xs font-black uppercase tracking-widest text-indigo-700">Level complete · Great effort!</p>
+            <h2 ref={focusHeadingRef} tabIndex={-1} className="mt-2 text-3xl font-black tracking-tight text-[#29235a] focus:outline-none">Nice word work!</h2>
             <p className="mt-3 text-lg">You completed {puzzles.length} visual spelling puzzles.</p>
             <p className="mt-2 text-sm">Independent first-try puzzles: {independentCorrect} of {puzzles.length}.</p>
             <p className="mt-2 text-sm">Final word recall: {recallFirstTry ? 'Correct independently on the first try' : recallCorrect ? 'Correct after practising' : 'Answer studied with help'}.</p>
             <p className="mt-2 text-sm">Hints and retries are part of learning. These results are not saved.</p>
             <p className="mt-4 text-sm text-slate-600">For lasting spelling confidence, return to these words later and try writing them in your own sentences without looking.</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <button type="button" onClick={() => startStage(stageId, true)} className="rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white hover:bg-indigo-800">Replay mixed puzzles</button>
-              <button type="button" onClick={() => setStageId(null)} className="rounded-xl border border-slate-300 px-5 py-3 font-bold text-indigo-900">Choose another level</button>
+              <button type="button" onClick={() => startStage(stageId, true)} className="ts-spelling-primary px-6 py-3.5 font-black">Replay mixed puzzles</button>
+              <button type="button" onClick={() => setStageId(null)} className="ts-spelling-secondary px-5 py-3 font-bold">Choose another level</button>
             </div>
           </section>
         )}
 
         {stageId && !finished && recallMode && recallWord && (
-          <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="recall-heading">
+          <section className="ts-spelling-board p-5 text-slate-900 sm:p-9" aria-labelledby="recall-heading">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">Final challenge · Remember and spell</span>
-              <button type="button" onClick={() => setStageId(null)}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold text-indigo-900">
-                Change level
-              </button>
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#efeaff] px-4 py-2 text-xs font-black uppercase tracking-wider text-[#4e3dac]"><span aria-hidden="true">★</span> Final challenge · Remember and spell</span>
+              <span className="rounded-full bg-amber-100 px-3 py-2 text-xs font-bold text-amber-800">Bonus round</span>
             </div>
-            <h2 id="recall-heading" ref={focusHeadingRef} tabIndex={-1} className="mt-5 text-2xl font-black focus:outline-none">Can you spell it without the tiles?</h2>
-            <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {recallWord.clue}</p>
+            <h2 id="recall-heading" ref={focusHeadingRef} tabIndex={-1} className="mt-5 text-2xl font-black tracking-tight text-[#28245f] focus:outline-none sm:text-3xl">Can you spell it without the tiles?</h2>
+            <p className="ts-spelling-clue mt-4 p-4 text-base font-medium text-[#293d64] sm:text-lg"><strong className="text-[#24668a]">Clue:</strong> {recallWord.clue}</p>
             <p className="mt-3 text-sm text-slate-600">Type the complete word from memory. No sound or picture is needed.</p>
             {!recallCorrect && !recallRevealed && (
               <form onSubmit={event => { event.preventDefault(); submitRecall(); }} className="mt-5 flex flex-col gap-3 sm:flex-row">
@@ -286,29 +284,36 @@ export default function VisualSpellingPuzzleLab() {
         )}
 
         {stageId && puzzle && !recallMode && !finished && (
-          <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="puzzle-heading">
+          <section className="ts-spelling-board p-5 text-slate-900 sm:p-9" aria-labelledby="puzzle-heading">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-              <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">
-                {VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId)?.title}
+              <span className="inline-flex items-center gap-2 rounded-full bg-[#efeaff] px-3 py-2 text-xs font-black text-[#4d3db0]">
+                <span aria-hidden="true">✦</span> {VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId)?.title}
               </span>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm font-semibold text-slate-600">Puzzle {index + 1} of {puzzles.length}</span>
-                <button type="button" onClick={() => setStageId(null)}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-semibold text-indigo-900">
-                  Change level
-                </button>
+                <span className="rounded-full bg-[#fff2d9] px-3 py-2 text-sm font-black text-[#75502d]">Puzzle {index + 1} of {puzzles.length}</span>
+                
               </div>
             </div>
-            <div aria-hidden="true" className="mb-6 h-2 overflow-hidden rounded-full bg-slate-100">
-              <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: ((index + (feedback === 'correct' ? 1 : 0)) / puzzles.length * 100) + '%' }} />
+            <div aria-label="Puzzle progress" role="progressbar" aria-valuemin={0} aria-valuemax={puzzles.length}
+              aria-valuenow={index + (feedback === 'correct' ? 1 : 0)}
+              className="mb-7 flex gap-1.5">
+              {puzzles.map((item, progressIndex) => (
+                <span key={item.id} aria-hidden="true"
+                  className={`ts-spelling-progress ${progressIndex < index || (progressIndex === index && feedback === 'correct')
+                    ? 'ts-spelling-progress--complete'
+                    : progressIndex === index ? 'ts-spelling-progress--active' : ''}`} />
+              ))}
             </div>
-            <h2 id="puzzle-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black focus:outline-none">
+            <div className="mb-3 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#8d579d]">
+              <span aria-hidden="true">✦</span> Word mission
+            </div>
+            <h2 id="puzzle-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black tracking-tight text-[#28245f] focus:outline-none sm:text-3xl">
               {puzzle.kind === 'arrange' ? 'Build the correct word' :
                puzzle.kind === 'correct' ? 'Spot the correct spelling' :
                puzzle.kind === 'missing' ? 'Fill the missing letters' :
                'Sort the word'}
             </h2>
-            <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? puzzle.pair.clue : puzzle.clue}</p>
+            <p className="ts-spelling-clue mt-4 p-4 text-base font-medium text-[#293d64] sm:text-lg"><strong className="text-[#24668a]">Clue:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? puzzle.pair.clue : puzzle.clue}</p>
 
             {puzzle.kind === 'arrange' && (
               <div className="mt-6">
