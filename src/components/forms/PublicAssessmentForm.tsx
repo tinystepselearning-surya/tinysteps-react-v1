@@ -72,7 +72,7 @@ export default function PublicAssessmentForm({
   submitLabel = 'Book Free 35-Minute Demo on WhatsApp',
   submitAriaLabel = 'Book Free 35-Minute Demo on WhatsApp',
   appearance = 'default',
-  helperText = 'Takes 20–30 seconds • No commitment • Get slots instantly on WhatsApp',
+  helperText = 'Free demo • No commitment • We’ll confirm available slots',
   secondaryHelperText = 'After you submit, we will reply on WhatsApp with the recommended starting path, available slots, and pricing clarity.',
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
@@ -134,6 +134,8 @@ export default function PublicAssessmentForm({
 
   useEffect(() => {
     if (!autoFocusFirstField) return;
+    // Avoid opening the on-screen keyboard before parents can see the form on mobile.
+    if (typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 639px)').matches) return;
     const timer = window.setTimeout(() => firstFieldRef.current?.focus(), 80);
     return () => window.clearTimeout(timer);
   }, [autoFocusFirstField]);
@@ -410,7 +412,11 @@ export default function PublicAssessmentForm({
     }
   };
 
-  const displayedSubmitLabel = form.contactPreference === 'phone'
+  const displayedSubmitLabel = !form.contactPreference
+    ? form.classFormatPreference === 'small_group' ? 'Send Group-Class Enquiry'
+      : form.classFormatPreference === 'unsure' ? 'Request Class Guidance'
+      : 'Request Free 35-Minute Demo'
+    : form.contactPreference === 'phone'
     ? form.classFormatPreference === 'small_group' ? 'Request Group-Class Callback'
       : form.classFormatPreference === 'unsure' ? 'Request Guidance by Phone'
       : 'Request a Phone Callback'
@@ -443,24 +449,24 @@ export default function PublicAssessmentForm({
 
   const isHeroCompact = appearance === 'heroCompact';
   const cardClassName = appearance === 'embedded'
-    ? 'border-white/90 p-5 shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:p-7'
+    ? 'border-white/90 p-4 shadow-[0_22px_60px_rgba(15,23,42,0.12)] sm:p-7'
     : isHeroCompact
-      ? 'border-slate-200 p-5 shadow-[0_18px_44px_rgba(15,23,42,0.12)] sm:p-6'
-      : 'border-slate-200 p-5 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8';
+      ? 'border-slate-200 p-4 shadow-[0_18px_44px_rgba(15,23,42,0.12)] sm:p-6'
+      : 'border-slate-200 p-4 shadow-[0_26px_70px_rgba(15,23,42,0.18)] sm:p-8';
 
-  const headerClassName = isHeroCompact ? 'relative mb-4' : 'relative mb-6 sm:mb-7';
+  const headerClassName = isHeroCompact ? 'relative mb-3 sm:mb-4' : 'relative mb-4 sm:mb-7';
   const formClassName = isHeroCompact
     ? 'relative space-y-3 pb-1 sm:space-y-3.5 sm:pb-2'
-    : 'relative space-y-4 pb-6 sm:space-y-5 sm:pb-10';
+    : 'relative space-y-3 pb-4 sm:space-y-5 sm:pb-8';
   const fieldGridClassName = isHeroCompact
     ? 'grid grid-cols-1 gap-3 sm:grid-cols-2'
-    : 'grid grid-cols-1 gap-4 sm:grid-cols-2';
+    : 'grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2';
   const selectGridClassName = isHeroCompact
     ? 'grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start'
-    : 'grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start';
+    : 'grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start';
   const submitClassName = isHeroCompact
     ? 'mt-3 inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/30 px-5 py-3 text-base font-bold text-white shadow-md shadow-orange-200/60 transition-all hover:shadow-orange-300/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2'
-    : 'mt-6 inline-flex h-12 w-full items-center justify-center rounded-2xl border border-white/30 px-6 py-4 text-base font-bold text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:py-6 md:text-lg';
+    : 'mt-3 inline-flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-white/30 px-4 py-3 text-center text-base font-bold leading-snug text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:mt-5 sm:px-6 sm:py-4 md:text-lg';
 
   return (
     <GlassCard className={cardClassName}>
@@ -468,14 +474,14 @@ export default function PublicAssessmentForm({
 
       <div className={headerClassName}>
         <h2 className={`text-xl font-bold sm:text-2xl ${NAVY_TEXT_STRONG}`}>{displayedTitle}</h2>
-        <p className={`mt-2 text-sm ${NAVY_TEXT}`}>{displayedDescription}</p>
+        <p className={`mt-1.5 text-sm leading-5 sm:mt-2 sm:leading-6 ${NAVY_TEXT}`}>{displayedDescription}</p>
       </div>
 
       <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
         <div className={fieldGridClassName}>
           <div className="group space-y-1">
-            <label htmlFor="assessment-parent-name" className="sr-only">
-              Parent Name *
+            <label htmlFor="assessment-parent-name" className="block text-xs font-semibold text-[#142449]">
+              Parent name *
             </label>
             <input
               ref={firstFieldRef}
@@ -490,7 +496,7 @@ export default function PublicAssessmentForm({
                 setForm((p) => ({ ...p, parentName: e.target.value }));
                 if (errors.parentName) setErrors((prev) => ({ ...prev, parentName: undefined }));
               }}
-              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              className={`min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:text-sm ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.parentName)}
             />
@@ -498,8 +504,8 @@ export default function PublicAssessmentForm({
           </div>
 
           <div className="group space-y-1">
-            <label htmlFor="assessment-child-name" className="sr-only">
-              Child Name *
+            <label htmlFor="assessment-child-name" className="block text-xs font-semibold text-[#142449]">
+              Child name *
             </label>
             <input
               id="assessment-child-name"
@@ -513,7 +519,7 @@ export default function PublicAssessmentForm({
                 setForm((p) => ({ ...p, childName: e.target.value }));
                 if (errors.childName) setErrors((prev) => ({ ...prev, childName: undefined }));
               }}
-              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              className={`min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:text-sm ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.childName)}
             />
@@ -522,7 +528,7 @@ export default function PublicAssessmentForm({
         </div>
 
         <div className="group space-y-1">
-          <label htmlFor="assessment-whatsapp" className="sr-only">
+          <label htmlFor="assessment-whatsapp" className="block text-xs font-semibold text-[#142449]">
             Mobile number (WhatsApp optional) *
           </label>
           <input
@@ -538,7 +544,7 @@ export default function PublicAssessmentForm({
               setForm((p) => ({ ...p, whatsapp: e.target.value }));
               if (errors.whatsapp) setErrors((prev) => ({ ...prev, whatsapp: undefined }));
             }}
-            className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+            className={`min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none transition-all placeholder:text-[#44597f] focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:text-sm ${NAVY_TEXT}`}
             required
             aria-invalid={Boolean(errors.whatsapp)}
           />
@@ -547,8 +553,8 @@ export default function PublicAssessmentForm({
 
         <div className={selectGridClassName}>
           <div className="group space-y-1">
-            <label htmlFor="assessment-child-age" className="sr-only">
-              Child Age *
+            <label htmlFor="assessment-child-age" className="block text-xs font-semibold text-[#142449]">
+              Child age *
             </label>
             <select
               id="assessment-child-age"
@@ -559,7 +565,7 @@ export default function PublicAssessmentForm({
                 setForm((p) => ({ ...p, childAge: e.target.value }));
                 if (errors.childAge) setErrors((prev) => ({ ...prev, childAge: undefined }));
               }}
-              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              className={`min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:text-sm ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.childAge)}
             >
@@ -576,8 +582,8 @@ export default function PublicAssessmentForm({
           </div>
 
           <div className="group space-y-1">
-            <label htmlFor="assessment-main-concern" className="sr-only">
-              Choose the area where your child needs support *
+            <label htmlFor="assessment-main-concern" className="block text-xs font-semibold text-[#142449]">
+              Where does your child need help? *
             </label>
             <select
               id="assessment-main-concern"
@@ -588,12 +594,12 @@ export default function PublicAssessmentForm({
                 setForm((p) => ({ ...p, mainConcern: e.target.value as MainConcernOption }));
                 if (errors.mainConcern) setErrors((prev) => ({ ...prev, mainConcern: undefined }));
               }}
-              className={`w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 ${NAVY_TEXT}`}
+              className={`min-h-[48px] w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base outline-none transition-all focus:border-orange-500 focus:ring-2 focus:ring-orange-100 sm:text-sm ${NAVY_TEXT}`}
               required
               aria-invalid={Boolean(errors.mainConcern)}
             >
               <option value="" disabled>
-                Choose the area where your child needs support
+                Choose a learning need
               </option>
               {mainConcernOptions.map((option) => (
                 <option key={option} value={option}>
@@ -601,13 +607,14 @@ export default function PublicAssessmentForm({
                 </option>
               ))}
             </select>
+            {form.mainConcern ? <p className="break-words text-xs leading-4 text-slate-600">Selected: {form.mainConcern}</p> : null}
             {errors.mainConcern ? <p className="text-xs text-rose-600">{errors.mainConcern}</p> : null}
           </div>
         </div>
 
         <fieldset className="space-y-2" aria-label="Preferred class format">
           <legend className="text-sm font-semibold text-[#142449]">Preferred class format *</legend>
-          <div className="grid grid-cols-3 gap-2" role="group" aria-label="Choose a class format">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Choose a class format">
             {([
               { value: 'one_to_one', label: 'One-to-One Classes' },
               { value: 'small_group', label: 'Group Classes' },
@@ -623,7 +630,7 @@ export default function PublicAssessmentForm({
                     trackFormStartOnce();
                     setForm((previous) => ({ ...previous, classFormatPreference: option.value as ClassFormatPreference }));
                   }}
-                  className={`min-h-[46px] min-w-0 rounded-xl border px-1.5 py-2.5 text-center text-[11px] font-semibold leading-4 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:px-3 sm:text-sm ${
+                  className={`min-h-[48px] min-w-0 rounded-xl border px-2 py-2.5 text-center text-xs font-semibold leading-4 transition-colors ${option.value === 'unsure' ? 'col-span-2 sm:col-span-1' : ''} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 sm:px-3 sm:text-sm ${
                     selected
                       ? 'border-[#142449] bg-[#142449] text-white shadow-sm'
                       : 'border-slate-300 bg-white text-[#142449] hover:border-[#759CC2] hover:bg-sky-50'
@@ -641,7 +648,7 @@ export default function PublicAssessmentForm({
 
         <fieldset className="space-y-2" aria-label="How Tiny Steps may contact you">
           <legend className="text-sm font-semibold text-[#142449]">How should we contact you about this enquiry? *</legend>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Choose your contact preference">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3" role="group" aria-label="Choose your contact preference">
             {([
               { value: 'phone', label: 'Call me' },
               { value: 'whatsapp', label: 'Reply on WhatsApp' },
@@ -656,7 +663,7 @@ export default function PublicAssessmentForm({
                   setForm((previous) => ({ ...previous, contactPreference: option.value }));
                   if (errors.contactPreference) setErrors((previous) => ({ ...previous, contactPreference: undefined }));
                 }}
-                className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${form.contactPreference === option.value
+                className={`min-h-[48px] min-w-0 rounded-xl border px-2 py-2.5 text-sm font-semibold leading-5 transition-colors ${option.value === 'either' ? 'col-span-2 sm:col-span-1' : ''} focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${form.contactPreference === option.value
                   ? 'border-[#142449] bg-[#142449] text-white'
                   : 'border-slate-300 bg-white text-[#142449] hover:border-sky-300 hover:bg-sky-50'}`}
               >{option.label}</button>
@@ -664,14 +671,13 @@ export default function PublicAssessmentForm({
           </div>
           {errors.contactPreference && <p className="text-xs text-rose-600">{errors.contactPreference}</p>}
           <p className="text-xs leading-5 text-slate-600">
-            By choosing a method and submitting, you ask Tiny Steps to contact you about this enquiry only.
-            You do not need WhatsApp to request a phone call. This does not subscribe you to marketing.
+            By submitting, you request contact about this enquiry only. WhatsApp is optional, and you are not subscribing to marketing.
           </p>
         </fieldset>
 
         <button
           type="submit"
-          aria-label={form.contactPreference === 'phone' ? displayedSubmitLabel : form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
+          aria-label={!form.contactPreference || form.contactPreference === 'phone' ? displayedSubmitLabel : form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
           disabled={isSubmitting}
           className={submitClassName}
           style={{
@@ -683,11 +689,13 @@ export default function PublicAssessmentForm({
 
         <div className="space-y-1 text-center">
           <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
-          <p className="text-xs text-slate-600">
-            We save your enquiry before opening WhatsApp. If WhatsApp does not work, you can still contact Tiny Steps by phone.
+          <p className="text-xs leading-4 text-slate-600">
+            {form.contactPreference === 'phone'
+              ? 'Your enquiry is saved for a phone callback. WhatsApp is not required.'
+              : 'Your enquiry is saved before WhatsApp opens. We can contact you even if it does not work.'}
           </p>
           {secondaryHelperText && form.classFormatPreference === 'one_to_one' && form.contactPreference !== 'phone' ? (
-            <p className="text-xs text-slate-600">{secondaryHelperText}</p>
+            <p className="hidden text-xs text-slate-600 sm:block">{secondaryHelperText}</p>
           ) : null}
         </div>
 
