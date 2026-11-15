@@ -414,7 +414,7 @@ const Layout: FC = () => {
   // Keep fixed support controls away from the final homepage booking CTA and footer.
   // This is homepage-only: specialist pages retain their existing support widgets.
   useEffect(() => {
-    if (normalizedPath !== '/' || suppressMarketingChrome) {
+    if (normalizedPath !== '/' || hideMarketingChrome) {
       setHideHomepageBottomWidgets(false);
       return;
     }
