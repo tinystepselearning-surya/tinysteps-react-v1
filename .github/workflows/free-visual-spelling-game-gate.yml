@@ -10,6 +10,7 @@ on:
       - 'src/lib/visualSpellingMoreLevels.ts'
       - 'src/lib/publicSpellingContent.ts'
       - 'src/lib/publicSpellingCurriculumExpansion.ts'
+      - 'src/lib/publicSpellingFurtherPractice.ts'
       - 'src/lib/publicSpellingTwoLetterWords.ts'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.tsx'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.css'
