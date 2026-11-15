@@ -273,6 +273,23 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
   },
 ];
 
+/**
+ * Mix the order for a new in-page play session. Nothing is persisted to the
+ * browser or a child profile. Caller selects when to reshuffle (on replay).
+ * Accepting an injected random source makes the shuffle deterministic in tests.
+ */
+export function shuffleVisualSpellingPuzzles(
+  puzzles: readonly VisualSpellingPuzzle[],
+  random: () => number = Math.random
+): VisualSpellingPuzzle[] {
+  const result = [...puzzles];
+  for (let i = result.length - 1; i > 0; i -= 1) {
+    const j = Math.min(i, Math.max(0, Math.floor(random() * (i + 1))));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
 export const visualSpellingAnswer = (puzzle: VisualSpellingPuzzle): string => {
   if (puzzle.kind === 'sort') return puzzle.answer;
   if (puzzle.kind === 'missing') return puzzle.missing;
