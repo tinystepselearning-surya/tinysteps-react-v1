@@ -4,6 +4,7 @@ import {
   resolveSimpleLeadAction,
   resolveSimpleLeadBucket,
   resolveSimpleStatusLabel,
+  resolveLeadTriage,
   simpleOutcomeNeedsReason,
 } from './leadsWorkflowBuckets';
 
@@ -95,5 +96,57 @@ describe('four-stage leads workflow buckets', () => {
     expect(simpleOutcomeNeedsReason('wrong_fit')).toBe(true);
     expect(simpleOutcomeNeedsReason('no_response')).toBe(true);
     expect(simpleOutcomeNeedsReason('enrolled')).toBe(false);
+  });
+});
+
+describe('guide-inspired lead triage — read-only evidence, never a verification score', () => {
+  const completeLead = {
+    parentName: 'Parent',
+    parentPhone: '+91 98765 43210',
+    childName: 'Child',
+    childAge: 6,
+    course: 'Phonics',
+    mainConcern: 'Blending sounds to read words',
+    source: 'website',
+  };
+
+  it('sorts only explicit parent-stated timing without treating it as verified intent', () => {
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'Today' }))
+      .toMatchObject({ statedUrgency: 'Today', urgencyRank: 0, detailGaps: [] });
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'This week' }).urgencyRank).toBe(1);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'This month' }).urgencyRank).toBe(2);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'Just exploring' }).urgencyRank).toBe(3);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'unknown' }))
+      .toMatchObject({ statedUrgency: null, urgencyRank: 4 });
+    expect(resolveLeadTriage({ ...completeLead, urgency: ' TODAY ' }).statedUrgency).toBe('Today');
+  });
+
+  it('identifies missing essentials but never treats an optional email, city or campaign as mandatory', () => {
+    const result = resolveLeadTriage({
+      parentName: '', parentPhone: '123', childName: null,
+      childAge: '0', course: '—', source: '', mainConcern: '',
+    });
+    expect(result.detailGaps).toEqual([
+      'parent name', 'contact number', 'child name',
+      'child age', 'learning goal', 'enquiry source',
+    ]);
+    expect(result.urgencyRank).toBe(4);
+  });
+
+  it('preserves a genuinely undecided learning concern instead of mistaking inferred Reading for confirmed intent', () => {
+    const result = resolveLeadTriage({
+      ...completeLead,
+      mainConcern: 'Not sure where to start',
+      course: 'Reading',
+      urgency: 'Just exploring',
+    });
+    expect(result.needsCourseGuidance).toBe(true);
+    expect(result.detailGaps).toEqual(['course guidance']);
+    expect(result.statedUrgency).toBe('Just exploring');
+  });
+
+  it('leaves a complete known-goal lead out of missing-detail triage', () => {
+    expect(resolveLeadTriage(completeLead).detailGaps).toEqual([]);
+    expect(resolveLeadTriage({ ...completeLead, urgency: null }).statedUrgency).toBe(null);
   });
 });
