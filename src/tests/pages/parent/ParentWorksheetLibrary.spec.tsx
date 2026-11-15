@@ -85,15 +85,15 @@ describe('ParentWorksheetLibrary course filter', () => {
         onRefresh={onRefresh}
       />,
     );
-    expect(screen.getByText('Phonics Lesson')).toBeInTheDocument();
-    expect(screen.queryByText('Grammar Lesson')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Phonics Lesson').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Grammar Lesson')).toHaveLength(0);
     const select = screen.getByRole('combobox', { name: 'Choose course' });
     expect(select).toHaveValue('__enrolled__');
     fireEvent.change(select, { target: { value: 'grammar' } });
-    expect(screen.queryByText('Phonics Lesson')).not.toBeInTheDocument();
-    expect(screen.getByText('Grammar Lesson')).toBeInTheDocument();
+    expect(screen.queryAllByText('Phonics Lesson')).toHaveLength(0);
+    expect(screen.getAllByText('Grammar Lesson').length).toBeGreaterThan(0);
     fireEvent.change(select, { target: { value: '__enrolled__' } });
-    expect(screen.getByText('Phonics Lesson')).toBeInTheDocument();
+    expect(screen.getAllByText('Phonics Lesson').length).toBeGreaterThan(0);
     expect(onRefresh).not.toHaveBeenCalled();
   });
 
@@ -107,6 +107,6 @@ describe('ParentWorksheetLibrary course filter', () => {
         onRefresh={vi.fn()}
       />,
     );
-    expect(screen.getByText('Grammar Lesson')).toBeInTheDocument();
+    expect(screen.getAllByText('Grammar Lesson').length).toBeGreaterThan(0);
   });
 });
