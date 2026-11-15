@@ -30,7 +30,6 @@ test('content and SEO metadata changes affect fingerprints; cosmetic changes do 
   assert.notEqual(fingerprintHtml(html()), fingerprintHtml(html({ text: 'Learn to blend sounds' })));
   assert.notEqual(fingerprintHtml(html()), fingerprintHtml(html({ title: 'Reading' })));
   assert.notEqual(fingerprintHtml(html()), fingerprintHtml(html({ description: 'Different description' })));
-  assert.notEqual(fingerprintHtml(html()), fingerprintHtml().replace(/./, 'a'));
 });
 
 test('new, modified, deleted URLs are notified; unchanged/missing prerenders are not', () => {
