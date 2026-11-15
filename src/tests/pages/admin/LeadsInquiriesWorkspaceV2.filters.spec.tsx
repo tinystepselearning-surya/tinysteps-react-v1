@@ -318,6 +318,26 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
   });
 
+  it('shows phone callback requests and keeps phone-only parents out of WhatsApp shortcuts', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = ['phone', 'whatsapp', 'legacy'].map((method, index) => ({
+      id: `contact-${index}`, parentName: `Contact Parent ${index}`,
+      childName: `Child ${index}`, primaryPhone: `91910000091${index}`,
+      source: 'website', programInterest: 'Phonics', status: 'new',
+      contactPreference: method === 'legacy' ? undefined : method,
+      contactPermission: method !== 'legacy',
+      createdAt: { toMillis: () => todayStart + index * 1000 },
+    }));
+    render(<LeadsInquiriesWorkspaceV2 />);
+    expect(screen.getByText('Parent requested: Phone callback')).toBeTruthy();
+    expect(screen.getByText('Parent requested: WhatsApp reply')).toBeTruthy();
+    const callLink = screen.getByRole('link', { name: 'Call parent' });
+    expect(callLink.getAttribute('href')).toBe('tel:919100000910');
+    expect(screen.getAllByRole('button', { name: 'Open WhatsApp' })).toHaveLength(2);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
   it('prepares a missing demo only when admin clicks Assign teacher', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = [{
