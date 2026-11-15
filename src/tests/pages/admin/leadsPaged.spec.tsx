@@ -33,6 +33,8 @@ vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
 import {
   LEAD_STATUSES_BY_BUCKET,
   leadReceivedAtMillis,
+  leadLatestInquiryAtMillis,
+  isReturningWebsiteEnquiryInRange,
   leadStatusBelongsToBucket,
   usePagedLeads,
   type LeadPageSize,
@@ -173,6 +175,7 @@ describe('all-bucket range loading', () => {
     firestoreMocks.getDocs
       .mockResolvedValueOnce(makeSnapshot([open, teacher, review, closed]))
       .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
       .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness bucket="all" pageSize="all" dateFromMs={1_000} dateToMs={5_000} />);
@@ -194,7 +197,7 @@ describe('canonical enquiry received date', () => {
     expect(leadReceivedAtMillis({ createdAt: timestamp(3_000) })).toBe(3_000);
   });
 
-  it('uses three bounded receipt-date lanes and shares them across card counts and rows', async () => {
+  it('uses four indexed date lanes and shares them across card counts and rows', async () => {
     const canonicalOpen = makeDoc('canonical-open', 'demo_pending_schedule', 9_000, 'manual', 2_000);
     const canonicalTeacher = makeDoc('canonical-teacher', 'demo_booked', 9_100, 'manual', 2_500);
     const legacyRequested = makeDoc('legacy-requested', 'demo_completed', 9_500, 'manual', undefined, 3_000);
@@ -203,7 +206,8 @@ describe('canonical enquiry received date', () => {
     firestoreMocks.getDocs
       .mockResolvedValueOnce(makeSnapshot([canonicalOpen, canonicalTeacher]))
       .mockResolvedValueOnce(makeSnapshot([legacyRequested]))
-      .mockResolvedValueOnce(makeSnapshot([legacyCreated]));
+      .mockResolvedValueOnce(makeSnapshot([legacyCreated]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -215,7 +219,7 @@ describe('canonical enquiry received date', () => {
     expect(screen.getByTestId('filtered-total')).toHaveTextContent('1');
     expect(screen.getByTestId('ids')).toHaveTextContent('canonical-open');
     expect(screen.getByTestId('created-at')).toHaveTextContent('2000');
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(3);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
     expect(firestoreMocks.getCountFromServer).not.toHaveBeenCalled();
 
     expect(getDataQueryArgs(0)).toContainEqual({
@@ -229,13 +233,59 @@ describe('canonical enquiry received date', () => {
     expect(getDataQueryArgs(0)).toContainEqual({ kind: 'orderBy', args: ['receivedAt', 'desc'] });
     expect(getDataQueryArgs(1)).toContainEqual({ kind: 'orderBy', args: ['requestedAt', 'desc'] });
     expect(getDataQueryArgs(2)).toContainEqual({ kind: 'orderBy', args: ['createdAt', 'desc'] });
+    expect(getDataQueryArgs(3)).toContainEqual({ kind: 'orderBy', args: ['lastInquiryAt', 'desc'] });
 
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 4; index += 1) {
       expect(getDataQueryArgs(index)).not.toContainEqual({
         kind: 'where',
         args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
       });
     }
+  });
+
+  it('returns the canonical lead again for a different IST date, with one row and original receipt preserved', async () => {
+    const first = Date.parse('2026-12-04T08:00:00Z');
+    const returned = Date.parse('2026-12-07T06:00:00Z');
+    const canonical = makeDoc('canonical', 'not_interested', first, 'website', first);
+    const active = {
+      ...canonical,
+      data: () => ({ ...canonical.data(), lastInquiryAt: timestamp(returned) }),
+    } as unknown as TestDoc;
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([active, active]));
+
+    render(<Harness bucket="all" pageSize="all"
+      dateFromMs={Date.parse('2026-12-06T18:30:00Z')}
+      dateToMs={Date.parse('2026-12-07T18:29:59Z')} />);
+
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(screen.getByTestId('ids')).toHaveTextContent('canonical');
+    expect(screen.getByTestId('filtered-total')).toHaveTextContent('1');
+    expect(screen.getByTestId('created-at')).toHaveTextContent(String(first));
+    expect(getDataQueryArgs(3)).toContainEqual({
+      kind: 'where', args: ['lastInquiryAt', '>=', {
+        kind: 'timestamp', value: Date.parse('2026-12-06T18:30:00Z'),
+      }],
+    });
+  });
+
+  it('does not treat same-day repeat submissions or unrelated edits as new enquiries', () => {
+    const first = Date.parse('2026-12-04T08:00:00Z');
+    const sameDay = Date.parse('2026-12-04T16:00:00Z');
+    const nextDay = Date.parse('2026-12-04T19:00:00Z'); // Dec 5 in IST
+    const start = Date.parse('2026-12-04T18:30:00Z');
+    const end = Date.parse('2026-12-05T18:29:59Z');
+    const base = { source: 'website', receivedAt: timestamp(first) };
+    expect(isReturningWebsiteEnquiryInRange({ ...base, lastInquiryAt: timestamp(sameDay) }, start, end)).toBe(false);
+    expect(isReturningWebsiteEnquiryInRange({ ...base, updatedAt: timestamp(nextDay) }, start, end)).toBe(false);
+    expect(isReturningWebsiteEnquiryInRange({ ...base, lastInquiryAt: timestamp(nextDay) }, start, end)).toBe(true);
+    expect(isReturningWebsiteEnquiryInRange({ ...base, lastInquiryAt: timestamp(nextDay) }, 0, 0)).toBe(false);
+    expect(isReturningWebsiteEnquiryInRange({ ...base, source: 'manual', lastInquiryAt: timestamp(nextDay) }, start, end)).toBe(false);
+    expect(leadLatestInquiryAtMillis({ ...base, lastInquiryAt: timestamp(nextDay) })).toBe(nextDay);
+    expect(leadReceivedAtMillis({ ...base, lastInquiryAt: timestamp(nextDay) })).toBe(first);
   });
 
   it('does not let a legacy requestedAt/createdAt lane override an existing canonical receivedAt', async () => {
@@ -245,7 +295,8 @@ describe('canonical enquiry received date', () => {
     firestoreMocks.getDocs
       .mockResolvedValueOnce(makeSnapshot([canonicalInside]))
       .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]))
-      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]));
+      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -273,6 +324,7 @@ describe('canonical enquiry received date', () => {
     firestoreMocks.getDocs
       .mockResolvedValueOnce(makeSnapshot([]))
       .mockResolvedValueOnce(makeSnapshot([malformedReceivedAt]))
+      .mockResolvedValueOnce(makeSnapshot([]))
       .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
@@ -357,6 +409,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
     firestoreMocks.getDocs
       .mockResolvedValueOnce(makeSnapshot(receivedDocs))
       .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
       .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={6_000} />);
@@ -368,7 +421,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     await waitFor(() => expect(screen.getByTestId('page')).toHaveTextContent('2'));
     await waitFor(() => expect(screen.getByTestId('ids').textContent?.split(',')).toHaveLength(2));
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(3);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
   });
 
   it('loads the entire bucket only when All is explicitly selected', async () => {
