@@ -220,7 +220,7 @@ export function isQualifiedAiReferralLead(input: {
 
 export const COMMERCIAL_C0_EVENT_CONTRACT = freeze({
   traffic: freezeList(['page_view', 'funnel_landing_page_view']),
-  intent: freezeList(['funnel_cta_click', 'book_demo_click', 'whatsapp_click']),
+  intent: freezeList(['funnel_cta_click', 'book_assessment_click', 'whatsapp_click']),
   submission: freezeList(['lead_form_submit', 'generate_lead']),
   rule:
     'Traffic, CTA and form events are diagnostic funnel signals. They must never be reported as qualified leads without a qualifying canonical lead lifecycle status.',
