@@ -48,6 +48,7 @@ suite('parent worksheet distribution rules', () => {
     await assertSucceeds(getDoc(doc(db, 'parentWorksheetLibrary', 'family-b')));
     await assertSucceeds(setDoc(doc(db, 'parentWorksheetLibrary', 'new'), { title: 'New' }));
     await assertSucceeds(updateDoc(doc(db, 'parentWorksheetLibrary', 'family-b'), { title: 'Edited' }));
+    await assertSucceeds(setDoc(doc(db, 'worksheetBundles', 'parentLibraryV1'), { ready: false }));
   });
 
   it('prevents parents from reading or dumping the distribution collection directly', async () => {
@@ -56,6 +57,8 @@ suite('parent worksheet distribution rules', () => {
     await assertFails(getDoc(doc(db, 'parentWorksheetLibrary', 'family-b')));
     await assertFails(getDocs(collection(db, 'parentWorksheetLibrary')));
     await assertFails(getDoc(doc(db, 'lessonCatalog', 'lesson-a')));
+    // Parents must never read the unfiltered all-course catalogue directly.
+    await assertFails(getDoc(doc(db, 'worksheetBundles', 'parentLibraryV1')));
   });
 
   it('prevents teachers and unauthenticated clients from reading parent distribution records', async () => {
@@ -64,5 +67,7 @@ suite('parent worksheet distribution rules', () => {
     const publicDb = testEnv.unauthenticatedContext().firestore();
     await assertFails(getDoc(doc(teacherDb, 'parentWorksheetLibrary', 'family-b')));
     await assertFails(getDoc(doc(publicDb, 'parentWorksheetLibrary', 'family-b')));
+    await assertFails(getDoc(doc(teacherDb, 'worksheetBundles', 'parentLibraryV1')));
+    await assertFails(getDoc(doc(publicDb, 'worksheetBundles', 'parentLibraryV1')));
   });
 });
