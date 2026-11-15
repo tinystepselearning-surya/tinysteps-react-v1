@@ -1596,6 +1596,8 @@ function teacherProgressIdentityUnchanged() {
           'initialMessageSnippet',
           'mainConcern',
           'classFormatPreference',
+          'contactPreference',
+          'contactPermission',
           'urgency',
           'timezone',
           'sourcePath',
@@ -1659,6 +1661,20 @@ function teacherProgressIdentityUnchanged() {
         && (
           !('classFormatPreference' in request.resource.data)
           || request.resource.data.classFormatPreference in ['one_to_one', 'small_group', 'unsure']
+        )
+        // Contact preference is explicit and enquiry-specific. Legacy website
+        // submissions with neither field remain valid during staged rollout.
+        // These fields record the parent's request, not verified identity or a
+        // delivered WhatsApp message.
+        && (
+          (
+            !('contactPreference' in request.resource.data)
+            && !('contactPermission' in request.resource.data)
+          )
+          || (
+            request.resource.data.contactPreference in ['phone', 'whatsapp', 'either']
+            && request.resource.data.contactPermission == true
+          )
         )
         && request.resource.data.mainConcern in [
           'Starting to read words after learning ABC/sounds',
