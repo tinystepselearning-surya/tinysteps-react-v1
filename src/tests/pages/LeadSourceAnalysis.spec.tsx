@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { getDocsLoggedMock, resolveStoredLeadAcquisitionMock } = vi.hoisted(() => ({
   getDocsLoggedMock: vi.fn(),
-  resolveStoredLeadAcquisitionMock: vi.fn(() => ({ channel: 'direct', source: 'direct', label: 'Direct' })),
+  resolveStoredLeadAcquisitionMock: vi.fn((_input?: { acquisitionChannel?: string }) => ({ channel: 'direct', source: 'direct', label: 'Direct' })),
 }));
 
 vi.mock('../../lib/firebaseConfig', () => ({
@@ -105,8 +105,8 @@ describe('LeadSourceAnalysis channel evidence honesty', () => {
         data: () => ({ source: 'website', receivedAt, status: 'new', landingPage: '/pricing' }),
       },
     ] });
-    resolveStoredLeadAcquisitionMock.mockImplementation((input: { acquisitionChannel?: string }) => (
-      input.acquisitionChannel === 'google_organic'
+    resolveStoredLeadAcquisitionMock.mockImplementation((input?: { acquisitionChannel?: string }) => (
+      input?.acquisitionChannel === 'google_organic'
         ? { channel: 'google_organic', source: 'google', label: 'Google Organic' }
         : { channel: 'direct', source: 'direct', label: 'Direct' }
     ));
