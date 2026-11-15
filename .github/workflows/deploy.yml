@@ -479,11 +479,10 @@ jobs:
         if: needs.analyze-changes.outputs.hosting_changed == 'true' && env.INDEXNOW_KEY != ''
         run: npm run indexnow:verify
 
-      - name: Submit changed canonical public URLs to IndexNow
+      - name: Submit canonical public URLs to IndexNow
         if: needs.analyze-changes.outputs.hosting_changed == 'true' && env.INDEXNOW_KEY != ''
         env:
           INDEXNOW_SITEMAP: dist/sitemap.xml
-          GITHUB_TOKEN: ${{ github.token }}
         run: npm run indexnow:submit
 
   recover-functions-manually:
