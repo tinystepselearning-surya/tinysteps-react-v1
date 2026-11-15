@@ -93,8 +93,8 @@ describe('LeadSourceAnalysis exact paid-source evidence', () => {
         dedupeCanonicalLeadId: 'lead-with-payment',
       }),
     };
-    getDocsLoggedMock.mockImplementation((label: string) => {
-      if (label.includes(':payment-evidence:')) {
+    getDocsLoggedMock.mockImplementation((label: unknown) => {
+      if (String(label || '').includes(':payment-evidence:')) {
         return Promise.resolve({ docs: [{ data: () => ({
           enrollmentId: 'enrollment-1', paidAmount: 400,
           paymentIds: ['payment-1'], status: 'partial',
