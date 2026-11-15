@@ -95,7 +95,7 @@ requireTokens('src/lib/conversionTracking.ts', [
   'buildLeadAttributionPayload',
   "trackEvent('lead_form_submit'",
   "trackEvent('generate_lead'",
-  "trackEvent('book_demo_click'",
+  "trackEvent('book_assessment_click'",
   "trackEvent('whatsapp_click'",
 ]);
 
