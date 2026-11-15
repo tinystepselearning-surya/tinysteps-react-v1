@@ -265,7 +265,10 @@ describe("FreeEnglishGameLandingPage", () => {
     expect(screen.getByRole("heading", { name: "Build a Word" })).toBeInTheDocument();
     expect(screen.queryByText(/listen/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/magnet:/i)).not.toBeInTheDocument();
-    expect(screen.getByAltText("cat")).toBeInTheDocument();
+    // A picture clue should not reveal the target spelling via alt text.
+    const catIllustration = document.querySelector('img[src="/games/maw/cat.png"]');
+    expect(catIllustration).toBeInTheDocument();
+    expect(catIllustration?.getAttribute("alt")).toBe("");
     expect(screen.getByText(/0\/36 completed this round/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /letter t/i }));
@@ -319,7 +322,10 @@ describe("FreeEnglishGameLandingPage", () => {
     await buildWord("nest");
 
     expect(screen.getAllByRole("heading", { name: "Word Families" }).length).toBeGreaterThan(0);
-    expect(screen.getByAltText("cat")).toBeInTheDocument();
+    // A picture clue should not reveal the target spelling via alt text.
+    const catIllustration = document.querySelector('img[src="/games/maw/cat.png"]');
+    expect(catIllustration).toBeInTheDocument();
+    expect(catIllustration?.getAttribute("alt")).toBe("");
     await chooseLetter("c", "cat");
     await chooseLetter("m", "map");
     await chooseLetter("d", "dog");
