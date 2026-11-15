@@ -704,7 +704,7 @@ function PublicSpellingAdventure({
           src={challenge.img}
           alt={challenge.word}
           draggable={false}
-          className="h-14 w-14 object-contain sm:h-22 sm:w-22 md:h-24 md:w-24"
+          className="h-14 w-14 object-contain sm:h-20 sm:w-20 md:h-24 md:w-24"
           onError={() => setImgOk(false)}
         />
       ) : (
