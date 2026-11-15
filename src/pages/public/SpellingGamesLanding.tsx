@@ -148,6 +148,13 @@ export default function SpellingGamesLanding() {
           </div>
         </section>
 
+        <p className="mt-5 text-sm text-[#606581]">
+          Looking for easier letter and word-building activities?{" "}
+          <Link to="/free-word-building-games-for-kids" className="font-extrabold text-[#3f38a0] underline underline-offset-4">
+            Browse word-building games
+          </Link>
+        </p>
+
         <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-[#dfe2ef] pt-6">
           <div className="max-w-xl">
             <p className="text-sm font-bold text-[#292952]">Looking for teacher-led spelling and English support?</p>
