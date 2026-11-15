@@ -96,12 +96,52 @@ const timestampToMillis = (value: unknown): number => {
 
 /**
  * Universal lead-received timestamp. receivedAt is authoritative; requestedAt and
- * createdAt are compatibility fallbacks only for historical records.
+ * createdAt are compatibility fallbacks only for historical records. Do not replace
+ * this first-touch date with a later returning-enquiry timestamp.
  */
 export const leadReceivedAtMillis = (lead: Record<string, unknown>): number =>
   timestampToMillis(lead.receivedAt) ||
   timestampToMillis(lead.requestedAt) ||
   timestampToMillis(lead.createdAt);
+
+/** Latest submitted website enquiry; not an edit timestamp or a new unique child. */
+export const leadLatestInquiryAtMillis = (lead: Record<string, unknown>): number =>
+  timestampToMillis(lead.lastInquiryAt) || leadReceivedAtMillis(lead);
+
+const enquiryIstDay = (ms: number): string => {
+  if (!ms) return '';
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Asia/Kolkata', day: '2-digit', month: '2-digit', year: 'numeric',
+  }).formatToParts(new Date(ms));
+  const value = (kind: string) => parts.find((item) => item.type === kind)?.value || '';
+  return `${value('year')}-${value('month')}-${value('day')}`;
+};
+
+/**
+ * A different IST calendar date constitutes a new operational enquiry.
+ * Do not rewrite receivedAt (first-touch cohort) or infer activity from updatedAt.
+ */
+export const isReturningWebsiteEnquiryInRange = (
+  lead: Record<string, unknown>,
+  dateFromMs: number,
+  dateToMs: number,
+): boolean => {
+  if (normalizeText(lead.source) !== 'website') return false;
+  const first = leadReceivedAtMillis(lead);
+  const latest = timestampToMillis(lead.lastInquiryAt);
+  return Boolean(first && latest &&
+    enquiryIstDay(first) !== enquiryIstDay(latest) &&
+    latest >= first &&
+    (!dateFromMs || latest >= dateFromMs) &&
+    (!dateToMs || latest <= dateToMs));
+};
+
+const enquiryActivityInRange = (
+  lead: Record<string, unknown>,
+  from: number,
+  to: number,
+): number => isReturningWebsiteEnquiryInRange(lead, from, to)
+  ? leadLatestInquiryAtMillis(lead) : leadReceivedAtMillis(lead);
 
 const leadReceivedAtValue = (lead: Record<string, unknown>): unknown => {
   if (timestampToMillis(lead.receivedAt)) return lead.receivedAt;
@@ -146,7 +186,7 @@ const buildCreatedAtConstraints = (
 };
 
 const buildReceiptRangeConstraints = (
-  field: 'receivedAt' | 'requestedAt' | 'createdAt',
+  field: 'receivedAt' | 'requestedAt' | 'createdAt' | 'lastInquiryAt',
   dateFromMs: number,
   dateToMs: number,
 ): QueryConstraint[] => {
@@ -162,23 +202,25 @@ const isWithinReceivedDateRange = (
   dateFromMs: number,
   dateToMs: number,
 ): boolean => {
-  const receivedAtMs = leadReceivedAtMillis(docSnapshot.data());
-  if (!receivedAtMs) return false;
-  if (dateFromMs && receivedAtMs < dateFromMs) return false;
-  if (dateToMs && receivedAtMs > dateToMs) return false;
-  return true;
+  const lead = docSnapshot.data();
+  const receivedAtMs = leadReceivedAtMillis(lead);
+  const originalInRange = receivedAtMs > 0 &&
+    (!dateFromMs || receivedAtMs >= dateFromMs) &&
+    (!dateToMs || receivedAtMs <= dateToMs);
+  return originalInRange || isReturningWebsiteEnquiryInRange(lead, dateFromMs, dateToMs);
 };
 
 /**
- * Bounded receipt-date read. Canonical rows come from receivedAt. Two additional
- * bounded compatibility lanes retain historical records that predate receivedAt.
- * The three result sets are de-duplicated before workflow-bucket filtering.
+ * Date-scoped operational read. First-touch receivedAt remains immutable; legacy
+ * requestedAt/createdAt lanes remain. A fourth indexed lastInquiryAt lane makes
+ * returning website parents visible on the day of their newest submission.
+ * Rows stay unique by canonical lead ID, including repeated same-day submits.
  */
 const getReceivedDateRangeDocs = async (
   dateFromMs: number,
   dateToMs: number,
 ): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
-  const [receivedSnapshot, requestedSnapshot, createdSnapshot] = await Promise.all([
+  const [receivedSnapshot, requestedSnapshot, createdSnapshot, returningSnapshot] = await Promise.all([
     getDocs(query(
       collection(db, LEADS_COLLECTION),
       ...buildReceiptRangeConstraints('receivedAt', dateFromMs, dateToMs),
@@ -190,6 +232,10 @@ const getReceivedDateRangeDocs = async (
     getDocs(query(
       collection(db, LEADS_COLLECTION),
       ...buildReceiptRangeConstraints('createdAt', dateFromMs, dateToMs),
+    )),
+    getDocs(query(
+      collection(db, LEADS_COLLECTION),
+      ...buildReceiptRangeConstraints('lastInquiryAt', dateFromMs, dateToMs),
     )),
   ]);
 
@@ -205,10 +251,18 @@ const getReceivedDateRangeDocs = async (
       docsById.set(docSnapshot.id, docSnapshot);
     }
   });
+  returningSnapshot.docs.forEach((docSnapshot) => {
+    if (isReturningWebsiteEnquiryInRange(docSnapshot.data(), dateFromMs, dateToMs)) {
+      docsById.set(docSnapshot.id, docSnapshot);
+    }
+  });
 
   return Array.from(docsById.values())
     .filter((docSnapshot) => isWithinReceivedDateRange(docSnapshot, dateFromMs, dateToMs))
-    .sort(sortLeadDocsByReceivedAtDesc);
+    .sort((left, right) =>
+      enquiryActivityInRange(right.data(), dateFromMs, dateToMs) -
+      enquiryActivityInRange(left.data(), dateFromMs, dateToMs) ||
+      right.id.localeCompare(left.id));
 };
 
 const getBucketDocs = async (bucket: SimpleLeadBucket): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
