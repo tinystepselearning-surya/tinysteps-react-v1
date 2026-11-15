@@ -54,6 +54,7 @@ jobs:
               src/pages/admin/LeadsInquiriesWorkspaceV2.tsx|\
               src/pages/teacher/components/demo/LegacyDemoAssignmentsView.tsx|\
               src/pages/admin/leadsWorkflowBuckets.ts|\
+              src/pages/admin/leadsPaged.ts|\
               src/pages/admin/leadsWorkflowBuckets.spec.ts|\
               src/services/leadsAdminService.ts|\
               src/lib/callFunctions.ts|\
@@ -72,6 +73,7 @@ jobs:
               src/services/leadCommunicationsService.ts|\
               src/tests/pages/LeadSourceAnalysis.spec.tsx|\
               src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx|\
+              src/tests/pages/admin/leadsPaged.spec.tsx|\
               src/tests/services/leadCommunicationsService.spec.ts|\
               src/tests/lib/publicLeadForm.spec.ts|\
               src/tests/seo/groupClassesCommercialPages.spec.ts)
@@ -92,6 +94,7 @@ jobs:
           src/tests/services/leadCommunicationsService.spec.ts
           src/pages/admin/leadAdminReadPolicy.test.ts
           src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx
+          src/tests/pages/admin/leadsPaged.spec.tsx
           src/pages/admin/leadsDueFollowUps.spec.ts
           src/pages/admin/leadsWorkflowBuckets.spec.ts
           src/pages/admin/futureDemoMilestones.spec.ts

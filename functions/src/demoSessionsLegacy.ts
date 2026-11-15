@@ -1704,29 +1704,34 @@ interface ReassignDemoSessionRequest {
 }
 
 async function resolveTeacherProfile(
+  tx: FirebaseFirestore.Transaction,
   db: FirebaseFirestore.Firestore,
   assignedTeacherId: string,
-  assignedTeacherName?: string,
 ) {
-  const teacherRef = db.collection('users').doc(assignedTeacherId);
-  const teacherSnap = await teacherRef.get();
+  // Read the teacher in the SAME transaction as the demo assignment so a
+  // concurrent deactivation cannot leave an inactive teacher assigned.
+  const teacherSnap = await tx.get(db.collection('users').doc(assignedTeacherId));
   if (!teacherSnap.exists) {
     throw new HttpsError('not-found', 'Teacher not found');
   }
 
   const teacherData = teacherSnap.data() || {};
-  const teacherRole = normalizeRole(teacherData.role);
-  if (teacherRole !== 'teacher') {
+  if (normalizeRole(teacherData.role) !== 'teacher') {
     throw new HttpsError('invalid-argument', 'assignedTeacherId must belong to a teacher');
   }
+  const teacherStatus = normalizeStatusValue(teacherData.status);
+  if (
+    ['suspended', 'archived', 'inactive', 'terminated', 'disabled'].includes(teacherStatus) ||
+    teacherData.isDeleted === true || teacherData.archivedAt || teacherData.deletedAt
+  ) {
+    throw new HttpsError('failed-precondition', 'This teacher is no longer active. Choose an active teacher.');
+  }
 
-  const fallbackName =
-    pickOptionalText(teacherData.name, 120) ||
+  // Never trust a client-provided teacher display name for the audit trail.
+  return pickOptionalText(teacherData.name, 120) ||
     pickOptionalText(teacherData.displayName, 120) ||
     pickOptionalText(teacherData.email, 120) ||
     'Teacher';
-
-  return pickOptionalText(assignedTeacherName, 120) || fallbackName;
 }
 
 export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
@@ -1750,15 +1755,13 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
     }
 
     const db = admin.firestore();
-    const nextTeacherName = await resolveTeacherProfile(
-      db,
-      assignedTeacherId,
-      request.data?.assignedTeacherName,
-    );
     const demoRef = db.collection('demoSessions').doc(demoId);
 
     await db.runTransaction(async (tx) => {
-      const snap = await tx.get(demoRef);
+      const [snap, nextTeacherName] = await Promise.all([
+        tx.get(demoRef),
+        resolveTeacherProfile(tx, db, assignedTeacherId),
+      ]);
       if (!snap.exists) {
         throw new HttpsError('not-found', 'Demo session not found');
       }
