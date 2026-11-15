@@ -196,7 +196,7 @@ const assessmentFaqItems = [
   {
     question: 'How will I receive available slots?',
     answer:
-      'After submitting the form, the Tiny Steps team will contact you on WhatsApp to discuss the child’s requirement and arrange a suitable assessment slot.',
+      'After submitting the form, our team will contact you by your chosen method to discuss your child’s needs and a suitable assessment slot.',
   },
 ];
 
@@ -383,21 +383,21 @@ export default function BookDemoPage() {
       <section className="relative overflow-hidden border-b border-slate-200/70 bg-[radial-gradient(circle_at_8%_16%,rgba(251,146,60,0.16),transparent_28%),radial-gradient(circle_at_92%_12%,rgba(125,211,252,0.18),transparent_30%),linear-gradient(180deg,#fffdfa_0%,#f8fbff_100%)]">
         <div className="pointer-events-none absolute left-1/2 top-[-14rem] h-[30rem] w-[52rem] -translate-x-1/2 rounded-full border border-[#E5DDF8]/70" />
 
-        <div className="relative mx-auto grid max-w-7xl gap-12 px-4 pb-16 pt-16 sm:px-6 md:pt-20 lg:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)] lg:items-center lg:gap-16 lg:px-8 lg:pb-20 lg:pt-24">
+        <div className="relative mx-auto grid max-w-7xl gap-9 px-4 pb-12 pt-12 sm:px-6 md:pt-16 lg:grid-cols-[minmax(0,0.95fr)_minmax(460px,1.05fr)] lg:items-start lg:gap-12 lg:px-8 lg:pb-16 lg:pt-16">
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#E5C7D8] bg-white/85 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#604577] shadow-sm backdrop-blur">
               <span className="h-2 w-2 rounded-full bg-[#755E96]" />
               Free live 1:1 assessment
             </div>
 
-            <h1 className="mt-6 font-heading text-4xl font-black leading-[1.03] tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-[4rem]">
+            <h1 className="mt-5 font-heading text-4xl font-black leading-[1.06] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[3.4rem]">
               Book a Free {FREE_DEMO_DURATION_MINUTES}-Minute 1:1 English Assessment
             </h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-700 sm:text-xl">
+            <p className="mt-5 max-w-2xl text-base leading-7 text-slate-700 sm:text-lg sm:leading-8">
               Tell us the main concern you are seeing. The live assessment helps identify your child&apos;s current starting point and the most suitable Tiny Steps learning path.
             </p>
 
-            <div className="mt-7 grid max-w-2xl gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid max-w-2xl gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
               {[
                 `${FREE_DEMO_DURATION_MINUTES}-minute live 1:1 assessment`,
                 'One free session per child',
@@ -410,10 +410,10 @@ export default function BookDemoPage() {
               ))}
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <a
                 href="#assessment-form"
-                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800"
+                className="inline-flex items-center justify-center rounded-full bg-slate-950 px-7 py-3.5 text-base font-bold text-white shadow-[0_12px_30px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:bg-slate-800 lg:hidden"
               >
                 {FREE_DEMO_CTA_LABEL}
               </a>
@@ -430,10 +430,10 @@ export default function BookDemoPage() {
           <div id="assessment-form" className="scroll-mt-28 lg:py-2">
             <PublicAssessmentForm
               source={assessmentSource}
-              title="Book Your Free Assessment"
-              description="Share your child’s main concern. Our team will contact you on WhatsApp and arrange a suitable assessment slot."
-              submitLabel={FREE_DEMO_CTA_LABEL}
-              submitAriaLabel={FREE_DEMO_CTA_LABEL}
+              title="Request Your Free Demo"
+              description="Share a few details. We’ll contact you about a suitable assessment time."
+              submitLabel="Request Free Demo"
+              submitAriaLabel="Request Free Demo"
               appearance="embedded"
               helperText="One free live 1:1 assessment per child • No enrolment commitment"
               secondaryHelperText={null}

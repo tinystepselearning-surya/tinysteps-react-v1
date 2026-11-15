@@ -236,6 +236,22 @@ describe('PublicAssessmentForm analytics', () => {
     expect(screen.getByText(/WhatsApp is not required/i)).toBeInTheDocument();
   });
 
+  it('keeps phone and age together and gives the learning-needs select a full row', () => {
+    render(<PublicAssessmentForm />);
+
+    const phone = screen.getByLabelText(/mobile number/i);
+    const age = screen.getByLabelText(/child age/i);
+    const support = screen.getByLabelText(/choose the area where your child needs support/i);
+    const phoneRow = phone.closest('.grid');
+
+    expect(phoneRow).toHaveClass('sm:grid-cols-2');
+    expect(phoneRow).toContainElement(age);
+    expect(phoneRow).not.toContainElement(support);
+    expect(screen.getByRole('option', { name: 'Select age' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /book your free assessment/i })).toBeInTheDocument();
+    expect(screen.getByText(/WhatsApp is optional; this does not subscribe you to marketing/i)).toBeInTheDocument();
+  });
+
   it('preselects group programme and saves a group-interest enquiry without a demo claim', async () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(
