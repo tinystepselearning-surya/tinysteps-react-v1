@@ -49,6 +49,9 @@ import { buildNewWebsiteLeadToastDescription } from './leadsRealtime';
 import {
   LEAD_PAGE_SIZE_OPTIONS,
   usePagedLeads,
+  leadReceivedAtMillis,
+  leadLatestInquiryAtMillis,
+  isReturningWebsiteEnquiryInRange,
   type LeadPageSize,
 } from './leadsPaged';
 import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
@@ -124,6 +127,7 @@ interface LeadRecord {
   demoSessionId?: string | null;
   createdAt?: Timestamp | null;
   updatedAt?: Timestamp | null;
+  lastInquiryAt?: Timestamp | null;
   dedupeCanonicalLeadId?: string | null;
 }
 
@@ -147,6 +151,8 @@ interface SimpleRow {
   attributionDetail: string | null;
   teacherName: string;
   createdAtMs: number;
+  originalEnquiryAtMs: number;
+  returningEnquiry: boolean;
   updatedAtMs: number;
   followUpAtMs: number;
   statusLabel: string;
@@ -536,12 +542,24 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     const buildRow = (lead: LeadRecord | null, demo: DemoSession | null, id: string): SimpleRow => {
       const demoStatus = demo ? normalizeDemoStatus(demo.status) : '';
       const followUpAtMs = (demo ? parseAdminFollowUpDateIstMs(demo.followUpDate) : 0) || toMs(lead?.nextFollowUpAt);
-      const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
+      const originalEnquiryAtMs = lead
+        ? leadReceivedAtMillis(lead as unknown as Record<string, unknown>)
+        : toMs(demo?.createdAt);
+      const returningEnquiry = Boolean(lead && isReturningWebsiteEnquiryInRange(
+        lead as unknown as Record<string, unknown>,
+        serverDateRange.fromMs,
+        serverDateRange.toMs,
+      ));
+      const createdAtMs = returningEnquiry && lead
+        ? leadLatestInquiryAtMillis(lead as unknown as Record<string, unknown>)
+        : originalEnquiryAtMs || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
       const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0, classFormatPreference: lead?.classFormatPreference };
       const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
       const row = {
         id, lead, demo,
-        bucket: resolveSimpleLeadBucket(workflow),
+        // Re-show an existing parent in Open for this day's enquiry, without
+        // changing stored demo, teacher assignment or enrolment decisions.
+        bucket: returningEnquiry ? 'open' : resolveSimpleLeadBucket(workflow),
         parentName: normalizeText(demo?.parentName || lead?.parentName) || '—',
         childName: normalizeText(demo?.childName || lead?.childName) || '—',
         parentPhone: normalizeText(lead?.primaryPhone || lead?.whatsappNumber || lead?.phoneNormalized || (demo ? demoPhones[demo.id] : '')) || '—',
@@ -552,9 +570,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         attributionDetail: attributionDisplay.detailLabel,
         teacherName: normalizeText(demo?.assignedTeacherName) || (demo?.assignedTeacherId ? 'Assigned teacher' : '—'),
         createdAtMs,
+        originalEnquiryAtMs,
+        returningEnquiry,
         updatedAtMs: Math.max(toMs(lead?.updatedAt || lead?.createdAt), toMs(demo?.lastUpdatedAt || demo?.createdAt)),
         followUpAtMs,
-        statusLabel: resolveSimpleStatusLabel(workflow),
+        statusLabel: returningEnquiry ? 'Returning enquiry · Needs review' : resolveSimpleStatusLabel(workflow),
         classFormatPreference: normalizeText(lead?.classFormatPreference) || 'one_to_one',
         contactPreference: resolveEnquiryContactPreference(lead),
       };
@@ -638,7 +658,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       if (shouldReplace) distinct.set(identity, row);
     });
     return Array.from(distinct.values());
-  }, [demoPhones, demos, leads]);
+  }, [demoPhones, demos, leads, serverDateRange.fromMs, serverDateRange.toMs]);
 
   const monthOptions = useMemo(() => buildRecentMonthOptions(), []);
 
@@ -947,6 +967,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   };
 
   const renderAction = (row: SimpleRow) => {
+    // A returning enquiry is a fresh staff task, not permission to create a
+    // second demo or alter an already completed enrolment.
+    if (row.returningEnquiry) {
+      return <Button size="sm" variant="outline" onClick={() => openEdit(row)}>Review new enquiry</Button>;
+    }
     const action = actionForRow(row);
     if (action === 'assign_teacher') return <Button size="sm" disabled={Boolean(retryingLeadId)} onClick={() => void openAssign(row)}>{retryingLeadId && retryingLeadId === row.lead?.id ? 'Preparing demo…' : 'Assign teacher'}</Button>;
     if (action === 'wait_teacher') return <Badge variant="outline" className="px-3 py-2">With teacher</Badge>;
@@ -984,7 +1009,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left text-slate-950">
           <div className="flex items-center justify-between gap-3"><div className="font-semibold">Total Leads</div><span className="text-2xl font-bold">{loading ? '—' : rows.length}</span></div>
-          <p className="mt-2 text-sm text-slate-600">Distinct phone + child for selected range</p>
+          <p className="mt-2 text-sm text-slate-600">Unique parent + child with an enquiry in this range (including returning parents once)</p>
         </div>
         {(['open', 'in_progress', 'admin_review', 'closed'] as SimpleLeadBucket[]).map((item) => {
           const meta = bucketMeta[item]; const Icon = meta.icon;
@@ -1046,7 +1071,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       <div><Label htmlFor="lead-date-to" className="mb-1 block text-xs text-slate-500">Enquiry to</Label><Input id="lead-date-to" type="date" value={dateTo} onChange={(event) => updateDateTo(event.target.value)} /></div>
       <Button type="button" onClick={applyFilters} disabled={leadsLoading}>{leadsLoading ? 'Applying…' : 'Apply filter'}</Button>
       <Button type="button" variant="outline" onClick={clearFilters} disabled={!filtersActive}>Clear</Button>
-    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today and fetches only that enquiry range. Choose a month, All months, or custom dates, then select Apply filter to fetch that range. Clearing both custom dates returns to Today. Counts are distinct by exact phone digits + child name, and every workflow tile is derived from the same reconciled rows.</p></Card>
+    </div><p className="mt-3 text-xs text-slate-500">The workspace opens on Today. A returning website enquiry from another IST date appears in Open as a new task, without creating a duplicate lead. Same-day submissions count once per parent and child. Historical first-touch attribution remains unchanged; the selected range shows unique active parent-child records, not the number of form submissions.</p></Card>
 
     <Card className="overflow-hidden">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
@@ -1081,6 +1106,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           </div>
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
           <div>
+            {row.returningEnquiry ? <Badge className="mb-1 bg-blue-100 text-blue-900 hover:bg-blue-100">New enquiry · Returning parent</Badge> : null}
             <Badge variant="outline">{row.statusLabel}</Badge>
             {row.bucket === 'open' && row.triage.detailGaps.length > 0 && (
               <div className="mt-1 max-w-[220px] text-[11px] text-amber-800" title={row.triage.detailGaps.join(', ')}>
@@ -1088,6 +1114,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
               </div>
             )}
             <div className="mt-1 text-xs font-medium text-slate-600">Enquired {formatUpdated(row.createdAtMs)}</div>
+            {row.returningEnquiry ? (
+              <div className="text-[11px] text-slate-500">
+                Previous enquiry {formatUpdated(row.originalEnquiryAtMs)} · Existing history retained
+              </div>
+            ) : null}
             {row.updatedAtMs > row.createdAtMs + 60_000 && <div className="text-[11px] text-slate-400">Updated {formatUpdated(row.updatedAtMs)}</div>}
             {row.followUpAtMs > 0 && <div className={`text-[11px] ${isAdminFollowUpDue(row, todayFollowUpKey) ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{isAdminFollowUpDue(row, todayFollowUpKey) ? 'Follow-up due' : 'Follow-up'} {formatFollowUp(row.followUpAtMs)}</div>}
           </div>
