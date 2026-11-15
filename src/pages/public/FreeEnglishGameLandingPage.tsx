@@ -35,13 +35,15 @@ export default function FreeEnglishGameLandingPage() {
   // Query-only variant: keep the established spelling page, canonical and SEO contract.
   const isVisualPuzzleMode =
     config?.publicPath === "/free-spelling-game-for-kids" &&
+    isPlayMode &&
     searchParams.get("mode") === "puzzles";
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
   useEffect(() => {
-    if (!shouldRenderPlayer) return;
+    // The visual-only variant opens directly into its game; no anchor scroll.
+    if (!shouldRenderPlayer || isVisualPuzzleMode) return;
     scrollToPublicGamePlayer();
-  }, [shouldRenderPlayer]);
+  }, [shouldRenderPlayer, isVisualPuzzleMode]);
 
   useEffect(() => {
     if (!config) return;
@@ -83,6 +85,20 @@ export default function FreeEnglishGameLandingPage() {
   }
 
   const pageUrl = `${SITE_ORIGIN}${config.publicPath}`;
+
+  // An immersive game-first screen for older children. Keep the established
+  // canonical + metadata/JSON-LD on the landing route, but do not render
+  // preschool phonics guidance, marketing sections or duplicate back controls.
+  // Classic spelling and the canonical information page remain unchanged.
+  if (isVisualPuzzleMode && shouldRenderPlayer) {
+    return (
+      <>
+        <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} />
+        <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode />
+      </>
+    );
+  }
+
   const tiles = getPublicEnglishGameLandingTiles(config);
 
   // Use custom FAQs if provided, otherwise fall back to generic
