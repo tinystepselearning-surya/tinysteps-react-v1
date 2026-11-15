@@ -31,6 +31,35 @@ describe('AssessmentRequestModal', () => {
     opener.remove();
   });
 
+  it('resizes the mobile scroll area when an Android keyboard reduces visible height', () => {
+    const originalWidth = window.innerWidth;
+    const originalViewport = window.visualViewport;
+    const mobileViewport = {
+      height: 480,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    };
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 });
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: mobileViewport });
+
+    try {
+      const { unmount } = render(<AssessmentRequestModal isOpen onClose={vi.fn()} />);
+      const panel = screen.getByRole('dialog').querySelector('.overflow-hidden') as HTMLElement;
+      const scrollArea = screen.getByRole('dialog').querySelector('.overflow-y-auto') as HTMLElement;
+      expect(panel.style.maxHeight).toBe('464px');
+      expect(scrollArea.style.maxHeight).toBe('464px');
+      mobileViewport.height = 300;
+      fireEvent.resize(window);
+      expect(panel.style.maxHeight).toBe('284px');
+      expect(scrollArea.style.maxHeight).toBe('284px');
+      unmount();
+      expect(mobileViewport.removeEventListener).toHaveBeenCalled();
+    } finally {
+      Object.defineProperty(window, 'innerWidth', { configurable: true, value: originalWidth });
+      Object.defineProperty(window, 'visualViewport', { configurable: true, value: originalViewport });
+    }
+  });
+
   it('keeps its close button visible as form content scrolls and supports Escape', () => {
     const onClose = vi.fn();
     render(<AssessmentRequestModal isOpen onClose={onClose} />);
