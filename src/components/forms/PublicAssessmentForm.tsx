@@ -460,10 +460,10 @@ export default function PublicAssessmentForm({
     : 'relative space-y-3 pb-4 sm:space-y-5 sm:pb-8';
   const fieldGridClassName = isHeroCompact
     ? 'grid grid-cols-1 gap-3 sm:grid-cols-2'
-    : 'grid grid-cols-1 gap-3 sm:grid-cols-2';
+    : 'grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-2';
   const selectGridClassName = isHeroCompact
     ? 'grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start'
-    : 'grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start';
+    : 'grid grid-cols-1 gap-3 sm:gap-4 sm:grid-cols-[minmax(0,0.7fr)_minmax(0,1.3fr)] sm:items-start';
   const submitClassName = isHeroCompact
     ? 'mt-3 inline-flex h-11 w-full items-center justify-center rounded-2xl border border-white/30 px-5 py-3 text-base font-bold text-white shadow-md shadow-orange-200/60 transition-all hover:shadow-orange-300/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2'
     : 'mt-3 inline-flex min-h-[52px] w-full items-center justify-center rounded-2xl border border-white/30 px-4 py-3 text-center text-base font-bold leading-snug text-white shadow-lg shadow-orange-200/70 transition-all hover:shadow-orange-300/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-300 focus-visible:ring-offset-2 sm:mt-5 sm:px-6 sm:py-4 md:text-lg';
