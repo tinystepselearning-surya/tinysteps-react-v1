@@ -146,10 +146,10 @@ describe('Group-class commercial page integration', () => {
     expect(content).toContain('Children are matched by learning level');
   });
 
-  it('keeps group preference in the lead schema and prevents automatic 1:1 demo creation', () => {
+  it('keeps group preference in the lead schema and defers assessment delivery choice to admin', () => {
     expect(read('src/lib/publicLeadForm.ts')).toContain("classFormatPreference: form.classFormatPreference || 'one_to_one'");
     expect(read('firestore.rules')).toContain("'one_to_one', 'small_group', 'unsure'");
-    expect(read('functions/src/leadDemoAutoWorkflow.ts')).toContain("lead.classFormatPreference === 'small_group'");
+    expect(read('functions/src/leadDemoAutoWorkflow.ts')).toContain("leadType: classFormatPreference === 'one_to_one' ? '1:1' : null");
     expect(read('src/pages/public/BookDemoPage.tsx')).toContain('Register Interest in Group');
   });
 });

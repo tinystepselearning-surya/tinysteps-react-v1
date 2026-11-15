@@ -148,6 +148,11 @@ const interactionSnapshot = (
   interestTrack: cleanText(lead.interestTrack, 120) || null,
   mainConcern: cleanText(lead.mainConcern, 300) || null,
   classFormatPreference: cleanText(lead.classFormatPreference, 40) || null,
+  // Keep the parent's request tied to this specific inquiry, never inferred
+  // from a WhatsApp link opening or a previous marketing preference.
+  contactPreference: ['phone', 'whatsapp', 'either'].includes(cleanText(lead.contactPreference, 20)) && lead.contactPermission === true
+    ? cleanText(lead.contactPreference, 20) : null,
+  contactPermission: lead.contactPermission === true && ['phone', 'whatsapp', 'either'].includes(cleanText(lead.contactPreference, 20)),
   source: WEBSITE_SOURCE,
   sourceDetail: cleanText(lead.sourceDetail, 160) || null,
   sourcePath: cleanText(lead.sourcePath, 220) || null,
@@ -563,6 +568,12 @@ export const onWebsiteLeadIdentityWrite = onDocumentWritten(
       const currentIsLatest = duplicateMs >= canonicalMs;
       if (currentIsLatest) {
         const latestFields = ['programInterest', 'interestTrack', 'mainConcern', 'urgency', 'classFormatPreference'];
+        // Treat contact permission as an enquiry-specific request; never reuse a
+        // prior contact preference for a newer legacy submission lacking consent.
+        const nextContact = cleanText(current.contactPreference, 20);
+        mergedPatch.contactPreference = current.contactPermission === true && ['phone', 'whatsapp', 'either'].includes(nextContact)
+          ? nextContact : null;
+        mergedPatch.contactPermission = current.contactPermission === true && ['phone', 'whatsapp', 'either'].includes(nextContact);
         latestFields.forEach((field) => {
           if (current[field] !== undefined && current[field] !== null && current[field] !== '') {
             mergedPatch[field] = current[field];

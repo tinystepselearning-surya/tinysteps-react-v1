@@ -4,25 +4,28 @@ import {
   resolveSimpleLeadAction,
   resolveSimpleLeadBucket,
   resolveSimpleStatusLabel,
+  resolveLeadTriage,
+  resolveEnquiryContactPreference,
+  labelEnquiryContactPreference,
   simpleOutcomeNeedsReason,
 } from './leadsWorkflowBuckets';
 
 describe('four-stage leads workflow buckets', () => {
   it('treats a new enquiry without a linked demo as a short-lived open sync state', () => {
     expect(resolveSimpleLeadBucket({ leadStatus: 'new', hasDemo: false })).toBe('open');
-    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('awaiting_demo');
+    expect(resolveSimpleLeadAction({ leadStatus: 'new', hasDemo: false })).toBe('assign_teacher');
     expect(resolveSimpleStatusLabel({ leadStatus: 'new', hasDemo: false })).toBe('Demo request not linked');
   });
 
-  it('never treats group or undecided enquiries as failed 1:1 demo creation', () => {
+  it('keeps group and undecided enquiries assignable even when a demo link is missing', () => {
     for (const format of ['small_group', 'unsure']) {
       const input = { leadStatus: 'new', hasDemo: false, classFormatPreference: format };
       expect(resolveSimpleLeadBucket(input)).toBe('open');
-      expect(resolveSimpleLeadAction(input)).toBe('follow_up_lead');
+      expect(resolveSimpleLeadAction(input)).toBe('assign_teacher');
     }
-    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'small_group' })).toBe('Small-group enquiry — review');
-    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'unsure' })).toBe('Class format undecided');
-    expect(resolveSimpleLeadAction({ hasDemo: false, classFormatPreference: 'one_to_one' })).toBe('awaiting_demo');
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'small_group' })).toBe('Demo request not linked');
+    expect(resolveSimpleStatusLabel({ hasDemo: false, classFormatPreference: 'unsure' })).toBe('Demo request not linked');
+    expect(resolveSimpleLeadAction({ hasDemo: false, classFormatPreference: 'one_to_one' })).toBe('assign_teacher');
   });
 
   it('keeps an unassigned demo in Open', () => {
@@ -95,5 +98,75 @@ describe('four-stage leads workflow buckets', () => {
     expect(simpleOutcomeNeedsReason('wrong_fit')).toBe(true);
     expect(simpleOutcomeNeedsReason('no_response')).toBe(true);
     expect(simpleOutcomeNeedsReason('enrolled')).toBe(false);
+  });
+});
+
+describe('guide-inspired lead triage — read-only evidence, never a verification score', () => {
+  const completeLead = {
+    parentName: 'Parent',
+    parentPhone: '+91 98765 43210',
+    childName: 'Child',
+    childAge: 6,
+    course: 'Phonics',
+    mainConcern: 'Blending sounds to read words',
+    source: 'website',
+  };
+
+  it('sorts only explicit parent-stated timing without treating it as verified intent', () => {
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'Today' }))
+      .toMatchObject({ statedUrgency: 'Today', urgencyRank: 0, detailGaps: [] });
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'This week' }).urgencyRank).toBe(1);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'This month' }).urgencyRank).toBe(2);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'Just exploring' }).urgencyRank).toBe(3);
+    expect(resolveLeadTriage({ ...completeLead, urgency: 'unknown' }))
+      .toMatchObject({ statedUrgency: null, urgencyRank: 4 });
+    expect(resolveLeadTriage({ ...completeLead, urgency: ' TODAY ' }).statedUrgency).toBe('Today');
+  });
+
+  it('identifies missing essentials but never treats an optional email, city or campaign as mandatory', () => {
+    const result = resolveLeadTriage({
+      parentName: '', parentPhone: '123', childName: null,
+      childAge: '0', course: '—', source: '', mainConcern: '',
+    });
+    expect(result.detailGaps).toEqual([
+      'parent name', 'contact number', 'child name',
+      'child age', 'learning goal', 'enquiry source',
+    ]);
+    expect(result.urgencyRank).toBe(4);
+  });
+
+  it('preserves a genuinely undecided learning concern instead of mistaking inferred Reading for confirmed intent', () => {
+    const result = resolveLeadTriage({
+      ...completeLead,
+      mainConcern: 'Not sure where to start',
+      course: 'Reading',
+      urgency: 'Just exploring',
+    });
+    expect(result.needsCourseGuidance).toBe(true);
+    expect(result.detailGaps).toEqual(['course guidance']);
+    expect(result.statedUrgency).toBe('Just exploring');
+  });
+
+  it('leaves a complete known-goal lead out of missing-detail triage', () => {
+    expect(resolveLeadTriage(completeLead).detailGaps).toEqual([]);
+    expect(resolveLeadTriage({ ...completeLead, urgency: null }).statedUrgency).toBe(null);
+  });
+});
+
+describe('parent-requested enquiry contact method', () => {
+  it('accepts only an explicit matched permission and known preference', () => {
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone', contactPermission: true })).toBe('phone');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'whatsapp', contactPermission: true })).toBe('whatsapp');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'either', contactPermission: true })).toBe('either');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone', contactPermission: false })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone' })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPermission: true })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPreference: 'marketing', contactPermission: true })).toBe(null);
+    expect(resolveEnquiryContactPreference(null)).toBe(null);
+  });
+  it('uses channel-specific labels without implying WhatsApp account verification', () => {
+    expect(labelEnquiryContactPreference('phone')).toBe('Phone callback');
+    expect(labelEnquiryContactPreference('whatsapp')).toBe('WhatsApp reply');
+    expect(labelEnquiryContactPreference('either')).toBe('Phone or WhatsApp');
   });
 });

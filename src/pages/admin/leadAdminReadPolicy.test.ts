@@ -44,7 +44,9 @@ describe('Leads admin read/write guardrails', () => {
     expect(workspace).toContain('this does not confirm a sent or received message');
     expect(tools).toContain('Log contact');
     expect(tools).toContain('Direction (staff-reported)');
-    expect(tools).toContain("setCommunicationType('message');");
+    // Phone-only requests start a call log; all others retain the manual message log.
+    expect(tools).toContain("setCommunicationType(contactPreference === 'phone' ? 'call' : 'message');");
+    expect(tools).toContain("setCommunicationChannel(contactPreference === 'phone' ? 'phone' : 'whatsapp');");
     expect(tools).toContain("setCommunicationDirection('outbound');");
     expect(tools).toContain("direction: communicationType === 'note' ? 'internal' : communicationDirection");
     expect(tools).toContain('Record only actual interactions, not merely opening WhatsApp');

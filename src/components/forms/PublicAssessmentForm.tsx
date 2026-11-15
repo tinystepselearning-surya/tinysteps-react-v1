@@ -20,6 +20,7 @@ import {
 } from '../../lib/publicLeadForm';
 
 const WHATSAPP_NUMBER = '919618398383';
+const PHONE_URL = 'tel:+919618398383';
 const SUN_ORANGE = '#ff6a00';
 const PREFILL_STORAGE_KEY = 'ts_public_assessment_prefill_v1';
 const PENDING_LEAD_ID_STORAGE_KEY = 'ts_public_assessment_pending_lead_id_v1';
@@ -83,15 +84,17 @@ export default function PublicAssessmentForm({
     childAge: '',
     mainConcern: preferredMainConcern || '',
     classFormatPreference: preferredFormat,
+    contactPreference: '',
     urgency: '',
   };
 
   const [form, setForm] = useState<PublicAssessmentFormState>(initialState);
   const [submitted, setSubmitted] = useState(false);
+  const [whatsappHandoffAttempted, setWhatsappHandoffAttempted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [lastOpenedWaLink, setLastOpenedWaLink] = useState('');
-  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string }>({});
+  const [errors, setErrors] = useState<{ parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string; contactPreference?: string }>({});
   const firstFieldRef = useRef<HTMLInputElement | null>(null);
   const hasTrackedFormStartRef = useRef(false);
   const submitLockRef = useRef(false);
@@ -193,30 +196,29 @@ export default function PublicAssessmentForm({
     }
   };
 
-  const navigateToWhatsapp = (popup: Window | null, url: string) => {
-    if (popup && !popup.closed) {
-      try {
-        if (typeof popup.location.replace === 'function') {
-          popup.location.replace(url);
-          return;
-        }
-      } catch {
-        // Fall through to assignment on the same popup if replace is unavailable.
+  // The lead must remain visibly confirmed on our website even if a browser
+  // blocks WhatsApp. A same-tab redirect can hide confirmation and the call fallback.
+  // This only reports an attempted handoff, never WhatsApp login, send or delivery.
+  const navigateToWhatsapp = (popup: Window | null, url: string): boolean => {
+    if (!popup || popup.closed) return false;
+    try {
+      if (typeof popup.location.replace === 'function') {
+        popup.location.replace(url);
+        return true;
       }
-
-      try {
-        popup.location.href = url;
-        return;
-      } catch {
-        // Fall through to same-tab navigation below.
-      }
+    } catch {
+      // The parent's browser may deny popup navigation.
     }
-
-    window.location.assign(url);
+    try {
+      popup.location.href = url;
+      return true;
+    } catch {
+      return false;
+    }
   };
 
   const validate = () => {
-    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string } = {};
+    const nextErrors: { parentName?: string; childName?: string; whatsapp?: string; childAge?: string; mainConcern?: string; contactPreference?: string } = {};
 
     if (!form.parentName.trim()) {
       nextErrors.parentName = 'Please enter parent name.';
@@ -226,8 +228,16 @@ export default function PublicAssessmentForm({
       nextErrors.childName = 'Please enter child name.';
     }
 
-    if (!form.whatsapp.trim()) {
-      nextErrors.whatsapp = 'Please enter WhatsApp number.';
+    const contactNumber = form.whatsapp.trim();
+    const contactDigits = contactNumber.replace(/\D/g, '');
+    if (!contactNumber) {
+      nextErrors.whatsapp = 'Please enter a mobile number so we can reach you.';
+    } else if (
+      !/^\+?[0-9\s()-]+$/.test(contactNumber) ||
+      contactDigits.length < 8 || contactDigits.length > 15 ||
+      contactNumber.length > 24
+    ) {
+      nextErrors.whatsapp = 'Enter a valid mobile number (8–15 digits, including country code where needed).';
     }
 
     if (!form.childAge) {
@@ -236,6 +246,9 @@ export default function PublicAssessmentForm({
 
     if (!form.mainConcern) {
       nextErrors.mainConcern = 'Please select the support area.';
+    }
+    if (!form.contactPreference) {
+      nextErrors.contactPreference = 'Please choose how Tiny Steps may reply about this enquiry.';
     }
 
     setErrors(nextErrors);
@@ -250,6 +263,7 @@ export default function PublicAssessmentForm({
     if (submitLockRef.current || isSubmitting) return;
 
     setSubmitted(false);
+    setWhatsappHandoffAttempted(false);
     setSubmitError('');
 
     const { isValid, nextErrors } = validate();
@@ -268,7 +282,8 @@ export default function PublicAssessmentForm({
 
     const submittedForm = { ...form };
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildPublicWhatsappMessage(submittedForm))}`;
-    const whatsappWindow = openWhatsappPopup();
+    // A phone callback does not require the parent to open or install WhatsApp.
+    const whatsappWindow = submittedForm.contactPreference === 'phone' ? null : openWhatsappPopup();
 
     const attribution = getPublicLeadAttribution();
     const trackingPayload = {
@@ -361,13 +376,17 @@ export default function PublicAssessmentForm({
       });
       if (submittedForm.classFormatPreference !== 'small_group' && submittedForm.classFormatPreference !== 'unsure') {
         trackDemoRequestReceived({
-          request_type: 'whatsapp_assessment_request',
+          request_type: submittedForm.contactPreference === 'phone' ? 'callback_assessment_request' : 'whatsapp_assessment_request',
           submission_id: leadRef.id,
           source_context: source || 'public_assessment_form',
         });
       }
-      navigateToWhatsapp(whatsappWindow, whatsappUrl);
-      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      const handoffAttempted = submittedForm.contactPreference !== 'phone'
+        && navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      setWhatsappHandoffAttempted(handoffAttempted);
+      if (handoffAttempted) {
+        trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      }
       setLastOpenedWaLink(whatsappUrl);
       setSubmitted(true);
       onSuccess?.();
@@ -378,17 +397,24 @@ export default function PublicAssessmentForm({
         error_fields: ['save'],
         error_message: 'lead_save_failed',
       });
-      navigateToWhatsapp(whatsappWindow, whatsappUrl);
-      trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      const handoffAttempted = navigateToWhatsapp(whatsappWindow, whatsappUrl);
+      setWhatsappHandoffAttempted(handoffAttempted);
+      if (handoffAttempted) {
+        trackWhatsappClick(source || 'public_assessment_form', trackingPayload);
+      }
       setLastOpenedWaLink(whatsappUrl);
-      setSubmitError('We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.');
+      setSubmitError('We could not confirm that your enquiry was saved. Please retry the form or contact Tiny Steps directly using the options below.');
     } finally {
       submitLockRef.current = false;
       setIsSubmitting(false);
     }
   };
 
-  const displayedSubmitLabel = form.classFormatPreference === 'small_group'
+  const displayedSubmitLabel = form.contactPreference === 'phone'
+    ? form.classFormatPreference === 'small_group' ? 'Request Group-Class Callback'
+      : form.classFormatPreference === 'unsure' ? 'Request Guidance by Phone'
+      : 'Request a Phone Callback'
+    : form.classFormatPreference === 'small_group'
     ? 'Register Group Interest on WhatsApp'
     : form.classFormatPreference === 'unsure'
       ? 'Request Class-Format Guidance on WhatsApp'
@@ -400,12 +426,16 @@ export default function PublicAssessmentForm({
     : title === 'Book Assessment' && form.classFormatPreference === 'unsure'
       ? 'Find the Right Class Format'
       : title;
-  const displayedDescription = form.classFormatPreference === 'small_group'
+  const displayedDescription = form.contactPreference === 'phone'
+    ? 'Share your child’s details. Our team can contact you by phone about the next steps.'
+    : form.classFormatPreference === 'small_group'
     ? 'Share your child’s details. We will contact you when a suitable group and timing can be arranged.'
     : form.classFormatPreference === 'unsure'
       ? 'Tell us about your child and we will help you choose a suitable learning format.'
       : description;
-  const displayedHelperText = form.classFormatPreference === 'small_group'
+  const displayedHelperText = form.contactPreference === 'phone'
+    ? 'Your request is saved before we contact you; no WhatsApp account is needed.'
+    : form.classFormatPreference === 'small_group'
     ? 'Group demos are arranged after suitable learners and schedules are matched.'
     : form.classFormatPreference === 'unsure'
       ? 'Our team will discuss the most suitable format with you.'
@@ -493,7 +523,7 @@ export default function PublicAssessmentForm({
 
         <div className="group space-y-1">
           <label htmlFor="assessment-whatsapp" className="sr-only">
-            WhatsApp Number *
+            Mobile number (WhatsApp optional) *
           </label>
           <input
             id="assessment-whatsapp"
@@ -501,8 +531,8 @@ export default function PublicAssessmentForm({
             type="tel"
             autoComplete="tel"
             inputMode="tel"
-            aria-label="WhatsApp Number"
-            placeholder="WhatsApp Number"
+            aria-label="Mobile number (WhatsApp optional)"
+            placeholder="Mobile number (WhatsApp optional)"
             value={form.whatsapp}
             onChange={(e) => {
               setForm((p) => ({ ...p, whatsapp: e.target.value }));
@@ -609,9 +639,39 @@ export default function PublicAssessmentForm({
           ) : null}
         </fieldset>
 
+        <fieldset className="space-y-2" aria-label="How Tiny Steps may contact you">
+          <legend className="text-sm font-semibold text-[#142449]">How should we contact you about this enquiry? *</legend>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3" role="group" aria-label="Choose your contact preference">
+            {([
+              { value: 'phone', label: 'Call me' },
+              { value: 'whatsapp', label: 'Reply on WhatsApp' },
+              { value: 'either', label: 'Either is fine' },
+            ] as const).map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                aria-pressed={form.contactPreference === option.value}
+                onClick={() => {
+                  trackFormStartOnce();
+                  setForm((previous) => ({ ...previous, contactPreference: option.value }));
+                  if (errors.contactPreference) setErrors((previous) => ({ ...previous, contactPreference: undefined }));
+                }}
+                className={`min-h-[44px] rounded-xl border px-3 py-2 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-orange-500 ${form.contactPreference === option.value
+                  ? 'border-[#142449] bg-[#142449] text-white'
+                  : 'border-slate-300 bg-white text-[#142449] hover:border-sky-300 hover:bg-sky-50'}`}
+              >{option.label}</button>
+            ))}
+          </div>
+          {errors.contactPreference && <p className="text-xs text-rose-600">{errors.contactPreference}</p>}
+          <p className="text-xs leading-5 text-slate-600">
+            By choosing a method and submitting, you ask Tiny Steps to contact you about this enquiry only.
+            You do not need WhatsApp to request a phone call. This does not subscribe you to marketing.
+          </p>
+        </fieldset>
+
         <button
           type="submit"
-          aria-label={form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
+          aria-label={form.contactPreference === 'phone' ? displayedSubmitLabel : form.classFormatPreference === 'one_to_one' && preferredFormat === 'one_to_one' ? submitAriaLabel : displayedSubmitLabel}
           disabled={isSubmitting}
           className={submitClassName}
           style={{
@@ -623,32 +683,58 @@ export default function PublicAssessmentForm({
 
         <div className="space-y-1 text-center">
           <p className={`text-xs ${NAVY_TEXT}`}>{displayedHelperText}</p>
-          {secondaryHelperText && form.classFormatPreference === 'one_to_one' ? (
+          <p className="text-xs text-slate-600">
+            We save your enquiry before opening WhatsApp. If WhatsApp does not work, you can still contact Tiny Steps by phone.
+          </p>
+          {secondaryHelperText && form.classFormatPreference === 'one_to_one' && form.contactPreference !== 'phone' ? (
             <p className="text-xs text-slate-600">{secondaryHelperText}</p>
           ) : null}
         </div>
 
         {submitError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
-            {submitError}
+          <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
+            <p>{submitError}</p>
+            <div className="flex flex-wrap gap-2">
+              <a href={lastOpenedWaLink || waLink} target="_blank" rel="noopener noreferrer"
+                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
+                className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
+                Send enquiry on WhatsApp
+              </a>
+              <a href={PHONE_URL}
+                className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
+                Call Tiny Steps
+              </a>
+            </div>
           </div>
         ) : null}
 
         {submitted ? (
           <div className="space-y-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900" role="status" aria-live="polite">
             <p className="font-medium">
-              Thank you! We received your request. Our team will reply on WhatsApp with the recommended starting path,
-              available slots, and pricing details.
+              Thank you! Tiny Steps has received your enquiry. You do not need to send a WhatsApp message for us to receive it.
             </p>
-            <p>WhatsApp should also open in a new tab now. If it did not open, use the options below.</p>
+            <p>
+              {form.contactPreference === 'phone'
+                ? 'You requested a phone callback. We did not open WhatsApp; our team can follow up using your saved contact number.'
+                : whatsappHandoffAttempted
+                  ? 'We tried to open WhatsApp in a new tab. If you cannot log in or send a message, you can use the options below.'
+                  : 'WhatsApp was not opened automatically. Your enquiry is saved; use the options below if you would like to contact us directly.'}
+            </p>
             <div className="flex flex-wrap gap-2">
               <a
                 href={lastOpenedWaLink || waLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
                 className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
               >
                 Open WhatsApp again
+              </a>
+              <a
+                href={PHONE_URL}
+                className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
+              >
+                Call Tiny Steps
               </a>
               <a
                 href="/class-samples"

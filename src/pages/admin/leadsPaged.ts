@@ -481,6 +481,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   // leads listener. Notification recency uses the same canonical receipt anchor.
   useEffect(() => {
     let hasServerBaseline = false;
+    let observedDemoLinks = new Map<string, string>();
     return onSnapshot(
       query(
         collection(db, LEADS_COLLECTION),
@@ -490,13 +491,32 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       { includeMetadataChanges: true },
       (snapshot) => {
         if (snapshot.metadata.fromCache) return;
+        // Reuse the existing five-document watch to notice the asynchronous
+        // canonical lead -> demo link. Without this, the one-time page query can
+        // keep showing "Demo request not linked" after the trigger succeeds.
+        const nextDemoLinks = new Map(snapshot.docs.map((document) => [
+          document.id,
+          normalizeText(document.data().demoSessionId),
+        ]));
         if (!hasServerBaseline) {
           hasServerBaseline = true;
+          observedDemoLinks = nextDemoLinks;
           return;
         }
+        const changes = snapshot.docChanges();
+        const demoLinkChangedWithinRange = changes.some((change) => {
+          if (change.type !== 'modified' || change.doc.metadata.hasPendingWrites) return false;
+          const previousLink = observedDemoLinks.get(change.doc.id);
+          if (previousLink === undefined || previousLink === normalizeText(change.doc.data().demoSessionId)) return false;
+          const received = leadReceivedAtMillis(change.doc.data());
+          return received > 0 &&
+            (!dateFromMs || received >= dateFromMs) &&
+            (!dateToMs || received <= dateToMs);
+        });
+        observedDemoLinks = nextDemoLinks;
+
         const now = Date.now();
-        const newWebsiteLeads = snapshot
-          .docChanges()
+        const newWebsiteLeads = changes
           .filter((change) => {
             if (change.type !== 'added' || change.doc.metadata.hasPendingWrites) return false;
             const data = change.doc.data();
@@ -505,14 +525,15 @@ export function usePagedLeads<T extends PagedLeadRecord>({
             return receivedAtMs > 0 && now - receivedAtMs <= RECENT_NOTIFICATION_WINDOW_MS;
           })
           .map((change) => toLeadRecord<T>(change.doc));
-        if (newWebsiteLeads.length === 0) return;
-        onNewWebsiteLeadsRef.current(newWebsiteLeads);
+        if (newWebsiteLeads.length === 0 && !demoLinkChangedWithinRange) return;
+        if (newWebsiteLeads.length > 0) onNewWebsiteLeadsRef.current(newWebsiteLeads);
         smallBucketCacheRef.current.clear();
         receivedRangeCacheRef.current = null;
         void refreshCounts();
         const rangeIncludesNow =
           (!dateFromMs || now >= dateFromMs) && (!dateToMs || now <= dateToMs);
-        if ((bucket === 'open' || bucket === 'all') && effectivePageIndex === 0 && rangeIncludesNow) {
+        if ((bucket === 'open' || bucket === 'all') && effectivePageIndex === 0 &&
+          (demoLinkChangedWithinRange || (newWebsiteLeads.length > 0 && rangeIncludesNow))) {
           pageStartCursorsRef.current = [null];
           setReloadVersion((current) => current + 1);
         }

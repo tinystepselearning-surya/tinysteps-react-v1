@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   fetchRange: vi.fn(),
   toast: vi.fn(),
   retryDemo: vi.fn(),
+  getDemoDoc: vi.fn(),
+  getTeachers: vi.fn(),
   leadsLoading: false,
   loadedLeads: [] as Array<Record<string, unknown>>,
 }));
@@ -18,6 +20,19 @@ vi.mock('../../../pages/admin/leadsPaged', () => ({
 }));
 
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
+
+vi.mock('firebase/firestore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase/firestore')>();
+  return {
+    ...actual,
+    collection: vi.fn((_db: unknown, path: string) => ({ path })),
+    doc: vi.fn((_db: unknown, _path: string, id: string) => ({ id })),
+    query: vi.fn((ref: unknown) => ref),
+    where: vi.fn(),
+    getDoc: mocks.getDemoDoc,
+    getDocs: mocks.getTeachers,
+  };
+});
 
 vi.mock('../../../services/demoSessionsService', () => ({
   listenDemoSessionsByIds: vi.fn((_ids: unknown, onData: (rows: unknown[]) => void) => {
@@ -82,7 +97,7 @@ vi.mock('@components/ui/select', () => ({
 }));
 
 vi.mock('@components/ui/dialog', () => ({
-  Dialog: ({ children }: any) => <div>{children}</div>,
+  Dialog: ({ children, open }: any) => open ? <div>{children}</div> : null,
   DialogContent: ({ children }: any) => <div>{children}</div>,
   DialogDescription: ({ children }: any) => <div>{children}</div>,
   DialogHeader: ({ children }: any) => <div>{children}</div>,
@@ -113,6 +128,14 @@ beforeEach(() => {
   mocks.fetchRange.mockReset();
   mocks.toast.mockReset();
   mocks.retryDemo.mockReset();
+  mocks.getDemoDoc.mockReset();
+  mocks.getTeachers.mockReset();
+  mocks.getDemoDoc.mockImplementation(async (ref: { id: string }) => ({
+    exists: () => true,
+    id: ref.id,
+    data: () => ({ status: 'open', leadType: null, parentName: 'Parent', childName: 'Child', courseInterested: 'Phonics', createdBy: 'test' }),
+  }));
+  mocks.getTeachers.mockResolvedValue({ docs: [] });
   mocks.leadsLoading = false;
   mocks.loadedLeads = [];
 
@@ -257,7 +280,65 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
   });
 
-  it('does not retry automatically and requires explicit admin confirmation for a missing 1:1 demo', async () => {
+  it('offers optional stated-timing sort and details filtering without modifying or fetching leads again', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    const makeLead = (id: string, name: string, created: number, urgency: string, concern: string) => ({
+      id, parentName: name, childName: 'Child ' + id, primaryPhone: '9191000077' + id,
+      childAge: 6, programInterest: 'Reading', mainConcern: concern, source: 'website',
+      status: 'new', urgency, classFormatPreference: 'unsure',
+      createdAt: { toMillis: () => todayStart + created },
+    });
+    mocks.loadedLeads = [
+      makeLead('001', 'Recent Parent', 3_000, 'Just exploring', 'Understanding what they read'),
+      makeLead('002', 'Urgent Parent', 1_000, 'Today', 'Not sure where to start'),
+      makeLead('003', 'Unknown Timing Parent', 2_000, '', 'Reading speed and word accuracy'),
+    ];
+    render(<LeadsInquiriesWorkspaceV2 />);
+
+    const visibleOrder = () => screen.getAllByText(/^(Recent Parent|Urgent Parent|Unknown Timing Parent)$/)
+      .map((item) => item.textContent);
+    expect(visibleOrder()).toEqual(['Recent Parent', 'Unknown Timing Parent', 'Urgent Parent']);
+    expect(screen.getByText('Parent-stated timing: Today')).toBeTruthy();
+    expect(screen.getByText('Learning goal: parent needs guidance')).toBeTruthy();
+    expect(screen.getByText('Check details: course guidance')).toBeTruthy();
+
+    const timingSort = screen.getByRole('button', { name: 'Prioritise stated timing' });
+    fireEvent.click(timingSort);
+    expect(visibleOrder()).toEqual(['Urgent Parent', 'Recent Parent', 'Unknown Timing Parent']);
+    expect(timingSort.getAttribute('aria-pressed')).toBe('true');
+
+    const details = screen.getByRole('button', { name: 'Needs details (1)' });
+    fireEvent.click(details);
+    expect(visibleOrder()).toEqual(['Urgent Parent']);
+    expect(details.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(details);
+    expect(visibleOrder()).toHaveLength(3);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    expect(mocks.getTeachers).not.toHaveBeenCalled();
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows phone callback requests and keeps phone-only parents out of WhatsApp shortcuts', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    mocks.loadedLeads = ['phone', 'whatsapp', 'legacy'].map((method, index) => ({
+      id: `contact-${index}`, parentName: `Contact Parent ${index}`,
+      childName: `Child ${index}`, primaryPhone: `91910000091${index}`,
+      source: 'website', programInterest: 'Phonics', status: 'new',
+      contactPreference: method === 'legacy' ? undefined : method,
+      contactPermission: method !== 'legacy',
+      createdAt: { toMillis: () => todayStart + index * 1000 },
+    }));
+    render(<LeadsInquiriesWorkspaceV2 />);
+    expect(screen.getByText('Parent requested: Phone callback')).toBeTruthy();
+    expect(screen.getByText('Parent requested: WhatsApp reply')).toBeTruthy();
+    const callLink = screen.getByRole('link', { name: 'Call parent' });
+    expect(callLink.getAttribute('href')).toBe('tel:919100000910');
+    expect(screen.getAllByRole('button', { name: 'Open WhatsApp' })).toHaveLength(2);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
+  it('prepares a missing demo only when admin clicks Assign teacher', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = [{
       id: 'canonical-retry',
@@ -271,23 +352,17 @@ describe('Leads & Enquiries explicit date filter application', () => {
       createdAt: { toMillis: () => todayStart + 1_000 },
     }];
     mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_canonical-retry' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    try {
-      render(<LeadsInquiriesWorkspaceV2 />);
-      const retry = await screen.findByRole('button', { name: 'Retry demo request' });
-      expect(mocks.retryDemo).not.toHaveBeenCalled();
-      fireEvent.click(retry);
-      await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
-      expect(confirm).toHaveBeenCalledTimes(1);
-      await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({
-        title: 'Demo request linked',
-      })));
-    } finally {
-      confirm.mockRestore();
-    }
+    render(<LeadsInquiriesWorkspaceV2 />);
+    const assign = await screen.findByRole('button', { name: 'Assign teacher' });
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    fireEvent.click(assign);
+    await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
+    await waitFor(() => expect(mocks.getDemoDoc).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('Parent preference: One-to-one classes')).toBeTruthy();
+    expect(mocks.reloadPage).toHaveBeenCalled();
   });
 
-  it('does not offer an automatic 1:1 retry for group or undecided enquiries', async () => {
+  it('offers the same explicit teacher assignment for group and undecided enquiries', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = ['small_group', 'unsure'].map((format, index) => ({
       id: `format-${index}`,
@@ -300,12 +375,16 @@ describe('Leads & Enquiries explicit date filter application', () => {
       programInterest: 'Phonics',
       createdAt: { toMillis: () => todayStart + 1_000 },
     }));
+    mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_format-0' });
     render(<LeadsInquiriesWorkspaceV2 />);
-    expect(await screen.findByText('Small-group enquiry — review')).toBeTruthy();
-    expect(screen.getByText('Class format undecided')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Retry demo request' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Review enquiry' })).toHaveLength(2);
+    expect(await screen.findAllByText('Demo request not linked')).toHaveLength(2);
+    const assign = screen.getAllByRole('button', { name: 'Assign teacher' });
+    expect(assign).toHaveLength(2);
     expect(mocks.retryDemo).not.toHaveBeenCalled();
+    fireEvent.click(assign[0]);
+    await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('format-0'));
+    expect(await screen.findByText('Parent preference: Group classes')).toBeTruthy();
+    expect(mocks.getDemoDoc).toHaveBeenCalledTimes(1);
   });
 
 });

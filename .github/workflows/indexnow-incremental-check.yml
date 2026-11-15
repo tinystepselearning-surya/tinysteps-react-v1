@@ -1,0 +1,66 @@
+name: IndexNow Incremental Notification Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/indexnow-submit.mjs'
+      - 'scripts/indexnow-change-detection.mjs'
+      - 'scripts/resolve-deployment-impact.mjs'
+      - 'scripts/test/indexnow-change-detection.node-test.mjs'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/indexnow-incremental-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow-safe-change:
+    name: Check IndexNow state and deployment isolation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check IndexNow scripts
+        run: |
+          node --check scripts/indexnow-submit.mjs
+          node --check scripts/indexnow-change-detection.mjs
+      - name: Test canonical diff and metadata fingerprints
+        run: node --test scripts/test/indexnow-change-detection.node-test.mjs
+      - name: Prove IndexNow activates Hosting but does not deploy Functions or Firestore
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node scripts/resolve-deployment-impact.mjs \
+            --before "$BASE_SHA" --functions-before "$BASE_SHA" \
+            --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" \
+            --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA" \
+            > /tmp/indexnow-impact-summary.txt
+          cat /tmp/indexnow-impact-summary.txt | grep -E 'Hosting changed:|Functions deployment required:|Firestore rules changed:|Firestore indexes changed:'
+          grep -qx 'hosting_changed=true' "$GITHUB_OUTPUT"
+          grep -qx 'functions_deployment_required=false' "$GITHUB_OUTPUT"
+          grep -qx 'firestore_rules_changed=false' "$GITHUB_OUTPUT"
+          grep -qx 'firestore_indexes_changed=false' "$GITHUB_OUTPUT"
+      - name: Verify IndexNow still runs only after production Hosting
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const yml = fs.readFileSync('.github/workflows/deploy.yml', 'utf8');
+          const job = yml.split('\n  deploy-to-firebase:\n')[1]?.split('\n  recover-functions-manually:\n')[0];
+          assert.ok(job, 'Production Hosting job not found');
+          assert.match(job, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
+          assert.match(job, /- name: Verify live IndexNow ownership key[\s\S]*?- name: Submit canonical public URLs to IndexNow/);
+          assert.match(job, /run: npm run indexnow:submit/);
+          const impact = fs.readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
+          assert.match(impact, /indexnowHostingChanged = hostingChangedFiles\.some/);
+          assert.match(impact, /if \(indexnowHostingChanged\) hostingResult\.hostingChanged = true/);
+          assert.match(impact, /hostingChanged: hostingResult\.hostingChanged \|\| forceHosting/);
+          console.log('IndexNow activates a Hosting deploy while preserving the original main-only post-deploy step.');
+          NODE

@@ -35,14 +35,15 @@ vi.mock('../../lib/firebaseConfig', () => ({
   functions: {},
 }));
 
-function fillValidForm() {
+function fillValidForm(selectContact = true) {
   fireEvent.change(screen.getByLabelText(/parent name/i), { target: { value: 'Priya' } });
   fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
-  fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
+  fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: '+919999999999' } });
   fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
   fireEvent.change(screen.getByLabelText(/choose the area where your child needs support/i), {
     target: { value: 'Blending sounds to read words' },
   });
+  if (selectContact) fireEvent.click(screen.getByRole('button', { name: 'Either is fine' }));
 }
 
 describe('PublicAssessmentForm analytics', () => {
@@ -102,13 +103,74 @@ describe('PublicAssessmentForm analytics', () => {
 
     fireEvent.change(screen.getByLabelText(/parent name/i), { target: { value: 'Priya' } });
     fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
-    fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
+    fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: '+919999999999' } });
     fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
 
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
 
     expect(screen.getByText(/please select the support area/i)).toBeInTheDocument();
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
+  });
+
+  it('rejects malformed phone numbers before any lead save or WhatsApp navigation', () => {
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: 'not-a-number' } });
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    expect(screen.getByText(/enter a valid mobile number/i)).toBeInTheDocument();
+    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
+    expect(globalThis.open).not.toHaveBeenCalled();
+    expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
+  });
+
+  it('requires a parent-selected enquiry contact method, not a preselected marketing opt-in', () => {
+    render(<PublicAssessmentForm />);
+    fillValidForm(false);
+    expect(screen.getByRole('button', { name: 'Call me' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Reply on WhatsApp' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Either is fine' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    expect(screen.getByText(/please choose how tiny steps may reply/i)).toBeInTheDocument();
+    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
+    expect(globalThis.open).not.toHaveBeenCalled();
+  });
+
+  it('saves phone callback requests without opening WhatsApp or counting a WhatsApp click', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Call me' }));
+    expect(screen.getByRole('button', { name: 'Call me' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.submit(screen.getByRole('button', { name: 'Request a Phone Callback' }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).toMatchObject({
+      contactPreference: 'phone',
+      contactPermission: true,
+      programInterest: 'Phonics',
+    });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/phone callback/i));
+    expect(globalThis.open).not.toHaveBeenCalled();
+    expect(popupLocationReplace).not.toHaveBeenCalled();
+    expect(locationAssignMock).not.toHaveBeenCalled();
+    expect(trackingMocks.trackWhatsappClick).not.toHaveBeenCalled();
+    expect(trackingMocks.trackDemoRequestReceived).toHaveBeenCalledWith(expect.objectContaining({
+      request_type: 'callback_assessment_request',
+    }));
+    expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
+  });
+
+  it('keeps normal WhatsApp handoff for a parent who explicitly prefers WhatsApp', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Reply on WhatsApp' }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).toMatchObject({
+      contactPreference: 'whatsapp', contactPermission: true,
+    });
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders only the required support-area dropdown with the exact options', () => {
@@ -262,7 +324,7 @@ describe('PublicAssessmentForm analytics', () => {
     expect(navigateOrder).toBeLessThan(whatsappOrder);
   });
 
-  it('uses same-tab fallback once when the popup is blocked', async () => {
+  it('preserves the saved enquiry and shows direct contact options when the popup is blocked', async () => {
     vi.stubGlobal('open', vi.fn(() => null));
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
@@ -273,12 +335,20 @@ describe('PublicAssessmentForm analytics', () => {
 
     await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
     expect(globalThis.open).toHaveBeenCalledTimes(1);
-    expect(locationAssignMock).toHaveBeenCalledTimes(1);
-    expect(locationAssignMock.mock.calls[0]?.[0]).toContain('https://wa.me/919618398383?text=');
+    expect(locationAssignMock).not.toHaveBeenCalled();
     expect(popupLocationReplace).not.toHaveBeenCalled();
     expect(anchorClick).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).toHaveBeenCalledTimes(1);
+    // Popup blocking is not a successful WhatsApp handoff, let alone a sent message.
+    expect(trackingMocks.trackWhatsappClick).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Tiny Steps has received your enquiry'));
+    expect(screen.getByRole('status')).toHaveTextContent('WhatsApp was not opened automatically');
+    expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
+    const retryLink = screen.getByRole('link', { name: 'Open WhatsApp again' });
+    expect(retryLink).toHaveAttribute('target', '_blank');
+    fireEvent.click(retryLink);
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1);
   });
 
   it('keeps a saved lead and WhatsApp handoff successful when attribution enrichment fails', async () => {
@@ -321,9 +391,11 @@ describe('PublicAssessmentForm analytics', () => {
     expect(locationAssignMock).not.toHaveBeenCalled();
     expect(anchorClick).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'We could not save your request on the website, but WhatsApp is opening with your completed message. Please send it so we can help you.'
+      'We could not confirm that your enquiry was saved. Please retry the form or contact Tiny Steps directly using the options below.'
     );
     expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
+    expect(screen.getByRole('link', { name: 'Send enquiry on WhatsApp' })).toHaveAttribute('target', '_blank');
   });
 
   it('prevents duplicate lead creation on double submit', async () => {

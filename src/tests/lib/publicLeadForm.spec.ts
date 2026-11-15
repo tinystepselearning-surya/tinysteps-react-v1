@@ -72,6 +72,36 @@ describe('publicLeadForm helpers', () => {
     expect(buildPublicWhatsappMessage(lead)).not.toContain('book one free 35-minute 1:1');
   });
 
+  it('keeps the undecided concern within the existing Firestore programme allowlist', () => {
+    const payload = buildPublicLeadPayload({
+      parentName: 'Parent', childName: 'Child', whatsapp: '919999999999', childAge: '6',
+      mainConcern: 'Not sure where to start', classFormatPreference: 'unsure', urgency: 'Just exploring',
+    });
+    expect(['Phonics', 'Reading', 'Grammar', 'Speaking']).toContain(payload.programInterest);
+    expect(payload.classFormatPreference).toBe('unsure');
+  });
+
+  it('adds contact permission only for an explicit enquiry-specific method', () => {
+    const parent = {
+      parentName: 'Parent', childName: 'Child', whatsapp: '919999999999',
+      childAge: '6', mainConcern: 'Blending sounds to read words' as const,
+      classFormatPreference: 'small_group' as const, urgency: '' as const,
+    };
+    const legacy = buildPublicLeadPayload(parent, { source: 'group_phonics_page' });
+    expect(legacy).not.toHaveProperty('contactPreference');
+    expect(legacy).not.toHaveProperty('contactPermission');
+
+    const callback = buildPublicLeadPayload({ ...parent, contactPreference: 'phone' }, { source: 'group_phonics_page' });
+    expect(callback).toMatchObject({
+      contactPreference: 'phone', contactPermission: true,
+      programInterest: 'Phonics', classFormatPreference: 'small_group',
+    });
+    expect(buildPublicWhatsappMessage({ ...parent, contactPreference: 'phone' }))
+      .toContain('Preferred contact for this enquiry: Phone callback');
+    expect(buildPublicWhatsappMessage({ ...parent, contactPreference: 'phone' }))
+      .toContain('Contact number: 919999999999');
+  });
+
   it('builds the complete server-side enrichment payload separately', () => {
     expect(
       buildLeadAttributionEnrichment({

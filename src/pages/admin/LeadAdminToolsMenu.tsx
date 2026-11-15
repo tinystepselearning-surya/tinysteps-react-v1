@@ -6,6 +6,7 @@ import {
   MessageSquareText,
   MoreHorizontal,
   Pencil,
+  PhoneCall,
   RotateCcw,
   Trash2,
   Undo2,
@@ -53,6 +54,7 @@ import {
   type LeadCommunicationType,
 } from '../../services/leadCommunicationsService';
 import { adminCorrectDemoCompletion } from '../../services/leadRecoveryService';
+import { resolveEnquiryContactPreference, labelEnquiryContactPreference } from './leadsWorkflowBuckets';
 import {
   buildLeadAdminSummary,
   buildLeadFollowUpMessage,
@@ -159,6 +161,18 @@ export default function LeadAdminToolsMenu({
   const followUpText = useMemo(() => buildLeadFollowUpMessage(row), [row]);
   const leadId = String(row.lead?.id || row.demo?.leadId || '').trim();
   const hasPhone = row.parentPhone !== '—' && phoneDigits(row.parentPhone).length >= 7;
+  const contactPreference = resolveEnquiryContactPreference(row.lead);
+  const canUseWhatsApp = hasPhone && contactPreference !== 'phone';
+  const canCallParent = hasPhone && contactPreference !== 'whatsapp';
+  const contactEvidence = useMemo(() => {
+    const inbound = communications.some((item) =>
+      ['message', 'call'].includes(item.type) && item.direction === 'inbound');
+    if (inbound) return 'Parent response recorded by staff; delivery is not externally verified.';
+    const outbound = communications.some((item) =>
+      ['message', 'call'].includes(item.type) && item.direction === 'outbound');
+    if (outbound) return 'Outbound contact recorded by staff; no parent response is recorded here.';
+    return 'No parent contact evidence recorded here. This does not prove that nobody has contacted the parent.';
+  }, [communications]);
   const normalizedDemoStatus = String(row.demo?.status || '').trim().toLowerCase();
   const canOpenOutcome = Boolean(row.demo) && (
     normalizedDemoStatus === 'open' ||
@@ -239,6 +253,7 @@ export default function LeadAdminToolsMenu({
       return;
     }
     setCommunicationsOpen(true);
+    setCommunications([]);
     setCommunicationsLoading(true);
     try {
       setCommunications(await fetchLeadCommunications(leadId, 50));
@@ -255,8 +270,8 @@ export default function LeadAdminToolsMenu({
 
   const openQuickContactLog = () => {
     // A quick log is a deliberate staff action; opening WhatsApp never logs contact.
-    setCommunicationType('message');
-    setCommunicationChannel('whatsapp');
+    setCommunicationType(contactPreference === 'phone' ? 'call' : 'message');
+    setCommunicationChannel(contactPreference === 'phone' ? 'phone' : 'whatsapp');
     setCommunicationDirection('outbound');
     setCommunicationSummary('');
     void openCommunications();
@@ -288,7 +303,7 @@ export default function LeadAdminToolsMenu({
   };
 
   const openWhatsApp = () => {
-    if (!hasPhone) return;
+    if (!canUseWhatsApp) return;
     window.open(`https://wa.me/${phoneDigits(row.parentPhone)}`, '_blank', 'noopener,noreferrer');
   };
 
@@ -360,7 +375,7 @@ export default function LeadAdminToolsMenu({
               <MessageSquareText className="mr-2 h-4 w-4" /> Communications
             </DropdownMenuItem>
           )}
-          {hasPhone && (
+          {canUseWhatsApp && (
             <DropdownMenuItem onClick={() => setWhatsAppOpen(true)}>
               <MessageCircle className="mr-2 h-4 w-4" /> WhatsApp helper
             </DropdownMenuItem>
@@ -409,12 +424,19 @@ export default function LeadAdminToolsMenu({
           )}
 
           <DropdownMenuSeparator />
+          {canCallParent && (
+            <DropdownMenuItem asChild>
+              <a href={`tel:${row.parentPhone.replace(/[^+\d]/g, '')}`} title="Open dialler; log the actual interaction separately">
+                <PhoneCall className="mr-2 h-4 w-4" /> Call parent
+              </a>
+            </DropdownMenuItem>
+          )}
           {hasPhone && (
             <DropdownMenuItem onClick={() => void copyWithToast(row.parentPhone, 'Phone')}>
               <ClipboardCopy className="mr-2 h-4 w-4" /> Copy phone
             </DropdownMenuItem>
           )}
-          {hasPhone && (
+          {canUseWhatsApp && (
             <DropdownMenuItem onClick={openWhatsApp}>
               <MessageCircle className="mr-2 h-4 w-4" /> Open WhatsApp
             </DropdownMenuItem>
@@ -441,10 +463,14 @@ export default function LeadAdminToolsMenu({
           <DialogHeader>
             <DialogTitle>Communications · {row.parentName}</DialogTitle>
             <DialogDescription>
-              Recent 50 entries are loaded only when this window is opened. There is no background communication listener.
+              Recent 50 entries load only when you open this window. Actions are staff-reported, never verified WhatsApp delivery.
             </DialogDescription>
           </DialogHeader>
 
+          {contactPreference && (
+            <p className="text-xs font-medium text-sky-800">Parent requested: {labelEnquiryContactPreference(contactPreference)} — this enquiry only.</p>
+          )}
+          {!communicationsLoading && <p className="text-xs text-slate-600" role="status">{contactEvidence}</p>}
           <div className="space-y-3 rounded-xl border p-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div>

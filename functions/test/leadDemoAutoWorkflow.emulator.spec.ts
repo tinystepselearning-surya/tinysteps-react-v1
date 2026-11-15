@@ -7,6 +7,7 @@ import {
   onOrphanDemoIdentityRepair,
   shouldEnsureDemoForLead,
 } from '../src/leadDemoAutoWorkflow';
+import { claimDemoSession, reassignDemoSession } from '../src/demoSessionsLegacy';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -39,14 +40,14 @@ describe('automatic lead -> demo workflow guards', () => {
     })).toBe(true);
   });
 
-  it('does not automatically book a 1:1 demo for group or undecided prospects', () => {
+  it('creates a demo request for every canonical class preference without scheduling a booking', () => {
     const canonical = {
       source: 'website', childName: 'Child', primaryPhone: '9440436379',
       status: 'new', dedupeCanonicalLeadId: 'lead-group',
       dedupeIdentityKey: 'canonical-key',
     };
-    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'small_group' })).toBe(false);
-    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'unsure' })).toBe(false);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'small_group' })).toBe(true);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'unsure' })).toBe(true);
     expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'one_to_one' })).toBe(true);
   });
 
@@ -140,6 +141,36 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await leadRef.get()).data()?.demoSessionId).toBe(expectedDemoId);
   });
 
+  it('automatically creates open requests for group and undecided new website leads', async () => {
+    for (const [index, format] of ['small_group', 'unsure'].entries()) {
+      const leadId = `auto-format-${index}`;
+      const leadRef = db.collection('leads').doc(leadId);
+      const before = await leadRef.get();
+      await leadRef.set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: `944043637${index}`,
+        source: 'website', sourceDetail: 'public_assessment_form',
+        status: 'new', classFormatPreference: format,
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: `unique-${index}`,
+        programInterest: 'Phonics',
+        createdAt: admin.firestore.Timestamp.now(),
+      });
+      const after = await leadRef.get();
+      await onLeadEnsureDemoRequest.run({
+        params: { leadId }, data: { before, after },
+      } as never);
+      const demoId = `lead_${leadId}`;
+      expect((await leadRef.get()).data()).toMatchObject({
+        demoSessionId: demoId, demoStatus: 'open',
+      });
+      expect((await db.collection('demoSessions').doc(demoId).get()).data())
+        .toMatchObject({
+          status: 'open', classFormatPreference: format, assessmentFormat: null,
+          leadType: null, assignedTeacherId: null,
+        });
+    }
+    expect((await db.collection('demoSessions').get()).size).toBe(2);
+  });
+
   it('lets an authorised admin safely retry once without duplicating an existing demo', async () => {
     const leadId = 'retry-canonical';
     const leadRef = db.collection('leads').doc(leadId);
@@ -166,21 +197,127 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await leadRef.get()).data()?.demoSessionId).toBe(`lead_${leadId}`);
   });
 
-  it('blocks manual retry for undecided or small-group enquiries', async () => {
+  it('safely creates format-neutral demo requests for group and undecided enquiries on admin retry', async () => {
     const adminUid = 'admin-demo-retry-format-test';
     await db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' });
-    for (const format of ['small_group', 'unsure']) {
+    for (const [index, format] of ['small_group', 'unsure'].entries()) {
       const leadId = `retry-${format}`;
-      await db.collection('leads').doc(leadId).set({
-        childName: 'Keerthi', primaryPhone: '9440436379', source: 'website',
+      const phone = `944043638${index}`;
+      const leadRef = db.collection('leads').doc(leadId);
+      await leadRef.set({
+        childName: 'Keerthi', primaryPhone: phone, source: 'website',
         status: 'new', classFormatPreference: format,
-        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'identity-key',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: `identity-${index}`,
       });
-      await expect(adminRetryLeadDemoRequest.run({
-        auth: { uid: adminUid }, data: { leadId },
-      } as never)).rejects.toThrow(/Review class format/);
+      const payload = { auth: { uid: adminUid }, data: { leadId } } as never;
+      const result = await adminRetryLeadDemoRequest.run(payload);
+      expect(result).toMatchObject({ ok: true, action: 'created', demoId: `lead_${leadId}` });
+      expect(await adminRetryLeadDemoRequest.run(payload)).toMatchObject({ ok: true, action: 'already_linked' });
+      const demo = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+      expect(demo).toMatchObject({ status: 'open', leadType: null, classFormatPreference: format, assessmentFormat: null });
+      expect((await leadRef.get()).data()).toMatchObject({ demoStatus: 'open', demoSessionId: result.demoId });
     }
-    expect((await db.collection('demoSessions').get()).size).toBe(0);
+    expect((await db.collection('demoSessions').get()).size).toBe(2);
+  });
+
+  it('prevents teacher self-claim from bypassing the admin format decision', async () => {
+    const adminUid = 'admin-claim-guard';
+    const teacherUid = 'teacher-claim-guard';
+    const leadId = 'undecided-claim-guard';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'active', name: 'Demo Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436397',
+        source: 'website', status: 'new', classFormatPreference: 'unsure',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'guard-identity',
+      }),
+    ]);
+    const result = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    const before = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+    expect(before).toMatchObject({ status: 'open', classFormatPreference: 'unsure', assessmentFormat: null });
+    await expect(claimDemoSession.run({
+      auth: { uid: teacherUid },
+      data: { demoId: result.demoId, teacherConfirmedDate: '2026-11-16', teacherConfirmedTime: '10:00' },
+    } as never)).rejects.toThrow(/Admin must choose assessment delivery/);
+    const after = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+    expect(after).toMatchObject({ status: 'open', assignedTeacherId: null });
+  });
+
+  it('records the chosen assessment delivery without overwriting the parent group preference', async () => {
+    const adminUid = 'admin-assessment-format';
+    const teacherUid = 'teacher-assessment-format';
+    const leadId = 'group-assessment-selection';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active', name: 'Admissions Admin' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'active', name: 'Demo Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436398',
+        source: 'website', status: 'new', classFormatPreference: 'small_group',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'group-format-identity',
+      }),
+    ]);
+    const result = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    expect((await db.collection('demoSessions').doc(result.demoId).get()).data())
+      .toMatchObject({ status: 'open', leadType: null, classFormatPreference: 'small_group' });
+
+    await reassignDemoSession.run({
+      auth: { uid: adminUid },
+      data: {
+        demoId: result.demoId,
+        assignedTeacherId: teacherUid,
+        assignedTeacherName: 'Demo Teacher',
+        assessmentFormat: 'one_to_one',
+      },
+    } as never);
+
+    expect((await db.collection('demoSessions').doc(result.demoId).get()).data()).toMatchObject({
+      status: 'assigned',
+      assessmentFormat: 'one_to_one',
+      leadType: '1:1',
+      classFormatPreference: 'small_group',
+      assignedTeacherId: teacherUid,
+    });
+    expect((await db.collection('leads').doc(leadId).get()).data()?.classFormatPreference).toBe('small_group');
+  });
+
+  it('refuses inactive teachers and takes the assigned name from the verified teacher profile', async () => {
+    const adminUid = 'admin-teacher-active-guard';
+    const teacherUid = 'inactive-teacher-guard';
+    const leadId = 'teacher-active-guard';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'inactive', name: 'Verified Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436396',
+        source: 'website', status: 'new', classFormatPreference: 'unsure',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'teacher-active-identity',
+      }),
+    ]);
+    const { demoId } = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    const assignment = {
+      auth: { uid: adminUid },
+      data: {
+        demoId, assignedTeacherId: teacherUid,
+        assignedTeacherName: 'Unverified Name', assessmentFormat: 'one_to_one',
+      },
+    } as never;
+    await expect(reassignDemoSession.run(assignment)).rejects.toThrow(/teacher is no longer active/i);
+    expect((await db.collection('demoSessions').doc(demoId).get()).data()).toMatchObject({
+      status: 'open', assignedTeacherId: null, assessmentFormat: null,
+    });
+
+    await db.collection('users').doc(teacherUid).update({ status: 'active' });
+    await reassignDemoSession.run(assignment);
+    expect((await db.collection('demoSessions').doc(demoId).get()).data()).toMatchObject({
+      status: 'assigned', assignedTeacherId: teacherUid, assignedTeacherName: 'Verified Teacher',
+    });
   });
 
   it('refuses a conflicting owned demo instead of creating a second parent-child request', async () => {

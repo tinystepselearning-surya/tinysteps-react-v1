@@ -121,8 +121,7 @@ export const shouldEnsureDemoForLead = (
 ): boolean => {
   if (!leadId || isSyntheticDemoLeadId(leadId)) return false;
   if (lead.archived === true || isTerminalLead(lead)) return false;
-  // Group interest is not a confirmed 1:1 demo booking. Keep it in the lead pool.
-  if (lead.classFormatPreference === 'small_group' || lead.classFormatPreference === 'unsure') return false;
+  // Class-format preference affects assessment planning, not operational demo eligibility.
   if (cleanText(lead.demoSessionId, 120)) return false;
   if (!isWebsiteCanonicalReady(leadId, lead)) return false;
   return Boolean(identityKey(leadPhone(lead), lead.childName));
@@ -250,7 +249,7 @@ export const shouldRunOrphanDemoRepair = (
 };
 
 // One idempotent, identity-checked transaction for the automatic trigger and an explicit admin retry.
-// The retry does not bypass canonicalization, format preference, ownership or unique-key conflicts.
+// Both paths preserve canonicalization, ownership and unique-key conflict checks.
 const ensureDemoRequest = async (leadId: string) => {
     const db = admin.firestore();
     const leadRef = db.collection('leads').doc(leadId);
@@ -383,10 +382,14 @@ const ensureDemoRequest = async (leadId: string) => {
         lead.receivedAt || lead.requestedAt || lead.createdAt,
       );
       const primaryDedupeKey = demoDedupeKey(childName, phone) || dedupeKeys[0];
+      const classFormatPreference = cleanText(lead.classFormatPreference, 40).toLowerCase() || 'one_to_one';
 
       tx.set(deterministicDemoRef, {
         parentName: cleanText(lead.parentName, 120) || 'Parent',
-        leadType: '1:1',
+        // Group/undecided requests stay format-neutral until an admin chooses the assessment format.
+        leadType: classFormatPreference === 'one_to_one' ? '1:1' : null,
+        classFormatPreference,
+        assessmentFormat: null,
         childName,
         childGrade,
         childAge,
@@ -543,9 +546,6 @@ export const adminRetryLeadDemoRequest = onCall<{ leadId: string }>(
     if (lead.archived === true || isTerminalLead(lead)) {
       throw new HttpsError('failed-precondition', 'Closed or archived leads cannot be retried.');
     }
-    if (lead.classFormatPreference === 'small_group' || lead.classFormatPreference === 'unsure') {
-      throw new HttpsError('failed-precondition', 'Review class format with the parent; a group/unsure enquiry is not an approved 1:1 demo.');
-    }
     if (!isWebsiteCanonicalReady(leadId, lead)) {
       throw new HttpsError('failed-precondition', 'Lead identity is not canonical or has a conflict. Review before creating a demo.');
     }
@@ -559,7 +559,7 @@ export const adminRetryLeadDemoRequest = onCall<{ leadId: string }>(
       return { ok: true, action: 'already_linked', demoId: linkedDemoId };
     }
     if (!shouldEnsureDemoForLead(leadId, lead)) {
-      throw new HttpsError('failed-precondition', 'Lead cannot safely receive an automatic 1:1 demo.');
+      throw new HttpsError('failed-precondition', 'Lead cannot safely receive a demo request.');
     }
 
     const result = await ensureDemoRequest(leadId);
