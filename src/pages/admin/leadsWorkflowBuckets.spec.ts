@@ -5,6 +5,8 @@ import {
   resolveSimpleLeadBucket,
   resolveSimpleStatusLabel,
   resolveLeadTriage,
+  resolveEnquiryContactPreference,
+  labelEnquiryContactPreference,
   simpleOutcomeNeedsReason,
 } from './leadsWorkflowBuckets';
 
@@ -148,5 +150,23 @@ describe('guide-inspired lead triage — read-only evidence, never a verificatio
   it('leaves a complete known-goal lead out of missing-detail triage', () => {
     expect(resolveLeadTriage(completeLead).detailGaps).toEqual([]);
     expect(resolveLeadTriage({ ...completeLead, urgency: null }).statedUrgency).toBe(null);
+  });
+});
+
+describe('parent-requested enquiry contact method', () => {
+  it('accepts only an explicit matched permission and known preference', () => {
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone', contactPermission: true })).toBe('phone');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'whatsapp', contactPermission: true })).toBe('whatsapp');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'either', contactPermission: true })).toBe('either');
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone', contactPermission: false })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPreference: 'phone' })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPermission: true })).toBe(null);
+    expect(resolveEnquiryContactPreference({ contactPreference: 'marketing', contactPermission: true })).toBe(null);
+    expect(resolveEnquiryContactPreference(null)).toBe(null);
+  });
+  it('uses channel-specific labels without implying WhatsApp account verification', () => {
+    expect(labelEnquiryContactPreference('phone')).toBe('Phone callback');
+    expect(labelEnquiryContactPreference('whatsapp')).toBe('WhatsApp reply');
+    expect(labelEnquiryContactPreference('either')).toBe('Phone or WhatsApp');
   });
 });
