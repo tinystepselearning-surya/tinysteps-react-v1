@@ -300,6 +300,29 @@ export function shuffleVisualSpellingPuzzles(
   return result;
 }
 
+/**
+ * Every level has 24 curated puzzles (six of each of four activity kinds).
+ * Deliver a child-sized eight-puzzle round rather than an exhausting 24-item
+ * page. Round 0 preserves the original reviewed introduction; rounds 1 and 2
+ * expose the remaining sixteen without repeats. No progress is persisted.
+ */
+export function visualSpellingPracticeRound(
+  stage: VisualSpellingStage,
+  round: number,
+): VisualSpellingPuzzle[] {
+  const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage);
+  if (!round) return selected.slice(0, 8);
+  const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
+  const offset = ((Math.max(0, Math.floor(round)) % 3) * 2);
+  const groups = activityKinds.map(kind =>
+    selected.filter(puzzle => puzzle.kind === kind).slice(offset, offset + 2)
+  );
+  const next = [0, 1].flatMap(i => groups.map(group => group[i]).filter(
+    (item): item is VisualSpellingPuzzle => Boolean(item)
+  ));
+  return shuffleVisualSpellingPuzzles(next);
+}
+
 export const visualSpellingAnswer = (puzzle: VisualSpellingPuzzle): string => {
   if (puzzle.kind === 'sort') return puzzle.answer;
   if (puzzle.kind === 'missing') return puzzle.missing;
