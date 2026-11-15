@@ -29,11 +29,11 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     const journey = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'explorer-journey');
     const friend = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'explorer-friend');
     const definite = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'builder-definitely');
-    const unhappy = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'master-unhappy');
+    const advancedPrefix = VISUAL_SPELLING_PUZZLES.find(p => p.id === 'master-misinterpretation');
     expect(journey && visualSpellingAnswer(journey)).toBe('journey');
     expect(friend && visualSpellingAnswer(friend)).toBe('friend');
     expect(definite && visualSpellingAnswer(definite)).toBe('i');
-    expect(unhappy && visualSpellingAnswer(unhappy)).toBe('Prefix at the start');
+    expect(advancedPrefix && visualSpellingAnswer(advancedPrefix)).toBe('Begins with mis-');
   });
 
 
