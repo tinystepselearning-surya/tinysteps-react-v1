@@ -1,0 +1,56 @@
+name: Public Enquiry Contact Preference Contract
+
+on:
+  pull_request:
+    paths:
+      - 'firestore.rules'
+      - 'src/tests/firestore/publicLeads.rules.spec.ts'
+      - 'src/lib/publicLeadForm.ts'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
+      - 'src/tests/lib/publicLeadForm.spec.ts'
+      - 'src/tests/components/PublicAssessmentForm.spec.tsx'
+      - '.github/workflows/public-enquiry-contact-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contact-contract:
+    name: Anonymous enquiry rules and form safety
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      GCLOUD_PROJECT: demo-tinysteps-public-contact
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-public-contact
+      FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Refuse production project and credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-public-contact
+          test "$GOOGLE_CLOUD_PROJECT" = demo-tinysteps-public-contact
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -z "${FIREBASE_TOKEN:-}"
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Verify exact public form and immutable payload semantics
+        run: npx vitest run src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx
+      - name: Real Firestore rules emulator
+        run: |
+          npx --yes firebase-tools@15.30.0 emulators:exec \
+            --project demo-tinysteps-public-contact \
+            --only firestore \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/publicLeads.rules.spec.ts'
+      - name: Check TypeScript
+        run: npm run typecheck

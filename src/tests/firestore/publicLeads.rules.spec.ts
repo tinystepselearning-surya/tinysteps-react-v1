@@ -86,6 +86,33 @@ suite('public leads firestore rules', () => {
     await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ classFormatPreference: 'massive_group' })));
   });
 
+  it('accepts explicit enquiry-specific contact methods and legacy submissions', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload()));
+    for (const contactPreference of ['phone', 'whatsapp', 'either']) {
+      await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+        contactPreference,
+        contactPermission: true,
+      })));
+    }
+  });
+
+  it('rejects unapproved contact preferences and unrequested contact permission', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      contactPreference: 'bulk_marketing', contactPermission: true,
+    })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      contactPreference: 'phone', contactPermission: false,
+    })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      contactPreference: 'phone',
+    })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({
+      contactPermission: true,
+    })));
+  });
+
   it('rejects invalid mainConcern values for unauthenticated create', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
 
