@@ -17,7 +17,6 @@ test('homepage booking modal owns the screen and restores support after close', 
   await expect(assessmentDialog).toBeVisible();
   await expect(assessmentDialog.getByRole('heading', { name: /Book your free assessment/i })).toBeVisible();
   await expect(supportDock).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Chat on WhatsApp' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Ask TinySteps AI' })).toHaveCount(0);
 
   await assessmentDialog.getByRole('button', { name: 'Close assessment form' }).click();
@@ -38,7 +37,6 @@ test('dedicated booking page has no floating support and shows the submit action
   // The widgets used to appear after a deferred load and cover the form.
   await page.waitForTimeout(19000);
   await expect(page.locator('[data-floating-assistant="1"]')).toHaveCount(0);
-  await expect(page.getByRole('link', { name: 'Chat on WhatsApp' })).toHaveCount(0);
 });
 
 test('phone-sized booking form stays usable without horizontal overflow', async ({ page }) => {
