@@ -17,6 +17,8 @@ describe('free visual spelling puzzle lab', () => {
     expect(screen.getByText(/no login.*nothing saved/i)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /everyday words/i }));
     expect(screen.getByText('A trip from one place to another.')).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Everyday Words', level: 2 })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Build the Word', level: 3 })).toBeTruthy();
 
     for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
       fireEvent.click(screen.getByRole('button', { name: new RegExp('Add tile ' + letter + ', position') }));
@@ -42,6 +44,27 @@ describe('free visual spelling puzzle lab', () => {
     expect(screen.getByRole('button', { name: /long word challenge/i })).toBeTruthy();
     expect(screen.getByText(/example words: friend · school · planet/i)).toBeTruthy();
   });
+  it('shows the selected level prominently and names its specific puzzle activity', () => {
+    const cases = [
+      { level: /everyday words/i, title: 'Everyday Words', activity: 'Build the Word' },
+      { level: /patterns & endings/i, title: 'Patterns & Endings', activity: 'Sort by Word Ending' },
+      { level: /tricky spellings/i, title: 'Tricky Spellings', activity: 'Fill the Missing Letters' },
+      { level: /long word challenge/i, title: 'Long Word Challenge', activity: 'Build from Word Parts' },
+    ];
+    for (const item of cases) {
+      const { unmount } = render(
+        <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
+          <VisualSpellingPuzzleLab />
+        </MemoryRouter>
+      );
+      fireEvent.click(screen.getByRole('button', { name: item.level }));
+      expect(screen.getByRole('heading', { name: item.title, level: 2 })).toBeTruthy();
+      expect(screen.getByRole('heading', { name: item.activity, level: 3 })).toBeTruthy();
+      expect(screen.getByText('Now playing: ' + item.title)).toBeTruthy();
+      unmount();
+    }
+  });
+
   it('requires sorting two contrasting words before counting the puzzle complete', () => {
     render(
       <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
