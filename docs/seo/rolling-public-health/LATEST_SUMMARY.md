@@ -1,5 +1,21 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T00:46:21.087Z UTC (15 November 2026 IST, slot 7 evidence handling)
+
+- Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
+- **15 November IST: 70/202 distinct exact-URL provider retrieval attempts (34.65%); 132 unattempted.** Previous-day timestamps excluded.
+- Slot 7 rows 61–70: **10/10 exact-URL retrievals returned page-specific provider-extracted text**, covering speaking games, letter sounds, sound listening, word building, spelling, sentence making, reading fluency, grammar, speaking practice and letter tracing. Evidence: `turn916048view0`–`turn916048view9` (provider reports crawled yesterday).
+- **Content-readiness observation, not a new regression:** speaking games category row 61 explicitly shows **4 listed / 0 playable**, with four coming-soon entries; speaking practice row 69 is also marked **COMING SOON**. This is not an HTTP/SEO failure or independently tested gameplay. No dated before/after evidence of a production change.
+- UTC marker `2026-11-15T00:46:21.087Z` is the **batch evidence-handling time**, not ten separately measured origin request times.
+- **Fully origin-verified: 0/202 today.** Origin HTTP status, final redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider text does not establish origin health.
+- GitHub Actions API returned **zero in-progress runs** at audit time. Administrative disabled state of the legacy workflow was not independently established; user's explicit confirmation remains operating basis. No GitHub workflow run or enabled.
+- No verified production regression or improvement; CHANGES.md unchanged. No production/workflow changes.
+- Next eligible batch: slot 8, rows 71–80, subject to recovery of earlier eligible unchecked URLs.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-14T23:46:44.742Z UTC (15 November 2026 IST, slot 6 evidence handling)
 
 - Registry validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12.
