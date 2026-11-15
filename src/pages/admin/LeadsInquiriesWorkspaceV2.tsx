@@ -95,6 +95,7 @@ interface LeadRecord {
   parentEmail?: string | null;
   childName?: string;
   childAge?: number | null;
+  childAgeBand?: '13+' | null;
   childGrade?: string | null;
   interestTrack?: string | null;
   programInterest?: string | null;
@@ -563,7 +564,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           parentName: row.parentName,
           parentPhone: row.parentPhone,
           childName: row.childName,
-          childAge: lead?.childAge ?? demo?.childAge,
+          childAge: lead?.childAgeBand === '13+' ? '13+' : lead?.childAge ?? demo?.childAge,
           course: row.course,
           mainConcern: lead?.mainConcern,
           source: row.source,
