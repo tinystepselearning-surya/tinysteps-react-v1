@@ -3,6 +3,7 @@ name: Free Visual Spelling Game Quality Gate
 on:
   pull_request:
     paths:
+      - 'src/app/routes.tsx'
       - 'src/lib/visualSpellingPuzzles.ts'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.tsx'
       - 'src/pages/public/PublicEnglishGamePlayer.tsx'
@@ -11,6 +12,7 @@ on:
       - 'src/pages/KidsGamesHub.tsx'
       - 'src/tests/pages/VisualSpellingPuzzles.spec.ts'
       - 'src/tests/pages/VisualSpellingPuzzleLab.spec.tsx'
+      - 'tests/free-visual-spelling-focus.spec.ts'
       - '.github/workflows/free-visual-spelling-game-gate.yml'
   workflow_dispatch:
 
@@ -43,5 +45,9 @@ jobs:
           npx vitest run
           src/tests/pages/VisualSpellingPuzzles.spec.ts
           src/tests/pages/VisualSpellingPuzzleLab.spec.tsx
+      - name: Install Chromium for game route checks
+        run: npx playwright install --with-deps chromium
+      - name: Test immersive puzzle route and classic-game regression in browser
+        run: npx playwright test tests/free-visual-spelling-focus.spec.ts --project=chromium
       - name: No deploy
         run: echo 'Validation only; never deploys or modifies Firebase.'
