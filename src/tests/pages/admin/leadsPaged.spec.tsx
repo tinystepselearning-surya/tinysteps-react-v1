@@ -1,5 +1,5 @@
 import React from 'react';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
@@ -407,6 +407,50 @@ describe('usePagedLeads bounded Firestore reads', () => {
       args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.in_progress]],
     });
     expect(hasConstraintKind(dataArgs, 'orderBy')).toBe(false);
+  });
+
+  it('refreshes a loaded enquiry when its background demo link arrives', async () => {
+    const before = makeDoc('recent', 'new', Date.now(), 'website');
+    const linked = {
+      ...before,
+      data: () => ({ ...before.data(), demoSessionId: 'lead_recent' }),
+    };
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([before]));
+    render(<Harness bucket="all" pageSize="all" />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      subscriptions[0].next(makeSnapshot([before]));
+    });
+    await act(async () => {
+      subscriptions[0].next({
+        ...makeSnapshot([linked]),
+        docChanges: () => [{ type: 'modified' as const, doc: linked }],
+      });
+    });
+    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2));
+    // Reuse the existing bounded notification watcher; don't subscribe to the full collection.
+    expect(firestoreMocks.onSnapshot.mock.calls.every((call) =>
+      (call[0] as { args: unknown[] }).args.some((arg) =>
+        (arg as { kind?: string; value?: number }).kind === 'limit' &&
+        (arg as { value?: number }).value === 5,
+      ),
+    )).toBe(true);
+  });
+
+  it('does not reload the enquiry range for unrelated lead metadata changes', async () => {
+    const lead = makeDoc('recent', 'new', Date.now(), 'website');
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([lead]));
+    render(<Harness bucket="all" pageSize="all" />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    await act(async () => {
+      subscriptions[0].next(makeSnapshot([lead]));
+      subscriptions[0].next({
+        ...makeSnapshot([lead]),
+        docChanges: () => [{ type: 'modified' as const, doc: lead }],
+      });
+    });
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
   });
 
   it('keeps only a five-document realtime watch for new website lead notifications', () => {
