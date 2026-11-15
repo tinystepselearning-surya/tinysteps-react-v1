@@ -254,7 +254,7 @@ describe("FreeEnglishGameLandingPage", () => {
     renderRoute("/free-spelling-game-for-kids?play=1");
 
     expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 1 })).toBeInTheDocument();
-    expect(screen.getByText(/guest play mode • spelling adventure/i)).toBeInTheDocument();
+    expect(screen.getByText(/tiny steps • free spelling practice/i)).toBeInTheDocument();
     // First puzzle is playable immediately; no extra landing or intro click.
     expect(screen.getByRole("heading", { name: "Build a Word", level: 2 })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /go to spell from memory/i })).toBeInTheDocument();
