@@ -2453,13 +2453,25 @@ export default function ParentDashboard() {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    queryFn: async (): Promise<ParentWorksheetItem[]> => {
-      if (!user?.uid || !selectedKidId) return [];
-      const response = await callFunction<{ resources?: Array<Record<string, unknown>> }, { kidId: string }>(
-        "getParentWorksheetResources",
-        { kidId: selectedKidId },
-      );
-      return (response.resources || []).map((resource) => toParentWorksheetItem(String(resource.id || ''), resource));
+    queryFn: async (): Promise<{
+      items: ParentWorksheetItem[];
+      enrolledCourseIds: string[];
+      parentOnlyWorksheetIds: string[];
+    }> => {
+      if (!user?.uid || !selectedKidId) {
+        return { items: [], enrolledCourseIds: [], parentOnlyWorksheetIds: [] };
+      }
+      const response = await callFunction<{
+        resources?: Array<Record<string, unknown>>;
+        enrolledCourseIds?: string[];
+        parentOnlyWorksheetIds?: string[];
+      }, { kidId: string }>("getParentWorksheetResources", { kidId: selectedKidId });
+      return {
+        items: (response.resources || []).map((resource) =>
+          toParentWorksheetItem(String(resource.id || ''), resource)),
+        enrolledCourseIds: response.enrolledCourseIds || [],
+        parentOnlyWorksheetIds: response.parentOnlyWorksheetIds || [],
+      };
     },
   });
 
@@ -4041,7 +4053,7 @@ export default function ParentDashboard() {
   }, [enrollmentsQuery.data, selectedKidId]);
 
   const visibleParentWorksheets = useMemo(() => {
-    const worksheets = parentWorksheetsQuery.data ?? [];
+    const worksheets = parentWorksheetsQuery.data?.items ?? [];
     return worksheets
       .filter((worksheet) => worksheet.isActive && !worksheet.isArchived)
       .sort((a, b) => {
@@ -5316,7 +5328,10 @@ export default function ParentDashboard() {
         {activeTab === "worksheets" && (
           <div className="space-y-3 sm:space-y-4">
             <ParentWorksheetLibrary
+              key={selectedKidId || 'no-child'}
               items={visibleParentWorksheets}
+              enrolledCourseIds={parentWorksheetsQuery.data?.enrolledCourseIds || []}
+              parentOnlyWorksheetIds={parentWorksheetsQuery.data?.parentOnlyWorksheetIds || []}
               loading={parentWorksheetsQuery.isLoading}
               refreshing={parentWorksheetsQuery.isFetching}
               onRefresh={() => void parentWorksheetsQuery.refetch()}
