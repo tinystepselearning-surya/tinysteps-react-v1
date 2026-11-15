@@ -54,10 +54,14 @@ test('every puzzle level opens an appropriately different child-readable challen
   await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
   const cases = [
     { level: /everyday words/i, title: 'Everyday Words', heading: 'Build the Word', clue: 'A trip from one place to another.' },
+    { level: /vowel spelling patterns/i, title: 'Vowel Spelling Patterns', heading: 'Build from Word Parts', clue: 'A coat worn to stay dry in the rain.' },
     { level: /patterns & endings/i, title: 'Patterns & Endings', heading: 'Sort by Word Ending', clue: 'Not paying enough attention or care.' },
     { level: /longer & compound words/i, title: 'Longer & Compound Words', heading: 'Build from Word Parts', clue: 'A tall flower with a large yellow head.' },
+    { level: /syllable spelling/i, title: 'Syllable Spelling', heading: 'Build from Word Parts', clue: 'A meal eaten outdoors.' },
+    { level: /plural & word changes/i, title: 'Plural & Word Changes', heading: 'Build from Word Parts', clue: 'Moved off the ground using your legs in the past.' },
     { level: /tricky spellings/i, title: 'Tricky Spellings', heading: 'Fill the Missing Letters', clue: 'Something that is needed or required.' },
     { level: /prefixes & word parts/i, title: 'Prefixes & Word Parts', heading: 'Build from Word Parts', clue: 'The feeling of not being happy.' },
+    { level: /word roots & meanings/i, title: 'Word Roots & Meanings', heading: 'Build from Word Parts', clue: 'A device used to talk to someone far away.' },
     { level: /long word challenge/i, title: 'Long Word Challenge', heading: 'Build from Word Parts', clue: 'Involving two or more countries.' },
   ];
   for (const item of cases) {
