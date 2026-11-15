@@ -13,7 +13,7 @@ const games = [
     age: "Approx. ages 5–8",
     label: "Start with shorter words",
     description: "Begin with an optional two-letter warm-up, then build familiar words, complete missing letters and correct mistakes.",
-    features: ["6 spelling activities", "108 reviewed word challenges", "6 per step · more on replay"],
+    features: ["6 spelling activities + warm-up", "126 practice challenges", "6 per step · more on replay"],
     href: CLASSIC_PATH,
     button: "Play Spelling Adventure",
     visual: "🔤",
