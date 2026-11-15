@@ -115,3 +115,58 @@ describe('shared month-bounded finance session reads', () => {
     expect(protectedSessions.docs).toHaveLength(0); // Protected row beyond the cap.
   });
 });
+
+
+describe('financial reconciliation shared-read parity', () => {
+  it('matches the independent helper results with overlapping date and monthKey matches', async () => {
+    const rows: Row[] = [
+      { id: 'completed-overlap', data: { date: '2026-11-12', monthKey: '2026-11', status: 'completed' } },
+      { id: 'completed-only-date', data: { date: '2026-11-18', status: 'completed' } },
+      { id: 'protected-overlap', data: {
+        date: '2026-11-13', monthKey: '2026-11',
+        status: 'cancelled', attendance: { kid: 'present' },
+      } },
+      { id: 'protected-only-month', data: {
+        monthKey: '2026-11', status: 'rescheduled', attendance: { kid: 'present' },
+      } },
+      { id: 'wrong-month', data: { monthKey: '2026-10', status: 'completed' } },
+    ];
+
+    const independent = fakeFirestore(rows);
+    const [originalCompleted, originalProtected] = await Promise.all([
+      fetchCompletedSessionsForFinanceReconciliation({
+        db: independent.db, monthKey: '2026-11', maxDocs: 20,
+      }),
+      fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation({
+        db: independent.db, monthKey: '2026-11', maxDocs: 20,
+      }),
+    ]);
+    expect(independent.reads).toHaveLength(6);
+
+    const shared = fakeFirestore(rows);
+    const monthCandidates = fetchMonthBoundedFinanceSessionCandidates({
+      db: shared.db, monthKey: '2026-11', maxDocs: 20,
+    });
+    const [sharedCompleted, sharedProtected] = await Promise.all([
+      fetchCompletedSessionsForFinanceReconciliation({
+        db: shared.db, monthKey: '2026-11', maxDocs: 20, monthCandidates,
+      }),
+      fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation({
+        db: shared.db, monthKey: '2026-11', maxDocs: 20, monthCandidates,
+      }),
+    ]);
+    expect(shared.reads).toHaveLength(3);
+    expect(sharedCompleted.docs.map((doc) => doc.id))
+      .toEqual(originalCompleted.docs.map((doc) => doc.id));
+    expect(sharedProtected.docs.map((doc) => doc.id))
+      .toEqual(originalProtected.docs.map((doc) => doc.id));
+    expect(sharedCompleted.truncated).toBe(originalCompleted.truncated);
+    expect(sharedProtected.truncated).toBe(originalProtected.truncated);
+    expect(sharedCompleted.docs.map((doc) => doc.id)).toEqual([
+      'completed-only-date', 'completed-overlap',
+    ]);
+    expect(sharedProtected.docs.map((doc) => doc.id)).toEqual([
+      'protected-only-month', 'protected-overlap',
+    ]);
+  });
+});
