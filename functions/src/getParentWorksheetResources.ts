@@ -1,5 +1,6 @@
 import * as admin from 'firebase-admin';
 import { createHash } from 'node:crypto';
+import { loadParentWorksheetBundle } from './helpers/parentWorksheetBundle';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 import {
   readLegacyUserIdentityShadow,
@@ -35,6 +36,22 @@ export function sanitizeWorksheetUrl(value: unknown): string | null {
   } catch {
     return null;
   }
+}
+
+/**
+ * Cross-course browsing is intentionally limited to general, course-targeted
+ * practice. Child-specific, enrolment-specific and parent-specific assignments
+ * remain visible only through the child's existing authorised course path.
+ */
+export function parentWorksheetIsGenerallyBrowseable(data: ResourceRecord): boolean {
+  if (data.isActive === false || data.active === false ||
+      data.isArchived === true || data.archived === true) return false;
+  if (strings(data.targetCourseIds).length === 0) return false;
+  if (strings(data.targetKidIds).length > 0 || strings(data.targetChildIds).length > 0 ||
+      strings(data.targetEnrollmentIds).length > 0) return false;
+  const parentTargets = strings(data.targetParentIds);
+  return parentTargets.length === 0 ||
+    (parentTargets.length === 1 && parentTargets[0] === 'all_parents');
 }
 
 export function parentWorksheetIsAllowed(
@@ -277,18 +294,24 @@ export async function loadParentWorksheetResources(
     throw new HttpsError('permission-denied', 'This child is not linked to the authenticated parent.');
   }
   const context = await activeEnrollmentContext(db, kidId);
-  const candidates = await fetchParentWorksheetCandidates(db, parentId, context.courseIds);
-  const allowedDocs = candidates.filter((entry) => parentWorksheetIsAllowed(entry.data(), { parentId, kidId, ...context }));
-  const courseIds = Array.from(new Set(allowedDocs.flatMap((entry) => strings(entry.data().targetCourseIds)).filter(Boolean)));
-  const courseSnaps = await Promise.all(courseIds.map((courseId) => db.collection('courses').doc(courseId).get()));
-  const courseTitleById = new Map(courseSnaps.map((snap, index) => {
-    const data = snap.data() || {};
-    return [courseIds[index], String(data.name || data.title || data.label || '').trim()];
-  }));
-  return allowedDocs
-    .map((entry) => parentFacingResource(entry.id, entry.data(), courseTitleById))
-    .filter(Boolean)
-    .sort((a, b) => (a!.sortOrder - b!.sortOrder) || a!.title.localeCompare(b!.title));
+  // One cached worksheet catalogue read on normal requests, independent of
+  // the number of courses and resources. Ownership/enrolment reads remain separate.
+  const candidates = await loadParentWorksheetBundle(db);
+  const visible = candidates.filter((entry) =>
+    parentWorksheetIsAllowed(entry.data, { parentId, kidId, ...context }) ||
+    parentWorksheetIsGenerallyBrowseable(entry.data));
+
+  // Course titles are already written on canonical worksheet records; avoid
+  // a further N per-course Firestore lookups on every parent's page visit.
+  const resources = visible
+    .map((entry) => parentFacingResource(entry.id, entry.data, new Map()))
+    .filter((resource): resource is NonNullable<typeof resource> => resource !== null)
+    .sort((a, b) => (a.sortOrder - b.sortOrder) || a.title.localeCompare(b.title));
+
+  return {
+    resources,
+    enrolledCourseIds: Array.from(context.courseIds, (id) => opaqueKey('course', id)),
+  };
 }
 
 export const getParentWorksheetResources = onCall({ region: 'asia-south1' }, async (request) => {
@@ -313,6 +336,5 @@ export const getParentWorksheetResources = onCall({ region: 'asia-south1' }, asy
   const kidId = String((request.data as { kidId?: unknown } | undefined)?.kidId || '').trim();
   if (!kidId || kidId.length > 200) throw new HttpsError('invalid-argument', 'A valid kidId is required.');
 
-  const resources = await loadParentWorksheetResources(db, request.auth.uid, kidId);
-  return { resources };
+  return loadParentWorksheetResources(db, request.auth.uid, kidId);
 });

@@ -38,6 +38,11 @@ import {
 import { Textarea } from '@components/ui/textarea';
 import { db } from '../../lib/firebaseConfig';
 import {
+  WORKSHEET_BUNDLE_COLLECTION,
+  WORKSHEET_BUNDLE_ID,
+  worksheetBundlePatch,
+} from '../../lib/parentWorksheetBundle';
+import {
   getSafeWorksheetUrl,
   normalizeWorksheetUrl,
   toParentWorksheetItem,
@@ -494,6 +499,8 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
 
         const nextLessonSnap = await transaction.get(nextLessonRef);
         const previousLessonSnap = previousLessonRef ? await transaction.get(previousLessonRef) : null;
+        const bundleRef = doc(db, WORKSHEET_BUNDLE_COLLECTION, WORKSHEET_BUNDLE_ID);
+        const bundleSnap = await transaction.get(bundleRef);
 
         const worksheetPayload = {
           title,
@@ -533,6 +540,11 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
         };
 
         transaction.set(worksheetRef, worksheetPayload, { merge: true });
+        // Commit the compact parent catalogue with the worksheet update, so
+        // parent reads never depend on an asynchronous trigger for admin edits.
+        transaction.set(bundleRef, worksheetBundlePatch(
+          bundleSnap.data(), worksheetRef.id, { ...existingData, ...worksheetPayload },
+        ));
 
         const mirroredResource: LessonWorksheetResource = {
           id: worksheetRef.id,
@@ -616,6 +628,8 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
         const lessonId = String(data?.lessonId || item.lessonId || '').trim();
         const lessonRef = lessonId ? doc(db, 'lessonCatalog', lessonId) : null;
         const lessonSnap = lessonRef ? await transaction.get(lessonRef) : null;
+        const bundleRef = doc(db, WORKSHEET_BUNDLE_COLLECTION, WORKSHEET_BUNDLE_ID);
+        const bundleSnap = await transaction.get(bundleRef);
 
         const nextActive = patch.isActive ?? (data?.isActive !== false && data?.active !== false);
         const nextArchived = patch.isArchived ?? (data?.isArchived === true || data?.archived === true);
@@ -631,6 +645,14 @@ export default function ParentWorksheetLibraryManagement(): JSX.Element {
           },
           { merge: true },
         );
+
+        transaction.set(bundleRef, worksheetBundlePatch(
+          bundleSnap.data(), item.id, {
+            ...data,
+            ...(patch.isActive !== undefined ? { isActive: patch.isActive, active: patch.isActive } : {}),
+            ...(patch.isArchived !== undefined ? { isArchived: patch.isArchived, archived: patch.isArchived } : {}),
+          },
+        ));
 
         if (lessonRef && lessonSnap?.exists()) {
           const resources = normalizeResources(lessonSnap.data()?.worksheetResources);

@@ -33,6 +33,7 @@ import {
 
 type Props = {
   items: ParentWorksheetItem[];
+  enrolledCourseIds?: string[];
   loading: boolean;
   refreshing?: boolean;
   onRefresh: () => void;
@@ -125,13 +126,31 @@ const LEARNING_MOTIFS = [Pencil, Blocks, BookOpen, NotebookPen, Stars, Backpack,
 
 const openSafely = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
 
-export function ParentWorksheetLibrary({ items, loading, refreshing = false, onRefresh }: Props) {
+export function ParentWorksheetLibrary({ items, enrolledCourseIds = [], loading, refreshing = false, onRefresh }: Props) {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCourse, setSelectedCourse] = useState('__enrolled__');
   const needle = searchQuery.trim().toLowerCase();
+  const enrolled = useMemo(() => new Set(enrolledCourseIds), [enrolledCourseIds]);
+  const courses = useMemo(() => {
+    const byId = new Map<string, string>();
+    for (const item of items) {
+      if (item.courseId && item.courseId !== 'legacy') {
+        byId.set(item.courseId, item.courseTitle || 'Course resources');
+      }
+    }
+    return Array.from(byId, ([id, title]) => ({ id, title }))
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [items]);
 
+  // The switch changes only local presentation, never makes another request.
   const visibleItems = useMemo(() => {
-    if (!needle) return items;
-    return items.filter((item) => [
+    const courseFiltered = items.filter((item) =>
+      selectedCourse === '__enrolled__'
+        ? (enrolled.size === 0 ? item.courseId === 'legacy' :
+          enrolled.has(item.courseId) || item.courseId === 'legacy')
+        : item.courseId === selectedCourse);
+    if (!needle) return courseFiltered;
+    return courseFiltered.filter((item) => [
       item.title,
       item.description,
       item.resourceType,
@@ -141,7 +160,7 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
       item.lessonFolderTitle,
       item.courseTitle,
     ].join(' ').toLowerCase().includes(needle));
-  }, [items, needle]);
+  }, [items, needle, selectedCourse, enrolled]);
 
   const groups = useMemo(() => groupParentWorksheets(visibleItems), [visibleItems]);
   const courseGroups = useMemo(() => {
@@ -205,7 +224,7 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
         </div>
       </div>
 
-      <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,220px)_auto] sm:items-end">
         <div>
           <label htmlFor="parent-worksheet-search" className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
             Find a worksheet
@@ -220,6 +239,25 @@ export function ParentWorksheetLibrary({ items, loading, refreshing = false, onR
               className="h-10 rounded-xl border-violet-100 bg-white/90 pl-9 shadow-sm focus-visible:ring-violet-300"
             />
           </div>
+        </div>
+        <div>
+          <label htmlFor="parent-worksheet-course" className="text-[11px] font-bold uppercase tracking-[0.12em] text-slate-500">
+            Choose course
+          </label>
+          <select
+            id="parent-worksheet-course"
+            aria-label="Choose course"
+            value={selectedCourse}
+            onChange={(event) => setSelectedCourse(event.target.value)}
+            className="mt-1 h-10 w-full rounded-xl border border-violet-100 bg-white/90 px-3 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
+          >
+            <option value="__enrolled__">My child's courses</option>
+            {courses.map((course) => (
+              <option key={course.id} value={course.id}>
+                {course.title}
+              </option>
+            ))}
+          </select>
         </div>
         <div className="pb-2 text-xs font-medium text-slate-500">{visibleItems.length} shown</div>
       </div>
