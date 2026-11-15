@@ -8,6 +8,8 @@ const mocks = vi.hoisted(() => ({
   fetchRange: vi.fn(),
   toast: vi.fn(),
   retryDemo: vi.fn(),
+  getDemoDoc: vi.fn(),
+  getTeachers: vi.fn(),
   leadsLoading: false,
   loadedLeads: [] as Array<Record<string, unknown>>,
 }));
@@ -18,6 +20,19 @@ vi.mock('../../../pages/admin/leadsPaged', () => ({
 }));
 
 vi.mock('../../../lib/firebaseConfig', () => ({ db: {} }));
+
+vi.mock('firebase/firestore', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('firebase/firestore')>();
+  return {
+    ...actual,
+    collection: vi.fn((_db: unknown, path: string) => ({ path })),
+    doc: vi.fn((_db: unknown, _path: string, id: string) => ({ id })),
+    query: vi.fn((ref: unknown) => ref),
+    where: vi.fn(),
+    getDoc: mocks.getDemoDoc,
+    getDocs: mocks.getTeachers,
+  };
+});
 
 vi.mock('../../../services/demoSessionsService', () => ({
   listenDemoSessionsByIds: vi.fn((_ids: unknown, onData: (rows: unknown[]) => void) => {
@@ -113,6 +128,14 @@ beforeEach(() => {
   mocks.fetchRange.mockReset();
   mocks.toast.mockReset();
   mocks.retryDemo.mockReset();
+  mocks.getDemoDoc.mockReset();
+  mocks.getTeachers.mockReset();
+  mocks.getDemoDoc.mockImplementation(async (ref: { id: string }) => ({
+    exists: () => true,
+    id: ref.id,
+    data: () => ({ status: 'open', leadType: null, parentName: 'Parent', childName: 'Child', courseInterested: 'Phonics', createdBy: 'test' }),
+  }));
+  mocks.getTeachers.mockResolvedValue({ docs: [] });
   mocks.leadsLoading = false;
   mocks.loadedLeads = [];
 
@@ -257,7 +280,7 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
   });
 
-  it('does not retry automatically and requires explicit admin confirmation for a missing 1:1 demo', async () => {
+  it('prepares a missing demo only when admin clicks Assign teacher', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = [{
       id: 'canonical-retry',
@@ -271,23 +294,17 @@ describe('Leads & Enquiries explicit date filter application', () => {
       createdAt: { toMillis: () => todayStart + 1_000 },
     }];
     mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_canonical-retry' });
-    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
-    try {
-      render(<LeadsInquiriesWorkspaceV2 />);
-      const retry = await screen.findByRole('button', { name: 'Retry demo request' });
-      expect(mocks.retryDemo).not.toHaveBeenCalled();
-      fireEvent.click(retry);
-      await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
-      expect(confirm).toHaveBeenCalledTimes(1);
-      await waitFor(() => expect(mocks.toast).toHaveBeenCalledWith(expect.objectContaining({
-        title: 'Demo request linked',
-      })));
-    } finally {
-      confirm.mockRestore();
-    }
+    render(<LeadsInquiriesWorkspaceV2 />);
+    const assign = await screen.findByRole('button', { name: 'Assign teacher' });
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    fireEvent.click(assign);
+    await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('canonical-retry'));
+    await waitFor(() => expect(mocks.getDemoDoc).toHaveBeenCalledTimes(1));
+    expect(await screen.findByText('Parent preference: One-to-one classes')).toBeTruthy();
+    expect(mocks.reloadPage).toHaveBeenCalled();
   });
 
-  it('does not offer an automatic 1:1 retry for group or undecided enquiries', async () => {
+  it('offers the same explicit teacher assignment for group and undecided enquiries', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = ['small_group', 'unsure'].map((format, index) => ({
       id: `format-${index}`,
@@ -300,12 +317,16 @@ describe('Leads & Enquiries explicit date filter application', () => {
       programInterest: 'Phonics',
       createdAt: { toMillis: () => todayStart + 1_000 },
     }));
+    mocks.retryDemo.mockResolvedValue({ ok: true, action: 'created', demoId: 'lead_format-0' });
     render(<LeadsInquiriesWorkspaceV2 />);
-    expect(await screen.findByText('Small-group enquiry — review')).toBeTruthy();
-    expect(screen.getByText('Class format undecided')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Retry demo request' })).toBeNull();
-    expect(screen.getAllByRole('button', { name: 'Review enquiry' })).toHaveLength(2);
+    expect(await screen.findAllByText('Demo request not linked')).toHaveLength(2);
+    const assign = screen.getAllByRole('button', { name: 'Assign teacher' });
+    expect(assign).toHaveLength(2);
     expect(mocks.retryDemo).not.toHaveBeenCalled();
+    fireEvent.click(assign[0]);
+    await waitFor(() => expect(mocks.retryDemo).toHaveBeenCalledWith('format-0'));
+    expect(await screen.findByText('Parent preference: Group classes')).toBeTruthy();
+    expect(mocks.getDemoDoc).toHaveBeenCalledTimes(1);
   });
 
 });
