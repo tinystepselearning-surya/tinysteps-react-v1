@@ -48,6 +48,10 @@ import {
 import {
   addLeadCommunication,
   fetchLeadCommunications,
+  leadContactOutcomeOptions,
+  leadContactOutcomeLabel,
+  recentLeadContactEvidence,
+  type LeadContactOutcome,
   type LeadCommunicationChannel,
   type LeadCommunicationDirection,
   type LeadCommunicationRecord,
@@ -146,6 +150,7 @@ export default function LeadAdminToolsMenu({
   const [communicationType, setCommunicationType] = useState<LeadCommunicationType>('note');
   const [communicationChannel, setCommunicationChannel] = useState<LeadCommunicationChannel>('internal');
   const [communicationDirection, setCommunicationDirection] = useState<LeadCommunicationDirection>('outbound');
+  const [communicationOutcome, setCommunicationOutcome] = useState<LeadContactOutcome | ''>('');
   const [communicationSummary, setCommunicationSummary] = useState('');
   const [communicationSaving, setCommunicationSaving] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
@@ -164,15 +169,12 @@ export default function LeadAdminToolsMenu({
   const contactPreference = resolveEnquiryContactPreference(row.lead);
   const canUseWhatsApp = hasPhone && contactPreference !== 'phone';
   const canCallParent = hasPhone && contactPreference !== 'whatsapp';
-  const contactEvidence = useMemo(() => {
-    const inbound = communications.some((item) =>
-      ['message', 'call'].includes(item.type) && item.direction === 'inbound');
-    if (inbound) return 'Parent response recorded by staff; delivery is not externally verified.';
-    const outbound = communications.some((item) =>
-      ['message', 'call'].includes(item.type) && item.direction === 'outbound');
-    if (outbound) return 'Outbound contact recorded by staff; no parent response is recorded here.';
-    return 'No parent contact evidence recorded here. This does not prove that nobody has contacted the parent.';
-  }, [communications]);
+  const contactEvidence = useMemo(() => recentLeadContactEvidence(communications), [communications]);
+  const availableOutcomes = leadContactOutcomeOptions(
+    communicationType,
+    communicationType === 'note' ? 'internal' : communicationDirection,
+  );
+  const needsContactResult = communicationType === 'message' || communicationType === 'call';
   const normalizedDemoStatus = String(row.demo?.status || '').trim().toLowerCase();
   const canOpenOutcome = Boolean(row.demo) && (
     normalizedDemoStatus === 'open' ||
@@ -273,12 +275,13 @@ export default function LeadAdminToolsMenu({
     setCommunicationType(contactPreference === 'phone' ? 'call' : 'message');
     setCommunicationChannel(contactPreference === 'phone' ? 'phone' : 'whatsapp');
     setCommunicationDirection('outbound');
+    setCommunicationOutcome('');
     setCommunicationSummary('');
     void openCommunications();
   };
 
   const saveCommunication = async () => {
-    if (!leadId || !communicationSummary.trim() || communicationSaving) return;
+    if (!leadId || !communicationSummary.trim() || communicationSaving || (needsContactResult && !communicationOutcome)) return;
     setCommunicationSaving(true);
     try {
       const created = await addLeadCommunication({
@@ -286,10 +289,12 @@ export default function LeadAdminToolsMenu({
         type: communicationType,
         channel: communicationChannel,
         direction: communicationType === 'note' ? 'internal' : communicationDirection,
+        ...(needsContactResult && communicationOutcome ? { outcome: communicationOutcome } : {}),
         summary: communicationSummary,
       });
       setCommunications((current) => [created, ...current].slice(0, 50));
       setCommunicationSummary('');
+      setCommunicationOutcome('');
       toast({ title: 'Communication logged', description: 'Saved with one communication write; no lead mirror write was added.' });
     } catch (error: any) {
       toast({
@@ -478,6 +483,8 @@ export default function LeadAdminToolsMenu({
                 <Select value={communicationType} onValueChange={(value) => {
                   const nextType = value as LeadCommunicationType;
                   setCommunicationType(nextType);
+                  setCommunicationOutcome('');
+                  setCommunicationDirection('outbound');
                   setCommunicationChannel(nextType === 'note' ? 'internal' : nextType === 'call' ? 'phone' : 'whatsapp');
                 }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
@@ -507,7 +514,7 @@ export default function LeadAdminToolsMenu({
               {communicationType === 'note' ? (
                 <p className="mt-1 text-sm text-slate-500">Internal note — not evidence of parent contact.</p>
               ) : (
-                <Select value={communicationDirection} onValueChange={(value) => setCommunicationDirection(value as LeadCommunicationDirection)}>
+                <Select value={communicationDirection} onValueChange={(value) => { setCommunicationDirection(value as LeadCommunicationDirection); setCommunicationOutcome(''); }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="outbound">Outbound — Tiny Steps contacted parent</SelectItem>
@@ -516,6 +523,24 @@ export default function LeadAdminToolsMenu({
                 </Select>
               )}
             </div>
+            {needsContactResult ? (
+              <div>
+                <Label>Contact result (staff-reported) *</Label>
+                <Select value={communicationOutcome} onValueChange={(value) => setCommunicationOutcome(value as LeadContactOutcome)}>
+                  <SelectTrigger className="mt-1" aria-label="Contact result">
+                    <SelectValue placeholder="Select actual result" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableOutcomes.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-slate-500">
+                  Select only what you know happened. Sending a message does not verify delivery or a parent reply.
+                </p>
+              </div>
+            ) : null}
             <div>
               <Label>Summary</Label>
               <Textarea
@@ -529,13 +554,13 @@ export default function LeadAdminToolsMenu({
               <Button
                 type="button"
                 onClick={() => void saveCommunication()}
-                disabled={!communicationSummary.trim() || communicationSaving}
+                disabled={!communicationSummary.trim() || communicationSaving || (needsContactResult && !communicationOutcome)}
               >
                 {communicationSaving ? 'Saving…' : 'Log communication'}
               </Button>
             </div>
             <p className="text-xs text-slate-500">
-              Record only actual interactions, not merely opening WhatsApp or preparing a message. Direction is staff-reported, not externally verified. Follow-up dates remain managed through Admin Review.
+              Record an actual contact attempt or interaction, not just opening WhatsApp. Outcomes are staff-reported, not externally verified. Follow-up dates remain managed through Admin Review.
             </p>
           </div>
 
@@ -550,6 +575,7 @@ export default function LeadAdminToolsMenu({
                   <div className="flex items-center gap-2">
                     <Badge variant="outline">{communicationTypeLabels[item.type]}</Badge>
                     <span className="text-xs text-slate-500">{item.channel} · {item.direction}</span>
+                    {item.outcome ? <Badge variant="outline">{leadContactOutcomeLabel(item.outcome)}</Badge> : null}
                   </div>
                   <span className="text-xs text-slate-500">{formatActionTime(item.createdAtMs)}</span>
                 </div>
