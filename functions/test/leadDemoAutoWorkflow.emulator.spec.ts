@@ -7,6 +7,7 @@ import {
   onOrphanDemoIdentityRepair,
   shouldEnsureDemoForLead,
 } from '../src/leadDemoAutoWorkflow';
+import { reassignDemoSession } from '../src/demoSessionsLegacy';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -187,6 +188,45 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
       expect((await leadRef.get()).data()).toMatchObject({ demoStatus: 'open', demoSessionId: result.demoId });
     }
     expect((await db.collection('demoSessions').get()).size).toBe(2);
+  });
+
+  it('records the chosen assessment delivery without overwriting the parent group preference', async () => {
+    const adminUid = 'admin-assessment-format';
+    const teacherUid = 'teacher-assessment-format';
+    const leadId = 'group-assessment-selection';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active', name: 'Admissions Admin' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'active', name: 'Demo Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436398',
+        source: 'website', status: 'new', classFormatPreference: 'small_group',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'group-format-identity',
+      }),
+    ]);
+    const result = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    expect((await db.collection('demoSessions').doc(result.demoId).get()).data())
+      .toMatchObject({ status: 'open', leadType: null, classFormatPreference: 'small_group' });
+
+    await reassignDemoSession.run({
+      auth: { uid: adminUid },
+      data: {
+        demoId: result.demoId,
+        assignedTeacherId: teacherUid,
+        assignedTeacherName: 'Demo Teacher',
+        assessmentFormat: 'one_to_one',
+      },
+    } as never);
+
+    expect((await db.collection('demoSessions').doc(result.demoId).get()).data()).toMatchObject({
+      status: 'assigned',
+      assessmentFormat: 'one_to_one',
+      leadType: '1:1',
+      classFormatPreference: 'small_group',
+      assignedTeacherId: teacherUid,
+    });
+    expect((await db.collection('leads').doc(leadId).get()).data()?.classFormatPreference).toBe('small_group');
   });
 
   it('refuses a conflicting owned demo instead of creating a second parent-child request', async () => {
