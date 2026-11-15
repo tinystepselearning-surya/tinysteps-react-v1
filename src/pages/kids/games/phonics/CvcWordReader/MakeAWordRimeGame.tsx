@@ -709,25 +709,23 @@ function PublicSpellingAdventure({
   };
 
   const renderPicture = (challenge: PublicSpellingChallenge) => {
-    // Meaning-only words must never be illustrated with a generic or
-    // unrelated symbol (e.g. a star shown beside "friend").
-    if (!challenge.img && !challenge.emojiFallback && !(challenge.clueType === 'picture' && EMOJI[challenge.word])) return null;
+    // Only editor-mapped, word-specific artwork is shown. Never invent a
+    // generic cloud/thought-bubble for a meaning-only clue such as "friend".
+    // Text clues stand on their own for children using a screen reader.
+    const symbol = challenge.emojiFallback ?? (challenge.clueType === "picture" ? EMOJI[challenge.word] : undefined);
+    if ((!challenge.img || !imgOk) && !symbol) return null;
     return (
-    <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/35 bg-white/25 shadow-inner sm:h-24 sm:w-24 md:h-28 md:w-28">
-      {challenge.img && imgOk ? (
-        <img
-          src={challenge.img}
-          alt={challenge.word}
-          draggable={false}
-          className="h-14 w-14 object-contain sm:h-20 sm:w-20 md:h-24 md:w-24"
-          onError={() => setImgOk(false)}
-        />
-      ) : (
-        <div className="text-4xl sm:text-5xl md:text-6xl" aria-label={challenge.word}>
-          {challenge.emojiFallback ?? EMOJI[challenge.word]}
-        </div>
-      )}
-    </div>
+      <div aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/35 bg-white/25 shadow-inner sm:h-20 sm:w-20">
+        {challenge.img && imgOk ? (
+          <img
+            src={challenge.img}
+            alt=""
+            draggable={false}
+            className="h-14 w-14 object-contain sm:h-16 sm:w-16"
+            onError={() => setImgOk(false)}
+          />
+        ) : <span className="text-4xl sm:text-5xl">{symbol}</span>}
+      </div>
     );
   };
 
@@ -890,7 +888,7 @@ function PublicSpellingAdventure({
 
   return (
     <div
-      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden bg-[radial-gradient(circle_at_50%_30%,#b2e9ff_0%,#7ed7fd_40%,#e9b9e8_100%)] px-2 pb-4 pt-14 text-slate-950 sm:px-4 sm:pt-16"
+      className={`relative flex min-h-[100dvh] w-full flex-col items-center ${screen === "complete" ? "justify-center pb-16 pt-16" : "justify-start pb-4 pt-14"} overflow-x-hidden bg-[radial-gradient(circle_at_50%_30%,#b2e9ff_0%,#7ed7fd_40%,#e9b9e8_100%)] px-2 text-slate-950 sm:px-4 sm:pt-16`}
       data-testid="public-spelling-adventure"
     >
       <div className="absolute left-2 top-2 right-2 z-10 flex min-w-0 items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
@@ -997,10 +995,13 @@ function PublicSpellingAdventure({
             <span>{displayedProgress}/{sessionTotalChallenges} completed this round</span>
           </div>
 
-          <div className="grid min-w-0 flex-1 items-stretch gap-2 py-2 md:grid-cols-[0.40fr_0.60fr]">
-            <section className="flex min-w-0 flex-row items-center justify-center gap-3 rounded-2xl bg-sky-100/80 p-3 text-left md:flex-col md:text-center">
+          <div className="grid min-w-0 flex-1 items-start gap-2 py-2 md:grid-cols-[0.36fr_0.64fr]">
+            <section className="flex min-w-0 flex-row items-center justify-start gap-3 rounded-2xl bg-sky-100/80 p-3 text-left md:flex-col md:items-start md:text-left">
               {renderPicture(current)}
-              <p className="text-base font-black text-slate-950 md:mt-3 md:text-lg">{current.clue}</p>
+              <div className="min-w-0">
+                <p className="mb-1 text-[10px] font-black uppercase tracking-wider text-sky-900">{current.clueType === "picture" ? "Picture and meaning clue" : current.clueType === "sentence" ? "Sentence clue" : "Meaning clue"}</p>
+                <p className="text-base font-black leading-relaxed text-slate-950 md:text-lg">{current.clue}</p>
+              </div>
               {current.review ? (
                 <span className="mt-3 rounded-full bg-amber-100 px-3 py-1 text-xs font-black uppercase tracking-[0.12em] text-amber-800">
                   Review
@@ -1026,7 +1027,7 @@ function PublicSpellingAdventure({
                 {feedback === "wrong" ? (
                   <span className="text-rose-700">Try again.</span>
                 ) : feedback === "correct" ? (
-                  <span className="text-emerald-700">Correct: {current.word}</span>
+                  <span className="text-emerald-700">Correct: {current.word}{current.spellingPattern ? ` · Pattern: ${current.spellingPattern}` : ""}</span>
                 ) : (
                   <span className="text-slate-500">
                     {current.mode === "fix" || current.mode === "spell" ? "Type carefully." : "Choose carefully."}
