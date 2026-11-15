@@ -222,6 +222,52 @@ export async function loadWorksheetParentIdentity(
   }
 }
 
+
+/**
+ * Read only potentially eligible worksheets. Course-targeted documents are eligible
+ * through an active enrolment; worksheets without course targets can be eligible
+ * through explicit parent / all_parents targeting. Query both routes because old
+ * library records may use parent-only targeting.
+ *
+ * These are intentionally *candidate* queries: the existing server-side
+ * parentWorksheetIsAllowed check still enforces active, child, course, parent
+ * and enrolment restrictions. Do not filter by active=true or impose a limit:
+ * historical records may omit the active field and should not disappear.
+ *
+ * Firestore permits up to 30 comparison values per array-contains-any query.
+ */
+const WORKSHEET_QUERY_MAX_VALUES = 30;
+
+export async function fetchParentWorksheetCandidates(
+  db: admin.firestore.Firestore,
+  parentId: string,
+  courseIds: Set<string>,
+): Promise<Array<FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>>> {
+  const library = db.collection('parentWorksheetLibrary');
+  const enrolledCourses = Array.from(courseIds).filter(Boolean).sort();
+  const queries: Array<Promise<FirebaseFirestore.QuerySnapshot<FirebaseFirestore.DocumentData>>> = [];
+
+  for (let i = 0; i < enrolledCourses.length; i += WORKSHEET_QUERY_MAX_VALUES) {
+    queries.push(
+      library
+        .where('targetCourseIds', 'array-contains-any', enrolledCourses.slice(i, i + WORKSHEET_QUERY_MAX_VALUES))
+        .get(),
+    );
+  }
+
+  const parentTargets = Array.from(new Set([parentId, 'all_parents']));
+  queries.push(
+    library.where('targetParentIds', 'array-contains-any', parentTargets).get(),
+  );
+
+  const snapshots = await Promise.all(queries);
+  const byId = new Map<string, FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>>();
+  snapshots.forEach((snapshot) => snapshot.docs.forEach((doc) => byId.set(doc.id, doc)));
+  // The original unfiltered collection query returned documents in document-ID order.
+  // Preserve this ordering for records that tie on sortOrder and title.
+  return Array.from(byId.values()).sort((a, b) => a.id.localeCompare(b.id));
+}
+
 export async function loadParentWorksheetResources(
   db: admin.firestore.Firestore,
   parentId: string,
@@ -231,8 +277,8 @@ export async function loadParentWorksheetResources(
     throw new HttpsError('permission-denied', 'This child is not linked to the authenticated parent.');
   }
   const context = await activeEnrollmentContext(db, kidId);
-  const snapshot = await db.collection('parentWorksheetLibrary').get();
-  const allowedDocs = snapshot.docs.filter((entry) => parentWorksheetIsAllowed(entry.data(), { parentId, kidId, ...context }));
+  const candidates = await fetchParentWorksheetCandidates(db, parentId, context.courseIds);
+  const allowedDocs = candidates.filter((entry) => parentWorksheetIsAllowed(entry.data(), { parentId, kidId, ...context }));
   const courseIds = Array.from(new Set(allowedDocs.flatMap((entry) => strings(entry.data().targetCourseIds)).filter(Boolean)));
   const courseSnaps = await Promise.all(courseIds.map((courseId) => db.collection('courses').doc(courseId).get()));
   const courseTitleById = new Map(courseSnaps.map((snap, index) => {
