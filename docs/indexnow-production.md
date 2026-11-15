@@ -8,7 +8,7 @@ Create one repository Actions secret named INDEXNOW_KEY (8–128 letters, number
 
 The production build writes the root ownership file under dist. Firebase Hosting publishes that file at https://tinystepslearning.com/.
 
-The deployment job already has GitHub contents: write permissions. The IndexNow step passes its scoped GITHUB_TOKEN to maintain the ci/indexnow-submitted state branch. No additional GitHub PAT or external service is needed.
+The existing deployment job already has GitHub contents: write permissions and actions/checkout configures authenticated Git transport. The IndexNow notifier uses that existing Git transport to create/update only the ci/indexnow-submitted state branch, without modifying the production checkout, adding a credential, or changing deploy.yml.
 
 ## Production sequence
 
@@ -21,32 +21,32 @@ On a push to main, only when an existing CI impact assessment requires a Hosting
 5. Only added, substantively modified, and removed sitemap URLs are notified, using **one HTTPS GET IndexNow request per URL**, 300 ms apart, with retries for transient 429/5xx/network failures. The existing api.indexnow.org endpoint, host and root keyLocation remain supported.
 6. Only after *all* requests return HTTP 200 or 202 is the baseline updated. A failed or interrupted run does not advance the state; a workflow-job rerun or later Hosting deployment can retry.
 
-On the first deployment after this migration, no prior baseline exists, so the script **records the current state without resubmitting historical URLs**. The previous integration already supplied those URLs. Future deployments send only changes. The original XML sitemap remains the comprehensive search-engine discovery mechanism.
+On the first deployment after this migration, no prior baseline exists, so the script **records the current state without resubmitting historical URLs**. This rollout intentionally does not notify search engines about changes made in that first deployment; it assumes the prior full-sitemap integration already submitted those URLs. Future deployments send only changes. The original XML sitemap remains the comprehensive search-engine discovery mechanism.
 
 A Hosting-independent Firestore or CMS content update does not trigger this deployment-only workflow. Those changes require their own publish hook if added in the future.
 
 ## Failure behaviour and noninterference
 
-- No changes to page content, canonical URLs, sitemaps, Firebase Functions, Firestore rules, website routing, or Hosting artefacts.
+- No changes to page content, canonical URLs, sitemaps, Firebase Functions, Firestore rules, website routing, or Hosting build contents. The narrow deployment-impact rule marks changes to IndexNow's executable scripts as requiring one ordinary Hosting deploy, so the existing post-deploy hook is actually exercised.
 - The IndexNow state is tracked on an isolated GitHub branch; it is **not** written to the public website or production branch.
 - Public canonical URLs absent from local prerender output are still tracked for additions/deletions, with a warning; unchanged missing pages are not repeatedly submitted.
 - If GitHub state is malformed or inaccessible, fail explicitly rather than silently submitting the entire sitemap.
 - If a submission fails, Hosting stays deployed, but the post-deploy IndexNow step fails and does **not** falsely record notifications as delivered.
 - No IndexNow requests are made when INDEXNOW_KEY is unset, preserving the existing opt-out.
-- Individual notifications contain only canonical public URLs. Neither GITHUB_TOKEN nor any GitHub state data is sent to IndexNow.
+- Individual notifications contain only canonical public URLs; GitHub credentials and stored state are not sent to IndexNow.
 
 ## Testing
 
 Run: node --test scripts/test/indexnow-change-detection.node-test.mjs
 
-Tests cover new/changed/deleted/unchanged pages, fingerprint stability under cosmetic changes, sitemap deduplication/host restrictions and invalid state rejection.
+Tests cover new/changed/deleted/unchanged pages, fingerprint stability under cosmetic changes, sitemap deduplication/host restrictions and invalid state rejection. A separate integration test runs the real CLI against an isolated local Git remote and mocked IndexNow responses to verify the initial state branch, no-op, failure/retry, removal, and unchanged checkout. The PR gate checks the Hosting-only activation rule and the unchanged production workflow.
 
 ## Verification
 
 After approval and merge:
 
 1. Confirm the existing Hosting deployment and live key verification succeed.
-2. Confirm the first run creates ci/indexnow-submitted and logs baseline creation without an all-URL submission.
+2. Confirm the first run creates ci/indexnow-submitted and logs baseline creation without an all-URL submission. The Bing recommendation may remain visible until later genuine updates are notified and Bing refreshes the report.
 3. Make one controlled, visible content edit to an indexable page on a later deployment; confirm exactly that canonical URL is notified, assuming no other public content changed.
 4. Run another Hosting deployment with no meaningful public-page changes; confirm zero requests.
 5. Verify IndexNow activity in Bing Webmaster Tools over the following days.
