@@ -71,7 +71,10 @@ test('classic spelling opens at a playable word and scrolls as a normal page on 
   await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Spelling Adventure', level: 1 })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Build It', level: 2 })).toBeVisible();
-  await expect(page.getByAltText('cat')).toBeVisible();
+  // Picture assets can fall back to the authored emoji; the meaning clue
+  // and word-building challenge must work in either rendering.
+  await expect(page.getByText('A small pet that says meow.')).toBeVisible();
+  await expect(page.getByRole('button', { name: /letter c/i })).toBeVisible();
   await expect(page.getByRole('button', { name: /start spelling adventure/i })).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Parent FAQ' })).toHaveCount(0);
   await expect(page.locator('footer')).toHaveCount(0);
