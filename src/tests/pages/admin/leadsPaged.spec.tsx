@@ -506,6 +506,47 @@ describe('usePagedLeads bounded Firestore reads', () => {
     expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
   });
 
+  it('refreshes the date-scoped queue when a returning canonical lead is merged asynchronously', async () => {
+    const now = Date.now();
+    const first = now - 2 * 24 * 60 * 60 * 1000;
+    const base = makeDoc('canonical', 'not_interested', first, 'website', first);
+    const returned = {
+      ...base,
+      data: () => ({ ...base.data(), lastInquiryAt: timestamp(now) }),
+    } as unknown as TestDoc;
+
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
+    render(<Harness bucket="all" pageSize="all"
+      dateFromMs={now - 3_600_000} dateToMs={now + 3_600_000} />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
+    expect(subscriptions).toHaveLength(2);
+    await act(async () => {
+      subscriptions[1].next(makeSnapshot([])); // establish server baseline
+    });
+    await act(async () => {
+      subscriptions[1].next({
+        ...makeSnapshot([returned]),
+        docChanges: () => [{ type: 'added' as const, doc: returned }],
+      });
+    });
+    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8));
+    // A second identical snapshot cannot falsely create an additional enquiry.
+    await act(async () => {
+      subscriptions[1].next({
+        ...makeSnapshot([returned]),
+        docChanges: () => [{ type: 'modified' as const, doc: returned }],
+      });
+    });
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8);
+    expect(firestoreMocks.onSnapshot.mock.calls.every((call) =>
+      (call[0] as { args: unknown[] }).args.some((arg) =>
+        (arg as { kind?: string; value?: number }).kind === 'limit' &&
+        (arg as { value?: number }).value === 5,
+      ),
+    )).toBe(true);
+  });
+
   it('keeps only a five-document realtime watch for new website lead notifications', () => {
     firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
     render(<Harness />);
