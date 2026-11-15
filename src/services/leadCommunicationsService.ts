@@ -12,12 +12,77 @@ import { db } from '../lib/firebaseConfig';
 export type LeadCommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 export type LeadCommunicationChannel = 'whatsapp' | 'phone' | 'internal' | 'other';
 export type LeadCommunicationDirection = 'inbound' | 'outbound' | 'internal';
+/**
+ * Explicitly staff-reported results, never inferred from WhatsApp links or an
+ * outbound log. These are not externally verified delivery receipts.
+ */
+export type LeadContactOutcome =
+  | 'message_sent_unconfirmed'
+  | 'parent_replied'
+  | 'attempted_no_answer'
+  | 'spoke_to_parent'
+  | 'invalid_contact';
+
+export const leadContactOutcomeOptions = (
+  type: LeadCommunicationType,
+  direction: LeadCommunicationDirection,
+): Array<{ value: LeadContactOutcome; label: string }> => {
+  if (type === 'message' && direction === 'outbound') {
+    return [{ value: 'message_sent_unconfirmed', label: 'Message sent — delivery unverified' }];
+  }
+  if (type === 'message' && direction === 'inbound') {
+    return [{ value: 'parent_replied', label: 'Parent replied' }];
+  }
+  if (type === 'call' && direction === 'inbound') {
+    return [{ value: 'spoke_to_parent', label: 'Spoke with parent' }];
+  }
+  if (type === 'call' && direction === 'outbound') {
+    return [
+      { value: 'spoke_to_parent', label: 'Spoke with parent' },
+      { value: 'attempted_no_answer', label: 'No answer' },
+      { value: 'invalid_contact', label: 'Wrong or unreachable number' },
+    ];
+  }
+  return [];
+};
+
+export const leadContactOutcomeLabel = (outcome: LeadContactOutcome): string => ({
+  message_sent_unconfirmed: 'Message sent — delivery unverified',
+  parent_replied: 'Parent replied',
+  attempted_no_answer: 'No answer',
+  spoke_to_parent: 'Spoke with parent',
+  invalid_contact: 'Wrong or unreachable number',
+}[outcome]);
+
+const normalizeOutcome = (value: unknown): LeadContactOutcome | null =>
+  value === 'message_sent_unconfirmed' ||
+  value === 'parent_replied' ||
+  value === 'attempted_no_answer' ||
+  value === 'spoke_to_parent' ||
+  value === 'invalid_contact'
+    ? value : null;
+
+export const recentLeadContactEvidence = (rows: LeadCommunicationRecord[]): string => {
+  // Newest meaningful explicit report wins; old records are never backfilled.
+  const latest = rows.find((row) => row.outcome);
+  if (latest?.outcome) {
+    return `Latest staff-reported contact result: ${leadContactOutcomeLabel(latest.outcome)}. Not independently verified.`;
+  }
+  const inbound = rows.some((row) =>
+    ['message', 'call'].includes(row.type) && row.direction === 'inbound');
+  if (inbound) return 'Inbound contact logged by staff; no structured contact result recorded.';
+  const outbound = rows.some((row) =>
+    ['message', 'call'].includes(row.type) && row.direction === 'outbound');
+  if (outbound) return 'Outbound contact logged by staff; no parent response confirmed here.';
+  return 'No contact result recorded in the recent logs. This does not prove no contact occurred.';
+};
 
 export interface LeadCommunicationRecord {
   id: string;
   type: LeadCommunicationType;
   channel: LeadCommunicationChannel;
   direction: LeadCommunicationDirection | 'unknown';
+  outcome?: LeadContactOutcome | null;
   summary: string;
   createdAtMs: number;
   createdBy?: string | null;
@@ -66,6 +131,7 @@ export async function fetchLeadCommunications(leadId: string, maxRows = 50): Pro
       type: normalizeType(data.type),
       channel: normalizeChannel(data.channel),
       direction,
+      outcome: normalizeOutcome(data.outcome),
       summary: String(data.summary || '').trim() || 'Communication logged',
       createdAtMs: toMs(data.createdAt),
       createdBy: typeof data.createdBy === 'string' ? data.createdBy : null,
@@ -78,6 +144,7 @@ export async function addLeadCommunication(input: {
   type: LeadCommunicationType;
   channel: LeadCommunicationChannel;
   direction?: LeadCommunicationDirection;
+  outcome?: LeadContactOutcome;
   summary: string;
 }): Promise<LeadCommunicationRecord> {
   const leadId = input.leadId.trim();
@@ -89,11 +156,16 @@ export async function addLeadCommunication(input: {
   const direction: LeadCommunicationDirection = input.type === 'note'
     ? 'internal'
     : input.direction === 'inbound' ? 'inbound' : 'outbound';
+  const outcomes = leadContactOutcomeOptions(input.type, direction);
+  if (input.outcome && !outcomes.some((option) => option.value === input.outcome)) {
+    throw new Error('Contact result does not match the communication type or direction.');
+  }
   const createdAtMs = Date.now();
   const ref = await addDoc(collection(db, 'leads', leadId, 'communications'), {
     type: input.type,
     channel: input.channel,
     direction,
+    ...(input.outcome ? { outcome: input.outcome } : {}),
     summary,
     followUpNeeded: false,
     status: 'logged',
@@ -105,6 +177,7 @@ export async function addLeadCommunication(input: {
     type: input.type,
     channel: input.channel,
     direction,
+    outcome: input.outcome || null,
     summary,
     createdAtMs,
   };
