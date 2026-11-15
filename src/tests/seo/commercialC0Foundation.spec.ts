@@ -72,6 +72,8 @@ describe('Commercial C0 revenue measurement and commercial facts', () => {
     expect(isCommercialQualifiedLeadStatus('contacted')).toBe(false);
     expect(isCommercialQualifiedLeadStatus('wrong_fit')).toBe(false);
 
+    expect(COMMERCIAL_C0_EVENT_CONTRACT.intent).toContain('book_assessment_click');
+    expect(COMMERCIAL_C0_EVENT_CONTRACT.intent).not.toContain('book_demo_click');
     expect(COMMERCIAL_C0_EVENT_CONTRACT.submission).toContain('lead_form_submit');
     expect(COMMERCIAL_C0_EVENT_CONTRACT.submission).toContain('generate_lead');
     expect(COMMERCIAL_C0_EVENT_CONTRACT.rule).toContain('must never be reported as qualified leads');
@@ -155,7 +157,7 @@ describe('Commercial C0 revenue measurement and commercial facts', () => {
       'buildLeadAttributionPayload',
       "trackEvent('lead_form_submit'",
       "trackEvent('generate_lead'",
-      "trackEvent('book_demo_click'",
+      "trackEvent('book_assessment_click'",
       "trackEvent('whatsapp_click'",
     ]) {
       expect(conversionTracking, token).toContain(token);

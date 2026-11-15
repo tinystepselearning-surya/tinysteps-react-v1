@@ -4,7 +4,7 @@ Last updated: 2026-04-05
 
 Purpose: make Tiny Steps public marketing conversion tracking usable for weekly SEO/AEO decisions without building a heavy dashboard.
 
----
+> **15 November 2026 assessment CTA event cutover:** The current public click tracker emits `book_assessment_click` once per assessment CTA interaction and no longer emits `book_demo_click`. Historical `book_demo_click` records remain unchanged; do not add both series together across the cutover. In GA4 Admin, unstar retired `book_demo_click` and retain `book_assessment_click` as the current assessment-intent key event. Other chosen lead-intent key events can remain enabled. A click does not prove a saved enquiry; reconcile `generate_lead` and canonical Firestore leads separately.\n\n---
 
 ## 1) Live Event Contract (Source of Truth)
 
@@ -14,7 +14,7 @@ Tracking base:
 - Internal portal routes are excluded by analytics guardrails.
 
 Conversion event names now live:
-1. `book_demo_click`
+1. `book_assessment_click`
 2. `whatsapp_click`
 3. `lead_form_submit`
 4. `high_intent_page_cta_click`
@@ -57,7 +57,7 @@ From `src/lib/conversionTracking.ts`:
 
 ## 3) What Each Event Means for Business Decisions
 
-### `book_demo_click`
+### `book_assessment_click`
 Meaning:
 - User showed strong lead intent by clicking book-demo/free-assessment CTA.
 
@@ -89,7 +89,7 @@ Use it to answer:
 
 ## 4) Signal Interpretation (Good vs Weak)
 
-### Pattern A: strong `book_demo_click`, weak `lead_form_submit`
+### Pattern A: strong `book_assessment_click`, weak `lead_form_submit`
 Interpretation:
 - Offer interest is strong, form completion is weak.
 Likely actions:
@@ -131,7 +131,7 @@ Use GA4 (Reports + Explore) in this order.
 
 ### A) Quick event health check
 1. Open **Reports → Engagement → Events**.
-2. Confirm events exist: `book_demo_click`, `whatsapp_click`, `lead_form_submit`, `high_intent_page_cta_click`.
+2. Confirm events exist: `book_assessment_click`, `whatsapp_click`, `lead_form_submit`, `high_intent_page_cta_click`.
 3. Set date range to last 7/28 days.
 
 ### B) Which pages are generating conversion events
@@ -148,7 +148,7 @@ Use GA4 (Reports + Explore) in this order.
 
 ### D) Landing pages that produce demo/form outcomes
 1. Add dimensions: `Landing page + query string`, `Event name`, `page_cluster`.
-2. Filter `Event name` to `book_demo_click` and `lead_form_submit`.
+2. Filter `Event name` to `book_assessment_click` and `lead_form_submit`.
 3. Find landing pages that produce both vs only click intent.
 
 ### E) WhatsApp-heavy pages vs form-heavy pages
@@ -161,7 +161,7 @@ Use GA4 (Reports + Explore) in this order.
 
 ## 6) Recommended Weekly Reporting Checklist
 
-1. Which `page_cluster` drives most `book_demo_click` this week?
+1. Which `page_cluster` drives most `book_assessment_click` this week?
 2. Which pages have high `whatsapp_click` but low `lead_form_submit`?
 3. Which authority pages (`/phonics`, `/grammar`, `/speaking`) assist intent best?
 4. Which problem pages outperform money pages on conversion intent?
@@ -180,14 +180,14 @@ Use this simple model:
 ### Stage 2: Intent signals
 - `high_intent_page_cta_click`
 - `whatsapp_click`
-- `book_demo_click`
+- `book_assessment_click`
 
 ### Stage 3: Lead conversion
 - `lead_form_submit`
 
 Interpretation by cluster:
 - **Authority:** trust + education; should assist movement to money/program pages.
-- **Money:** should produce strong direct `book_demo_click` and some `lead_form_submit`.
+- **Money:** should produce strong direct `book_assessment_click` and some `lead_form_submit`.
 - **Age:** usually early/mid intent; should progress to program/money outcomes.
 - **Problem:** often high urgency; expect stronger `whatsapp_click` and rising demo intent.
 - **Program:** should convert better than broad pages once fit is clear.
@@ -197,7 +197,7 @@ Interpretation by cluster:
 
 ## 8) Decision Rules (Action Framework)
 
-- If `book_demo_click` is high but `lead_form_submit` is low:
+- If `book_assessment_click` is high but `lead_form_submit` is low:
   - Improve lead form trust and reduce form friction.
 - If a problem page beats money pages:
   - Expand that problem cluster and link it directly to relevant program pages.
@@ -233,4 +233,4 @@ WhatsApp conversion tracking:
 
 - This step adds interpretation and reporting guidance only (no dashboard UI build).
 - `high_intent_page_cta_click` is intentionally selective (strong CTA labels only) to avoid event spam.
-- `book_demo_click` from non-link controls without destination may not fire unless label + destination rules match; this is deliberate for event quality.
+- `book_assessment_click` from non-link controls without destination may not fire unless label + destination rules match; this is deliberate for event quality.
