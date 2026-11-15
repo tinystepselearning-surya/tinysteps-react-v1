@@ -77,7 +77,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     clue: 'Without doubt; certainly.',
     before: 'defin', missing: 'i', after: 'tely', choices: ['a', 'i', 'e', 'o'],
     hint: 'The spelling is related to definite.',
-    learningNote: 'Definitely is formed from definite + ly, with the final e removed before -ly.',
+    learningNote: 'Definitely is definite + ly. Keep the e before -ly: definite → definitely.',
   },
   {
     id: 'builder-careless', stage: 'builder', kind: 'sort', word: 'careless',
