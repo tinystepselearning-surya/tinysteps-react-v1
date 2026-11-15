@@ -2453,16 +2453,24 @@ export default function ParentDashboard() {
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    queryFn: async (): Promise<{ items: ParentWorksheetItem[]; enrolledCourseIds: string[] }> => {
-      if (!user?.uid || !selectedKidId) return { items: [], enrolledCourseIds: [] };
+    queryFn: async (): Promise<{
+      items: ParentWorksheetItem[];
+      enrolledCourseIds: string[];
+      parentOnlyWorksheetIds: string[];
+    }> => {
+      if (!user?.uid || !selectedKidId) {
+        return { items: [], enrolledCourseIds: [], parentOnlyWorksheetIds: [] };
+      }
       const response = await callFunction<{
         resources?: Array<Record<string, unknown>>;
         enrolledCourseIds?: string[];
+        parentOnlyWorksheetIds?: string[];
       }, { kidId: string }>("getParentWorksheetResources", { kidId: selectedKidId });
       return {
         items: (response.resources || []).map((resource) =>
           toParentWorksheetItem(String(resource.id || ''), resource)),
         enrolledCourseIds: response.enrolledCourseIds || [],
+        parentOnlyWorksheetIds: response.parentOnlyWorksheetIds || [],
       };
     },
   });
@@ -5323,6 +5331,7 @@ export default function ParentDashboard() {
               key={selectedKidId || 'no-child'}
               items={visibleParentWorksheets}
               enrolledCourseIds={parentWorksheetsQuery.data?.enrolledCourseIds || []}
+              parentOnlyWorksheetIds={parentWorksheetsQuery.data?.parentOnlyWorksheetIds || []}
               loading={parentWorksheetsQuery.isLoading}
               refreshing={parentWorksheetsQuery.isFetching}
               onRefresh={() => void parentWorksheetsQuery.refetch()}

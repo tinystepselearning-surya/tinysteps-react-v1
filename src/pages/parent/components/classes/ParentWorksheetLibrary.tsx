@@ -34,6 +34,7 @@ import {
 type Props = {
   items: ParentWorksheetItem[];
   enrolledCourseIds?: string[];
+  parentOnlyWorksheetIds?: string[];
   loading: boolean;
   refreshing?: boolean;
   onRefresh: () => void;
@@ -126,11 +127,14 @@ const LEARNING_MOTIFS = [Pencil, Blocks, BookOpen, NotebookPen, Stars, Backpack,
 
 const openSafely = (url: string) => window.open(url, '_blank', 'noopener,noreferrer');
 
-export function ParentWorksheetLibrary({ items, enrolledCourseIds = [], loading, refreshing = false, onRefresh }: Props) {
+export function ParentWorksheetLibrary({
+  items, enrolledCourseIds, parentOnlyWorksheetIds = [], loading, refreshing = false, onRefresh,
+}: Props) {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCourse, setSelectedCourse] = useState('__enrolled__');
   const needle = searchQuery.trim().toLowerCase();
-  const enrolled = useMemo(() => new Set(enrolledCourseIds), [enrolledCourseIds]);
+  const enrolled = useMemo(() => new Set(enrolledCourseIds || []), [enrolledCourseIds]);
+  const parentOnly = useMemo(() => new Set(parentOnlyWorksheetIds), [parentOnlyWorksheetIds]);
   const courses = useMemo(() => {
     const byId = new Map<string, string>();
     for (const item of items) {
@@ -146,8 +150,8 @@ export function ParentWorksheetLibrary({ items, enrolledCourseIds = [], loading,
   const visibleItems = useMemo(() => {
     const courseFiltered = items.filter((item) =>
       selectedCourse === '__enrolled__'
-        ? (enrolled.size === 0 ? item.courseId === 'legacy' :
-          enrolled.has(item.courseId) || item.courseId === 'legacy')
+        ? (enrolledCourseIds === undefined || enrolled.has(item.courseId) ||
+          item.courseId === 'legacy' || parentOnly.has(item.id))
         : item.courseId === selectedCourse);
     if (!needle) return courseFiltered;
     return courseFiltered.filter((item) => [
@@ -160,7 +164,7 @@ export function ParentWorksheetLibrary({ items, enrolledCourseIds = [], loading,
       item.lessonFolderTitle,
       item.courseTitle,
     ].join(' ').toLowerCase().includes(needle));
-  }, [items, needle, selectedCourse, enrolled]);
+  }, [items, needle, selectedCourse, enrolled, parentOnly, enrolledCourseIds]);
 
   const groups = useMemo(() => groupParentWorksheets(visibleItems), [visibleItems]);
   const courseGroups = useMemo(() => {
