@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T15:46:15Z UTC (15 November 2026, 21:16 IST, slot 22 reconciliation)
+
+- Re-read and parsed current tracker: **202 records, 202 unique URLs, 22 correctly aligned columns**; slots 1–19 each contain 10 and slot 20 contains 12. All **202/202** URLs have current-day IST dates and parseable UTC evidence-handling timestamps. These are provider-attempt records, **not origin HTTP response timestamps**. **0/202 fully origin-verified**.
+- Re-attempted exact public URL retrievals for previously blocked rows 77, 126 and 162: `https://tinystepslearning.com/speaking-progress-framework`, `https://tinystepslearning.com/blog/how-children-recognise-words-automatically-after-phonics`, and `https://tinystepslearning.com/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics`. All three returned retrieval-provider **Internal Error** (refs `turn236807view0`–`turn236807view2`). **These are blocked audits, not verified production failures.**
+- Direct HTTPS HEAD attempt to row 77 at **2026-11-15T15:46:10Z UTC** failed before HTTP with `curl: (6) Could not resolve host: tinystepslearning.com`. Origin status, redirects, canonical, noindex, robots, raw HTML, JSON-LD and bot access remain **UNVERIFIED**. No fabricated PASS/FAIL or per-row HTTP timestamps.
+- GitHub Actions in-progress run list returned **0** runs. Workflow administrative state could not be read: workflow-state endpoint was rejected by the connector. User-confirmed GitHub UI disablement remains the operating basis; cron YAML is not treated as evidence of enablement. No workflow was run or enabled.
+- No verified before/after production change. `MASTER_URL_TRACKER.csv` and `CHANGES.md` intentionally unchanged; no new verifiable row-level production result. No production or source changes.
+- Next: slots 23–24 catch-up/recovery, without counting already attempted URLs again toward distinct daily coverage.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T14:40:56Z UTC (15 November 2026, 20:10 IST, slot 21 reconciliation)
 
 - Tracker read and validated: **202 records, 202 unique URLs, 22 columns**, slots 1–19 contain 10 each and slot 20 contains 12. All 202 rows have current-day date and nonempty UTC evidence-handling markers. **202/202 provider attempts recorded; 0/202 fully origin-verified**. Existing timestamps are not certified HTTP response times.
