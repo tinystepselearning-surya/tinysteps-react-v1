@@ -199,7 +199,7 @@ export default function VisualSpellingPuzzleLab() {
                 <label className="flex-1">
                   <span className="mb-2 block text-sm font-bold">Your spelling</span>
                   <input type="text" value={recallValue} autoComplete="off" spellCheck={false}
-                    onChange={event => { setRecallValue(event.target.value); setRecallAttempted(false); }}
+                    onChange={event => setRecallValue(event.target.value)}
                     className="w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg font-semibold text-slate-950 focus:border-indigo-700 focus:outline-none"
                     aria-label="Type the spelling from memory" />
                 </label>
@@ -329,14 +329,16 @@ export default function VisualSpellingPuzzleLab() {
 
             {puzzle.kind === 'sort' && (
               <div className="mt-6">
-                <p className="mb-3 text-center text-sm text-slate-600">Drag the word into a group, or tap the matching group.</p>
+                <p className="mb-3 text-center text-sm text-slate-600">
+                  Sort both words to complete this puzzle ({sortIndex + 1} of 2). Drag into a group or tap the matching group.
+                </p>
                 <div className="mb-5 text-center">
                   <span
                     draggable={feedback !== 'correct'}
-                    onDragStart={event => event.dataTransfer.setData('text/plain', puzzle.word)}
+                    onDragStart={event => event.dataTransfer.setData('text/plain', activeSortWord)}
                     className="inline-block cursor-grab rounded-xl border-2 border-indigo-300 bg-white px-6 py-4 text-3xl font-black text-indigo-950 shadow-sm"
-                    aria-label={'Word to sort: ' + puzzle.word}
-                  >{puzzle.word}</span>
+                    aria-label={'Word to sort: ' + activeSortWord}
+                  >{activeSortWord}</span>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {puzzle.categories.map(category => (
@@ -345,7 +347,7 @@ export default function VisualSpellingPuzzleLab() {
                       onDragOver={event => event.preventDefault()}
                       onDrop={event => {
                         event.preventDefault();
-                        if (event.dataTransfer.getData('text/plain') === puzzle.word) submit(category);
+                        if (event.dataTransfer.getData('text/plain') === activeSortWord) submit(category);
                       }}
                       className="min-h-20 rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-4 py-4 text-lg font-bold hover:border-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:opacity-60">{category}</button>
                   ))}
@@ -364,24 +366,38 @@ export default function VisualSpellingPuzzleLab() {
                   </button>
                 )}
               </div>
-              {showHint && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950"><strong>Hint:</strong> {puzzle.hint}</p>}
+              {showHint && <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-950"><strong>Hint:</strong> {puzzle.kind === 'sort' && sortIndex === 1 ? 'Compare the ending or prefix with the two category names.' : puzzle.hint}</p>}
             </div>
 
             {feedback === 'retry' && (
               <p role="status" className="mt-5 rounded-xl bg-amber-50 p-4 font-medium text-amber-900">
-                Not quite. Look at the clue and check the letter pattern. You can try again, use a hint or rearrange your tiles.
+                {puzzle.kind === 'arrange'
+                  ? 'Those tiles are not in the correct order. Use Undo or Clear and try again.'
+                  : puzzle.kind === 'correct'
+                    ? `“${wrongChoice}” is not the accepted spelling. Compare the order of the letters and try again.`
+                    : puzzle.kind === 'missing'
+                      ? `“${wrongChoice}” does not complete this word. Check the letters on both sides.`
+                      : `This word doesn't belong in “${wrongChoice}”. Look at its written pattern.`}
+                {retryCount >= 2 ? ` ${puzzle.kind === 'sort' && sortIndex === 1 ? 'Compare the two category labels carefully.' : puzzle.hint}` : ''}
               </p>
             )}
             {feedback === 'correct' && (
               <div role="status" className="mt-5 rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
                 <h3 className="text-xl font-black">
-                  {revealed ? `Answer: ${puzzle.kind === 'sort' ? puzzle.answer : puzzle.word}` : `You got it: ${puzzle.word}!`}
+                  {revealed
+                    ? puzzle.kind === 'sort'
+                      ? `Answers: ${puzzle.word} → ${puzzle.answer}; ${puzzle.pair.word} → ${puzzle.pair.answer}`
+                      : `Answer: ${puzzle.word}`
+                    : puzzle.kind === 'sort'
+                      ? 'Both words sorted!'
+                      : `You got it: ${puzzle.word}!`}
                 </h3>
                 {revealed && <p className="mt-2 text-sm font-semibold">This was a learning turn, not an independent correct answer.</p>}
                 <p className="mt-2 text-sm">{puzzle.learningNote}</p>
+                {puzzle.kind === 'sort' && <p className="mt-2 text-sm">{puzzle.pair.learningNote}</p>}
                 <button type="button" onClick={nextPuzzle}
                   className="mt-5 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white hover:bg-emerald-800">
-                  {index + 1 < puzzles.length ? 'Next puzzle' : 'See my results'}
+                  {index + 1 < puzzles.length ? 'Next puzzle' : 'Final spelling challenge'}
                 </button>
               </div>
             )}
