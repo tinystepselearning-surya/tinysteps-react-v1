@@ -283,6 +283,20 @@ export default function FreeEnglishGamesHubPage() {
                 </Link>
               </article>
             ))}
+            <article className="rounded-lg border border-amber-300/30 bg-gradient-to-br from-amber-400/10 to-indigo-500/10 p-4">
+              <h3 className="text-base font-extrabold text-amber-100">Visual Spelling Puzzle Lab</h3>
+              <p className="mt-1 text-xs font-bold uppercase tracking-wider text-violet-200">Ages 8–10+ · Visual spelling</p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Arrange letters, complete words, find correct spellings and sort word patterns.
+                Completely free, silent, no login and no saved progress.
+              </p>
+              <Link
+                className="mt-3 inline-flex rounded-lg border border-amber-300/40 bg-amber-400/15 px-3 py-2 text-sm font-extrabold text-amber-100 hover:bg-amber-400/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-amber-300"
+                to="/free-spelling-game-for-kids?play=1&mode=puzzles"
+              >
+                Play Free Spelling Puzzles
+              </Link>
+            </article>
           </div>
         </section>
       </div>
