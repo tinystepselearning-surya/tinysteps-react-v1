@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   serverTimestamp: vi.fn(() => ({ kind: 'server-timestamp' })),
 }));
 
-vi.mock('../../lib/firebaseConfig', () => ({ db: {} }));
+vi.mock('../../lib/firebaseConfig', () => ({ db: {}, auth: { currentUser: { uid: 'staff-admin-test' } } }));
 
 vi.mock('firebase/firestore', () => ({
   addDoc: mocks.addDoc,
@@ -84,6 +84,8 @@ describe('Staff-recorded lead communication evidence', () => {
       direction: 'outbound', outcome: 'spoke_to_parent',
     });
     expect(recorded.outcome).toBe('spoke_to_parent');
+    expect(recorded.createdBy).toBe('staff-admin-test');
+    expect(mocks.addDoc.mock.calls[0][1].createdBy).toBe('staff-admin-test');
     expect(recentLeadContactEvidence([recorded])).toMatch(/Spoke with parent/);
   });
 
