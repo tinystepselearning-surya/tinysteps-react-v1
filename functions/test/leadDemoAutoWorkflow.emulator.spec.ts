@@ -7,7 +7,7 @@ import {
   onOrphanDemoIdentityRepair,
   shouldEnsureDemoForLead,
 } from '../src/leadDemoAutoWorkflow';
-import { reassignDemoSession } from '../src/demoSessionsLegacy';
+import { claimDemoSession, reassignDemoSession } from '../src/demoSessionsLegacy';
 
 if (!admin.apps.length) admin.initializeApp();
 
@@ -188,6 +188,32 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
       expect((await leadRef.get()).data()).toMatchObject({ demoStatus: 'open', demoSessionId: result.demoId });
     }
     expect((await db.collection('demoSessions').get()).size).toBe(2);
+  });
+
+  it('prevents teacher self-claim from bypassing the admin format decision', async () => {
+    const adminUid = 'admin-claim-guard';
+    const teacherUid = 'teacher-claim-guard';
+    const leadId = 'undecided-claim-guard';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'active', name: 'Demo Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436397',
+        source: 'website', status: 'new', classFormatPreference: 'unsure',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'guard-identity',
+      }),
+    ]);
+    const result = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    const before = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+    expect(before).toMatchObject({ status: 'open', classFormatPreference: 'unsure', assessmentFormat: null });
+    await expect(claimDemoSession.run({
+      auth: { uid: teacherUid },
+      data: { demoId: result.demoId, teacherConfirmedDate: '2026-11-16', teacherConfirmedTime: '10:00' },
+    } as never)).rejects.toThrow(/Admin must choose assessment delivery/);
+    const after = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+    expect(after).toMatchObject({ status: 'open', assignedTeacherId: null });
   });
 
   it('records the chosen assessment delivery without overwriting the parent group preference', async () => {
