@@ -17,7 +17,8 @@ const PARENT_FIELDS = [
   'category', 'lessonId', 'lessonTitle', 'lessonName', 'lessonFolderId',
   'lessonFolderTitle', 'courseId', 'courseTitle', 'courseName', 'sortOrder',
   'targetCourseIds', 'targetParentIds', 'targetKidIds', 'targetChildIds',
-  'targetEnrollmentIds', 'active', 'isActive', 'archived', 'isArchived',
+  'targetEnrollmentIds', 'targetStageTags', 'stageTags',
+  'active', 'isActive', 'archived', 'isArchived',
 ] as const;
 
 function project(id: string, source: Record<string, unknown>): WorksheetBundleEntry {

@@ -146,6 +146,11 @@ export function ParentWorksheetLibrary({
       .sort((a, b) => a.title.localeCompare(b.title));
   }, [items]);
 
+  const enrolledTitles = courses.filter((course) => enrolled.has(course.id)).map((course) => course.title);
+  const defaultCourseLabel = enrolledTitles.length
+    ? `My child's courses (${enrolledTitles.join(', ')})`
+    : "My child's courses";
+
   // The switch changes only local presentation, never makes another request.
   const visibleItems = useMemo(() => {
     const courseFiltered = items.filter((item) =>
@@ -255,7 +260,7 @@ export function ParentWorksheetLibrary({
             onChange={(event) => setSelectedCourse(event.target.value)}
             className="mt-1 h-10 w-full rounded-xl border border-violet-100 bg-white/90 px-3 text-sm font-semibold text-slate-700 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-300"
           >
-            <option value="__enrolled__">My child's courses</option>
+            <option value="__enrolled__">{defaultCourseLabel}</option>
             {courses.map((course) => (
               <option key={course.id} value={course.id}>
                 {course.title}

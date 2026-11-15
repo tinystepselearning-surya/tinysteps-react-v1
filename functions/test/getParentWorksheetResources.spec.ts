@@ -50,14 +50,15 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('getParentWorksheetResourc
     const result = await loadParentWorksheetResources(db, parentA, kidA);
     // General course resources are browseable even outside enrolment;
     // child-targeted and other family's private worksheets remain denied.
-    expect(result.resources).toHaveLength(2);
-    expect(result.resources.map((row) => row.title).sort()).toEqual(['Allowed', 'Denied']);
-    expect(result.resources[0]).not.toHaveProperty('teacherScript');
-    expect(result.resources[0]).not.toHaveProperty('targetCourseIds');
-    expect(result.resources[0]).not.toHaveProperty('targetKidIds');
-    expect(result.resources[0]).not.toHaveProperty('targetEnrollmentIds');
-    expect(result.resources[0]).not.toHaveProperty('targetParentIds');
-    expect(result.resources[0]?.id).not.toContain(`allowed-${suffix}`);
+    const ourResources = result.resources.filter((row) =>
+      row.url === 'https://example.com/a.pdf' || row.url === 'https://example.com/b.pdf');
+    expect(ourResources.map((row) => row.title).sort()).toEqual(['Allowed', 'Denied']);
+    expect(ourResources[0]).not.toHaveProperty('teacherScript');
+    expect(ourResources[0]).not.toHaveProperty('targetCourseIds');
+    expect(ourResources[0]).not.toHaveProperty('targetKidIds');
+    expect(ourResources[0]).not.toHaveProperty('targetEnrollmentIds');
+    expect(ourResources[0]).not.toHaveProperty('targetParentIds');
+    expect(ourResources[0]?.id).not.toContain(`allowed-${suffix}`);
     expect(result.enrolledCourseIds).toHaveLength(1);
     await expect(loadParentWorksheetResources(db, parentB, kidA)).rejects.toMatchObject({ code: 'permission-denied' });
   });
@@ -83,6 +84,9 @@ describe('parent worksheet course browsing access policy', () => {
     })).toBe(false);
     expect(parentWorksheetIsGenerallyBrowseable({
       targetCourseIds: ['other-course'], targetParentIds: ['another-family'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetStageTags: ['stage-advanced'],
     })).toBe(false);
     expect(parentWorksheetIsGenerallyBrowseable({
       targetCourseIds: ['other-course'], active: false,

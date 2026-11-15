@@ -48,7 +48,8 @@ export function parentWorksheetIsGenerallyBrowseable(data: ResourceRecord): bool
       data.isArchived === true || data.archived === true) return false;
   if (strings(data.targetCourseIds).length === 0) return false;
   if (strings(data.targetKidIds).length > 0 || strings(data.targetChildIds).length > 0 ||
-      strings(data.targetEnrollmentIds).length > 0) return false;
+      strings(data.targetEnrollmentIds).length > 0 ||
+      strings(data.targetStageTags).length > 0 || strings(data.stageTags).length > 0) return false;
   const parentTargets = strings(data.targetParentIds);
   return parentTargets.length === 0 ||
     (parentTargets.length === 1 && parentTargets[0] === 'all_parents');
