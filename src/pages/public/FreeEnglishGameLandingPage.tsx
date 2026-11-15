@@ -6,6 +6,7 @@ import { createFAQPageSchema } from "../../lib/schemas";
 import { applySeo } from "../../lib/seo";
 import { trackFreeResourceToTrialClick } from "../../lib/conversionTracking";
 import PublicEnglishGamePlayer from "./PublicEnglishGamePlayer";
+import SpellingGamesLanding from "./SpellingGamesLanding";
 import {
   PUBLIC_ENGLISH_GAMES_HUB_PATH,
   getPublicEnglishGameLandingByPath,
@@ -32,6 +33,8 @@ export default function FreeEnglishGameLandingPage() {
   const [searchParams] = useSearchParams();
   const config: PublicEnglishGameLandingConfig | null = getPublicEnglishGameLandingByPath(location.pathname);
   const isPlayMode = searchParams.get("play") === "1";
+  const isSpellingLanding = config?.publicPath === "/free-spelling-game-for-kids";
+  const isSpellingPlayMode = isSpellingLanding && isPlayMode;
   // Query-only variant: keep the established spelling page, canonical and SEO contract.
   const isVisualPuzzleMode =
     config?.publicPath === "/free-spelling-game-for-kids" &&
@@ -40,10 +43,11 @@ export default function FreeEnglishGameLandingPage() {
   const shouldRenderPlayer = !!config?.isPublicPlayReady && isPlayMode;
 
   useEffect(() => {
-    // The visual-only variant opens directly into its game; no anchor scroll.
-    if (!shouldRenderPlayer || isVisualPuzzleMode) return;
+    // Both spelling experiences are dedicated game-first modes. Avoid
+    // scrolling an overlaid game inside the long information page.
+    if (!shouldRenderPlayer || isSpellingPlayMode) return;
     scrollToPublicGamePlayer();
-  }, [shouldRenderPlayer, isVisualPuzzleMode]);
+  }, [shouldRenderPlayer, isSpellingPlayMode]);
 
   useEffect(() => {
     if (!config) return;
@@ -86,15 +90,16 @@ export default function FreeEnglishGameLandingPage() {
 
   const pageUrl = `${SITE_ORIGIN}${config.publicPath}`;
 
-  // An immersive game-first screen for older children. Keep the established
-  // canonical + metadata/JSON-LD on the landing route, but do not render
-  // preschool phonics guidance, marketing sections or duplicate back controls.
-  // Classic spelling and the canonical information page remain unchanged.
-  if (isVisualPuzzleMode && shouldRenderPlayer) {
+  // The single indexed spelling URL offers two distinct age-appropriate games.
+  // Both query-only play variants render just the game, never a long landing
+  // page with nested fixed overlays and automatic scroll-to-game behaviour.
+  if (isSpellingLanding) {
     return (
       <>
         <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} />
-        <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode />
+        {isSpellingPlayMode
+          ? <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode={isVisualPuzzleMode} />
+          : <SpellingGamesLanding />}
       </>
     );
   }
