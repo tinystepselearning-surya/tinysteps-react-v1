@@ -126,7 +126,7 @@ export const isReturningWebsiteEnquiryInRange = (
   dateFromMs: number,
   dateToMs: number,
 ): boolean => {
-  if (normalizeText(lead.source) !== 'website') return false;
+  if (normalizeText(lead.source) !== 'website' || (!dateFromMs && !dateToMs)) return false;
   const first = leadReceivedAtMillis(lead);
   const latest = timestampToMillis(lead.lastInquiryAt);
   return Boolean(first && latest &&
@@ -595,6 +595,44 @@ export function usePagedLeads<T extends PagedLeadRecord>({
       (error) => onErrorRef.current(error as Error),
     );
   }, [bucket, dateFromMs, dateToMs, effectivePageIndex, refreshCounts]);
+
+  // A returning parent updates an older canonical lead, not a newly created
+  // document. The existing createdAt watcher won't see that row; this additional
+  // five-row watch refreshes Today when the server-side merge arrives.
+  useEffect(() => {
+    if (!hasDateFilter || (bucket !== 'all' && bucket !== 'open') || effectivePageIndex !== 0) return undefined;
+    let hasBaseline = false;
+    let priorInquiryTimes = new Map<string, number>();
+    return onSnapshot(
+      query(collection(db, LEADS_COLLECTION), orderBy('lastInquiryAt', 'desc'), limit(NEW_LEAD_WATCH_SIZE)),
+      { includeMetadataChanges: true },
+      (snapshot) => {
+        if (snapshot.metadata.fromCache) return;
+        const nextTimes = new Map(snapshot.docs.map((document) =>
+          [document.id, leadLatestInquiryAtMillis(document.data())]));
+        if (!hasBaseline) {
+          hasBaseline = true;
+          priorInquiryTimes = nextTimes;
+          return;
+        }
+        const now = Date.now();
+        const hasNewReturningEnquiry = snapshot.docChanges().some((change) => {
+          if (change.type === 'removed' || change.doc.metadata.hasPendingWrites) return false;
+          const data = change.doc.data();
+          const latest = leadLatestInquiryAtMillis(data);
+          return isReturningWebsiteEnquiryInRange(data, dateFromMs, dateToMs) &&
+            priorInquiryTimes.get(change.doc.id) !== latest &&
+            latest > 0 && now - latest >= 0 &&
+            now - latest <= RECENT_NOTIFICATION_WINDOW_MS;
+        });
+        priorInquiryTimes = nextTimes;
+        if (!hasNewReturningEnquiry) return;
+        receivedRangeCacheRef.current = null;
+        setReloadVersion((current) => current + 1);
+      },
+      (error) => onErrorRef.current(error as Error),
+    );
+  }, [bucket, dateFromMs, dateToMs, effectivePageIndex, hasDateFilter]);
 
   const reloadPage = useCallback((resetToFirst = false) => {
     if (bucket !== 'all') smallBucketCacheRef.current.delete(bucket);
