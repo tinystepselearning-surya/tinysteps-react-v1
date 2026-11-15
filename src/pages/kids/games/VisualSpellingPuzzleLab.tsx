@@ -191,7 +191,7 @@ export default function VisualSpellingPuzzleLab() {
             </div>}
             <h1 className={`font-black tracking-tight ${stageId ? 'text-lg sm:text-xl' : 'text-3xl sm:text-5xl'}`}>Spelling <span className="text-amber-300">Puzzle Lab</span></h1>
             <p className={`font-medium text-indigo-100 ${stageId ? 'mt-1 text-xs sm:text-sm' : 'mt-2 text-sm sm:text-base'}`}>
-              {stageId ? `Now playing: ${selectedStage?.title} · Level ${selectedStageNumber} of ${VISUAL_SPELLING_STAGES.length}` : 'Free for ages 8–10+ · No login · No sound · Nothing saved'}
+              {stageId ? `Now playing: ${selectedStage?.title}` : 'Free for ages 8–10+ · No login · No sound · Nothing saved'}
             </p>
           </div>
           <button type="button" onClick={returnToSpellingHome}
