@@ -141,6 +141,36 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await leadRef.get()).data()?.demoSessionId).toBe(expectedDemoId);
   });
 
+  it('automatically creates open requests for group and undecided new website leads', async () => {
+    for (const [index, format] of ['small_group', 'unsure'].entries()) {
+      const leadId = `auto-format-${index}`;
+      const leadRef = db.collection('leads').doc(leadId);
+      const before = await leadRef.get();
+      await leadRef.set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: `944043637${index}`,
+        source: 'website', sourceDetail: 'public_assessment_form',
+        status: 'new', classFormatPreference: format,
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: `unique-${index}`,
+        programInterest: 'Phonics',
+        createdAt: admin.firestore.Timestamp.now(),
+      });
+      const after = await leadRef.get();
+      await onLeadEnsureDemoRequest.run({
+        params: { leadId }, data: { before, after },
+      } as never);
+      const demoId = `lead_${leadId}`;
+      expect((await leadRef.get()).data()).toMatchObject({
+        demoSessionId: demoId, demoStatus: 'open',
+      });
+      expect((await db.collection('demoSessions').doc(demoId).get()).data())
+        .toMatchObject({
+          status: 'open', classFormatPreference: format, assessmentFormat: null,
+          leadType: null, assignedTeacherId: null,
+        });
+    }
+    expect((await db.collection('demoSessions').get()).size).toBe(2);
+  });
+
   it('lets an authorised admin safely retry once without duplicating an existing demo', async () => {
     const leadId = 'retry-canonical';
     const leadRef = db.collection('leads').doc(leadId);
