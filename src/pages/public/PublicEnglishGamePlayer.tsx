@@ -5,13 +5,16 @@ import SentenceStepperStage4 from "../kids/games/phonics/SentenceStepperStage4";
 import BuildBetterSentencesChooseBetter from "../kids/games/grammar/BuildBetterSentencesChooseBetter";
 import StoryReadingGame from "../kids/games/reading/StoryReading/StoryReadingGame";
 import MakeAWordRimeGame from "../kids/games/phonics/CvcWordReader/MakeAWordRimeGame";
+import VisualSpellingPuzzleLab from "../kids/games/VisualSpellingPuzzleLab";
 
 type PublicEnglishGamePlayerProps = {
   publicPath: string;
+  visualPuzzleMode?: boolean;
 };
 
 export default function PublicEnglishGamePlayer({
   publicPath,
+  visualPuzzleMode = false,
 }: PublicEnglishGamePlayerProps) {
   switch (publicPath) {
     case "/free-letter-sounds-game-for-kids":
@@ -39,6 +42,7 @@ export default function PublicEnglishGamePlayer({
         />
       );
     case "/free-spelling-game-for-kids":
+      if (visualPuzzleMode) return <VisualSpellingPuzzleLab />;
       return (
         <MakeAWordRimeGame
           forceAnonymousMode
