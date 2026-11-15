@@ -448,20 +448,20 @@ export default function PublicAssessmentForm({
 
   const isHeroCompact = appearance === 'heroCompact';
   const cardClassName = appearance === 'embedded'
-    ? 'border-white/90 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.09)] sm:p-6'
+    ? 'border-white/90 p-4 shadow-[0_18px_42px_rgba(15,23,42,0.09)] sm:p-6 lg:p-5'
     : isHeroCompact
       ? 'border-slate-200 p-4 shadow-[0_18px_44px_rgba(15,23,42,0.12)] sm:p-5'
       : 'border-slate-200 p-4 shadow-none sm:p-6';
 
   const headerClassName = isHeroCompact
     ? 'relative mb-3 sm:mb-4'
-    : appearance === 'embedded' ? 'relative mb-4 sm:mb-5' : 'relative mb-4 pr-16 sm:mb-5';
+    : appearance === 'embedded' ? 'relative mb-3 sm:mb-4 lg:mb-3' : 'relative mb-4 pr-16 sm:mb-5';
   const formClassName = isHeroCompact
     ? 'relative space-y-3 pb-1 sm:space-y-3.5 sm:pb-2'
-    : 'relative space-y-3 pb-3 sm:space-y-4 sm:pb-4';
+    : 'relative space-y-3 pb-3 sm:space-y-4 sm:pb-4 lg:space-y-3 lg:pb-3';
   const fieldGridClassName = isHeroCompact
     ? 'grid grid-cols-1 gap-3 sm:grid-cols-2'
-    : 'grid grid-cols-1 gap-3 sm:gap-3.5 sm:grid-cols-2';
+    : 'grid grid-cols-1 gap-3 sm:gap-3.5 sm:grid-cols-2 lg:gap-3';
   // The concern dropdown needs a full row; age sits alongside the phone input.
   const selectGridClassName = fieldGridClassName;
   const submitClassName = isHeroCompact

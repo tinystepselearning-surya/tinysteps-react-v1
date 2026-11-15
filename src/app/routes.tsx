@@ -349,6 +349,10 @@ const Layout: FC = () => {
     !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome || isSpellingPlayFocus;
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
+  // The booking form owns the interaction surface while it is open. The
+  // standalone /book-demo page always displays that form, so floating
+  // assistance must not overlap its inputs or submit button either.
+  const assessmentOwnsViewport = normalizedPath === '/book-demo' || isAssessmentModalOpen;
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
   const [showDeferredSupportWidgets, setShowDeferredSupportWidgets] = useState(false);
   const [hideHomepageBottomWidgets, setHideHomepageBottomWidgets] = useState(false);
@@ -596,7 +600,7 @@ const Layout: FC = () => {
           <Footer />
         </Suspense>
       ) : null}
-      {!hideSupportWidgets && showDeferredSupportWidgets ? (
+      {!hideSupportWidgets && showDeferredSupportWidgets && !assessmentOwnsViewport ? (
         <Suspense fallback={null}>
           <FloatingAssistant suppressDock={hideHomepageBottomWidgets} />
           {!hideHomepageBottomWidgets ? <BackToTopButton /> : null}
