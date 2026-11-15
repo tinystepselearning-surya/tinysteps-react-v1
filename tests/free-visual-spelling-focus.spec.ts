@@ -31,7 +31,8 @@ for (const viewport of [
     expect(horizontalOverflow).toBe(false);
 
     await page.getByRole('button', { name: /Everyday Words/ }).click();
-    await expect(page.getByRole('heading', { name: 'Build the correct word' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Everyday Words', level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Build the Word', level: 3 })).toBeVisible();
 
     // In-level back stays inside the spelling game, not the unrelated
     // English Excellence Games directory, and preserves the puzzle URL.
@@ -52,14 +53,16 @@ test('every puzzle level opens an appropriately different child-readable challen
   await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
   const cases = [
-    { level: /everyday words/i, heading: 'Build the correct word', clue: 'A trip from one place to another.' },
-    { level: /patterns & endings/i, heading: 'Sort the word', clue: 'Not paying enough attention or care.' },
-    { level: /tricky spellings/i, heading: 'Fill the missing letters', clue: 'Something that is needed or required.' },
-    { level: /long word challenge/i, heading: 'Build the correct word', clue: 'Involving two or more countries.' },
+    { level: /everyday words/i, title: 'Everyday Words', heading: 'Build the Word', clue: 'A trip from one place to another.' },
+    { level: /patterns & endings/i, title: 'Patterns & Endings', heading: 'Sort by Word Ending', clue: 'Not paying enough attention or care.' },
+    { level: /tricky spellings/i, title: 'Tricky Spellings', heading: 'Fill the Missing Letters', clue: 'Something that is needed or required.' },
+    { level: /long word challenge/i, title: 'Long Word Challenge', heading: 'Build from Word Parts', clue: 'Involving two or more countries.' },
   ];
   for (const item of cases) {
     await page.getByRole('button', { name: item.level }).click();
-    await expect(page.getByRole('heading', { name: item.heading, exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: item.title, level: 2 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: item.heading, level: 3 })).toBeVisible();
+    await expect(page.getByText('Now playing: ' + item.title)).toBeVisible();
     await expect(page.getByText(item.clue)).toBeVisible();
     await page.getByRole('button', { name: 'All Spelling Levels' }).click();
     await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
