@@ -455,7 +455,7 @@ export default function PublicAssessmentForm({
 
   const headerClassName = isHeroCompact
     ? 'relative mb-3 sm:mb-4'
-    : appearance === 'embedded' ? 'relative mb-3 sm:mb-4 lg:mb-3' : 'relative mb-4 pr-16 sm:mb-5';
+    : appearance === 'embedded' ? 'relative mb-3 sm:mb-4 lg:mb-3' : 'relative mb-4 sm:mb-5';
   const formClassName = isHeroCompact
     ? 'relative space-y-3 pb-1 sm:space-y-3.5 sm:pb-2'
     : 'relative space-y-3 pb-3 sm:space-y-4 sm:pb-4 lg:space-y-3 lg:pb-3';
