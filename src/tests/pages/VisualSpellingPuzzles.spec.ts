@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   VISUAL_SPELLING_PUZZLES,
   VISUAL_SPELLING_STAGES,
+  shuffleVisualSpellingPuzzles,
   validateVisualSpellingPuzzles,
   visualSpellingAnswer,
   type VisualSpellingPuzzle,
@@ -55,6 +56,15 @@ describe('sound-free visual spelling puzzle curriculum', () => {
     expect(new Set(advanced.map(puzzle => puzzle.kind))).toEqual(
       new Set(['arrange', 'correct', 'missing', 'sort'])
     );
+  });
+
+  it('shuffles all puzzles without changing their answers or storing a session', () => {
+    const original = VISUAL_SPELLING_PUZZLES.filter(p => p.stage === 'explorer');
+    const shuffled = shuffleVisualSpellingPuzzles(original, () => 0);
+    expect(shuffled).toHaveLength(original.length);
+    expect(shuffled.map(p => p.id)).not.toEqual(original.map(p => p.id));
+    expect(new Set(shuffled.map(p => p.id))).toEqual(new Set(original.map(p => p.id)));
+    expect(original[0].id).toBe('explorer-journey');
   });
 
   it('refuses ambiguous options and corrupted word parts', () => {
