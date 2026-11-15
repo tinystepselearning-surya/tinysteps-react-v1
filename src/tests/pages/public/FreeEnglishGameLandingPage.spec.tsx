@@ -126,6 +126,40 @@ describe("FreeEnglishGameLandingPage", () => {
     },
   );
 
+  it("explains both spelling games on the canonical page with truthful learning-resource schema", () => {
+    vi.mocked(applySeo).mockClear();
+    renderRoute("/free-spelling-game-for-kids");
+
+    expect(screen.getByRole("heading", { name: "Which spelling game fits my child's current skills?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 3 }).closest("article"))
+      .toHaveAttribute("id", "spelling-adventure");
+    expect(screen.getByRole("heading", { name: "Spelling Puzzle Lab", level: 3 }).closest("article"))
+      .toHaveAttribute("id", "spelling-puzzle-lab");
+
+    const seoCall = vi.mocked(applySeo).mock.calls.find(([settings]) =>
+      settings.canonicalPath === "/free-spelling-game-for-kids"
+    )?.[0];
+    expect(seoCall).toBeDefined();
+    expect(seoCall?.canonicalPath).toBe("/free-spelling-game-for-kids");
+    expect(seoCall?.jsonLd).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        "@type": "CollectionPage",
+        mainEntity: expect.objectContaining({
+          "@type": "ItemList",
+          numberOfItems: 2,
+          itemListElement: expect.arrayContaining([
+            expect.objectContaining({ position: 1, item: expect.objectContaining({ name: "Spelling Adventure", isAccessibleForFree: true }) }),
+            expect.objectContaining({ position: 2, item: expect.objectContaining({ name: "Spelling Puzzle Lab", isAccessibleForFree: true }) }),
+          ]),
+        }),
+      }),
+    ]));
+    const serializedSchema = JSON.stringify(seoCall?.jsonLd);
+    expect(serializedSchema).not.toContain("aggregateRating");
+    expect(serializedSchema).not.toContain("reviewCount");
+    expect(serializedSchema).toContain("/free-spelling-game-for-kids?play=1&mode=puzzles");
+  });
+
   it("keeps unreleased speaking practice accessible while setting noindex", () => {
     vi.mocked(applySeo).mockClear();
     renderRoute("/free-speaking-practice-game-for-kids");
