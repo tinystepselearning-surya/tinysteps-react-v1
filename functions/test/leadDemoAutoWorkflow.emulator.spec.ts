@@ -39,14 +39,14 @@ describe('automatic lead -> demo workflow guards', () => {
     })).toBe(true);
   });
 
-  it('does not automatically book a 1:1 demo for group or undecided prospects', () => {
+  it('creates a demo request for every canonical class preference without scheduling a booking', () => {
     const canonical = {
       source: 'website', childName: 'Child', primaryPhone: '9440436379',
       status: 'new', dedupeCanonicalLeadId: 'lead-group',
       dedupeIdentityKey: 'canonical-key',
     };
-    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'small_group' })).toBe(false);
-    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'unsure' })).toBe(false);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'small_group' })).toBe(true);
+    expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'unsure' })).toBe(true);
     expect(shouldEnsureDemoForLead('lead-group', { ...canonical, classFormatPreference: 'one_to_one' })).toBe(true);
   });
 
@@ -166,21 +166,27 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await leadRef.get()).data()?.demoSessionId).toBe(`lead_${leadId}`);
   });
 
-  it('blocks manual retry for undecided or small-group enquiries', async () => {
+  it('safely creates format-neutral demo requests for group and undecided enquiries on admin retry', async () => {
     const adminUid = 'admin-demo-retry-format-test';
     await db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' });
-    for (const format of ['small_group', 'unsure']) {
+    for (const [index, format] of ['small_group', 'unsure'].entries()) {
       const leadId = `retry-${format}`;
-      await db.collection('leads').doc(leadId).set({
-        childName: 'Keerthi', primaryPhone: '9440436379', source: 'website',
+      const phone = `944043638${index}`;
+      const leadRef = db.collection('leads').doc(leadId);
+      await leadRef.set({
+        childName: 'Keerthi', primaryPhone: phone, source: 'website',
         status: 'new', classFormatPreference: format,
-        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'identity-key',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: `identity-${index}`,
       });
-      await expect(adminRetryLeadDemoRequest.run({
-        auth: { uid: adminUid }, data: { leadId },
-      } as never)).rejects.toThrow(/Review class format/);
+      const payload = { auth: { uid: adminUid }, data: { leadId } } as never;
+      const result = await adminRetryLeadDemoRequest.run(payload);
+      expect(result).toMatchObject({ ok: true, action: 'created', demoId: `lead_${leadId}` });
+      expect(await adminRetryLeadDemoRequest.run(payload)).toMatchObject({ ok: true, action: 'already_linked' });
+      const demo = (await db.collection('demoSessions').doc(result.demoId).get()).data();
+      expect(demo).toMatchObject({ status: 'open', leadType: null, classFormatPreference: format, assessmentFormat: null });
+      expect((await leadRef.get()).data()).toMatchObject({ demoStatus: 'open', demoSessionId: result.demoId });
     }
-    expect((await db.collection('demoSessions').get()).size).toBe(0);
+    expect((await db.collection('demoSessions').get()).size).toBe(2);
   });
 
   it('refuses a conflicting owned demo instead of creating a second parent-child request', async () => {
