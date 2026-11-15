@@ -30,12 +30,11 @@ export type StatedParentUrgency = 'Today' | 'This week' | 'This month' | 'Just e
  */
 export type EnquiryContactPreference = 'phone' | 'whatsapp' | 'either';
 
-export const resolveEnquiryContactPreference = (input: {
-  contactPreference?: unknown;
-  contactPermission?: unknown;
-} | null | undefined): EnquiryContactPreference | null => {
-  if (input?.contactPermission !== true) return null;
-  const value = String(input.contactPreference || '').trim().toLowerCase();
+export const resolveEnquiryContactPreference = (input: unknown): EnquiryContactPreference | null => {
+  // Accept both schema-typed LeadRecord and legacy Firestore map shapes.
+  const lead = input && typeof input === 'object' ? input as Record<string, unknown> : null;
+  if (lead?.contactPermission !== true) return null;
+  const value = String(lead.contactPreference || '').trim().toLowerCase();
   return value === 'phone' || value === 'whatsapp' || value === 'either' ? value : null;
 };
 
