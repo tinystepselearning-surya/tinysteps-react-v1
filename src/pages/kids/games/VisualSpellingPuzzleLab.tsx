@@ -219,12 +219,24 @@ export default function VisualSpellingPuzzleLab() {
 
             {puzzle.kind === 'sort' && (
               <div className="mt-6">
-                <p className="mb-3 text-center text-3xl font-black text-indigo-950">{puzzle.word}</p>
-                <p className="mb-4 text-center text-sm text-slate-600">Which spelling group does this word belong to?</p>
+                <p className="mb-3 text-center text-sm text-slate-600">Drag the word into a group, or tap the matching group.</p>
+                <div className="mb-5 text-center">
+                  <span
+                    draggable={feedback !== 'correct'}
+                    onDragStart={event => event.dataTransfer.setData('text/plain', puzzle.word)}
+                    className="inline-block cursor-grab rounded-xl border-2 border-indigo-300 bg-white px-6 py-4 text-3xl font-black text-indigo-950 shadow-sm"
+                    aria-label={'Word to sort: ' + puzzle.word}
+                  >{puzzle.word}</span>
+                </div>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {puzzle.categories.map(category => (
                     <button type="button" key={category} disabled={feedback === 'correct'}
                       onClick={() => submit(category)}
+                      onDragOver={event => event.preventDefault()}
+                      onDrop={event => {
+                        event.preventDefault();
+                        if (event.dataTransfer.getData('text/plain') === puzzle.word) submit(category);
+                      }}
                       className="min-h-20 rounded-2xl border-2 border-indigo-200 bg-indigo-50 px-4 py-4 text-lg font-bold hover:border-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-800 disabled:opacity-60">{category}</button>
                   ))}
                 </div>
