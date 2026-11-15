@@ -23,6 +23,13 @@ describe('Microsoft Clarity route policy', () => {
       '/games/english-excellence',
       '/online-phonics-reading-classes',
       '/resources/grammar/a-an-articles-for-kids',
+      '/phonics/age-3',
+      '/phonics/age-4',
+      '/phonics/age-5',
+      '/phonics/age-6',
+      '/group-phonics-classes-for-kids',
+      '/group-grammar-classes-for-kids',
+      '/group-public-speaking-classes-for-kids',
       '/blog/what-is-phonics-for-kids',
       '/courses/phonics-foundation',
       '/curriculum',
@@ -53,6 +60,8 @@ describe('Microsoft Clarity route policy', () => {
       '/unauthorized',
       '/dev/comet-courier',
       '/future-protected-area',
+      '/phonics/age-7',
+      '/group-unknown-class-for-kids',
     ]) {
       expect(isClarityAllowedPath(route), route).toBe(false);
     }
