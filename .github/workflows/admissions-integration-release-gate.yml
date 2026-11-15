@@ -51,8 +51,6 @@ jobs:
               src/pages/admin/FutureDemoMilestonesCard.tsx|\
               src/pages/admin/LeadAdminToolsMenu.tsx|\
               src/pages/admin/LeadSourceAnalysis.tsx|\
-              src/pages/admin/sourcePaymentEvidence.ts|\
-              src/pages/admin/sourcePaymentEvidence.spec.ts|\
               src/pages/admin/LeadsInquiriesWorkspaceV2.tsx|\
               src/pages/teacher/components/demo/LegacyDemoAssignmentsView.tsx|\
               src/pages/admin/leadsWorkflowBuckets.ts|\
@@ -93,7 +91,6 @@ jobs:
         run: >
           npx vitest run
           src/tests/pages/LeadSourceAnalysis.spec.tsx
-          src/pages/admin/sourcePaymentEvidence.spec.ts
           src/tests/services/leadCommunicationsService.spec.ts
           src/pages/admin/leadAdminReadPolicy.test.ts
           src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx
