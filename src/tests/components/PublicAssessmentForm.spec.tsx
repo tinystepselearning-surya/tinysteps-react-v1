@@ -111,6 +111,17 @@ describe('PublicAssessmentForm analytics', () => {
     expect(trackingMocks.trackLeadFormSubmit).not.toHaveBeenCalled();
   });
 
+  it('rejects malformed phone numbers before any lead save or WhatsApp navigation', () => {
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: 'not-a-number' } });
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    expect(screen.getByText(/enter a valid mobile number/i)).toBeInTheDocument();
+    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
+    expect(globalThis.open).not.toHaveBeenCalled();
+    expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
+  });
+
   it('renders only the required support-area dropdown with the exact options', () => {
     render(<PublicAssessmentForm />);
 
