@@ -9,6 +9,7 @@ import {
   normalizePublicSpellingAnswer,
   type PublicSpellingChallenge,
 } from "../../../../../lib/publicSpellingContent";
+import { twoLetterPracticeRound, TWO_LETTER_ROUND_SIZE } from "../../../../../lib/publicSpellingTwoLetterWords";
 
 type Item = {
   onset: string; // c
@@ -502,6 +503,7 @@ function PublicSpellingAdventure({
   const [levelIndex, setLevelIndex] = useState(0);
   const [queue, setQueue] = useState<PublicSpellingChallenge[]>(() => publicSpellingPracticeRound(PUBLIC_SPELLING_LEVELS[0], 0));
   const [sessionRound, setSessionRound] = useState(0);
+  const [twoLetterMode, setTwoLetterMode] = useState(false);
   const [builtLetters, setBuiltLetters] = useState<string[]>([]);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
@@ -521,8 +523,10 @@ function PublicSpellingAdventure({
 
   const currentLevel = PUBLIC_SPELLING_LEVELS[levelIndex] ?? PUBLIC_SPELLING_LEVELS[0];
   const current = queue[0] ?? currentLevel.challenges[0];
-  const sessionTotalChallenges = PUBLIC_SPELLING_LEVELS.slice(sessionStartLevelIndex)
-    .reduce((sum, level) => sum + Math.min(PUBLIC_SPELLING_SESSION_SIZE, level.challenges.length), 0);
+  const sessionTotalChallenges = twoLetterMode
+    ? TWO_LETTER_ROUND_SIZE
+    : PUBLIC_SPELLING_LEVELS.slice(sessionStartLevelIndex)
+      .reduce((sum, level) => sum + Math.min(PUBLIC_SPELLING_SESSION_SIZE, level.challenges.length), 0);
   const displayedProgress = Math.min(sessionTotalChallenges, completedCoreChallenges);
   const accuracy = scoredCoreChallenges > 0
     ? Math.round((correctChallenges / scoredCoreChallenges) * 100)
@@ -567,6 +571,7 @@ function PublicSpellingAdventure({
   const startFreshAtLevel = (index: number, round = sessionRound) => {
     const safeIndex = Math.max(0, Math.min(index, PUBLIC_SPELLING_LEVELS.length - 1));
     setSessionStartLevelIndex(safeIndex);
+    setTwoLetterMode(false);
     setSessionRound(round);
     setCorrectChallenges(0);
     setScoredCoreChallenges(0);
@@ -575,12 +580,22 @@ function PublicSpellingAdventure({
     startLevel(safeIndex, round);
   };
 
+  const startTwoLetterWords = (round = 0) => {
+    startFreshAtLevel(0, round);
+    setTwoLetterMode(true);
+    setQueue(twoLetterPracticeRound(round));
+  };
+
   const startJourney = () => {
     startFreshAtLevel(0, 0);
   };
 
   const replayJourney = () => {
-    startFreshAtLevel(0, sessionRound + 1);
+    if (twoLetterMode) {
+      startTwoLetterWords(sessionRound + 1);
+    } else {
+      startFreshAtLevel(0, sessionRound + 1);
+    }
   };
 
   const goToNextChallenge = (hadError: boolean) => {
@@ -601,7 +616,7 @@ function PublicSpellingAdventure({
         if (nextQueue.length > 0) return nextQueue;
 
         const nextLevelIndex = levelIndex + 1;
-        if (nextLevelIndex < PUBLIC_SPELLING_LEVELS.length) {
+        if (!twoLetterMode && nextLevelIndex < PUBLIC_SPELLING_LEVELS.length) {
           const nextLevel = PUBLIC_SPELLING_LEVELS[nextLevelIndex];
           setLevelIndex(nextLevelIndex);
           return publicSpellingPracticeRound(nextLevel, sessionRound);
@@ -937,9 +952,15 @@ function PublicSpellingAdventure({
             <div>
               <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-indigo-700">Your spelling activity</p>
               <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
-                Step {levelIndex + 1} of {PUBLIC_SPELLING_LEVELS.length}
+                {twoLetterMode ? "Optional written-word warm-up" : `Step ${levelIndex + 1} of ${PUBLIC_SPELLING_LEVELS.length}`}
               </div>
-              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{currentLevel.title}</h2>
+              <h2 className="text-2xl font-black text-slate-950 sm:text-3xl">{twoLetterMode ? "Two-Letter Words" : currentLevel.title}</h2>
+              {!twoLetterMode && (
+                <button type="button" onClick={() => startTwoLetterWords(0)}
+                  className="mt-1 min-h-9 rounded-full border border-indigo-300 bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-800 focus:outline-none focus:ring-4 focus:ring-yellow-300">
+                  Try two-letter words
+                </button>
+              )}
             </div>
             <div className="grid w-full grid-cols-3 gap-1.5 pb-1 sm:grid-cols-6 lg:w-auto" role="tablist" aria-label="Spelling adventure steps">
               {PUBLIC_SPELLING_LEVELS.map((level, index) => (
@@ -949,13 +970,13 @@ function PublicSpellingAdventure({
                   onClick={() => startFreshAtLevel(index)}
                   className={[
                     "min-w-0 whitespace-normal rounded-full px-1.5 py-2 text-[10px] font-black leading-tight transition focus:outline-none focus:ring-4 focus:ring-yellow-300 sm:px-2 sm:text-xs",
-                    index === levelIndex
+                    !twoLetterMode && index === levelIndex
                       ? "bg-slate-950 text-white"
                       : "bg-slate-100 text-slate-700 hover:bg-slate-200",
                   ].join(" ")}
                   aria-label={`Go to ${level.title}`}
                   role="tab"
-                  aria-selected={index === levelIndex}
+                  aria-selected={!twoLetterMode && index === levelIndex}
                 >
                   {level.shortTitle}
                 </button>
@@ -972,7 +993,7 @@ function PublicSpellingAdventure({
             />
           </div>
           <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
-            <span>{Math.min(queue.length, currentLevel.challenges.length)} left in this step</span>
+            <span>{Math.min(queue.filter(item => !item.review).length, twoLetterMode ? TWO_LETTER_ROUND_SIZE : PUBLIC_SPELLING_SESSION_SIZE)} left in this step</span>
             <span>{displayedProgress}/{sessionTotalChallenges} completed this round</span>
           </div>
 
@@ -998,7 +1019,7 @@ function PublicSpellingAdventure({
               ].join(" ")}
             >
               <p className="mb-3 text-xs font-black uppercase tracking-[0.10em] text-slate-500 sm:text-sm">
-                {currentLevel.instruction}
+                {twoLetterMode ? "Read the sentence. Tap the two letters in the correct order." : currentLevel.instruction}
               </p>
               {renderCurrentChallenge()}
               <div className="mt-3 min-h-[26px] text-base font-black">
@@ -1019,9 +1040,9 @@ function PublicSpellingAdventure({
 
       {screen === "complete" && (
         <section className="w-[min(680px,100%)] rounded-[28px] border border-white/55 bg-white/95 p-6 text-center shadow-2xl sm:p-8">
-          <h2 className="text-4xl font-black text-slate-950">Spelling Journey Complete!</h2>
+          <h2 className="text-3xl font-black text-slate-950 sm:text-4xl">{twoLetterMode ? "Two-Letter Word Warm-up Complete!" : "Spelling Journey Complete!"}</h2>
           <p className="mt-3 text-base font-semibold text-slate-600">
-            You completed the spelling journey. First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
+            {twoLetterMode ? "You completed six two-letter words." : "You completed the spelling journey."} First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <button
@@ -1029,7 +1050,7 @@ function PublicSpellingAdventure({
               onClick={replayJourney}
               className="rounded-full bg-slate-950 px-6 py-3 text-sm font-black uppercase tracking-[0.12em] text-white transition hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-yellow-300"
             >
-              Replay
+              {twoLetterMode ? "Try six more tiny words" : "Replay new word set"}
             </button>
             <button
               type="button"
