@@ -24,9 +24,8 @@ const PHONE_URL = 'tel:+919618398383';
 const SUN_ORANGE = '#ff6a00';
 const PREFILL_STORAGE_KEY = 'ts_public_assessment_prefill_v1';
 const PENDING_LEAD_ID_STORAGE_KEY = 'ts_public_assessment_pending_lead_id_v1';
-const NAVY_TEXT_OUTLINE = '[text-shadow:-0.7px_-0.7px_0_rgba(255,255,255,0.78),0.7px_-0.7px_0_rgba(255,255,255,0.78),-0.7px_0.7px_0_rgba(255,255,255,0.78),0.7px_0.7px_0_rgba(255,255,255,0.78)]';
-const NAVY_TEXT = `text-[#182B57] ${NAVY_TEXT_OUTLINE}`;
-const NAVY_TEXT_STRONG = `text-[#142449] ${NAVY_TEXT_OUTLINE}`;
+const NAVY_TEXT = 'text-[#223557]';
+const NAVY_TEXT_STRONG = 'text-[#142449]';
 
 const readPendingLeadId = (): string | null => {
   try {
@@ -73,7 +72,7 @@ export default function PublicAssessmentForm({
   submitAriaLabel = 'Book Free 35-Minute Demo on WhatsApp',
   appearance = 'default',
   helperText = 'Free assessment · No enrolment commitment',
-  secondaryHelperText = 'After you submit, we will reply on WhatsApp with the recommended starting path, available slots, and pricing clarity.',
+  secondaryHelperText = null,
 }: PublicAssessmentFormProps) {
   const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
   const mainConcernOptions = PUBLIC_MAIN_CONCERN_OPTIONS;
@@ -454,7 +453,9 @@ export default function PublicAssessmentForm({
       ? 'border-slate-200 p-4 shadow-[0_18px_44px_rgba(15,23,42,0.12)] sm:p-5'
       : 'border-slate-200 p-4 shadow-none sm:p-6';
 
-  const headerClassName = isHeroCompact ? 'relative mb-3 sm:mb-4' : 'relative mb-4 pr-16 sm:mb-5';
+  const headerClassName = isHeroCompact
+    ? 'relative mb-3 sm:mb-4'
+    : appearance === 'embedded' ? 'relative mb-4 sm:mb-5' : 'relative mb-4 pr-16 sm:mb-5';
   const formClassName = isHeroCompact
     ? 'relative space-y-3 pb-1 sm:space-y-3.5 sm:pb-2'
     : 'relative space-y-3 pb-3 sm:space-y-4 sm:pb-4';
@@ -527,7 +528,7 @@ export default function PublicAssessmentForm({
         <div className={selectGridClassName}>
           <div className="group space-y-1">
             <label htmlFor="assessment-whatsapp" className="block text-xs font-semibold text-[#142449]">
-              Mobile number (WhatsApp optional) *
+              Mobile number *
             </label>
             <input
               id="assessment-whatsapp"
@@ -567,7 +568,7 @@ export default function PublicAssessmentForm({
               aria-invalid={Boolean(errors.childAge)}
             >
               <option value="" disabled>
-                Child Age
+                Select age
               </option>
               {ageOptions.map((age) => (
                 <option key={age} value={age}>
@@ -668,7 +669,7 @@ export default function PublicAssessmentForm({
           </div>
           {errors.contactPreference && <p className="text-xs text-rose-600">{errors.contactPreference}</p>}
           <p className="text-xs leading-5 text-slate-600">
-            We’ll contact you about this enquiry only. WhatsApp is optional; no marketing subscription.
+            By submitting, you request contact about this enquiry only. WhatsApp is optional; no marketing.
           </p>
         </fieldset>
 
