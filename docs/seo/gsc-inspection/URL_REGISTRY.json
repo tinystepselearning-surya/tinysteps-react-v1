@@ -1,0 +1,6084 @@
+{
+  "property": "sc-domain:tinystepslearning.com",
+  "generatedAt": "2026-10-29T00:00:00Z",
+  "source": "Bootstrap based on checked-in sitemaps, public manifests and redirects; refresh with npm run gen:sitemaps && npm run seo:gsc-registry",
+  "counts": {
+    "index": 262,
+    "redirect": 116,
+    "noindex": 12,
+    "unclassified": 0
+  },
+  "problems": 57,
+  "rows": [
+    {
+      "url": "https://tinystepslearning.com/",
+      "pathname": "/",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/about",
+      "pathname": "/about",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/why-tiny-steps",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "pathname": "/best-online-phonics-classes-for-kids-in-india",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/best-online-phonics-classes-india",
+      "pathname": "/best-online-phonics-classes-india",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog",
+      "pathname": "/blog",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids",
+      "pathname": "/blog/are-phonics-apps-enough-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/are-phonics-apps-enough-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/back-to-school-english-confidence-plan",
+      "pathname": "/blog/back-to-school-english-confidence-plan",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/back-to-school-english-confidence-plan",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/benefits-of-phonics-for-kids",
+      "pathname": "/blog/benefits-of-phonics-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/benefits-of-phonics-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/best-age-to-start-phonics-classes-for-kids",
+      "pathname": "/blog/best-age-to-start-phonics-classes-for-kids",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/what-age-to-start-phonics",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/best-online-phonics-classes-for-kids",
+      "pathname": "/blog/best-online-phonics-classes-for-kids",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/best-phonics-classes-for-kids",
+      "pathname": "/blog/best-phonics-classes-for-kids",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/can-child-improve-english-in-10-days",
+      "pathname": "/blog/can-child-improve-english-in-10-days",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/can-child-improve-english-in-10-days",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/can-child-master-english-in-10-days",
+      "pathname": "/blog/can-child-master-english-in-10-days",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/can-child-improve-english-in-10-days",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme",
+      "pathname": "/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/cbse-phonics-curriculum-vs-systematic-phonics-programme",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-gives-one-word-answers",
+      "pathname": "/blog/child-gives-one-word-answers",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/child-gives-one-word-answers",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read",
+      "pathname": "/blog/child-knows-abc-but-cannot-read",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/child-knows-abc-but-cannot-read",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes",
+      "pathname": "/blog/child-knows-grammar-but-makes-mistakes",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/child-knows-grammar-but-makes-mistakes",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-knows-letter-sounds-but-cannot-read",
+      "pathname": "/blog/child-knows-letter-sounds-but-cannot-read",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home",
+      "pathname": "/blog/child-reads-in-class-but-forgets-at-home",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/child-reads-in-class-but-forgets-at-home",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-reads-words-but-does-not-understand-story",
+      "pathname": "/blog/child-reads-words-but-does-not-understand-story",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak",
+      "pathname": "/blog/child-understands-english-but-does-not-speak",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/conversation-skills-for-kids",
+      "pathname": "/blog/conversation-skills-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/conversation-skills-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/cvc-words-explained-for-parents",
+      "pathname": "/blog/cvc-words-explained-for-parents",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/cvc-words-explained-for-parents",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/digraphs-and-tricky-words",
+      "pathname": "/blog/digraphs-and-tricky-words",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/digraphs-and-tricky-words",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/does-cbse-include-phonics-ncf-foundational-literacy",
+      "pathname": "/blog/does-cbse-include-phonics-ncf-foundational-literacy",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/does-cbse-include-phonics-ncf-foundational-literacy",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/engage-children-phonics-grammar-speaking-at-home",
+      "pathname": "/blog/engage-children-phonics-grammar-speaking-at-home",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-assessment",
+      "pathname": "/blog/grammar-assessment",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-assessment",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-conjunctions",
+      "pathname": "/blog/grammar-conjunctions",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-conjunctions",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-creative-writing",
+      "pathname": "/blog/grammar-creative-writing",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-creative-writing",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-editing-camp",
+      "pathname": "/blog/grammar-editing-camp",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-editing-camp",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-nouns-to-paragraphs",
+      "pathname": "/blog/grammar-nouns-to-paragraphs",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-nouns-to-paragraphs",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-speaking-bridge",
+      "pathname": "/blog/grammar-speaking-bridge",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-speaking-bridge",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-subject-verb",
+      "pathname": "/blog/grammar-subject-verb",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-subject-verb",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/grammar-tenses",
+      "pathname": "/blog/grammar-tenses",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/grammar-tenses",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-children-recognise-words-automatically-after-phonics",
+      "pathname": "/blog/how-children-recognise-words-automatically-after-phonics",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-children-recognise-words-automatically-after-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-kids-learn-blending",
+      "pathname": "/blog/how-kids-learn-blending",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-kids-learn-blending",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-long-does-it-take-child-to-learn-phonics",
+      "pathname": "/blog/how-long-does-it-take-child-to-learn-phonics",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/how-long-does-phonics-take",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-long-does-phonics-take",
+      "pathname": "/blog/how-long-does-phonics-take",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-long-does-phonics-take",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence",
+      "pathname": "/blog/how-phonics-builds-reading-confidence",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-phonics-classes-help-kids-read",
+      "pathname": "/blog/how-phonics-classes-help-kids-read",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-phonics-classes-help-kids-read",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together",
+      "pathname": "/blog/how-phonics-grammar-and-communication-work-together",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-phonics-improves-spelling",
+      "pathname": "/blog/how-phonics-improves-spelling",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-phonics-improves-spelling",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-schools-can-assess-decoding-not-memorisation",
+      "pathname": "/blog/how-schools-can-assess-decoding-not-memorisation",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-schools-can-assess-decoding-not-memorisation",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-tiny-steps-builds-reading-confidence",
+      "pathname": "/blog/how-tiny-steps-builds-reading-confidence",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/how-phonics-builds-reading-confidence",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-choose-phonics-classes",
+      "pathname": "/blog/how-to-choose-phonics-classes",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/best-online-phonics-classes-for-kids-in-india",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home",
+      "pathname": "/blog/how-to-engage-kids-in-english-learning-at-home",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-to-engage-kids-in-english-learning-at-home",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children",
+      "pathname": "/blog/how-to-improve-reading-fluency-in-children",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-to-improve-reading-fluency-in-children",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids",
+      "pathname": "/blog/how-to-improve-sentence-formation-in-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-to-improve-sentence-formation-in-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-teach-paragraph-writing-to-kids",
+      "pathname": "/blog/how-to-teach-paragraph-writing-to-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-to-teach-paragraph-writing-to-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-to-teach-storytelling-to-kids",
+      "pathname": "/blog/how-to-teach-storytelling-to-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-to-teach-storytelling-to-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/how-vocabulary-supports-reading-comprehension",
+      "pathname": "/blog/how-vocabulary-supports-reading-comprehension",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/how-vocabulary-supports-reading-comprehension",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/international-phonics-benchmarks-for-indian-schools",
+      "pathname": "/blog/international-phonics-benchmarks-for-indian-schools",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/international-phonics-benchmarks-for-indian-schools",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/june-school-readiness-english-revision-plan",
+      "pathname": "/blog/june-school-readiness-english-revision-plan",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan",
+      "pathname": "/blog/june-school-reopening-english-readiness-plan",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/june-school-reopening-english-readiness-plan",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/long-vowel-sounds-for-kids",
+      "pathname": "/blog/long-vowel-sounds-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/long-vowel-sounds-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/online-english-classes-for-kids-india",
+      "pathname": "/blog/online-english-classes-for-kids-india",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/online-english-classes-for-kids-india",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/online-phonics-classes-vs-school",
+      "pathname": "/blog/online-phonics-classes-vs-school",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/online-phonics-classes-vs-school",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/online-phonics-games",
+      "pathname": "/blog/online-phonics-games",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/online-phonics-games",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-activities-for-kids-at-home",
+      "pathname": "/blog/phonics-activities-for-kids-at-home",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-activities-for-kids-at-home",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-at-home-activities",
+      "pathname": "/blog/phonics-at-home-activities",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-1-phonics-satpin-launch",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-blending-activities",
+      "pathname": "/blog/phonics-blending-activities",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-blending-activities",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-blending-club",
+      "pathname": "/blog/phonics-blending-club",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-blending-club",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-comprehension",
+      "pathname": "/blog/phonics-comprehension",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-comprehension",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-diagnostics",
+      "pathname": "/blog/phonics-diagnostics",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-diagnostics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-for-parents-guide",
+      "pathname": "/blog/phonics-for-parents-guide",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-for-parents-guide",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-games-for-letter-sounds",
+      "pathname": "/blog/phonics-games-for-letter-sounds",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-games-for-letter-sounds",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-grammar-speaking-connected-english-communication",
+      "pathname": "/blog/phonics-grammar-speaking-connected-english-communication",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/how-phonics-grammar-and-communication-work-together",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-long-vowels",
+      "pathname": "/blog/phonics-long-vowels",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-long-vowels",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-multisyllabic",
+      "pathname": "/blog/phonics-multisyllabic",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-multisyllabic",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-r-controlled",
+      "pathname": "/blog/phonics-r-controlled",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-r-controlled",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-rules-for-beginners",
+      "pathname": "/blog/phonics-rules-for-beginners",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-rules-for-beginners",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-satpin-launch",
+      "pathname": "/blog/phonics-satpin-launch",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-satpin-launch",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-scope-and-sequence-for-cbse-schools",
+      "pathname": "/blog/phonics-scope-and-sequence-for-cbse-schools",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-scope-and-sequence-for-cbse-schools",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-summer-plan",
+      "pathname": "/blog/phonics-summer-plan",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-summer-plan",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-teacher-training-for-schools-implementation",
+      "pathname": "/blog/phonics-teacher-training-for-schools-implementation",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-teacher-training-for-schools-implementation",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonics-tricky-words",
+      "pathname": "/blog/phonics-tricky-words",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonics-tricky-words",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics",
+      "pathname": "/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/prevent-summer-slide-reading",
+      "pathname": "/blog/prevent-summer-slide-reading",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/prevent-summer-slide-reading",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/public-speaking-delivery-for-kids",
+      "pathname": "/blog/public-speaking-delivery-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/public-speaking-delivery-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/punctuation-and-capital-letters-for-kids",
+      "pathname": "/blog/punctuation-and-capital-letters-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/punctuation-and-capital-letters-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/r-controlled-vowels-explained",
+      "pathname": "/blog/r-controlled-vowels-explained",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/r-controlled-vowels-explained",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/satpin-phonics-guide",
+      "pathname": "/blog/satpin-phonics-guide",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/satpin-phonics-guide",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/science-of-phonics-learning",
+      "pathname": "/blog/science-of-phonics-learning",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/science-of-phonics-learning",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/screen-smart-summer-routine-for-kids",
+      "pathname": "/blog/screen-smart-summer-routine-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/screen-smart-summer-routine-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/sight-words-or-phonics-first",
+      "pathname": "/blog/sight-words-or-phonics-first",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/sight-words-or-phonics-first",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-competition-prep",
+      "pathname": "/blog/speaking-competition-prep",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-competition-prep",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-confidence-seeds",
+      "pathname": "/blog/speaking-confidence-seeds",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-confidence-seeds",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-debate-starters",
+      "pathname": "/blog/speaking-debate-starters",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-debate-starters",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-family-showcase",
+      "pathname": "/blog/speaking-family-showcase",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-family-showcase",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-structure",
+      "pathname": "/blog/speaking-structure",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-structure",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-video-feedback",
+      "pathname": "/blog/speaking-video-feedback",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-video-feedback",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/speaking-visual-aids",
+      "pathname": "/blog/speaking-visual-aids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/speaking-visual-aids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/spoken-english-classes-for-kids-confidence",
+      "pathname": "/blog/spoken-english-classes-for-kids-confidence",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/child-understands-english-but-does-not-speak",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading",
+      "pathname": "/blog/synthetic-phonics-vs-traditional-reading",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/synthetic-phonics-vs-traditional-reading",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/systematic-cumulative-phonics-explained-for-schools",
+      "pathname": "/blog/systematic-cumulative-phonics-explained-for-schools",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/systematic-cumulative-phonics-explained-for-schools",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-1-phonics-satpin-launch",
+      "pathname": "/blog/week-1-phonics-satpin-launch",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-satpin-launch",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-10-grammar-subject-verb",
+      "pathname": "/blog/week-10-grammar-subject-verb",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-subject-verb",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-11-grammar-creative-writing",
+      "pathname": "/blog/week-11-grammar-creative-writing",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-creative-writing",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-12-speaking-confidence-seeds",
+      "pathname": "/blog/week-12-speaking-confidence-seeds",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-confidence-seeds",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-13-speaking-structure",
+      "pathname": "/blog/week-13-speaking-structure",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-structure",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-14-speaking-visual-aids",
+      "pathname": "/blog/week-14-speaking-visual-aids",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-visual-aids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-15-speaking-debate-starters",
+      "pathname": "/blog/week-15-speaking-debate-starters",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-debate-starters",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-16-phonics-summer-plan",
+      "pathname": "/blog/week-16-phonics-summer-plan",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-summer-plan",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-17-grammar-assessment",
+      "pathname": "/blog/week-17-grammar-assessment",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-assessment",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-18-speaking-video-feedback",
+      "pathname": "/blog/week-18-speaking-video-feedback",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-video-feedback",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-19-phonics-multisyllabic",
+      "pathname": "/blog/week-19-phonics-multisyllabic",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-multisyllabic",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-2-phonics-blending-club",
+      "pathname": "/blog/week-2-phonics-blending-club",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-blending-club",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-20-grammar-editing-camp",
+      "pathname": "/blog/week-20-grammar-editing-camp",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-editing-camp",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-21-speaking-competition-prep",
+      "pathname": "/blog/week-21-speaking-competition-prep",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-competition-prep",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-22-phonics-diagnostics",
+      "pathname": "/blog/week-22-phonics-diagnostics",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-diagnostics",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-23-grammar-speaking-bridge",
+      "pathname": "/blog/week-23-grammar-speaking-bridge",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-speaking-bridge",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-24-speaking-family-showcase",
+      "pathname": "/blog/week-24-speaking-family-showcase",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/speaking-family-showcase",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-25-back-to-school-plan",
+      "pathname": "/blog/week-25-back-to-school-plan",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/back-to-school-english-confidence-plan",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-26-screen-smart-summer-routine",
+      "pathname": "/blog/week-26-screen-smart-summer-routine",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/screen-smart-summer-routine-for-kids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-27-prevent-summer-slide-reading",
+      "pathname": "/blog/week-27-prevent-summer-slide-reading",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/prevent-summer-slide-reading",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-3-phonics-tricky-words",
+      "pathname": "/blog/week-3-phonics-tricky-words",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-tricky-words",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-4-phonics-long-vowels",
+      "pathname": "/blog/week-4-phonics-long-vowels",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-long-vowels",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-5-phonics-r-controlled",
+      "pathname": "/blog/week-5-phonics-r-controlled",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-r-controlled",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-6-phonics-comprehension",
+      "pathname": "/blog/week-6-phonics-comprehension",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/phonics-comprehension",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs",
+      "pathname": "/blog/week-7-grammar-nouns-to-paragraphs",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-nouns-to-paragraphs",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-8-grammar-tenses",
+      "pathname": "/blog/week-8-grammar-tenses",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-tenses",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week-9-grammar-conjunctions",
+      "pathname": "/blog/week-9-grammar-conjunctions",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/grammar-conjunctions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week1",
+      "pathname": "/blog/week1",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-1-phonics-satpin-launch",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week10",
+      "pathname": "/blog/week10",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-10-grammar-subject-verb",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week10.html",
+      "pathname": "/blog/week10.html",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-10-grammar-subject-verb",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week2",
+      "pathname": "/blog/week2",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-2-phonics-blending-club",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week3",
+      "pathname": "/blog/week3",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-3-phonics-tricky-words",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week4",
+      "pathname": "/blog/week4",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-4-phonics-long-vowels",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week5",
+      "pathname": "/blog/week5",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-5-phonics-r-controlled",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week6",
+      "pathname": "/blog/week6",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-6-phonics-comprehension",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week6.html",
+      "pathname": "/blog/week6.html",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-6-phonics-comprehension",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week7",
+      "pathname": "/blog/week7",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week7.html",
+      "pathname": "/blog/week7.html",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-7-grammar-nouns-to-paragraphs",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week8",
+      "pathname": "/blog/week8",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-8-grammar-tenses",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week8.html",
+      "pathname": "/blog/week8.html",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-8-grammar-tenses",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week9",
+      "pathname": "/blog/week9",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-9-grammar-conjunctions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/week9.html",
+      "pathname": "/blog/week9.html",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/week-9-grammar-conjunctions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/what-age-to-start-phonics",
+      "pathname": "/blog/what-age-to-start-phonics",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/what-age-to-start-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading",
+      "pathname": "/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/what-is-jolly-phonics-and-is-it-the-best-way-to-teach-reading",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/what-is-phonics-for-kids",
+      "pathname": "/blog/what-is-phonics-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/what-is-phonics-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-child-answers-only-in-one-word",
+      "pathname": "/blog/why-child-answers-only-in-one-word",
+      "category": "blog",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/blog/child-gives-one-word-answers",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "pathname": "/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/why-child-knows-letter-sounds-but-cannot-read-words",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story",
+      "pathname": "/blog/why-child-reads-words-but-does-not-understand-story",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/why-child-reads-words-but-does-not-understand-story",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-letter-sounds-are-not-enough-to-read",
+      "pathname": "/blog/why-letter-sounds-are-not-enough-to-read",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/why-letter-sounds-are-not-enough-to-read",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-parents-choose-online-phonics",
+      "pathname": "/blog/why-parents-choose-online-phonics",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/why-parents-choose-online-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/blog/why-public-speaking-is-important-for-kids",
+      "pathname": "/blog/why-public-speaking-is-important-for-kids",
+      "category": "blog",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/blog/why-public-speaking-is-important-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-blog.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/book-demo",
+      "pathname": "/book-demo",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/book-demo",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/careers",
+      "pathname": "/careers",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/careers",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/child-not-reading-properly",
+      "pathname": "/child-not-reading-properly",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/child-not-reading-properly",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/class-samples",
+      "pathname": "/class-samples",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/class-samples",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/confidence-building-program-kids",
+      "pathname": "/confidence-building-program-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/confidence-building-program-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/contact",
+      "pathname": "/contact",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/contact",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses",
+      "pathname": "/courses",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/advanced-grammar",
+      "pathname": "/courses/advanced-grammar",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar-mastery",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/advanced-public-speaking",
+      "pathname": "/courses/advanced-public-speaking",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/basic-grammar",
+      "pathname": "/courses/basic-grammar",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/basic-public-speaking",
+      "pathname": "/courses/basic-public-speaking",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/grammar",
+      "pathname": "/courses/grammar",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/grammar",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/grammar-essentials",
+      "pathname": "/courses/grammar-essentials",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/grammar-mastery",
+      "pathname": "/courses/grammar-mastery",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/grammar-mastery",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/phonics",
+      "pathname": "/courses/phonics",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-foundation",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/phonics-advanced",
+      "pathname": "/courses/phonics-advanced",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/phonics-advanced",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/phonics-brush-up",
+      "pathname": "/courses/phonics-brush-up",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/phonics-brush-up",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/phonics-foundation",
+      "pathname": "/courses/phonics-foundation",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/phonics-foundation",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/phonics-foundations",
+      "pathname": "/courses/phonics-foundations",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-foundation",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/public-speaking",
+      "pathname": "/courses/public-speaking",
+      "category": "course",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "pathname": "/courses/public-speaking-excellence",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "pathname": "/courses/public-speaking-foundations",
+      "category": "course",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-courses.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/curriculum",
+      "pathname": "/curriculum",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/curriculum",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-classes-for-4-year-old",
+      "pathname": "/english-classes-for-4-year-old",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-classes-for-4-year-old",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-classes-for-5-year-old",
+      "pathname": "/english-classes-for-5-year-old",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-classes-for-5-year-old",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-classes-for-6-year-old",
+      "pathname": "/english-classes-for-6-year-old",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-classes-for-6-year-old",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-classes-for-7-10-year-old",
+      "pathname": "/english-classes-for-7-10-year-old",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-classes-for-7-10-year-old",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-foundation-program",
+      "pathname": "/english-foundation-program",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-foundation-program",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/english-grammar-writing-classes",
+      "pathname": "/english-grammar-writing-classes",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/english-grammar-writing-classes",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/faq",
+      "pathname": "/faq",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/faq",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/feed.xml",
+      "pathname": "/feed.xml",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/for-schools",
+      "pathname": "/for-schools",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/for-schools",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/founder/login",
+      "pathname": "/founder/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids",
+      "pathname": "/free-balloon-pop-phonics-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-english-games-for-kids",
+      "pathname": "/free-english-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-english-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-games",
+      "pathname": "/free-games",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/free-english-games-for-kids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-games-for-kids",
+      "pathname": "/free-games-for-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/free-english-games-for-kids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-games/word-meaning-flashcards",
+      "pathname": "/free-games/word-meaning-flashcards",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-games/word-meaning-flashcards",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-grammar-games-for-kids",
+      "pathname": "/free-grammar-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-grammar-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-grammar-practice-game-for-kids",
+      "pathname": "/free-grammar-practice-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-grammar-practice-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-letter-sound-games-for-kids",
+      "pathname": "/free-letter-sound-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-letter-sound-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-letter-sounds-game-for-kids",
+      "pathname": "/free-letter-sounds-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-letter-sounds-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-letter-tracing-game-for-kids",
+      "pathname": "/free-letter-tracing-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-letter-tracing-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-letter-tracing-with-sounds-game-for-kids",
+      "pathname": "/free-letter-tracing-with-sounds-game-for-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/letter-tracing-with-sounds-game",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-phonics-balloon-pop-game-for-kids",
+      "pathname": "/free-phonics-balloon-pop-game-for-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/free-balloon-pop-phonics-game-for-kids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-phonics-games-for-kids",
+      "pathname": "/free-phonics-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-phonics-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-reading-fluency-game-for-kids",
+      "pathname": "/free-reading-fluency-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-reading-fluency-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-reading-games-for-kids",
+      "pathname": "/free-reading-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-reading-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-sentence-building-games-for-kids",
+      "pathname": "/free-sentence-building-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-sentence-building-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-sentence-making-game-for-kids",
+      "pathname": "/free-sentence-making-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-sentence-making-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-sound-listening-game-for-kids",
+      "pathname": "/free-sound-listening-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-sound-listening-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-speaking-games-for-kids",
+      "pathname": "/free-speaking-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-speaking-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-speaking-practice-game-for-kids",
+      "pathname": "/free-speaking-practice-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-speaking-practice-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-spelling-game-for-kids",
+      "pathname": "/free-spelling-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-spelling-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-word-building-game-for-kids",
+      "pathname": "/free-word-building-game-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-word-building-game-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/free-word-building-games-for-kids",
+      "pathname": "/free-word-building-games-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/free-word-building-games-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/games",
+      "pathname": "/games",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/phonics-learning-games",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/games/english-excellence",
+      "pathname": "/games/english-excellence",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/phonics-learning-games",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/grammar",
+      "pathname": "/grammar",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/grammar",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/group-grammar-classes-for-kids",
+      "pathname": "/group-grammar-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/group-grammar-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/group-phonics-classes-for-kids",
+      "pathname": "/group-phonics-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/group-phonics-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/group-public-speaking-classes-for-kids",
+      "pathname": "/group-public-speaking-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/group-public-speaking-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/how-it-works",
+      "pathname": "/how-it-works",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/curriculum",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/learning-partner",
+      "pathname": "/learning-partner",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/learning-partner",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/learning-partner/login",
+      "pathname": "/learning-partner/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/learningpartner",
+      "pathname": "/learningpartner",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/learning-partner",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/letter-tracing-with-sounds-game",
+      "pathname": "/letter-tracing-with-sounds-game",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/letter-tracing-with-sounds-game",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/login",
+      "pathname": "/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/book-demo",
+      "pathname": "/main/book-demo",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/book-demo",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses",
+      "pathname": "/main/courses",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/advanced-grammar",
+      "pathname": "/main/courses/advanced-grammar",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar-mastery",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/advanced-public-speaking",
+      "pathname": "/main/courses/advanced-public-speaking",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-excellence",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/basic-grammar",
+      "pathname": "/main/courses/basic-grammar",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/basic-public-speaking",
+      "pathname": "/main/courses/basic-public-speaking",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/grammar",
+      "pathname": "/main/courses/grammar",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/grammar-mastery",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/phonics",
+      "pathname": "/main/courses/phonics",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-foundation",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/phonics-advanced",
+      "pathname": "/main/courses/phonics-advanced",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-advanced",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/phonics-brush-up",
+      "pathname": "/main/courses/phonics-brush-up",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-brush-up",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/phonics-foundation",
+      "pathname": "/main/courses/phonics-foundation",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-foundation",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/phonics-foundations",
+      "pathname": "/main/courses/phonics-foundations",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/phonics-foundation",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/courses/public-speaking",
+      "pathname": "/main/courses/public-speaking",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/courses/public-speaking-foundations",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents",
+      "pathname": "/main/parents",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/choosing-course",
+      "pathname": "/main/parents/choosing-course",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/choosing-course",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/common-mistakes",
+      "pathname": "/main/parents/common-mistakes",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/common-mistakes",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/getting-started",
+      "pathname": "/main/parents/getting-started",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/getting-started",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/helping-with-homework",
+      "pathname": "/main/parents/helping-with-homework",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/helping-with-homework",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/payments",
+      "pathname": "/main/parents/payments",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/payments",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/phonics-mission",
+      "pathname": "/main/parents/phonics-mission",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/phonics-mission",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/reading-at-home",
+      "pathname": "/main/parents/reading-at-home",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/reading-at-home",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/scheduling",
+      "pathname": "/main/parents/scheduling",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/scheduling",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/speech-confidence",
+      "pathname": "/main/parents/speech-confidence",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/speech-confidence",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/parents/tracking-progress",
+      "pathname": "/main/parents/tracking-progress",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/parents/tracking-progress",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/main/resources",
+      "pathname": "/main/resources",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/resources",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/online-english-classes-for-kids",
+      "pathname": "/online-english-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/online-english-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/online-english-classes-for-kids-india",
+      "pathname": "/online-english-classes-for-kids-india",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/online-english-classes-for-kids",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/online-english-classes-hyderabad",
+      "pathname": "/online-english-classes-hyderabad",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/online-english-classes-hyderabad",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/online-phonics-reading-classes",
+      "pathname": "/online-phonics-reading-classes",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/phonics",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parent/login",
+      "pathname": "/parent/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents",
+      "pathname": "/parents",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/choosing-course",
+      "pathname": "/parents/choosing-course",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/choosing-course",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/common-mistakes",
+      "pathname": "/parents/common-mistakes",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/common-mistakes",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/getting-started",
+      "pathname": "/parents/getting-started",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/getting-started",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/helping-with-homework",
+      "pathname": "/parents/helping-with-homework",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/helping-with-homework",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/payments",
+      "pathname": "/parents/payments",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/payments",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/phonics-mission",
+      "pathname": "/parents/phonics-mission",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/phonics-mission",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/reading-at-home",
+      "pathname": "/parents/reading-at-home",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/reading-at-home",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/scheduling",
+      "pathname": "/parents/scheduling",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/scheduling",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/speech-confidence",
+      "pathname": "/parents/speech-confidence",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/speech-confidence",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/parents/tracking-progress",
+      "pathname": "/parents/tracking-progress",
+      "category": "parent-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/parents/tracking-progress",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-parents.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics",
+      "pathname": "/phonics",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics-apps-for-preschoolers-india",
+      "pathname": "/phonics-apps-for-preschoolers-india",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/phonics-apps-for-preschoolers-india",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics-classes-for-kids",
+      "pathname": "/phonics-classes-for-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/phonics",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics-fees-india",
+      "pathname": "/phonics-fees-india",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/phonics-fees-india",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics-games-for-preschoolers",
+      "pathname": "/phonics-games-for-preschoolers",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/phonics-games-for-preschoolers",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/phonics-learning-games",
+      "pathname": "/phonics-learning-games",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/phonics-learning-games",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/pricing",
+      "pathname": "/pricing",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/pricing",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/privacy",
+      "pathname": "/privacy",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/privacy-policy",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/privacy-policy",
+      "pathname": "/privacy-policy",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/privacy-policy",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest",
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/privacy.html",
+      "pathname": "/privacy.html",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/privacy-policy",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/public-speaking-communication-kids",
+      "pathname": "/public-speaking-communication-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/speaking",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/reading-classes-for-kids",
+      "pathname": "/reading-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/reading-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/reading-fluency-program",
+      "pathname": "/reading-fluency-program",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/reading-fluency-program",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/refund-guarantee",
+      "pathname": "/refund-guarantee",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources",
+      "pathname": "/resources",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar",
+      "pathname": "/resources/grammar",
+      "category": "resource-hub",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/a-an-articles-for-kids",
+      "pathname": "/resources/grammar/a-an-articles-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/a-an-articles-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/active-and-passive-voice-for-kids",
+      "pathname": "/resources/grammar/active-and-passive-voice-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/active-and-passive-voice-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/adjectives-for-kids",
+      "pathname": "/resources/grammar/adjectives-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/adjectives-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/adverbs-for-kids",
+      "pathname": "/resources/grammar/adverbs-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/adverbs-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/common-grammar-mistakes-for-kids",
+      "pathname": "/resources/grammar/common-grammar-mistakes-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/common-grammar-mistakes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/compound-sentences-for-kids",
+      "pathname": "/resources/grammar/compound-sentences-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/compound-sentences-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/conditionals-for-kids",
+      "pathname": "/resources/grammar/conditionals-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/conditionals-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/contrast-and-concession-for-kids",
+      "pathname": "/resources/grammar/contrast-and-concession-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/contrast-and-concession-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/countable-uncountable-nouns-for-kids",
+      "pathname": "/resources/grammar/countable-uncountable-nouns-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/countable-uncountable-nouns-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/determiners-for-kids",
+      "pathname": "/resources/grammar/determiners-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/determiners-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/direct-and-reported-speech-for-kids",
+      "pathname": "/resources/grammar/direct-and-reported-speech-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/direct-and-reported-speech-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/forming-questions-in-english-for-kids",
+      "pathname": "/resources/grammar/forming-questions-in-english-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/forming-questions-in-english-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/future-forms-for-kids",
+      "pathname": "/resources/grammar/future-forms-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/future-forms-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/independent-and-dependent-clauses",
+      "pathname": "/resources/grammar/independent-and-dependent-clauses",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/independent-and-dependent-clauses",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/modal-verbs-for-kids",
+      "pathname": "/resources/grammar/modal-verbs-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/modal-verbs-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/negative-sentences-and-short-answers",
+      "pathname": "/resources/grammar/negative-sentences-and-short-answers",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/negative-sentences-and-short-answers",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/noun-phrases-for-kids",
+      "pathname": "/resources/grammar/noun-phrases-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/noun-phrases-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/nouns-for-kids",
+      "pathname": "/resources/grammar/nouns-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/nouns-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/past-perfect-tense-for-kids",
+      "pathname": "/resources/grammar/past-perfect-tense-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/past-perfect-tense-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/prepositions-for-kids",
+      "pathname": "/resources/grammar/prepositions-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/prepositions-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/present-perfect-vs-simple-past-for-kids",
+      "pathname": "/resources/grammar/present-perfect-vs-simple-past-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/present-perfect-vs-simple-past-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/pronouns-for-kids",
+      "pathname": "/resources/grammar/pronouns-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/pronouns-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/proper-nouns-for-kids",
+      "pathname": "/resources/grammar/proper-nouns-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/proper-nouns-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/quantifiers-for-kids",
+      "pathname": "/resources/grammar/quantifiers-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/quantifiers-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/reason-and-result-connectors-for-kids",
+      "pathname": "/resources/grammar/reason-and-result-connectors-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/reason-and-result-connectors-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/relative-clauses-for-kids",
+      "pathname": "/resources/grammar/relative-clauses-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/relative-clauses-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/sentence-fragments-and-run-ons-for-kids",
+      "pathname": "/resources/grammar/sentence-fragments-and-run-ons-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/sentence-fragments-and-run-ons-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/simple-future-tense-for-kids",
+      "pathname": "/resources/grammar/simple-future-tense-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/simple-future-tense-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/simple-past-tense-for-kids",
+      "pathname": "/resources/grammar/simple-past-tense-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/simple-past-tense-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/simple-past-vs-past-continuous-for-kids",
+      "pathname": "/resources/grammar/simple-past-vs-past-continuous-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/simple-past-vs-past-continuous-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/simple-present-tense-for-kids",
+      "pathname": "/resources/grammar/simple-present-tense-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/simple-present-tense-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/simple-present-vs-present-continuous-for-kids",
+      "pathname": "/resources/grammar/simple-present-vs-present-continuous-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/simple-present-vs-present-continuous-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/singular-and-plural-nouns",
+      "pathname": "/resources/grammar/singular-and-plural-nouns",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/singular-and-plural-nouns",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/the-article-for-kids",
+      "pathname": "/resources/grammar/the-article-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/the-article-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/time-and-sequence-connectors-for-kids",
+      "pathname": "/resources/grammar/time-and-sequence-connectors-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/time-and-sequence-connectors-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/verb-forms-irregular-verbs-for-kids",
+      "pathname": "/resources/grammar/verb-forms-irregular-verbs-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/verb-forms-irregular-verbs-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/verbs-for-kids",
+      "pathname": "/resources/grammar/verbs-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/verbs-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/grammar/word-order-for-kids",
+      "pathname": "/resources/grammar/word-order-for-kids",
+      "category": "grammar-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/grammar/word-order-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics",
+      "pathname": "/resources/phonics",
+      "category": "resource-hub",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ai-vowel-team-phonics",
+      "pathname": "/resources/phonics/ai-vowel-team-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ai-vowel-team-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ar-r-controlled-vowels-phonics",
+      "pathname": "/resources/phonics/ar-r-controlled-vowels-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ar-r-controlled-vowels-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/au-aw-phonics",
+      "pathname": "/resources/phonics/au-aw-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/au-aw-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ch-digraph-phonics",
+      "pathname": "/resources/phonics/ch-digraph-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ch-digraph-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ch-tch-spelling-phonics",
+      "pathname": "/resources/phonics/ch-tch-spelling-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ch-tch-spelling-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ck-rule-phonics",
+      "pathname": "/resources/phonics/ck-rule-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ck-rule-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/consonant-le-phonics",
+      "pathname": "/resources/phonics/consonant-le-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/consonant-le-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ea-vowel-team-phonics",
+      "pathname": "/resources/phonics/ea-vowel-team-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ea-vowel-team-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ee-vowel-team-phonics",
+      "pathname": "/resources/phonics/ee-vowel-team-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ee-vowel-team-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/er-ir-ur-r-controlled-vowels-phonics",
+      "pathname": "/resources/phonics/er-ir-ur-r-controlled-vowels-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/er-ir-ur-r-controlled-vowels-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/floss-rule-phonics",
+      "pathname": "/resources/phonics/floss-rule-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/floss-rule-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ie-vowel-team-phonics",
+      "pathname": "/resources/phonics/ie-vowel-team-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ie-vowel-team-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/j-sound-spellings-phonics",
+      "pathname": "/resources/phonics/j-sound-spellings-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/j-sound-spellings-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/kn-silent-k-phonics",
+      "pathname": "/resources/phonics/kn-silent-k-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/kn-silent-k-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/magic-e-phonics",
+      "pathname": "/resources/phonics/magic-e-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/magic-e-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ng-digraph-phonics",
+      "pathname": "/resources/phonics/ng-digraph-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ng-digraph-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/oa-vowel-team-phonics",
+      "pathname": "/resources/phonics/oa-vowel-team-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/oa-vowel-team-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/oi-oy-phonics",
+      "pathname": "/resources/phonics/oi-oy-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/oi-oy-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/oo-sounds-phonics",
+      "pathname": "/resources/phonics/oo-sounds-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/oo-sounds-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/or-r-controlled-vowels-phonics",
+      "pathname": "/resources/phonics/or-r-controlled-vowels-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/or-r-controlled-vowels-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ou-ow-phonics",
+      "pathname": "/resources/phonics/ou-ow-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ou-ow-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/qu-sound-phonics",
+      "pathname": "/resources/phonics/qu-sound-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/qu-sound-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/rabbit-rule-phonics",
+      "pathname": "/resources/phonics/rabbit-rule-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/rabbit-rule-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/schwa-sound-for-kids-phonics",
+      "pathname": "/resources/phonics/schwa-sound-for-kids-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/schwa-sound-for-kids-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/sh-digraph-phonics",
+      "pathname": "/resources/phonics/sh-digraph-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/sh-digraph-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/shun-sound-family-phonics",
+      "pathname": "/resources/phonics/shun-sound-family-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/shun-sound-family-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/soft-c-hard-c-phonics",
+      "pathname": "/resources/phonics/soft-c-hard-c-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/soft-c-hard-c-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/soft-g-hard-g-phonics",
+      "pathname": "/resources/phonics/soft-g-hard-g-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/soft-g-hard-g-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/th-digraph-phonics",
+      "pathname": "/resources/phonics/th-digraph-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/th-digraph-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/ui-vowel-sound-phonics",
+      "pathname": "/resources/phonics/ui-vowel-sound-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/ui-vowel-sound-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/phonics/y-as-a-vowel-phonics",
+      "pathname": "/resources/phonics/y-as-a-vowel-phonics",
+      "category": "phonics-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/phonics/y-as-a-vowel-phonics",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/speaking",
+      "pathname": "/resources/speaking",
+      "category": "resource-hub",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/speaking",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/action-words-for-kids",
+      "pathname": "/resources/vocabulary/action-words-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/action-words-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/collocations-for-kids",
+      "pathname": "/resources/vocabulary/collocations-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/collocations-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/context-clues-for-kids",
+      "pathname": "/resources/vocabulary/context-clues-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/context-clues-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/describing-words-for-kids",
+      "pathname": "/resources/vocabulary/describing-words-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/describing-words-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/everyday-vocabulary-for-kids",
+      "pathname": "/resources/vocabulary/everyday-vocabulary-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/everyday-vocabulary-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/feelings-emotions-for-kids",
+      "pathname": "/resources/vocabulary/feelings-emotions-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/feelings-emotions-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/food-clothes-body-vocabulary-for-kids",
+      "pathname": "/resources/vocabulary/food-clothes-body-vocabulary-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/food-clothes-body-vocabulary-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/home-family-daily-routine-vocabulary",
+      "pathname": "/resources/vocabulary/home-family-daily-routine-vocabulary",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/home-family-daily-routine-vocabulary",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/multiple-meaning-confused-words-for-kids",
+      "pathname": "/resources/vocabulary/multiple-meaning-confused-words-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/multiple-meaning-confused-words-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/nature-weather-places-transport-for-kids",
+      "pathname": "/resources/vocabulary/nature-weather-places-transport-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/nature-weather-places-transport-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/phrasal-verbs-common-expressions-for-kids",
+      "pathname": "/resources/vocabulary/phrasal-verbs-common-expressions-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/phrasal-verbs-common-expressions-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/school-vocabulary-for-kids",
+      "pathname": "/resources/vocabulary/school-vocabulary-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/school-vocabulary-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/synonyms-antonyms-for-kids",
+      "pathname": "/resources/vocabulary/synonyms-antonyms-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/synonyms-antonyms-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/vocabulary-for-better-writing",
+      "pathname": "/resources/vocabulary/vocabulary-for-better-writing",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/vocabulary-for-better-writing",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/vocabulary-for-speaking-conversation",
+      "pathname": "/resources/vocabulary/vocabulary-for-speaking-conversation",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/vocabulary-for-speaking-conversation",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/resources/vocabulary/word-families-prefixes-suffixes-for-kids",
+      "pathname": "/resources/vocabulary/word-families-prefixes-suffixes-for-kids",
+      "category": "vocabulary-guide",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/resources/vocabulary/word-families-prefixes-suffixes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": [
+        "indexable_missing_from_sitemap"
+      ]
+    },
+    {
+      "url": "https://tinystepslearning.com/rss.xml",
+      "pathname": "/rss.xml",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/seasonal/christmas-tree",
+      "pathname": "/seasonal/christmas-tree",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/shy-child-speaking-confidence",
+      "pathname": "/shy-child-speaking-confidence",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/shy-child-speaking-confidence",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/signup",
+      "pathname": "/signup",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/book-demo",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/sitemap",
+      "pathname": "/sitemap",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/slow-reader-child-help",
+      "pathname": "/slow-reader-child-help",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/slow-reader-child-help",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/speaking",
+      "pathname": "/speaking",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/speaking",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/speaking-progress-framework",
+      "pathname": "/speaking-progress-framework",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/speaking-progress-framework",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/spoken-english-classes-for-kids",
+      "pathname": "/spoken-english-classes-for-kids",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "pathname": "/spoken-english-classes-for-kids-online",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/spoken-english-classes-for-kids-online",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-camp-for-kids-india",
+      "pathname": "/summer-camp-for-kids-india",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-camp-for-kids-india",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-camps",
+      "pathname": "/summer-camps",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-camps",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-camps/grammar-fast-track",
+      "pathname": "/summer-camps/grammar-fast-track",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-camps/grammar-fast-track",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-camps/phonics-fast-track",
+      "pathname": "/summer-camps/phonics-fast-track",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-camps/phonics-fast-track",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-camps/speaking-fast-track",
+      "pathname": "/summer-camps/speaking-fast-track",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-camps/speaking-fast-track",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-english-camp-2026",
+      "pathname": "/summer-english-camp-2026",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/summer-camps",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-reading-program-kids",
+      "pathname": "/summer-reading-program-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-reading-program-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/summer-speaking-camp-kids",
+      "pathname": "/summer-speaking-camp-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/summer-speaking-camp-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/surya/login",
+      "pathname": "/surya/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/teacher/login",
+      "pathname": "/teacher/login",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/teachers",
+      "pathname": "/teachers",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/team",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/team",
+      "pathname": "/team",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/team",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/team/vannala-ravali-priya",
+      "pathname": "/team/vannala-ravali-priya",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/team/vannala-ravali-priya",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/terms",
+      "pathname": "/terms",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/terms-and-conditions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/terms-and-conditions",
+      "pathname": "/terms-and-conditions",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/terms-and-conditions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "public-route-manifest",
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/terms-of-service",
+      "pathname": "/terms-of-service",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/terms-and-conditions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/terms.html",
+      "pathname": "/terms.html",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/terms-and-conditions",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/testimonials",
+      "pathname": "/testimonials",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/testimonials",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/unauthorized",
+      "pathname": "/unauthorized",
+      "category": "site",
+      "intended_state": "noindex",
+      "canonical_url": "",
+      "redirect_to": "",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "application-route-manifest"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/why-tiny-steps",
+      "pathname": "/why-tiny-steps",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/why-tiny-steps",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/why-us",
+      "pathname": "/why-us",
+      "category": "site",
+      "intended_state": "redirect",
+      "canonical_url": "",
+      "redirect_to": "https://tinystepslearning.com/why-tiny-steps",
+      "in_sitemap": false,
+      "sitemap_files": [],
+      "sources": [
+        "redirect-config"
+      ],
+      "problems": []
+    },
+    {
+      "url": "https://tinystepslearning.com/writing-classes-for-kids",
+      "pathname": "/writing-classes-for-kids",
+      "category": "site",
+      "intended_state": "index",
+      "canonical_url": "https://tinystepslearning.com/writing-classes-for-kids",
+      "redirect_to": "",
+      "in_sitemap": true,
+      "sitemap_files": [
+        "sitemap-static.xml"
+      ],
+      "sources": [
+        "public-route-manifest",
+        "sitemap"
+      ],
+      "problems": []
+    }
+  ]
+}
