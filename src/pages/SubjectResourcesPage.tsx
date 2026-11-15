@@ -85,6 +85,7 @@ const SUBJECTS: Record<ResourceSubject, SubjectConfig> = {
         links: [
           { title: 'Letter-sound games', description: 'Practise hearing and recognising individual letter sounds.', to: '/free-letter-sound-games-for-kids', label: 'Practise letter sounds' },
           { title: 'Word-building games', description: 'Move from sound knowledge into blending and word construction.', to: '/free-word-building-games-for-kids', label: 'Build words' },
+          { title: 'Free spelling games', description: 'Choose Spelling Adventure for early word-building or Spelling Puzzle Lab for longer patterns and word changes.', to: '/free-spelling-game-for-kids', label: 'Explore free spelling games' },
           { title: 'Reading games', description: 'Practise reading accuracy, confidence and fluency.', to: '/free-reading-games-for-kids', label: 'Practise reading' },
         ],
       },
