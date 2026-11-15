@@ -25,12 +25,12 @@ const PROTECTED_FAMILIES = {
   'phonics-blending-activities': ['phonics-practice', '/phonics'],
   'satpin-phonics-guide': ['phonics-practice', '/phonics'],
   'phonics-for-parents-guide': ['phonics-practice', '/phonics'],
-  'how-to-improve-reading-fluency-in-children': ['reading-fluency', '/phonics'],
+  'how-to-improve-reading-fluency-in-children': ['reading-fluency', '/reading-classes-for-kids'],
   'child-knows-grammar-but-makes-mistakes': ['grammar-diagnostic', '/grammar'],
   'how-to-improve-sentence-formation-in-kids': ['sentence-building', '/grammar'],
   'grammar-nouns-to-paragraphs': ['sentence-building', '/grammar'],
   'child-understands-english-but-does-not-speak': ['speaking-confidence', '/speaking'],
-  'child-gives-one-word-answers': ['speaking-confidence', '/speaking'],
+  'child-gives-one-word-answers': ['speaking-confidence', '/spoken-english-classes-for-kids-online'],
   'speaking-confidence-seeds': ['speaking-confidence', '/speaking'],
 } as const;
 
@@ -47,6 +47,29 @@ describe('B11 blog lead conversion and attribution guardrails', () => {
       expect(config.primaryAction.to, slug).toBe('/book-demo');
       expect(config.secondaryAction?.to, slug).toBe(programRoute);
       expect(isParentDemoConversion(config), slug).toBe(true);
+    }
+  });
+
+  it('keeps the two revised parent-problem exits specific without rewriting other programmes or assessment capture', () => {
+    const reading = getBlogConversionConfig(bySlug.get('how-to-improve-reading-fluency-in-children')!);
+    const shortAnswers = getBlogConversionConfig(bySlug.get('child-gives-one-word-answers')!);
+    const generalSpeaking = getBlogConversionConfig(bySlug.get('speaking-confidence-seeds')!);
+    const decoding = getBlogConversionConfig(bySlug.get('why-child-knows-letter-sounds-but-cannot-read-words')!);
+
+    expect(reading.secondaryAction).toMatchObject({
+      to: '/reading-classes-for-kids',
+      kind: 'program',
+    });
+    expect(shortAnswers.secondaryAction).toMatchObject({
+      to: '/spoken-english-classes-for-kids-online',
+      kind: 'program',
+    });
+    expect(generalSpeaking.secondaryAction?.to).toBe('/speaking');
+    expect(decoding.secondaryAction?.to).toBe('/phonics');
+
+    for (const candidate of [reading, shortAnswers, generalSpeaking, decoding]) {
+      expect(candidate.primaryAction).toMatchObject({ to: '/book-demo', kind: 'demo' });
+      expect(isParentDemoConversion(candidate)).toBe(true);
     }
   });
 
