@@ -188,7 +188,7 @@ describe('PublicAssessmentForm analytics', () => {
     });
   });
 
-  it('renders three class-format buttons in one row and updates conversion intent', async () => {
+  it('renders responsive class-format choices and updates conversion intent', async () => {
     firestoreMocks.setDoc.mockResolvedValue(undefined);
     render(<PublicAssessmentForm />);
     const optionGroup = screen.getByRole('group', { name: /choose a class format/i });
@@ -202,7 +202,7 @@ describe('PublicAssessmentForm analytics', () => {
     fireEvent.click(groupButton);
     expect(groupButton).toHaveAttribute('aria-pressed', 'true');
     expect(privateButton).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: /register group interest on whatsapp/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send Group-Class Enquiry' })).toBeInTheDocument();
 
     fillValidForm();
     fireEvent.submit(screen.getByRole('button', { name: /register group interest on whatsapp/i }));
