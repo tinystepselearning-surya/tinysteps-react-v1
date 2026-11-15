@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T21:45:15.734Z UTC (16 November 2026 IST, slot 4)
+
+- Tracker validated before audit: **202 selected URLs, 202 unique, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted URLs: **40/202 (19.80%)**, rows 1–40; **162 not yet attempted**; **0/202 fully origin-verified**. Prior-day attempts excluded.
+- Slot 4 rows 31–40: nine exact-URL web.open retrievals returned page-specific substantive provider-extracted text, including grammar/speaking hubs, Jolly Phonics, pricing and contact (refs `turn263416view1`–`turn263416view9`). Row 31 (OU/OW phonics) returned retrieval-provider Internal Error (`turn263416view0`), **not a confirmed production failure**.
+- Independent curl HTTPS request at **2026-11-15T21:45:07Z** failed with `curl: (6) Could not resolve host: tinystepslearning.com`; no origin HTTP response. HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. The row UTC evidence-handling marker **2026-11-15T21:45:15.734Z** is not a measured origin request time.
+- GitHub Actions in-progress query returned `total_count: 0` and an empty run array. Legacy workflow administrative disablement not independently verified; user's confirmed UI disablement remains the basis. No GitHub workflow triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 5, rows 41–50**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T20:48:43.460Z UTC (16 November 2026 IST, slot 3)
 
 - Tracker checked before audit: **202 selected URLs, 202 unique, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted retrievals: **30/202 (14.85%)**, rows 1–30; **172 not yet attempted**; **0/202 fully origin-verified**. Previous-day evidence is excluded.
