@@ -96,6 +96,7 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
       >
         <div
           ref={modalHeaderRef}
+          data-assessment-toolbar="1"
           className="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-2"
         >
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tiny Steps enquiry</p>
@@ -109,7 +110,7 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
             Close
           </button>
         </div>
-        <div ref={modalScrollRef} className="min-h-0 flex-1 max-h-[calc(100dvh-4.75rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[calc(100dvh-6rem)]">
+        <div ref={modalScrollRef} data-assessment-scroll-region="1" className="min-h-0 flex-1 max-h-[calc(100dvh-4.75rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[calc(100dvh-6rem)]">
           <BookAssessmentForm source="public_assessment_modal" />
         </div>
       </div>
