@@ -149,7 +149,7 @@ export default function SpellingGamesLanding({ faqs }: SpellingGamesLandingProps
             destination_path: "/book-demo",
             program: "phonics",
           })} className="rounded-xl border border-indigo-200 bg-white px-5 py-3 text-sm font-extrabold text-[#38348b] hover:border-indigo-400">
-            Explore a Free Demo
+            Book Free 35-Minute Demo
           </Link>
         </div>
       </div>
