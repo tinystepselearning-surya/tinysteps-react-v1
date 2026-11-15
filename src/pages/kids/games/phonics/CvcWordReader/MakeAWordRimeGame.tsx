@@ -508,6 +508,9 @@ function PublicSpellingAdventure({
   const [correctChallenges, setCorrectChallenges] = useState(0);
   const [scoredCoreChallenges, setScoredCoreChallenges] = useState(0);
   const [completedCoreChallenges, setCompletedCoreChallenges] = useState(0);
+  // A learner can open any step directly. Skipped earlier steps are NOT
+  // counted as completed challenges in this temporary play session.
+  const [sessionStartLevelIndex, setSessionStartLevelIndex] = useState(0);
   const [completedChallenges, setCompletedChallenges] = useState(0);
   const advanceTimeoutRef = useRef<number | null>(null);
   const feedbackTimeoutRef = useRef<number | null>(null);
@@ -515,8 +518,9 @@ function PublicSpellingAdventure({
 
   const currentLevel = PUBLIC_SPELLING_LEVELS[levelIndex] ?? PUBLIC_SPELLING_LEVELS[0];
   const current = queue[0] ?? currentLevel.challenges[0];
-  const totalChallenges = PUBLIC_SPELLING_LEVELS.reduce((sum, level) => sum + level.challenges.length, 0);
-  const displayedProgress = Math.min(totalChallenges, completedCoreChallenges);
+  const sessionTotalChallenges = PUBLIC_SPELLING_LEVELS.slice(sessionStartLevelIndex)
+    .reduce((sum, level) => sum + level.challenges.length, 0);
+  const displayedProgress = Math.min(sessionTotalChallenges, completedCoreChallenges);
   const accuracy = scoredCoreChallenges > 0
     ? Math.round((correctChallenges / scoredCoreChallenges) * 100)
     : 100;
@@ -559,12 +563,10 @@ function PublicSpellingAdventure({
 
   const startFreshAtLevel = (index: number) => {
     const safeIndex = Math.max(0, Math.min(index, PUBLIC_SPELLING_LEVELS.length - 1));
-    const completedBefore = PUBLIC_SPELLING_LEVELS
-      .slice(0, safeIndex)
-      .reduce((sum, level) => sum + level.challenges.length, 0);
+    setSessionStartLevelIndex(safeIndex);
     setCorrectChallenges(0);
     setScoredCoreChallenges(0);
-    setCompletedCoreChallenges(completedBefore);
+    setCompletedCoreChallenges(0);
     setCompletedChallenges(0);
     startLevel(safeIndex);
   };
@@ -924,7 +926,7 @@ function PublicSpellingAdventure({
         <main className="flex w-[min(1040px,100%)] flex-col rounded-[22px] border border-white/55 bg-white/95 p-3 shadow-2xl sm:rounded-[28px] sm:p-5">
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div>
-              <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-indigo-700">Spelling Adventure · Free to play</p>
+              <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-indigo-700">Your spelling activity</p>
               <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
                 Step {levelIndex + 1} of {PUBLIC_SPELLING_LEVELS.length}
               </div>
@@ -952,15 +954,17 @@ function PublicSpellingAdventure({
             </div>
           </div>
 
-          <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
+          <div role="progressbar" aria-label="Spelling practice completed this session"
+            aria-valuemin={0} aria-valuemax={sessionTotalChallenges} aria-valuenow={displayedProgress}
+            className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all"
-              style={{ width: `${Math.max(4, (displayedProgress / totalChallenges) * 100)}%` }}
+              style={{ width: `${(displayedProgress / sessionTotalChallenges) * 100}%` }}
             />
           </div>
           <div className="mt-2 flex justify-between text-xs font-bold text-slate-500">
             <span>{Math.min(queue.length, currentLevel.challenges.length)} left in this step</span>
-            <span>{displayedProgress}/{totalChallenges} done</span>
+            <span>{displayedProgress}/{sessionTotalChallenges} completed this round</span>
           </div>
 
           <div className="grid flex-1 items-stretch gap-3 py-3 sm:gap-4 lg:grid-cols-[0.42fr_0.58fr]">
