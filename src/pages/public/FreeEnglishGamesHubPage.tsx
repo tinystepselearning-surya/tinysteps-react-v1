@@ -203,6 +203,30 @@ export default function FreeEnglishGamesHubPage() {
       />
 
       <div className="mx-auto w-full max-w-7xl space-y-4 px-3 pb-10 sm:px-5">
+        <section aria-labelledby="featured-spelling-games" className="rounded-xl border border-cyan-300/30 bg-[linear-gradient(120deg,rgba(12,74,110,0.7),rgba(76,29,149,0.42))] p-5 sm:p-6">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-cyan-200">Free spelling practice · Two playable games</p>
+              <h2 id="featured-spelling-games" className="mt-2 text-xl font-black text-white sm:text-2xl">Spelling Adventure and Spelling Puzzle Lab</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-100">
+                For children starting to build written words, Spelling Adventure offers a two-letter warm-up and six practice activities.
+                Older confident readers can try ten levels of vowel patterns, syllables and word-part puzzles in Spelling Puzzle Lab.
+                Both are free, sound-free and require no login.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2 lg:max-w-[250px]">
+              <Link to="/free-spelling-game-for-kids#spelling-adventure"
+                className="inline-flex min-h-11 items-center rounded-lg bg-cyan-200 px-4 py-2 text-sm font-extrabold text-slate-950 hover:bg-cyan-100">
+                Explore Spelling Adventure
+              </Link>
+              <Link to="/free-spelling-game-for-kids#spelling-puzzle-lab"
+                className="inline-flex min-h-11 items-center rounded-lg border border-white/40 bg-white/10 px-4 py-2 text-sm font-extrabold text-white hover:bg-white/20">
+                Explore Spelling Puzzle Lab
+              </Link>
+            </div>
+          </div>
+        </section>
+
         <section
           aria-labelledby="featured-balloon-pop"
           className="overflow-hidden rounded-xl border border-fuchsia-300/25 bg-[linear-gradient(135deg,rgba(88,28,135,0.42),rgba(14,116,144,0.28))] p-5 shadow-[0_18px_60px_rgba(76,29,149,0.2)] sm:p-6"

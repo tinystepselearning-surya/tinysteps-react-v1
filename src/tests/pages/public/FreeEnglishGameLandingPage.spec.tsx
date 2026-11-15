@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FreeEnglishGameLandingPage from "../../../pages/public/FreeEnglishGameLandingPage";
 import { PUBLIC_ENGLISH_GAME_LANDING_CONFIGS } from "../../../lib/publicEnglishGames";
+import { ROUTE_SEO_REGISTRY } from "../../../lib/routeSeoRegistry.js";
 import { applySeo } from "../../../lib/seo";
 
 const landingMocks = vi.hoisted(() => ({
@@ -125,6 +126,48 @@ describe("FreeEnglishGameLandingPage", () => {
       expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
     },
   );
+
+  it("explains both spelling games on the canonical page with truthful learning-resource schema", () => {
+    vi.mocked(applySeo).mockClear();
+    renderRoute("/free-spelling-game-for-kids");
+
+    expect(screen.getByRole("heading", { name: "Which spelling game fits my child's current skills?" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 3 }).closest("article"))
+      .toHaveAttribute("id", "spelling-adventure");
+    expect(screen.getByRole("heading", { name: "Spelling Puzzle Lab", level: 3 }).closest("article"))
+      .toHaveAttribute("id", "spelling-puzzle-lab");
+
+    const browserMeta = PUBLIC_ENGLISH_GAME_LANDING_CONFIGS.find(
+      ({ publicPath }) => publicPath === "/free-spelling-game-for-kids"
+    );
+    const initialHtmlMeta = ROUTE_SEO_REGISTRY["/free-spelling-game-for-kids"];
+    expect(initialHtmlMeta.title).toBe(browserMeta?.seoTitle);
+    expect(initialHtmlMeta.description).toBe(browserMeta?.seoDescription);
+    expect(initialHtmlMeta.canonicalPath).toBe("/free-spelling-game-for-kids");
+
+    const seoCall = vi.mocked(applySeo).mock.calls.find(([settings]) =>
+      settings.canonicalPath === "/free-spelling-game-for-kids"
+    )?.[0];
+    expect(seoCall).toBeDefined();
+    expect(seoCall?.canonicalPath).toBe("/free-spelling-game-for-kids");
+    expect(seoCall?.jsonLd).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        "@type": "CollectionPage",
+        mainEntity: expect.objectContaining({
+          "@type": "ItemList",
+          numberOfItems: 2,
+          itemListElement: expect.arrayContaining([
+            expect.objectContaining({ position: 1, item: expect.objectContaining({ name: "Spelling Adventure", isAccessibleForFree: true }) }),
+            expect.objectContaining({ position: 2, item: expect.objectContaining({ name: "Spelling Puzzle Lab", isAccessibleForFree: true }) }),
+          ]),
+        }),
+      }),
+    ]));
+    const serializedSchema = JSON.stringify(seoCall?.jsonLd);
+    expect(serializedSchema).not.toContain("aggregateRating");
+    expect(serializedSchema).not.toContain("reviewCount");
+    expect(serializedSchema).toContain("/free-spelling-game-for-kids?play=1&mode=puzzles");
+  });
 
   it("keeps unreleased speaking practice accessible while setting noindex", () => {
     vi.mocked(applySeo).mockClear();

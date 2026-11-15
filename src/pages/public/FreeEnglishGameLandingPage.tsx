@@ -64,6 +64,57 @@ export default function FreeEnglishGameLandingPage() {
       ],
     };
 
+    // One canonical discovery URL describes both genuinely different playable games.
+    // Structured data mirrors the visible game cards; no fabricated reviews or
+    // search-only keyword pages are introduced for the query-string play modes.
+    const spellingCollectionSchema = isSpellingLanding ? {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "@id": `${pageUrl}#spelling-games`,
+      url: pageUrl,
+      name: "Free Spelling Games for Kids: Spelling Adventure and Spelling Puzzle Lab",
+      description: config.seoDescription,
+      mainEntity: {
+        "@type": "ItemList",
+        name: "Tiny Steps free spelling practice games",
+        numberOfItems: 2,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            item: {
+              "@type": "LearningResource",
+              "@id": `${pageUrl}#spelling-adventure`,
+              name: "Spelling Adventure",
+              description: "Free sound-free spelling practice for approximately ages 5–8: an optional two-letter warm-up and six activities for building, completing and correcting written words.",
+              url: `${pageUrl}?play=1`,
+              inLanguage: "en",
+              typicalAgeRange: "5–8",
+              learningResourceType: "Interactive spelling game",
+              educationalUse: "practice",
+              isAccessibleForFree: true,
+            },
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            item: {
+              "@type": "LearningResource",
+              "@id": `${pageUrl}#spelling-puzzle-lab`,
+              name: "Spelling Puzzle Lab",
+              description: "Free sound-free spelling puzzles for approximately ages 8–10+: ten levels covering vowel spelling, syllables, word changes, prefixes and roots.",
+              url: `${pageUrl}?play=1&mode=puzzles`,
+              inLanguage: "en",
+              typicalAgeRange: "8–10+",
+              learningResourceType: "Interactive spelling game",
+              educationalUse: "practice",
+              isAccessibleForFree: true,
+            },
+          },
+        ],
+      },
+    } : null;
+
     // Use custom FAQs if provided, otherwise fall back to generic
     const faqItems = config.faqs || [
       { question: "Is this game free?", answer: "Yes. This Tiny Steps public game page is free to open in your browser." },
@@ -80,7 +131,7 @@ export default function FreeEnglishGameLandingPage() {
       canonicalPath: config.publicPath,
       ogType: "website",
       robots: config.isPublicPlayReady ? undefined : "noindex, follow",
-      jsonLd: [breadcrumbSchema, createFAQPageSchema(faqItems)],
+      jsonLd: [breadcrumbSchema, ...(spellingCollectionSchema ? [spellingCollectionSchema] : []), createFAQPageSchema(faqItems)],
     });
   }, [config]);
 

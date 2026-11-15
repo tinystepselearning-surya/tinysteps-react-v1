@@ -75,6 +75,22 @@ test('every puzzle level opens an appropriately different child-readable challen
   }
 });
 
+test('public games hub links visibly to both spelling experiences on one canonical page', async ({ page }) => {
+  await page.goto('/free-english-games-for-kids', { waitUntil: 'domcontentloaded' });
+  const adventure = page.getByRole('link', { name: 'Explore Spelling Adventure' });
+  const puzzleLab = page.getByRole('link', { name: 'Explore Spelling Puzzle Lab' });
+  await expect(adventure).toHaveAttribute('href', '/free-spelling-game-for-kids#spelling-adventure');
+  await expect(puzzleLab).toHaveAttribute('href', '/free-spelling-game-for-kids#spelling-puzzle-lab');
+
+  await adventure.click();
+  await expect(page).toHaveURL(/\/free-spelling-game-for-kids#spelling-adventure$/);
+  await expect(page.locator('#spelling-adventure')).toBeVisible();
+  await expect(page.locator('#spelling-puzzle-lab')).toBeVisible();
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href', 'https://tinystepslearning.com/free-spelling-game-for-kids'
+  );
+});
+
 test('one concise indexed spelling page presents exactly two distinct free games', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/free-spelling-game-for-kids', { waitUntil: 'domcontentloaded' });
