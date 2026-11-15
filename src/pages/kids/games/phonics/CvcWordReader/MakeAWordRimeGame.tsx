@@ -494,9 +494,11 @@ function PublicSpellingAdventure({
   activityContextLabel,
 }: PublicSpellingAdventureProps) {
   const navigate = useNavigate();
-  const [screen, setScreen] = useState<"intro" | "play" | "complete">("intro");
+  // The public game opens directly at its first playable word. The step tabs
+  // remain available for children who wish to start at another difficulty.
+  const [screen, setScreen] = useState<"intro" | "play" | "complete">("play");
   const [levelIndex, setLevelIndex] = useState(0);
-  const [queue, setQueue] = useState<PublicSpellingChallenge[]>([]);
+  const [queue, setQueue] = useState<PublicSpellingChallenge[]>(() => [...PUBLIC_SPELLING_LEVELS[0].challenges]);
   const [builtLetters, setBuiltLetters] = useState<string[]>([]);
   const [typedAnswer, setTypedAnswer] = useState("");
   const [feedback, setFeedback] = useState<"idle" | "correct" | "wrong">("idle");
@@ -862,7 +864,7 @@ function PublicSpellingAdventure({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_50%_30%,#8be8ff_0%,#64d2ff_32%,#ff6aa8_100%)] px-2 py-2 text-slate-950 sm:px-3 sm:py-3"
+      className="relative flex min-h-[100dvh] w-full flex-col items-center justify-start overflow-x-hidden bg-[radial-gradient(circle_at_50%_30%,#b2e9ff_0%,#7ed7fd_40%,#e9b9e8_100%)] px-2 pb-8 pt-16 text-slate-950 sm:px-4 sm:pt-20"
       data-testid="public-spelling-adventure"
     >
       <div className="absolute left-2 top-2 right-2 z-10 flex min-w-0 items-center justify-between gap-2 sm:left-5 sm:right-5 sm:top-5">
@@ -879,7 +881,7 @@ function PublicSpellingAdventure({
       </div>
 
       {screen === "intro" && (
-        <section className="mt-12 max-h-[calc(100vh-4rem)] w-[min(980px,96vw)] overflow-y-auto rounded-[24px] border border-white/45 bg-white/90 p-4 shadow-2xl sm:rounded-[28px] sm:p-7">
+        <section className="w-[min(980px,100%)] rounded-[24px] border border-white/55 bg-white/95 p-4 shadow-2xl sm:rounded-[28px] sm:p-7">
           <div className="text-center">
             <h2 className="text-3xl font-black text-slate-950 sm:text-4xl">Spelling Adventure</h2>
             <p className="mx-auto mt-3 max-w-2xl text-sm font-semibold leading-6 text-slate-600 sm:text-base">
@@ -916,9 +918,10 @@ function PublicSpellingAdventure({
       )}
 
       {screen === "play" && current && (
-        <main className="mt-12 flex h-[calc(100vh-3.5rem)] min-h-0 w-[min(1040px,98vw)] flex-col overflow-hidden rounded-[22px] border border-white/45 bg-white/92 p-3 shadow-2xl sm:mt-14 sm:h-[calc(100vh-4.5rem)] sm:w-[min(1040px,96vw)] sm:rounded-[28px] sm:p-5">
+        <main className="flex w-[min(1040px,100%)] flex-col rounded-[22px] border border-white/55 bg-white/95 p-3 shadow-2xl sm:rounded-[28px] sm:p-5">
           <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
             <div>
+              <p className="mb-1 text-[11px] font-black uppercase tracking-widest text-indigo-700">Spelling Adventure · Free to play</p>
               <div className="text-xs font-black uppercase tracking-[0.16em] text-sky-700">
                 Step {levelIndex + 1} of {PUBLIC_SPELLING_LEVELS.length}
               </div>
@@ -957,7 +960,7 @@ function PublicSpellingAdventure({
             <span>{displayedProgress}/{totalChallenges} done</span>
           </div>
 
-          <div className="grid min-h-0 flex-1 items-center gap-3 overflow-y-auto py-2 sm:gap-4 sm:py-3 lg:grid-cols-[0.42fr_0.58fr]">
+          <div className="grid flex-1 items-stretch gap-3 py-3 sm:gap-4 lg:grid-cols-[0.42fr_0.58fr]">
             <section className="flex flex-col items-center justify-center rounded-3xl bg-sky-100/80 p-4 text-center">
               {current.mode === "spell" && !current.img ? (
                 <div className="flex h-28 w-28 items-center justify-center rounded-3xl border border-white/35 bg-white/25 text-6xl shadow-inner sm:h-36 sm:w-36" aria-hidden="true">
@@ -1003,7 +1006,7 @@ function PublicSpellingAdventure({
       )}
 
       {screen === "complete" && (
-        <section className="mt-12 w-[min(680px,94vw)] rounded-[28px] border border-white/45 bg-white/92 p-6 text-center shadow-2xl sm:p-8">
+        <section className="w-[min(680px,100%)] rounded-[28px] border border-white/55 bg-white/95 p-6 text-center shadow-2xl sm:p-8">
           <h2 className="text-4xl font-black text-slate-950">Spelling Journey Complete!</h2>
           <p className="mt-3 text-base font-semibold text-slate-600">
             You completed the spelling journey. First-try accuracy: {accuracy}% • Turns played: {completedChallenges}
