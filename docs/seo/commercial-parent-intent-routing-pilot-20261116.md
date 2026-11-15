@@ -34,3 +34,30 @@ Report separately for these two article URLs (exclude all games), with source an
 - CRM: canonical new parent–child enquiries and returning episodes, blog attribution where preserved, confirmed/completed demo and enrolled status; do not infer paid admissions from GA4 clicks.
 
 An internal link change may improve parent navigation without changing SEO rankings. Do not conclude success from impressions alone, and do not aggregate repeat clicks as unique parent enquiries.
+
+## Pricing and Reading evidence pass — 16 November 2026
+
+The following figures were recalculated directly from the user's 15 November uploaded exports:
+- **Google Search Console, 14 Aug–13 Nov 2026, page totals:** `/pricing`: **37 clicks, 4,643 impressions, 0.80% CTR, 2.55 average position**; `/reading-classes-for-kids`: **4 clicks, 159 impressions, 2.52% CTR, 19.48 average position**.
+- **GA4-linked GSC landing-page report, 18 Oct–14 Nov 2026:** Pricing **7/1,183 clicks/impressions**; Reading **2/63**. These metrics are Google organic Search Console data embedded in a GA4 export, not an independent GA4 session count.
+- **Google generative-AI feature impressions, 14 Aug–13 Nov:** Pricing **201**; Reading **30**. AI impressions are **not visits, distinct referrals, recommendations or leads**.
+- **Unfiltered *site-wide* Queries.csv:** `online phonics classes fees` 74 impressions / 4 clicks / avg position 16.55; `phonics classes fees` 74 / 1 / 14.97; `reading classes for kids near me` 46 / 0 / 8.70; `online reading classes for kids` 23 / 1 / 23.39. These are **NOT Pricing-page or Reading-page query observations**, and none of these exports provides a page-by-query-by-India cross-tabulation. Search Console omits many query rows; aggregate query totals cannot be equated with page totals.
+
+### Interpretation and risk decision
+
+- Pricing is being **shown often without many clicks**, even though its aggregated average position is relatively high. We cannot tell from this dataset whether that represents branded navigational impressions, irrelevant queries, rich-result presentation, or low-intent searches. **No metadata or snippet experiment** is justified yet.
+- Reading has an **exposure/discovery** limitation, not established evidence of a poor search snippet. Low-volume query rows and the weaker page-level position do not prove a particular keyword opportunity, but support checking the existing internal pathways.
+- The Pricing page already links to the correct Reading programme, but its question grouped *decoding* with Reading even though Reading explicitly sends unstable decoding to Phonics. We made **one parent-fit wording clarification in `src/pages/PricingPage.tsx`**; the pricing table, CTA, metadata and links remain unchanged.
+- The two article-programme links earlier in this branch remain the other bounded edits. Do not create a new Reading page, Pricing fee page or query-variant URL.
+
+### Evidence still required before considering any title/meta/canonical alteration
+
+From **Google Search Console → Performance → Search results**, export two independently filtered **Queries** views for the same date range:
+1. Page filter **Exact URL** `https://tinystepslearning.com/pricing` plus Country = **India**.
+2. Page filter **Exact URL** `https://tinystepslearning.com/reading-classes-for-kids` plus Country = **India**.
+
+Include device and the prior matched comparison period if available; evaluate branded vs nonbranded parent-buying queries, position, snippet accuracy and month-over-month direction. These results are currently **unavailable**. Preserve existing metadata until this evidence is reviewed.
+
+### Post-approval measurement (not yet live)
+
+For the revised Pricing question, watch use of the existing Reading programme link and subsequent assessment clicks, with canonical CRM enquiries and admissions counted separately. For Reading, compare true **India page-level impressions and clicks**, new enquiry episodes, completed assessments, and admissions. Do not interpret historical GA4 aggregate key events as submitted leads or attribute causality without comparable observation windows. The release decision must include mobile and desktop inspection and no-regression confirmation.
