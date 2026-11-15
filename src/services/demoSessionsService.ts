@@ -360,6 +360,7 @@ interface ReassignDemoSessionPayload {
   demoId: string;
   assignedTeacherId: string;
   assignedTeacherName?: string;
+  assessmentFormat?: 'one_to_one' | 'small_group';
 }
 
 interface CancelDemoSessionPayload {
