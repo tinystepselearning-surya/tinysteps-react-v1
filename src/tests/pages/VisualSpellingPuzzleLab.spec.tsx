@@ -62,6 +62,7 @@ describe('free visual spelling puzzle lab', () => {
     expect(screen.getByText('hopeful')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Ends in -ful' }));
     expect(screen.getByText('hopeless')).toBeTruthy();
+    expect(screen.getByText('Having little or no hope for a good outcome.')).toBeTruthy();
     expect(screen.queryByText(/both words sorted/i)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ends in -less' }));
     expect(screen.getByText(/both words sorted/i)).toBeTruthy();
