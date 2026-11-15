@@ -208,6 +208,21 @@ const FAMILY_COPY: Record<BlogConversionFamily, Omit<BlogConversionConfig, 'fami
   },
 };
 
+// Only override the programme comparison exit for these two specific parent problems.
+// The shared family, booking CTA and first-touch tracking contract remain unchanged.
+const PARENT_PROBLEM_PROGRAMME_EXITS: Partial<Record<string, BlogConversionAction>> = {
+  'how-to-improve-reading-fluency-in-children': {
+    label: 'Compare reading classes for fluent-word readers',
+    to: '/reading-classes-for-kids',
+    kind: 'program',
+  },
+  'child-gives-one-word-answers': {
+    label: 'Compare Spoken English classes for short answers',
+    to: '/spoken-english-classes-for-kids-online',
+    kind: 'program',
+  },
+};
+
 function inferFamily(post: BlogConversionInput): BlogConversionFamily {
   const explicit = EXPLICIT_FAMILY_BY_SLUG[post.slug];
   if (explicit) return explicit;
@@ -252,6 +267,7 @@ export function getBlogConversionConfig(post: BlogConversionInput): BlogConversi
     authorityCluster: authority.cluster,
     intentCluster: authority.topics[0] || family,
     ...copy,
+    secondaryAction: PARENT_PROBLEM_PROGRAMME_EXITS[post.slug] || copy.secondaryAction,
   };
 }
 
