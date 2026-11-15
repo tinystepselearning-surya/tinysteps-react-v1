@@ -333,8 +333,11 @@ export const DemoAssignmentsView: React.FC<DemoAssignmentsViewProps> = ({ teache
   );
 
   const filteredAvailableDemos = useMemo(() => {
-    if (!hasEligibilityConfig) return availableDemos;
-    return availableDemos.filter((demo) => {
+    // Admin chooses the delivery format before undecided/group enquiries reach the self-claim pool.
+    const readyForSelfClaim = availableDemos.filter((demo) =>
+      !((demo.classFormatPreference === 'small_group' || demo.classFormatPreference === 'unsure') && !demo.assessmentFormat));
+    if (!hasEligibilityConfig) return readyForSelfClaim;
+    return readyForSelfClaim.filter((demo) => {
       const track = normalizeTrack(demo.courseInterested || '');
       if (!track) return true;
       return eligibleTracks.includes(track);
