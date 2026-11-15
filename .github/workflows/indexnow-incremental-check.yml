@@ -1,0 +1,45 @@
+name: IndexNow Incremental Notification Gate
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/indexnow-submit.mjs'
+      - 'scripts/indexnow-change-detection.mjs'
+      - 'scripts/test/indexnow-change-detection.node-test.mjs'
+      - '.github/workflows/deploy.yml'
+      - '.github/workflows/indexnow-incremental-check.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  indexnow-safe-change:
+    name: Check IndexNow state and deployment isolation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax-check IndexNow scripts
+        run: |
+          node --check scripts/indexnow-submit.mjs
+          node --check scripts/indexnow-change-detection.mjs
+      - name: Test canonical diff and metadata fingerprints
+        run: node --test scripts/test/indexnow-change-detection.node-test.mjs
+      - name: Verify IndexNow still runs only after production Hosting
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const yml = fs.readFileSync('.github/workflows/deploy.yml', 'utf8');
+          const job = yml.split('\n  deploy-to-firebase:\n')[1]?.split('\n  recover-functions-manually:\n')[0];
+          assert.ok(job, 'Production Hosting job not found');
+          assert.match(job, /github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
+          assert.match(job, /- name: Verify live IndexNow ownership key[\s\S]*?- name: Submit changed canonical public URLs to IndexNow/);
+          assert.match(job, /GITHUB_TOKEN: \$\{\{ github\.token \}\}/);
+          assert.match(job, /run: npm run indexnow:submit/);
+          console.log('IndexNow remains post-Hosting, main-only, and scoped.');
+          NODE
