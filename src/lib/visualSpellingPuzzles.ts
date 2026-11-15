@@ -315,8 +315,12 @@ export function visualSpellingPracticeRound(
   round: number,
 ): VisualSpellingPuzzle[] {
   const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage);
-  const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
   const normalizedRound = Math.max(0, Math.floor(round)) % 3;
+  // The four established stages retain their approved first-eight order.
+  if (normalizedRound === 0 && stage !== 'syllables' && stage !== 'morphology') {
+    return selected.slice(0, 8);
+  }
+  const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
   const offset = normalizedRound * 2;
   const groups = activityKinds.map(kind =>
     selected.filter(puzzle => puzzle.kind === kind).slice(offset, offset + 2)
