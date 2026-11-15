@@ -60,7 +60,7 @@ export default function PublicEnglishGamePlayer({
           publicSpellingAdventure
           activityContextLabelOverride="Guest Play Mode • Spelling Adventure"
           missionReturnHrefOverride={publicPath}
-          missionBackLabel="← Back to Free Games"
+          missionBackLabel="← Spelling Games"
         />
       );
     case "/free-sentence-making-game-for-kids":
