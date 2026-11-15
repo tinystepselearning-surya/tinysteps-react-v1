@@ -6,8 +6,10 @@ on:
       - 'src/app/routes.tsx'
       - 'src/lib/visualSpellingPuzzles.ts'
       - 'src/lib/visualSpellingCurriculumExpansion.ts'
+      - 'src/lib/visualSpellingBridgeCurriculum.ts'
       - 'src/lib/publicSpellingContent.ts'
       - 'src/lib/publicSpellingCurriculumExpansion.ts'
+      - 'src/lib/publicSpellingTwoLetterWords.ts'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.tsx'
       - 'src/pages/kids/games/VisualSpellingPuzzleLab.css'
       - 'src/pages/public/PublicEnglishGamePlayer.tsx'
@@ -20,6 +22,7 @@ on:
       - 'src/pages/KidsGamesHub.tsx'
       - 'src/tests/pages/VisualSpellingPuzzles.spec.ts'
       - 'src/tests/lib/publicSpellingContent.spec.ts'
+      - 'src/tests/lib/publicSpellingTwoLetterWords.spec.ts'
       - 'src/tests/pages/VisualSpellingPuzzleLab.spec.tsx'
       - 'tests/free-visual-spelling-focus.spec.ts'
       - '.github/workflows/free-visual-spelling-game-gate.yml'
@@ -54,6 +57,7 @@ jobs:
           npx vitest run
           src/tests/pages/VisualSpellingPuzzles.spec.ts
           src/tests/lib/publicSpellingContent.spec.ts
+          src/tests/lib/publicSpellingTwoLetterWords.spec.ts
           src/tests/pages/VisualSpellingPuzzleLab.spec.tsx
           src/tests/pages/public/FreeEnglishGameLandingPage.spec.tsx
       - name: Install Chromium for game route checks
