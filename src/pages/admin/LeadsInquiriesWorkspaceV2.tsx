@@ -1115,7 +1115,25 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       {outcomeRow?.bucket === 'closed' ? <div className="space-y-4"><div className="rounded-xl border p-4"><Badge>{outcomeRow.statusLabel}</Badge>{outcomeRow.demo?.admissionNotConfirmedReason && <p className="mt-3 text-sm text-slate-700">{outcomeRow.demo.admissionNotConfirmedReason}</p>}</div><div className="flex justify-end"><Button variant="outline" onClick={() => setOutcomeRow(null)}>Close</Button></div></div> : <form onSubmit={submitOutcome} className="space-y-4"><div><Label>Admin decision *</Label><Select value={outcomeForm.conversionStatus} onValueChange={(value) => setOutcomeForm((current) => ({ ...current, conversionStatus: value as DemoConversionStatus | 'none' }))}><SelectTrigger className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">Not decided</SelectItem>{OUTCOME_OPTIONS.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select>{outcomeForm.conversionStatus !== 'none' && <p className="mt-1 text-xs text-slate-500">{OUTCOME_OPTIONS.find((item) => item.value === outcomeForm.conversionStatus)?.help}</p>}</div>
         {isSimpleFollowUpDecision(outcomeForm.conversionStatus) && <div><Label>Next follow-up date *</Label><Input type="date" className="mt-1" value={outcomeForm.followUpDate} onChange={(event) => setOutcomeForm((current) => ({ ...current, followUpDate: event.target.value }))} /></div>}
         <div className="grid gap-3 sm:grid-cols-2"><div><Label>Fee discussed</Label><Input className="mt-1" value={outcomeForm.feeDiscussed} onChange={(event) => setOutcomeForm((current) => ({ ...current, feeDiscussed: event.target.value }))} placeholder="Example: ₹4,800 / 12 classes" /></div><div><Label>Recommended course</Label><Input className="mt-1" value={outcomeForm.recommendedCourse} onChange={(event) => setOutcomeForm((current) => ({ ...current, recommendedCourse: event.target.value }))} /></div><div><Label>Recommended frequency</Label><Input className="mt-1" value={outcomeForm.recommendedFrequency} onChange={(event) => setOutcomeForm((current) => ({ ...current, recommendedFrequency: event.target.value }))} placeholder="Example: 3 classes / week" /></div></div>
-        <div><Label>{simpleOutcomeNeedsReason(outcomeForm.conversionStatus) ? 'Reason / note *' : 'Reason / note'}</Label><Textarea className="mt-1" value={outcomeForm.reason} onChange={(event) => setOutcomeForm((current) => ({ ...current, reason: event.target.value }))} placeholder="Add only what the next admin needs to know" /></div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOutcomeRow(null)}>Cancel</Button><Button type="submit" disabled={outcomeSaving || outcomeForm.conversionStatus === 'none'}>{outcomeSaving ? 'Saving…' : 'Save decision'}</Button></div></form>}
+        <div>
+          <Label>{simpleOutcomeNeedsReason(outcomeForm.conversionStatus) ? 'Reason / note *' : 'Reason / note'}</Label>
+          <Textarea className="mt-1" value={outcomeForm.reason} onChange={(event) => setOutcomeForm((current) => ({ ...current, reason: event.target.value }))} placeholder="Add only what the next admin needs to know" />
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-2"
+            onClick={() => setOutcomeForm((current) => ({
+              ...current,
+              reason: current.reason.includes('Parent says fees are too high')
+                ? current.reason
+                : [current.reason.trim(), 'Parent says fees are too high.'].filter(Boolean).join(' '),
+            }))}
+          >
+            Add pricing concern
+          </Button>
+          <p className="mt-1 text-xs text-slate-500">Records only the parent's stated objection; does not change the selected admission decision.</p>
+        </div><div className="flex justify-end gap-2"><Button type="button" variant="outline" onClick={() => setOutcomeRow(null)}>Cancel</Button><Button type="submit" disabled={outcomeSaving || outcomeForm.conversionStatus === 'none'}>{outcomeSaving ? 'Saving…' : 'Save decision'}</Button></div></form>}
     </DialogContent></Dialog>
 
     <Dialog open={Boolean(editRow)} onOpenChange={(open) => !open && setEditRow(null)}><DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto"><DialogHeader><DialogTitle>Edit lead information</DialogTitle><DialogDescription>Update parent, child and enquiry details. Workflow status and teacher outcome are not changed here.</DialogDescription></DialogHeader><form onSubmit={submitEdit} className="space-y-4">

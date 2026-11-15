@@ -19,7 +19,7 @@ vi.mock('firebase/firestore', () => ({
   query: vi.fn(),
 }));
 
-import { addLeadCommunication, fetchLeadCommunications, recentLeadContactEvidence, leadContactOutcomeOptions } from '../../services/leadCommunicationsService';
+import { addLeadCommunication, customStaffWhatsAppUrl, fetchLeadCommunications, recentLeadContactEvidence, leadContactOutcomeOptions } from '../../services/leadCommunicationsService';
 
 describe('Staff-recorded lead communication evidence', () => {
   beforeEach(() => {
@@ -128,6 +128,58 @@ describe('Staff-recorded lead communication evidence', () => {
     expect(recentLeadContactEvidence([{ ...base, outcome: null }]))
       .toMatch(/no parent response confirmed/i);
     expect(recentLeadContactEvidence([])).toMatch(/No contact result recorded/);
+  });
+
+  it('records a pricing objection separately from the contact result', async () => {
+    const record = await addLeadCommunication({
+      leadId: 'existing-lead',
+      type: 'call', channel: 'phone', direction: 'outbound',
+      outcome: 'spoke_to_parent', parentConcern: 'price_too_high',
+      summary: 'Parent said the course fee feels too high. Discussed class options.',
+    });
+    expect(mocks.addDoc.mock.calls[0][1]).toMatchObject({
+      outcome: 'spoke_to_parent', parentConcern: 'price_too_high',
+    });
+    expect(record.parentConcern).toBe('price_too_high');
+    expect(mocks.addDoc.mock.calls[0][1]).not.toHaveProperty('conversionStatus');
+  });
+
+  it('does not claim a pricing objection from an unconfirmed message or unanswered call', async () => {
+    await expect(addLeadCommunication({
+      leadId: 'existing-lead', type: 'message', channel: 'whatsapp',
+      direction: 'outbound', outcome: 'message_sent_unconfirmed',
+      parentConcern: 'price_too_high', summary: 'Only sent a message',
+    })).rejects.toThrow('requires a conversation');
+    await expect(addLeadCommunication({
+      leadId: 'existing-lead', type: 'call', channel: 'phone',
+      outcome: 'attempted_no_answer', parentConcern: 'price_too_high',
+      summary: 'No answer',
+    })).rejects.toThrow('requires a conversation');
+    expect(mocks.addDoc).not.toHaveBeenCalled();
+  });
+
+  it('keeps a custom WhatsApp draft manual, properly encoded and without writing a lead log', () => {
+    const url = customStaffWhatsAppUrl('+91 96660 95553', 'Hello, may we discuss class options & fees?');
+    expect(url).toBe('https://wa.me/919666095553?text=Hello%2C%20may%20we%20discuss%20class%20options%20%26%20fees%3F');
+    expect(customStaffWhatsAppUrl('+919666095553', '  ')).toBeNull();
+    expect(customStaffWhatsAppUrl('123', 'Hello')).toBeNull();
+    expect(customStaffWhatsAppUrl('+919666095553', 'x'.repeat(1501))).toBeNull();
+    expect(mocks.addDoc).not.toHaveBeenCalled();
+  });
+
+  it('preserves the concern tag in recent communications without backfilling legacy records', async () => {
+    mocks.getDocs.mockResolvedValue({ docs: [
+      { id: 'priced', data: () => ({
+        type: 'call', channel: 'phone', direction: 'outbound',
+        outcome: 'spoke_to_parent', parentConcern: 'price_too_high',
+        summary: 'Too expensive',
+      }) },
+      { id: 'legacy', data: () => ({
+        type: 'note', channel: 'internal', summary: 'Older entry',
+      }) },
+    ] });
+    const records = await fetchLeadCommunications('existing-lead');
+    expect(records.map((row) => row.parentConcern)).toEqual(['price_too_high', null]);
   });
 
   it('refuses empty summaries without writing a contact event', async () => {

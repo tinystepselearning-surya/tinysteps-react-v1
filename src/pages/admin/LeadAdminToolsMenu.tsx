@@ -50,8 +50,11 @@ import {
   fetchLeadCommunications,
   leadContactOutcomeOptions,
   leadContactOutcomeLabel,
+  parentConcernLabel,
+  customStaffWhatsAppUrl,
   recentLeadContactEvidence,
   type LeadContactOutcome,
+  type LeadParentConcern,
   type LeadCommunicationChannel,
   type LeadCommunicationDirection,
   type LeadCommunicationRecord,
@@ -151,10 +154,12 @@ export default function LeadAdminToolsMenu({
   const [communicationChannel, setCommunicationChannel] = useState<LeadCommunicationChannel>('internal');
   const [communicationDirection, setCommunicationDirection] = useState<LeadCommunicationDirection>('outbound');
   const [communicationOutcome, setCommunicationOutcome] = useState<LeadContactOutcome | ''>('');
+  const [parentConcern, setParentConcern] = useState<LeadParentConcern | 'none'>('none');
   const [communicationSummary, setCommunicationSummary] = useState('');
   const [communicationSaving, setCommunicationSaving] = useState(false);
   const [timelineOpen, setTimelineOpen] = useState(false);
   const [whatsAppOpen, setWhatsAppOpen] = useState(false);
+  const [customWhatsAppText, setCustomWhatsAppText] = useState('');
   const [correctionOpen, setCorrectionOpen] = useState(false);
   const [correctionReason, setCorrectionReason] = useState('');
   const [correctionDetail, setCorrectionDetail] = useState('');
@@ -175,6 +180,11 @@ export default function LeadAdminToolsMenu({
     communicationType === 'note' ? 'internal' : communicationDirection,
   );
   const needsContactResult = communicationType === 'message' || communicationType === 'call';
+  const canRecordParentConcern = communicationType === 'note' ||
+    communicationOutcome === 'spoke_to_parent' || communicationOutcome === 'parent_replied';
+  const customWhatsAppUrl = canUseWhatsApp
+    ? customStaffWhatsAppUrl(row.parentPhone, customWhatsAppText)
+    : null;
   const normalizedDemoStatus = String(row.demo?.status || '').trim().toLowerCase();
   const canOpenOutcome = Boolean(row.demo) && (
     normalizedDemoStatus === 'open' ||
@@ -276,6 +286,7 @@ export default function LeadAdminToolsMenu({
     setCommunicationChannel(contactPreference === 'phone' ? 'phone' : 'whatsapp');
     setCommunicationDirection('outbound');
     setCommunicationOutcome('');
+    setParentConcern('none');
     setCommunicationSummary('');
     void openCommunications();
   };
@@ -290,11 +301,13 @@ export default function LeadAdminToolsMenu({
         channel: communicationChannel,
         direction: communicationType === 'note' ? 'internal' : communicationDirection,
         ...(needsContactResult && communicationOutcome ? { outcome: communicationOutcome } : {}),
+        ...(parentConcern !== 'none' && canRecordParentConcern ? { parentConcern } : {}),
         summary: communicationSummary,
       });
       setCommunications((current) => [created, ...current].slice(0, 50));
       setCommunicationSummary('');
       setCommunicationOutcome('');
+      setParentConcern('none');
       toast({ title: 'Communication logged', description: 'Saved with one communication write; no lead mirror write was added.' });
     } catch (error: any) {
       toast({
@@ -484,6 +497,7 @@ export default function LeadAdminToolsMenu({
                   const nextType = value as LeadCommunicationType;
                   setCommunicationType(nextType);
                   setCommunicationOutcome('');
+                  setParentConcern('none');
                   setCommunicationDirection('outbound');
                   setCommunicationChannel(nextType === 'note' ? 'internal' : nextType === 'call' ? 'phone' : 'whatsapp');
                 }}>
@@ -514,7 +528,7 @@ export default function LeadAdminToolsMenu({
               {communicationType === 'note' ? (
                 <p className="mt-1 text-sm text-slate-500">Internal note — not evidence of parent contact.</p>
               ) : (
-                <Select value={communicationDirection} onValueChange={(value) => { setCommunicationDirection(value as LeadCommunicationDirection); setCommunicationOutcome(''); }}>
+                <Select value={communicationDirection} onValueChange={(value) => { setCommunicationDirection(value as LeadCommunicationDirection); setCommunicationOutcome(''); setParentConcern('none'); }}>
                   <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="outbound">Outbound — Tiny Steps contacted parent</SelectItem>
@@ -526,7 +540,7 @@ export default function LeadAdminToolsMenu({
             {needsContactResult ? (
               <div>
                 <Label>Contact result (staff-reported) *</Label>
-                <Select value={communicationOutcome} onValueChange={(value) => setCommunicationOutcome(value as LeadContactOutcome)}>
+                <Select value={communicationOutcome} onValueChange={(value) => { setCommunicationOutcome(value as LeadContactOutcome); setParentConcern('none'); }}>
                   <SelectTrigger className="mt-1" aria-label="Contact result">
                     <SelectValue placeholder="Select actual result" />
                   </SelectTrigger>
@@ -541,8 +555,26 @@ export default function LeadAdminToolsMenu({
                 </p>
               </div>
             ) : null}
+            {canRecordParentConcern ? (
+              <div>
+                <Label>Parent's concern (optional)</Label>
+                <Select value={parentConcern} onValueChange={(value) => setParentConcern(value as LeadParentConcern | 'none')}>
+                  <SelectTrigger className="mt-1" aria-label="Parent concern">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No concern recorded</SelectItem>
+                    <SelectItem value="price_too_high">Price is too high</SelectItem>
+                    <SelectItem value="other">Other concern — explain below</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="mt-1 text-xs text-slate-500">
+                  An objection is not a final rejection. Keep the lead open for follow-up unless the parent explicitly declines.
+                </p>
+              </div>
+            ) : null}
             <div>
-              <Label>Summary</Label>
+              <Label>Summary / custom note</Label>
               <Textarea
                 className="mt-1"
                 value={communicationSummary}
@@ -576,6 +608,7 @@ export default function LeadAdminToolsMenu({
                     <Badge variant="outline">{communicationTypeLabels[item.type]}</Badge>
                     <span className="text-xs text-slate-500">{item.channel} · {item.direction}</span>
                     {item.outcome ? <Badge variant="outline">{leadContactOutcomeLabel(item.outcome)}</Badge> : null}
+                    {item.parentConcern ? <Badge variant="outline">Concern: {parentConcernLabel(item.parentConcern)}</Badge> : null}
                   </div>
                   <span className="text-xs text-slate-500">{formatActionTime(item.createdAtMs)}</span>
                 </div>
@@ -632,8 +665,47 @@ export default function LeadAdminToolsMenu({
               </div>
               <Textarea value={followUpText} readOnly rows={6} />
             </div>
-            {hasPhone && (
-              <div className="flex justify-end"><Button onClick={openWhatsApp}>Open WhatsApp</Button></div>
+            <div className="rounded-xl border border-slate-200 p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <Label htmlFor="staff-custom-whatsapp-message">Custom message</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={!customWhatsAppText.trim()}
+                  onClick={() => void copyWithToast(customWhatsAppText.trim(), 'Custom message')}
+                >
+                  Copy custom message
+                </Button>
+              </div>
+              <Textarea
+                id="staff-custom-whatsapp-message"
+                aria-label="Custom WhatsApp message"
+                value={customWhatsAppText}
+                onChange={(event) => setCustomWhatsAppText(event.target.value)}
+                maxLength={1500}
+                rows={5}
+                placeholder="Write your own polite, personalised reply to the parent."
+              />
+              <div className="mt-3 flex flex-wrap justify-end gap-2">
+                {canUseWhatsApp && (
+                  <Button
+                    type="button"
+                    disabled={!customWhatsAppUrl}
+                    onClick={() => {
+                      if (customWhatsAppUrl) window.open(customWhatsAppUrl, '_blank', 'noopener,noreferrer');
+                    }}
+                  >
+                    Review custom message in WhatsApp
+                  </Button>
+                )}
+              </div>
+              <p className="mt-2 text-xs text-slate-500">
+                This only prepares a message. Staff must review and send it manually in WhatsApp, then separately log any actual contact.
+              </p>
+            </div>
+            {canUseWhatsApp && (
+              <div className="flex justify-end"><Button onClick={openWhatsApp}>Open WhatsApp without a draft</Button></div>
             )}
           </div>
         </DialogContent>

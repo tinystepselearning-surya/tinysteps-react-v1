@@ -12,6 +12,22 @@ import { auth, db } from '../lib/firebaseConfig';
 export type LeadCommunicationType = 'message' | 'call' | 'follow_up' | 'note';
 export type LeadCommunicationChannel = 'whatsapp' | 'phone' | 'internal' | 'other';
 export type LeadCommunicationDirection = 'inbound' | 'outbound' | 'internal';
+/** Parent's stated concern, not an admission outcome or proof of disinterest. */
+export type LeadParentConcern = 'price_too_high' | 'other';
+
+export const parentConcernLabel = (concern: LeadParentConcern): string =>
+  concern === 'price_too_high' ? 'Price is too high' : 'Other concern';
+
+const normalizeConcern = (value: unknown): LeadParentConcern | null =>
+  value === 'price_too_high' || value === 'other' ? value : null;
+
+/** Staff can edit a draft. Preparing/opening it must never create a sent contact event. */
+export const customStaffWhatsAppUrl = (phone: string, draft: string): string | null => {
+  const digits = phone.replace(/\D/g, '');
+  const message = draft.trim();
+  if (digits.length < 7 || digits.length > 15 || !message || message.length > 1500) return null;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+};
 /**
  * Explicitly staff-reported results, never inferred from WhatsApp links or an
  * outbound log. These are not externally verified delivery receipts.
@@ -83,6 +99,7 @@ export interface LeadCommunicationRecord {
   channel: LeadCommunicationChannel;
   direction: LeadCommunicationDirection | 'unknown';
   outcome?: LeadContactOutcome | null;
+  parentConcern?: LeadParentConcern | null;
   summary: string;
   createdAtMs: number;
   createdBy?: string | null;
@@ -132,6 +149,7 @@ export async function fetchLeadCommunications(leadId: string, maxRows = 50): Pro
       channel: normalizeChannel(data.channel),
       direction,
       outcome: normalizeOutcome(data.outcome),
+      parentConcern: normalizeConcern(data.parentConcern),
       summary: String(data.summary || '').trim() || 'Communication logged',
       createdAtMs: toMs(data.createdAt),
       createdBy: typeof data.createdBy === 'string' ? data.createdBy : null,
@@ -145,6 +163,7 @@ export async function addLeadCommunication(input: {
   channel: LeadCommunicationChannel;
   direction?: LeadCommunicationDirection;
   outcome?: LeadContactOutcome;
+  parentConcern?: LeadParentConcern;
   summary: string;
 }): Promise<LeadCommunicationRecord> {
   const leadId = input.leadId.trim();
@@ -160,12 +179,22 @@ export async function addLeadCommunication(input: {
   if (input.outcome && !outcomes.some((option) => option.value === input.outcome)) {
     throw new Error('Contact result does not match the communication type or direction.');
   }
+  // A concern is separate from the communication result. In an active
+  // conversation it must be supported by a confirmed reply/conversation.
+  if (input.parentConcern && !(
+    input.type === 'note' ||
+    input.outcome === 'spoke_to_parent' ||
+    input.outcome === 'parent_replied'
+  )) {
+    throw new Error('Parent concern requires a conversation or an internal note documenting earlier evidence.');
+  }
   const createdAtMs = Date.now();
   const ref = await addDoc(collection(db, 'leads', leadId, 'communications'), {
     type: input.type,
     channel: input.channel,
     direction,
     ...(input.outcome ? { outcome: input.outcome } : {}),
+    ...(input.parentConcern ? { parentConcern: input.parentConcern } : {}),
     summary,
     ...(auth?.currentUser?.uid ? { createdBy: auth.currentUser.uid } : {}),
     followUpNeeded: false,
@@ -179,6 +208,7 @@ export async function addLeadCommunication(input: {
     channel: input.channel,
     direction,
     outcome: input.outcome || null,
+    parentConcern: input.parentConcern || null,
     summary,
     createdAtMs,
     createdBy: auth?.currentUser?.uid || null,
