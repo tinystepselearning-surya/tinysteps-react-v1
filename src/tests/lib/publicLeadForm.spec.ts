@@ -72,6 +72,15 @@ describe('publicLeadForm helpers', () => {
     expect(buildPublicWhatsappMessage(lead)).not.toContain('book one free 35-minute 1:1');
   });
 
+  it('does not invent a Reading course when the parent needs help choosing', () => {
+    const payload = buildPublicLeadPayload({
+      parentName: 'Parent', childName: 'Child', whatsapp: '919999999999', childAge: '6',
+      mainConcern: 'Not sure where to start', classFormatPreference: 'unsure', urgency: 'Just exploring',
+    });
+    expect(payload.programInterest).toBeNull();
+    expect(payload.classFormatPreference).toBe('unsure');
+  });
+
   it('builds the complete server-side enrichment payload separately', () => {
     expect(
       buildLeadAttributionEnrichment({
