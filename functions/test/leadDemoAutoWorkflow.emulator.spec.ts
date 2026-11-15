@@ -285,6 +285,41 @@ describeEmulator('automatic lead -> demo workflow emulator integrity', () => {
     expect((await db.collection('leads').doc(leadId).get()).data()?.classFormatPreference).toBe('small_group');
   });
 
+  it('refuses inactive teachers and takes the assigned name from the verified teacher profile', async () => {
+    const adminUid = 'admin-teacher-active-guard';
+    const teacherUid = 'inactive-teacher-guard';
+    const leadId = 'teacher-active-guard';
+    await Promise.all([
+      db.collection('users').doc(adminUid).set({ role: 'admin', status: 'active' }),
+      db.collection('users').doc(teacherUid).set({ role: 'teacher', status: 'inactive', name: 'Verified Teacher' }),
+      db.collection('leads').doc(leadId).set({
+        parentName: 'Parent', childName: 'Keerthi', primaryPhone: '9440436396',
+        source: 'website', status: 'new', classFormatPreference: 'unsure',
+        dedupeCanonicalLeadId: leadId, dedupeIdentityKey: 'teacher-active-identity',
+      }),
+    ]);
+    const { demoId } = await adminRetryLeadDemoRequest.run({
+      auth: { uid: adminUid }, data: { leadId },
+    } as never);
+    const assignment = {
+      auth: { uid: adminUid },
+      data: {
+        demoId, assignedTeacherId: teacherUid,
+        assignedTeacherName: 'Unverified Name', assessmentFormat: 'one_to_one',
+      },
+    } as never;
+    await expect(reassignDemoSession.run(assignment)).rejects.toThrow(/teacher is no longer active/i);
+    expect((await db.collection('demoSessions').doc(demoId).get()).data()).toMatchObject({
+      status: 'open', assignedTeacherId: null, assessmentFormat: null,
+    });
+
+    await db.collection('users').doc(teacherUid).update({ status: 'active' });
+    await reassignDemoSession.run(assignment);
+    expect((await db.collection('demoSessions').doc(demoId).get()).data()).toMatchObject({
+      status: 'assigned', assignedTeacherId: teacherUid, assignedTeacherName: 'Verified Teacher',
+    });
+  });
+
   it('refuses a conflicting owned demo instead of creating a second parent-child request', async () => {
     const uid = 'admin-owned-conflict-test';
     const leadId = 'canonical-owned-conflict';
