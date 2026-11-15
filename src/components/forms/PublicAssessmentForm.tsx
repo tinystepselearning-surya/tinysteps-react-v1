@@ -35,7 +35,7 @@ const readPendingLeadId = (): string | null => {
   }
 };
 
-type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12';
+type AgeOption = '3' | '4' | '5' | '6' | '7' | '8' | '9' | '10' | '11' | '12' | '13+';
 
 type PublicAssessmentFormProps = {
   source?: string;
@@ -74,7 +74,7 @@ export default function PublicAssessmentForm({
   helperText = 'Free assessment · No enrolment commitment',
   secondaryHelperText = null,
 }: PublicAssessmentFormProps) {
-  const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+  const ageOptions: AgeOption[] = ['3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13+'];
   const mainConcernOptions = PUBLIC_MAIN_CONCERN_OPTIONS;
   const initialState: PublicAssessmentFormState = {
     parentName: '',
@@ -572,7 +572,7 @@ export default function PublicAssessmentForm({
               </option>
               {ageOptions.map((age) => (
                 <option key={age} value={age}>
-                  {age}
+                  {age === '13+' ? '13 or older' : age}
                 </option>
               ))}
             </select>
