@@ -99,7 +99,7 @@ export default function FreeEnglishGameLandingPage() {
         <Meta title={config.seoTitle} description={config.seoDescription} canonical={pageUrl} />
         {isSpellingPlayMode
           ? <PublicEnglishGamePlayer publicPath={config.publicPath} visualPuzzleMode={isVisualPuzzleMode} />
-          : <SpellingGamesLanding />}
+          : <SpellingGamesLanding faqs={config.faqs || []} />}
       </>
     );
   }
