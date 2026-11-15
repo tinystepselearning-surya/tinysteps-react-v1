@@ -27,11 +27,12 @@ export const VISUAL_SPELLING_STAGES: readonly {
   id: VisualSpellingStage;
   title: string;
   subtitle: string;
+  examples: string;
 }[] = [
-  { id: 'explorer', title: 'Word Explorer', subtitle: 'Spot and form familiar spellings' },
-  { id: 'builder', title: 'Pattern Builder', subtitle: 'Notice letter patterns and word endings' },
-  { id: 'expert', title: 'Spelling Expert', subtitle: 'Handle longer and trickier words' },
-  { id: 'master', title: 'Word Architect', subtitle: 'Build advanced words from meaningful parts' },
+  { id: 'explorer', title: 'Everyday Words', subtitle: 'Build familiar words, spot mistakes and fill missing letters.', examples: 'friend · school · planet' },
+  { id: 'builder', title: 'Patterns & Endings', subtitle: 'Match word endings, prefixes and tricky letter patterns.', examples: 'careful · receive · happiness' },
+  { id: 'expert', title: 'Tricky Spellings', subtitle: 'Practise double letters, spelling changes and longer words.', examples: 'necessary · calendar · opportunity' },
+  { id: 'master', title: 'Long Word Challenge', subtitle: 'Build and check long words using meaningful word parts.', examples: 'international · accommodation · misunderstanding' },
 ];
 
 export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
@@ -95,6 +96,15 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
   },
 
   {
+    id: 'builder-careless', stage: 'builder', kind: 'sort', word: 'careless',
+    clue: 'Not paying enough attention or care.',
+    categories: ['Ends in -ful', 'Ends in -less'], answer: 'Ends in -less',
+    pair: { word: 'careful', clue: 'Taking care to avoid mistakes or harm.', answer: 'Ends in -ful', learningNote: 'Careful has the suffix -ful. Careless has -less; the two endings change the meaning.' },
+    hint: 'The suffix changes the meaning of care.',
+    learningNote: 'Careless is care + less. The suffix -less often means without.',
+  },
+
+  {
     id: 'builder-carefully', stage: 'builder', kind: 'arrange', word: 'carefully',
     clue: 'Doing something with attention to avoid mistakes.',
     tiles: ['ly', 'care', 'ful'],
@@ -114,14 +124,6 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     before: 'defin', missing: 'i', after: 'tely', choices: ['a', 'i', 'e', 'o'],
     hint: 'The spelling is related to definite.',
     learningNote: 'Definitely is definite + ly. Keep the e before -ly: definite → definitely.',
-  },
-  {
-    id: 'builder-careless', stage: 'builder', kind: 'sort', word: 'careless',
-    clue: 'Not paying enough attention or care.',
-    categories: ['Ends in -ful', 'Ends in -less'], answer: 'Ends in -less',
-    pair: { word: 'careful', clue: 'Taking care to avoid mistakes or harm.', answer: 'Ends in -ful', learningNote: 'Careful has the suffix -ful. Careless has -less; the two endings change the meaning.' },
-    hint: 'The suffix changes the meaning of care.',
-    learningNote: 'Careless is care + less. The suffix -less often means without.',
   },
   {
     id: 'builder-disagree', stage: 'builder', kind: 'arrange', word: 'disagree',
@@ -154,6 +156,14 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
   },
 
   {
+    id: 'expert-necessary', stage: 'expert', kind: 'missing', word: 'necessary',
+    clue: 'Something that is needed or required.',
+    before: 'nece', missing: 'ss', after: 'ary', choices: ['sc', 's', 'ss', 'c'],
+    hint: 'The middle of this word has two of the same consonant.',
+    learningNote: 'Necessary has one c followed by two s letters: ne-ce-ss-ary.',
+  },
+
+  {
     id: 'expert-unhappiness', stage: 'expert', kind: 'arrange', word: 'unhappiness',
     clue: 'The feeling or state of not being happy.',
     tiles: ['ness', 'un', 'happi'],
@@ -166,13 +176,6 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
     options: ['calender', 'calandar', 'calendar', 'calendor'],
     hint: 'Pay attention to the last three letters.',
     learningNote: 'Calendar ends in -dar, not -der.',
-  },
-  {
-    id: 'expert-necessary', stage: 'expert', kind: 'missing', word: 'necessary',
-    clue: 'Something that is needed or required.',
-    before: 'nece', missing: 'ss', after: 'ary', choices: ['sc', 's', 'ss', 'c'],
-    hint: 'The middle of this word has two of the same consonant.',
-    learningNote: 'Necessary has one c followed by two s letters: ne-ce-ss-ary.',
   },
   {
     id: 'expert-kindness', stage: 'expert', kind: 'sort', word: 'kindness',
