@@ -1,0 +1,159 @@
+/* The visual-only spelling experience is deliberately isolated from the
+ * public SEO landing page and authenticated Tiny Steps dashboard themes. */
+.ts-spelling-surface {
+  position: relative;
+  isolation: isolate;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 6% 8%, rgba(154, 107, 255, .30), transparent 33%),
+    radial-gradient(ellipse at 94% 18%, rgba(49, 200, 230, .18), transparent 33%),
+    linear-gradient(153deg, #23194d 0%, #1b295b 52%, #07506a 100%);
+}
+.ts-spelling-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  opacity: .30;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,.40) 1px,transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 86%);
+}
+.ts-spelling-glow {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  width: 20rem;
+  height: 20rem;
+  border-radius: 999px;
+  filter: blur(62px);
+  opacity: .25;
+}
+.ts-spelling-glow--coral { top: 16rem; left: -11rem; background: #ff9a8b; }
+.ts-spelling-glow--aqua { right: -9rem; bottom: 0; background: #45d9c8; }
+.ts-spelling-board {
+  background: #fffdfa;
+  border: 1px solid rgba(255,255,255,.94);
+  border-radius: 1.9rem;
+  box-shadow: 0 15px 0 rgba(11,23,63,.12), 0 28px 72px rgba(4,10,39,.22);
+}
+.ts-spelling-stage-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.7rem;
+  border: 2px solid rgba(255,255,255,.62);
+  box-shadow: 0 8px 0 rgba(5,15,43,.16), 0 15px 36px rgba(6,12,43,.18);
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.ts-spelling-stage-card::after {
+  content: "";
+  position: absolute;
+  right: -2rem;
+  top: -3rem;
+  width: 11rem;
+  height: 11rem;
+  pointer-events: none;
+  border-radius: 50%;
+  background: rgba(255,255,255,.20);
+}
+.ts-spelling-stage-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 0 rgba(5,15,43,.13), 0 24px 42px rgba(6,12,43,.22);
+  border-color: rgba(255,255,255,.96);
+}
+.ts-spelling-stage-card:active { transform: translateY(1px); }
+.ts-spelling-tile {
+  position: relative;
+  border-radius: 1rem;
+  border: 2px solid #dbd4ff;
+  border-bottom: 5px solid #b6a5f9;
+  background: linear-gradient(#ffffff, #f8f5ff);
+  color: #2c216d;
+  box-shadow: 0 4px 11px rgba(64,41,157,.10);
+  transition: transform .14s ease, border-color .14s ease, background-color .14s ease;
+  touch-action: manipulation;
+}
+.ts-spelling-tile:not(:disabled):hover {
+  transform: translateY(-3px);
+  border-color: #8c6cf7;
+  background: #f0ebff;
+}
+.ts-spelling-tile:not(:disabled):active { transform: translateY(1px); }
+.ts-spelling-slot {
+  background: repeating-linear-gradient(-45deg,#f6f4ff 0,#f6f4ff 13px,#f1efff 13px,#f1efff 26px);
+  border: 2px dashed #b5a6fa;
+  border-radius: 1.25rem;
+}
+.ts-spelling-choice {
+  position: relative;
+  min-width: 0;
+  border: 2px solid #e4e6fa;
+  border-bottom-width: 5px;
+  background: #ffffff;
+  color: #24234d;
+  border-radius: 1.15rem;
+  box-shadow: 0 3px 12px rgba(49,47,96,.06);
+  transition: transform .15s ease, border-color .15s ease, background-color .15s ease;
+  touch-action: manipulation;
+}
+.ts-spelling-choice:not(:disabled):hover {
+  transform: translateY(-2px);
+  border-color: #9080f7;
+  background: #f7f5ff;
+}
+.ts-spelling-choice:not(:disabled):active { transform: translateY(1px); }
+.ts-spelling-primary {
+  border-radius: 1rem;
+  background: linear-gradient(100deg, #5947d6, #7960ec);
+  color: #ffffff;
+  box-shadow: 0 5px 0 #39299b, 0 10px 22px rgba(67,47,156,.22);
+  transition: transform .14s ease, filter .14s ease;
+}
+.ts-spelling-primary:not(:disabled):hover { filter: brightness(1.08); transform: translateY(-2px); }
+.ts-spelling-primary:not(:disabled):active { transform: translateY(2px); box-shadow: 0 2px 0 #39299b; }
+.ts-spelling-primary:disabled { opacity: .48; cursor: not-allowed; box-shadow: none; }
+.ts-spelling-secondary {
+  border: 1px solid #d9d7ec;
+  border-radius: .9rem;
+  background: #ffffff;
+  color: #3e3474;
+  transition: background-color .14s ease;
+}
+.ts-spelling-secondary:not(:disabled):hover { background: #f3efff; }
+.ts-spelling-secondary:disabled { opacity: .48; cursor: not-allowed; }
+.ts-spelling-message {
+  border-radius: 1.35rem;
+  border: 1px solid #b3eacb;
+  background: linear-gradient(120deg,#e9fff3,#effcf8);
+}
+.ts-spelling-hint { border-radius: 1.05rem; background: #fff4d5; color: #704909; }
+.ts-spelling-clue {
+  border-radius: 1.15rem;
+  border: 1px solid #d0eafa;
+  background: linear-gradient(105deg,#ecf9ff,#f1f6ff);
+}
+.ts-spelling-progress {
+  height: .78rem;
+  flex: 1 1 0;
+  border-radius: 999px;
+  background: #e8eaf4;
+  transition: background-color .18s ease, transform .18s ease;
+}
+.ts-spelling-progress--complete { background: linear-gradient(90deg,#38bfa7,#40d8c5); }
+.ts-spelling-progress--active { background: linear-gradient(90deg,#ffab63,#ffcb7b); transform: scaleY(1.1); }
+.ts-spelling-surface button:focus-visible,
+.ts-spelling-surface input:focus-visible { outline: 3px solid #ffb84e; outline-offset: 4px; }
+@media (max-width: 420px) {
+  .ts-spelling-board { border-radius: 1.35rem; }
+  .ts-spelling-stage-card { border-radius: 1.3rem; }
+  .ts-spelling-glow { opacity: .13; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ts-spelling-stage-card, .ts-spelling-tile, .ts-spelling-choice,
+  .ts-spelling-primary, .ts-spelling-progress { transition: none; }
+  .ts-spelling-stage-card:hover,.ts-spelling-tile:hover,.ts-spelling-choice:hover,
+  .ts-spelling-primary:hover { transform: none; }
+}
