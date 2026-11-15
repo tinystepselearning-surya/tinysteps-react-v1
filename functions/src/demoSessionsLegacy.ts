@@ -1694,6 +1694,7 @@ interface ReassignDemoSessionRequest {
   demoId: string;
   assignedTeacherId: string;
   assignedTeacherName?: string;
+  assessmentFormat?: 'one_to_one' | 'small_group';
 }
 
 async function resolveTeacherProfile(
@@ -1737,6 +1738,10 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
       120,
     );
 
+    const assessmentFormat = request.data?.assessmentFormat;
+    if (assessmentFormat !== undefined && assessmentFormat !== 'one_to_one' && assessmentFormat !== 'small_group') {
+      throw new HttpsError('invalid-argument', 'Invalid assessment format');
+    }
     const db = admin.firestore();
     const nextTeacherName = await resolveTeacherProfile(
       db,
@@ -1751,7 +1756,7 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
         throw new HttpsError('not-found', 'Demo session not found');
       }
 
-      const demo = snap.data() as { status?: string; history?: unknown };
+      const demo = snap.data() as { status?: string; history?: unknown; leadType?: string | null };
       const currentStatus = normalizeDemoStatus(demo.status);
       if (currentStatus !== 'open' && currentStatus !== 'assigned') {
         throw new HttpsError(
@@ -1760,6 +1765,10 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
         );
       }
 
+      // Unresolved enquiries cannot silently become 1:1 assignments.
+      if (!assessmentFormat && !['1:1', 'Group Class'].includes(demo.leadType || '')) {
+        throw new HttpsError('failed-precondition', 'Select an assessment format before assigning this enquiry');
+      }
       const historyAction = currentStatus === 'open' ? 'assigned' : 'reassigned';
       const historyNote =
         currentStatus === 'open'
@@ -1768,6 +1777,7 @@ export const reassignDemoSession = onCall<ReassignDemoSessionRequest>(
 
       tx.update(demoRef, {
         status: 'assigned',
+        ...(assessmentFormat ? { leadType: assessmentFormat === 'small_group' ? 'Group Class' : '1:1' } : {}),
         assignedTeacherId,
         assignedTeacherName: nextTeacherName,
         assignedAt: admin.firestore.FieldValue.serverTimestamp(),
