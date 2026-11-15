@@ -21,6 +21,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -30,6 +32,21 @@ jobs:
           node --check scripts/indexnow-change-detection.mjs
       - name: Test canonical diff and metadata fingerprints
         run: node --test scripts/test/indexnow-change-detection.node-test.mjs
+      - name: Prove IndexNow activates Hosting but does not deploy Functions or Firestore
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          node scripts/resolve-deployment-impact.mjs \\
+            --before "$BASE_SHA" --functions-before "$BASE_SHA" \\
+            --hosting-before "$BASE_SHA" --firestore-rules-before "$BASE_SHA" \\
+            --firestore-indexes-before "$BASE_SHA" --sha "$GITHUB_SHA" \\
+            > /tmp/indexnow-impact-summary.txt
+          cat /tmp/indexnow-impact-summary.txt | grep -E 'Hosting changed:|Functions deployment required:|Firestore rules changed:|Firestore indexes changed:'
+          grep -qx 'hosting_changed=true' "$GITHUB_OUTPUT"
+          grep -qx 'functions_deployment_required=false' "$GITHUB_OUTPUT"
+          grep -qx 'firestore_rules_changed=false' "$GITHUB_OUTPUT"
+          grep -qx 'firestore_indexes_changed=false' "$GITHUB_OUTPUT"
       - name: Verify IndexNow still runs only after production Hosting
         run: |
           node --input-type=module <<'NODE'
