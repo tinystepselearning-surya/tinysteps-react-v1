@@ -84,7 +84,7 @@ test('classic spelling opens at a playable word and scrolls as a normal page on 
   expect(await page.evaluate(() => document.querySelector('[data-testid="public-spelling-adventure"]')?.getBoundingClientRect().top)).toBeGreaterThanOrEqual(-1);
   await page.evaluate(() => window.scrollTo(0, 360));
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
-  await page.getByRole('button', { name: /back to free games/i }).click();
+  await page.getByRole('button', { name: /spelling games/i }).click();
   await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
 });
 
