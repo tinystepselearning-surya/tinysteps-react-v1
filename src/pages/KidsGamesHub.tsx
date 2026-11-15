@@ -265,12 +265,12 @@ const KidsGamesHub: React.FC = () => {
           {/* Older learners: independent, sound-free spelling puzzles. */}
           <button
             type="button"
-            onClick={() => navigate(`/kids/games/spelling-puzzle-lab${kidId ? `?kidId=${encodeURIComponent(kidId)}` : ''}`)}
+            onClick={() => navigate('/free-spelling-game-for-kids?play=1&mode=puzzles')}
             className="mission-card"
             style={{ minHeight: '120px', background: 'linear-gradient(160deg, rgba(251, 191, 36, 0.16), rgba(168, 85, 247, 0.13))', borderColor: 'rgba(251, 191, 36, 0.35)' }}
           >
             <h4 className="text-lg font-bold text-yellow-300">Spelling Puzzle Lab</h4>
-            <p className="text-xs text-white/80 mt-1">Ages 8–10+ · Word puzzles, no sound</p>
+            <p className="text-xs text-white/80 mt-1">Free · No login · Ages 8–10+ · No sound</p>
           </button>
         </div>
       </div>
