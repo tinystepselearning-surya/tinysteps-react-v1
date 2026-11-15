@@ -35,14 +35,15 @@ vi.mock('../../lib/firebaseConfig', () => ({
   functions: {},
 }));
 
-function fillValidForm() {
+function fillValidForm(selectContact = true) {
   fireEvent.change(screen.getByLabelText(/parent name/i), { target: { value: 'Priya' } });
   fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
-  fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
+  fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: '+919999999999' } });
   fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
   fireEvent.change(screen.getByLabelText(/choose the area where your child needs support/i), {
     target: { value: 'Blending sounds to read words' },
   });
+  if (selectContact) fireEvent.click(screen.getByRole('button', { name: 'Either is fine' }));
 }
 
 describe('PublicAssessmentForm analytics', () => {
@@ -102,7 +103,7 @@ describe('PublicAssessmentForm analytics', () => {
 
     fireEvent.change(screen.getByLabelText(/parent name/i), { target: { value: 'Priya' } });
     fireEvent.change(screen.getByLabelText(/child name/i), { target: { value: 'Aarav' } });
-    fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: '+919999999999' } });
+    fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: '+919999999999' } });
     fireEvent.change(screen.getByLabelText(/child age/i), { target: { value: '7' } });
 
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
@@ -114,12 +115,62 @@ describe('PublicAssessmentForm analytics', () => {
   it('rejects malformed phone numbers before any lead save or WhatsApp navigation', () => {
     render(<PublicAssessmentForm />);
     fillValidForm();
-    fireEvent.change(screen.getByLabelText(/whatsapp number/i), { target: { value: 'not-a-number' } });
+    fireEvent.change(screen.getByLabelText(/mobile number/i), { target: { value: 'not-a-number' } });
     fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
     expect(screen.getByText(/enter a valid mobile number/i)).toBeInTheDocument();
     expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
     expect(globalThis.open).not.toHaveBeenCalled();
     expect(trackingMocks.trackGenerateLead).not.toHaveBeenCalled();
+  });
+
+  it('requires a parent-selected enquiry contact method, not a preselected marketing opt-in', () => {
+    render(<PublicAssessmentForm />);
+    fillValidForm(false);
+    expect(screen.getByRole('button', { name: 'Call me' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Reply on WhatsApp' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('button', { name: 'Either is fine' })).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    expect(screen.getByText(/please choose how tiny steps may reply/i)).toBeInTheDocument();
+    expect(firestoreMocks.setDoc).not.toHaveBeenCalled();
+    expect(globalThis.open).not.toHaveBeenCalled();
+  });
+
+  it('saves phone callback requests without opening WhatsApp or counting a WhatsApp click', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Call me' }));
+    expect(screen.getByRole('button', { name: 'Call me' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.submit(screen.getByRole('button', { name: 'Request a Phone Callback' }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).toMatchObject({
+      contactPreference: 'phone',
+      contactPermission: true,
+      programInterest: 'Phonics',
+    });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/phone callback/i));
+    expect(globalThis.open).not.toHaveBeenCalled();
+    expect(popupLocationReplace).not.toHaveBeenCalled();
+    expect(locationAssignMock).not.toHaveBeenCalled();
+    expect(trackingMocks.trackWhatsappClick).not.toHaveBeenCalled();
+    expect(trackingMocks.trackDemoRequestReceived).toHaveBeenCalledWith(expect.objectContaining({
+      request_type: 'callback_assessment_request',
+    }));
+    expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
+  });
+
+  it('keeps normal WhatsApp handoff for a parent who explicitly prefers WhatsApp', async () => {
+    firestoreMocks.setDoc.mockResolvedValue(undefined);
+    render(<PublicAssessmentForm />);
+    fillValidForm();
+    fireEvent.click(screen.getByRole('button', { name: 'Reply on WhatsApp' }));
+    fireEvent.submit(screen.getByRole('button', { name: /book free 35-minute demo on whatsapp/i }));
+    await waitFor(() => expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1));
+    expect(firestoreMocks.setDoc.mock.calls[0]?.[1]).toMatchObject({
+      contactPreference: 'whatsapp', contactPermission: true,
+    });
+    expect(popupLocationReplace).toHaveBeenCalledTimes(1);
+    expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
   });
 
   it('renders only the required support-area dropdown with the exact options', () => {
