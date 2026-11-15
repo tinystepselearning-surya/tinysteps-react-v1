@@ -106,6 +106,16 @@ describe("FreeEnglishGameLandingPage", () => {
       renderRoute(route);
 
       expect(screen.getByRole("heading", { name: heading, level: 1 })).toBeInTheDocument();
+      if (route === "/free-spelling-game-for-kids") {
+        expect(screen.getByRole("link", { name: /play spelling adventure/i }))
+          .toHaveAttribute("href", "/free-spelling-game-for-kids?play=1");
+        expect(screen.getByRole("link", { name: /play spelling puzzle lab/i }))
+          .toHaveAttribute("href", "/free-spelling-game-for-kids?play=1&mode=puzzles");
+        expect(screen.getAllByText(/no saved game progress/i).length).toBeGreaterThan(0);
+        expect(screen.getAllByRole("link").some(link => link.getAttribute("href") === categoryPath)).toBe(true);
+        expect(screen.getAllByRole("link").some(link => link.getAttribute("href") === "/free-english-games-for-kids")).toBe(true);
+        return;
+      }
       expect(screen.getAllByText(/no login required\./i).length).toBeGreaterThan(0);
       expect(screen.getAllByText(/temporarily in this browser/i).length).toBeGreaterThan(0);
       expect(screen.getAllByRole("link", { name: /all english games|back to free english games for kids/i }).length).toBeGreaterThan(0);
@@ -243,22 +253,14 @@ describe("FreeEnglishGameLandingPage", () => {
 
     renderRoute("/free-spelling-game-for-kids?play=1");
 
-    expect(screen.getByRole("heading", { name: /free spelling game for kids/i, level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /guest play mode/i, level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 1 })).toBeInTheDocument();
     expect(screen.getByText(/guest play mode • spelling adventure/i)).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: /spelling adventure/i })).toBeInTheDocument();
-    expect(screen.getByText(/build words, complete missing letters, fix mistakes, and spell whole words/i)).toBeInTheDocument();
-    expect(screen.getByText("Build It")).toBeInTheDocument();
-    expect(screen.getAllByText("Word Families").length).toBeGreaterThan(0);
-    expect(screen.getByText("Complete It")).toBeInTheDocument();
-    expect(screen.getByText("Choose It")).toBeInTheDocument();
-    expect(screen.getByText("Fix It")).toBeInTheDocument();
-    expect(screen.getByText("Spell It")).toBeInTheDocument();
+    // First puzzle is playable immediately; no extra landing or intro click.
+    expect(screen.getByRole("heading", { name: "Build It", level: 2 })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /go to spell it/i })).toBeInTheDocument();
     expect(screen.getByTestId("location-probe")).toHaveTextContent("/free-spelling-game-for-kids?play=1");
     expect(screen.queryByText(/no child selected/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/kidId|synced child tracking|synced per-child tracking/i)).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /start spelling adventure/i }));
 
     expect(screen.getByRole("heading", { name: "Build It" })).toBeInTheDocument();
     expect(screen.queryByText(/listen/i)).not.toBeInTheDocument();
@@ -422,7 +424,7 @@ describe("FreeEnglishGameLandingPage", () => {
     vi.useFakeTimers();
     renderRoute("/free-spelling-game-for-kids?play=1");
 
-    fireEvent.click(screen.getByRole("button", { name: /start at spell it/i }));
+    fireEvent.click(screen.getByRole("tab", { name: /go to spell it/i }));
 
     expect(screen.getByRole("heading", { name: "Spell It" })).toBeInTheDocument();
     expect(screen.getByText(/30\/36 done/i)).toBeInTheDocument();
@@ -578,11 +580,13 @@ describe("FreeEnglishGameLandingPage", () => {
     wordBuildingView.unmount();
     const spellingView = renderRoute("/free-spelling-game-for-kids");
 
-    expect(screen.getByRole("link", { name: "Play Free" })).toHaveAttribute(
-      "href",
-      "/free-spelling-game-for-kids?play=1",
+    expect(screen.getByRole("link", { name: /play spelling adventure/i })).toHaveAttribute(
+      "href", "/free-spelling-game-for-kids?play=1",
     );
-    expect(screen.getAllByText("FREE TO PLAY").length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: /play spelling puzzle lab/i })).toHaveAttribute(
+      "href", "/free-spelling-game-for-kids?play=1&mode=puzzles",
+    );
+    expect(screen.queryByRole("link", { name: "Play Free" })).not.toBeInTheDocument();
 
     spellingView.unmount();
     const sentenceMakingView = renderRoute("/free-sentence-making-game-for-kids");
@@ -676,27 +680,31 @@ describe("FreeEnglishGameLandingPage", () => {
       expect(screen.getByText(/sound listening|sound detective/i)).toBeInTheDocument();
     });
 
-    it("renders unique benefits for Spelling", () => {
+    it("explains the two distinct spelling games without duplicate launch controls", () => {
       renderRoute("/free-spelling-game-for-kids");
 
-      expect(screen.getByRole("heading", { name: /what children learn/i, level: 2 })).toBeInTheDocument();
-      expect(screen.getByText(/builds spelling confidence from short words to complex patterns/i)).toBeInTheDocument();
-      expect(screen.getByText(/practises blends, digraphs, and long-vowel spelling rules/i)).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Choose your spelling game", level: 2 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 3 })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "Spelling Puzzle Lab", level: 3 })).toBeInTheDocument();
+      expect(screen.getAllByRole("link", { name: /play spelling adventure/i })).toHaveLength(1);
+      expect(screen.getAllByRole("link", { name: /play spelling puzzle lab/i })).toHaveLength(1);
+      expect(screen.queryByText(/ready for the next step/i)).not.toBeInTheDocument();
     });
 
-    it("renders unique FAQs for Spelling", () => {
+    it("renders FAQs consistent with the two spelling games", () => {
       renderRoute("/free-spelling-game-for-kids");
 
-      expect(screen.getByText(/at what age should my child start spelling practice/i)).toBeInTheDocument();
-      expect(screen.getByText(/my child spells words the way they sound/i)).toBeInTheDocument();
-      expect(screen.queryByText(/is this game free\?/i)).not.toBeInTheDocument();
+      expect(screen.getByText(/are both games free/i)).toBeInTheDocument();
+      expect(screen.getByText(/which game should my child choose/i)).toBeInTheDocument();
+      expect(screen.getByText(/does my child need headphones or sound/i)).toBeInTheDocument();
     });
 
-    it("renders next game for Spelling pointing to Vocabulary", () => {
+    it("preserves a word-building category link without unrelated game promotions", () => {
       renderRoute("/free-spelling-game-for-kids");
 
-      expect(screen.getByRole("heading", { name: /ready for the next step/i, level: 2 })).toBeInTheDocument();
-      expect(screen.getByRole("heading", { name: /vocabulary adventure/i, level: 3 })).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /browse word-building games/i }))
+        .toHaveAttribute("href", "/free-word-building-games-for-kids");
+      expect(screen.queryByRole("heading", { name: /vocabulary adventure/i })).not.toBeInTheDocument();
     });
 
     it("renders unique benefits for Sentence Making", () => {
@@ -728,7 +736,7 @@ describe("FreeEnglishGameLandingPage", () => {
       expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
 
       renderRoute("/free-spelling-game-for-kids?play=1");
-      expect(screen.getAllByRole("heading", { name: /guest play mode/i, level: 2 }).length).toBeGreaterThanOrEqual(1);
+      expect(screen.getByRole("heading", { name: "Spelling Adventure", level: 1 })).toBeInTheDocument();
       expect(landingMocks.recordLevelResultMock).not.toHaveBeenCalled();
 
       renderRoute("/free-sentence-making-game-for-kids?play=1");
