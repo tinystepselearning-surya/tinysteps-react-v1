@@ -23,6 +23,11 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
     // On Android, the software keyboard can shrink the visual viewport without
     // changing 100dvh. Keep the scroll region above the keyboard in that case.
     const syncVisibleHeight = () => {
+      if (window.innerWidth >= 640) {
+        modalContentRef.current?.style.removeProperty('max-height');
+        modalScrollRef.current?.style.removeProperty('max-height');
+        return;
+      }
       const visualHeight = window.visualViewport?.height ?? window.innerHeight;
       const available = Math.max(160, Math.floor(Math.min(window.innerHeight, visualHeight) - 16));
       const maxHeight = `${available}px`;
