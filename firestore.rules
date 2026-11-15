@@ -1250,6 +1250,13 @@ function teacherProgressIdentityUnchanged() {
       allow create, update, delete: if isAdmin();
     }
 
+    // Server-only worksheet catalogue. Admin UI maintains the projection
+    // transactionally; parents continue to use an authenticated callable.
+    match /worksheetBundles/{bundleId} {
+      allow read, create, update: if isAdmin();
+      allow delete: if false;
+    }
+
     // ----------------------------
     // BILLING CHARGES COLLECTION
     // ----------------------------

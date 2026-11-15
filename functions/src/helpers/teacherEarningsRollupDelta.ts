@@ -342,26 +342,28 @@ export const planTeacherEarningsRollupChange = (input: {
 };
 
 /**
- * Returns true only when the live trigger may safely skip its authoritative month scan.
- *
- * This deliberately supports update events only. Both snapshots must carry the same explicit
- * canonical teacherId/monthKey target, and the planner must prove the rollup contribution and
- * payout state are unchanged. Legacy rows whose month is only derivable from timestamps therefore
- * continue through the existing recompute path.
+ * Retain the existing canonical metadata-update skip. Also skip standalone
+ * creates/deletes which the authoritative calculator excludes entirely (void
+ * or archived). Never skip session-linked records: their canonical/legacy
+ * deduplication could change even when a row itself is void.
  */
 export const canSkipTeacherEarningsRollupRecompute = (input: {
   earningId: string;
   before: Record<string, unknown> | null;
   after: Record<string, unknown> | null;
 }): boolean => {
-  if (!input.before || !input.after) return false;
-
-  const beforeTarget = teacherMonthRollupTargetFor(input.before);
-  const afterTarget = teacherMonthRollupTargetFor(input.after);
-  if (!sameTarget(beforeTarget, afterTarget)) return false;
-
   const plan = planTeacherEarningsRollupChange(input);
   if (plan.mode !== 'noop' || plan.targets.length !== 1) return false;
 
-  return sameTarget(plan.targets[0] || null, beforeTarget);
+  if (input.before && input.after) {
+    const beforeTarget = teacherMonthRollupTargetFor(input.before);
+    const afterTarget = teacherMonthRollupTargetFor(input.after);
+    return sameTarget(beforeTarget, afterTarget) &&
+      sameTarget(plan.targets[0] || null, beforeTarget);
+  }
+
+  const existing = input.before || input.after;
+  if (!existing || isSessionLinked(existing)) return false;
+  if (existing.archived !== true && normalizeStatus(existing.status) !== 'void') return false;
+  return sameTarget(teacherMonthRollupTargetFor(existing), plan.targets[0] || null);
 };

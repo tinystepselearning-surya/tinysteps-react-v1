@@ -229,6 +229,14 @@ export const onTeacherEarningsRollupWrite = onDocumentWritten(
       return;
     }
 
+    if (incremental.mode === 'fallback') {
+      // Log only the fallback category and event type; no teacher or payout PII.
+      console.info('teacher earnings authoritative recompute fallback', {
+        reason: incremental.reason,
+        eventType: beforeData === null ? 'create' : afterData === null ? 'delete' : 'update',
+      });
+    }
+
     if (incremental.mode === 'conflict') {
       console.error('teacher earnings incremental marker conflict; forcing authoritative recompute', {
         earningId,
