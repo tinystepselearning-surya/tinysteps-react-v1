@@ -49,6 +49,25 @@ jobs:
           npx vitest run src/tests/functions/wave1IdentityAuthorizationHardening.spec.ts src/tests/pages/parent/ParentWorksheetLibrary.spec.tsx src/tests/lib/parentWorksheetBundle.spec.ts
       - name: Frontend TypeScript check
         run: npm run typecheck
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Isolated parent worksheet Firestore rules test
+        env:
+          CI: 'true'
+          GCLOUD_PROJECT: demo-tinysteps-parent-worksheets
+          GOOGLE_CLOUD_PROJECT: demo-tinysteps-parent-worksheets
+          FIREBASE_CLI_DISABLE_TELEMETRY: 'true'
+        run: |
+          set -euo pipefail
+          test "$GCLOUD_PROJECT" = demo-tinysteps-parent-worksheets
+          test -z "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -z "${FIREBASE_TOKEN:-}"
+          npx --yes firebase-tools@latest emulators:exec \
+            --project demo-tinysteps-parent-worksheets \
+            --only firestore \
+            'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 npx vitest run src/tests/firestore/parentWorksheets.rules.spec.ts'
       - name: Full backend regression suite
         run: npm --prefix functions test
       - name: Backend lint
