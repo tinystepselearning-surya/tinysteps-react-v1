@@ -218,9 +218,9 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
   {
     id: 'master-international', stage: 'master', kind: 'arrange', word: 'international',
     clue: 'Involving two or more countries.',
-    tiles: ['national', 'inter'],
-    hint: 'Place the prefix meaning between before national.',
-    learningNote: 'International is inter- + national. The prefix inter- can mean between.',
+    tiles: ['al', 'inter', 'nation'],
+    hint: 'Start with inter- (between), add nation, then finish with -al.',
+    learningNote: 'International can be built from inter- + nation + -al. Inter- means between; -al can mean relating to.',
   },
   {
     id: 'master-accommodation', stage: 'master', kind: 'correct', word: 'accommodation',
