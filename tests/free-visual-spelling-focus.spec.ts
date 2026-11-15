@@ -278,3 +278,31 @@ test('tablet touch: puzzles are operable without mouse drag and do not clip at i
     await context.close();
   }
 });
+
+test('1366px laptop shows correct feedback and Next puzzle without a second screen', async ({ page }) => {
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+  await page.getByRole('button', { name: /Everyday Words/ }).click();
+  for (const letter of ['j', 'o', 'u', 'r', 'n', 'e', 'y']) {
+    await page.getByRole('button', { name: new RegExp('Add tile ' + letter + ', position') }).click();
+  }
+  await page.getByRole('button', { name: 'Check spelling' }).click();
+  const next = page.getByRole('button', { name: 'Next puzzle' });
+  await expect(next).toBeVisible();
+  const bounds = await next.boundingBox();
+  expect(bounds).toBeTruthy();
+  expect(bounds!.y).toBeGreaterThanOrEqual(0);
+  expect(bounds!.y + bounds!.height, 'Next puzzle must fit 1366x768 without another full screen')
+    .toBeLessThanOrEqual(768 + 8);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 2)).toBe(false);
+});
+
+test('meaning-only clues do not show a generic cloud or other unrelated icon', async ({ page }) => {
+  await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
+  const game = page.getByTestId('public-spelling-adventure');
+  await game.getByRole('tab', { name: 'Go to Fix a Spelling Mistake' }).click();
+  await expect(page.getByText('A person you like and enjoy spending time with.')).toBeVisible();
+  await expect(page.getByText('Meaning clue')).toBeVisible();
+  await expect(game.locator('img')).toHaveCount(0);
+  await expect(game.getByRole('textbox', { name: 'Correct spelling' })).toBeVisible();
+});
