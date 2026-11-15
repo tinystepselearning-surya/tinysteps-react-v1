@@ -31,7 +31,7 @@ describe('free visual spelling puzzle lab', () => {
     expect(container.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it('opens all six stages without requiring a child ID', () => {
+  it('opens all ten stages without requiring a child ID', () => {
     render(
       <MemoryRouter initialEntries={['/free-spelling-game-for-kids?play=1&mode=puzzles']}>
         <VisualSpellingPuzzleLab />
@@ -39,20 +39,28 @@ describe('free visual spelling puzzle lab', () => {
     );
 
     expect(screen.getByRole('button', { name: /everyday words/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /vowel spelling patterns/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /patterns & endings/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /longer & compound words/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /syllable spelling/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /plural & word changes/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /tricky spellings/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /prefixes & word parts/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /word roots & meanings/i })).toBeTruthy();
     expect(screen.getByRole('button', { name: /long word challenge/i })).toBeTruthy();
     expect(screen.getByText(/example words: friend · school · planet/i)).toBeTruthy();
   });
   it('shows the selected level prominently and names its specific puzzle activity', () => {
     const cases = [
       { level: /everyday words/i, title: 'Everyday Words', activity: 'Build the Word' },
+      { level: /vowel spelling patterns/i, title: 'Vowel Spelling Patterns', activity: 'Build from Word Parts' },
       { level: /patterns & endings/i, title: 'Patterns & Endings', activity: 'Sort by Word Ending' },
       { level: /longer & compound words/i, title: 'Longer & Compound Words', activity: 'Build from Word Parts' },
+      { level: /syllable spelling/i, title: 'Syllable Spelling', activity: 'Build from Word Parts' },
+      { level: /plural & word changes/i, title: 'Plural & Word Changes', activity: 'Build from Word Parts' },
       { level: /tricky spellings/i, title: 'Tricky Spellings', activity: 'Fill the Missing Letters' },
       { level: /prefixes & word parts/i, title: 'Prefixes & Word Parts', activity: 'Build from Word Parts' },
+      { level: /word roots & meanings/i, title: 'Word Roots & Meanings', activity: 'Build from Word Parts' },
       { level: /long word challenge/i, title: 'Long Word Challenge', activity: 'Build from Word Parts' },
     ];
     for (const item of cases) {
