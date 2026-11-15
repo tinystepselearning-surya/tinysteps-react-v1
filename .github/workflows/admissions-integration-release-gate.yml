@@ -56,6 +56,10 @@ jobs:
               src/pages/admin/leadsWorkflowBuckets.spec.ts|\
               src/services/leadsAdminService.ts|\
               src/lib/callFunctions.ts|\
+              src/lib/publicLeadForm.ts|\
+              src/services/demoSessionsService.ts|\
+              src/types/models.ts|\
+              functions/src/demoSessionsLegacy.ts|\
               functions/src/leadDemoAutoWorkflow.ts|\
               functions/src/index.ts|\
               functions/test/leadDemoAutoWorkflow.emulator.spec.ts|\
@@ -67,7 +71,9 @@ jobs:
               src/services/leadCommunicationsService.ts|\
               src/tests/pages/LeadSourceAnalysis.spec.tsx|\
               src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx|\
-              src/tests/services/leadCommunicationsService.spec.ts)
+              src/tests/services/leadCommunicationsService.spec.ts|\
+              src/tests/lib/publicLeadForm.spec.ts|\
+              src/tests/seo/groupClassesCommercialPages.spec.ts)
                 echo "Approved internal change: $path"
                 ;;
               *)
@@ -89,6 +95,8 @@ jobs:
           src/pages/admin/leadsWorkflowBuckets.spec.ts
           src/pages/admin/futureDemoMilestones.spec.ts
           src/tests/pages/admin/leadFunnelEnrollmentDate.spec.ts
+          src/tests/lib/publicLeadForm.spec.ts
+          src/tests/seo/groupClassesCommercialPages.spec.ts
       - name: Install locked Cloud Functions dependencies
         run: npm ci --prefix functions --no-audit --no-fund
       - name: Validate Cloud Functions and safe-retry guards
