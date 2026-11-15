@@ -1,108 +1,117 @@
 #!/usr/bin/env node
-import fs from 'fs/promises';
-import path from 'path';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { loadCanonicalUrls, createPageState, changedUrls, validateState, STATE_VERSION } from './indexnow-change-detection.mjs';
 
 const DEFAULT_HOST = 'tinystepslearning.com';
 const DEFAULT_ENDPOINT = 'https://api.indexnow.org/indexnow';
-const MAX_URLS_PER_REQUEST = 10000;
+const STATE_BRANCH = 'ci/indexnow-submitted';
+const STATE_FILE = 'indexnow-submitted-state.json';
 const MAX_ATTEMPTS = 3;
-
-function validateKey(key) {
-  return /^[A-Za-z0-9-]{8,128}$/.test(key);
-}
-
-function extractLocs(xml) {
-  return Array.from(xml.matchAll(/<loc>([^<]+)<\/loc>/g), (match) => match[1].trim());
-}
-
-async function loadUrlsFromSitemap(sitemapPath) {
-  const absolutePath = path.resolve(process.cwd(), sitemapPath);
-  const xml = await fs.readFile(absolutePath, 'utf8');
-  const locs = extractLocs(xml);
-
-  if (/<sitemapindex/i.test(xml)) {
-    const nested = await Promise.all(
-      locs.map(async (sitemapUrl) => {
-        const pathname = new URL(sitemapUrl).pathname.replace(/^\//, '');
-        const nestedPath = path.resolve(process.cwd(), 'dist', pathname);
-        const nestedXml = await fs.readFile(nestedPath, 'utf8');
-        return extractLocs(nestedXml);
-      }),
-    );
-    return nested.flat();
-  }
-
-  return locs;
-}
-
-function normalizeUrls(urls, host) {
-  const expectedHost = host.toLowerCase();
-  const normalized = [];
-
-  for (const candidate of urls) {
-    try {
-      const url = new URL(candidate);
-      if (!['http:', 'https:'].includes(url.protocol)) continue;
-      if (url.hostname.toLowerCase() !== expectedHost) continue;
-      url.hash = '';
-      normalized.push(url.toString());
-    } catch {
-      // Ignore malformed URLs instead of poisoning the whole submission batch.
-    }
-  }
-
-  return [...new Set(normalized)];
-}
-
-function chunk(values, size) {
-  const chunks = [];
-  for (let index = 0; index < values.length; index += size) {
-    chunks.push(values.slice(index, index + size));
-  }
-  return chunks;
-}
+const SUBMISSION_GAP_MS = 300;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function submitBatch({ endpoint, host, key, keyLocation, urls }) {
-  let lastError = null;
+function validateKey(key) {
+  return /^[A-Za-z0-9-]{8,128}$/.test(key);
+}
 
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {
+function git(args, input) {
+  return execFileSync('git', args, {
+    encoding: 'utf8',
+    input,
+    timeout: 25000,
+    maxBuffer: 2 * 1024 * 1024,
+    stdio: ['pipe', 'pipe', 'pipe'],
+  }).trim();
+}
+
+async function readSubmittedState(host) {
+  // actions/checkout already configures authenticated git transport in the
+  // existing contents:write deployment job. No additional workflow token
+  // injection or permissions are necessary.
+  let remoteSha;
+  try {
+    remoteSha = git(['ls-remote', '--exit-code', '--heads', 'origin', STATE_BRANCH]).split(/\s+/)[0];
+  } catch (error) {
+    if (error?.status === 2) return { exists: false, sha: null, state: null };
+    throw new Error('Unable to check IndexNow state branch: ' + String(error?.message || error));
+  }
+  if (!/^[a-f0-9]{40}$/.test(remoteSha)) {
+    throw new Error('Invalid remote IndexNow state commit SHA.');
+  }
+  git(['fetch', '--no-tags', 'origin',
+    'refs/heads/' + STATE_BRANCH + ':refs/remotes/origin/' + STATE_BRANCH]);
+  const fetchedSha = git(['rev-parse', 'refs/remotes/origin/' + STATE_BRANCH]);
+  if (fetchedSha !== remoteSha) {
+    throw new Error('IndexNow state changed while being read; refusing a stale update.');
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(git(['show', fetchedSha + ':' + STATE_FILE]));
+  } catch (error) {
+    throw new Error('IndexNow state branch exists but lacks a valid state file: ' +
+      String(error?.message || error));
+  }
+  return { exists: true, sha: fetchedSha, state: validateState(parsed, host) };
+}
+
+async function saveSubmittedState(baseSha, prior, state) {
+  // Git plumbing creates a separate state-only commit without touching the
+  // checkout, current branch, tracked app files, or production artifact.
+  const parent = prior.sha || baseSha;
+  if (!/^[a-f0-9]{40}$/.test(parent)) {
+    throw new Error('GITHUB_SHA is required to bootstrap IndexNow state.');
+  }
+  const content = JSON.stringify(state, null, 2) + '\n';
+  const blob = git(['hash-object', '-w', '--stdin'], content);
+  const tree = git(['mktree'], '100644 blob ' + blob + '\t' + STATE_FILE + '\n');
+  const commit = git([
+    '-c', 'user.name=Tiny Steps IndexNow Bot',
+    '-c', 'user.email=indexnow-bot@users.noreply.github.com',
+    'commit-tree', tree, '-p', parent,
+    '-m', 'chore(indexnow): record successfully notified canonical URLs',
+  ]);
+  // Fast-forward-only push rejects a concurrent update, rather than losing it.
+  git(['push', 'origin', commit + ':refs/heads/' + STATE_BRANCH]);
+}
+
+function retryDelay(response, attempt) {
+  const retryAfter = response?.headers?.get('retry-after');
+  if (retryAfter) {
+    const seconds = Number(retryAfter);
+    const millis = Number.isFinite(seconds) ? seconds * 1000 : Date.parse(retryAfter) - Date.now();
+    if (Number.isFinite(millis) && millis > 0) return Math.min(millis, 120000);
+  }
+  return Math.min(1000 * 2 ** (attempt - 1), 10000);
+}
+
+async function notifyOne({ endpoint, key, keyLocation, url }) {
+  const requestUrl = new URL(endpoint);
+  requestUrl.searchParams.set('url', url);
+  requestUrl.searchParams.set('key', key);
+  requestUrl.searchParams.set('keyLocation', keyLocation);
+  let lastError;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    let response;
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'User-Agent': 'TinySteps-IndexNow/1.0',
-        },
-        body: JSON.stringify({
-          host,
-          key,
-          keyLocation,
-          urlList: urls,
-        }),
+      response = await fetch(requestUrl, {
+        method: 'GET',
+        headers: { 'User-Agent': 'TinySteps-IndexNow/2.0' },
+        signal: AbortSignal.timeout(20000),
       });
-
-      if ([200, 202].includes(response.status)) {
-        return response.status;
-      }
-
-      const body = await response.text();
-      lastError = new Error(`IndexNow submission failed (${response.status}): ${body.slice(0, 400)}`);
-
-      const retryable = response.status === 429 || response.status >= 500;
-      if (!retryable || attempt === MAX_ATTEMPTS) break;
+      if (response.status === 200 || response.status === 202) return response.status;
+      lastError = new Error('IndexNow rejected a URL with HTTP ' + response.status +
+        ': ' + (await response.text()).slice(0, 300));
+      if (response.status !== 429 && response.status < 500) break;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      if (attempt === MAX_ATTEMPTS) break;
     }
-
-    await sleep(500 * 2 ** (attempt - 1));
+    if (attempt < MAX_ATTEMPTS) await sleep(retryDelay(response, attempt));
   }
-
-  throw lastError ?? new Error('IndexNow submission failed for an unknown reason.');
+  throw lastError || new Error('Unknown IndexNow submission failure.');
 }
 
 async function main() {
@@ -111,41 +120,55 @@ async function main() {
     console.log('INDEXNOW_KEY not set; skipping IndexNow submission.');
     return;
   }
-
-  if (!validateKey(key)) {
-    throw new Error('INDEXNOW_KEY format is invalid; expected 8-128 letters, numbers, or dashes.');
-  }
-
-  const endpoint = (process.env.INDEXNOW_ENDPOINT || DEFAULT_ENDPOINT).trim();
+  if (!validateKey(key)) throw new Error('INDEXNOW_KEY format is invalid.');
   const host = (process.env.INDEXNOW_HOST || DEFAULT_HOST).trim().toLowerCase();
-  const sitemapPath = process.env.INDEXNOW_SITEMAP || 'dist/sitemap.xml';
-  const keyLocation = (process.env.INDEXNOW_KEY_LOCATION || `https://${host}/${key}.txt`).trim();
-
-  const keyLocationUrl = new URL(keyLocation);
-  if (keyLocationUrl.hostname.toLowerCase() !== host) {
-    throw new Error('INDEXNOW_KEY_LOCATION must be hosted on the same host being submitted.');
+  const keyLocation = (process.env.INDEXNOW_KEY_LOCATION || 'https://' + host + '/' + key + '.txt').trim();
+  if (new URL(keyLocation).hostname.toLowerCase() !== host || new URL(keyLocation).protocol !== 'https:') {
+    throw new Error('INDEXNOW_KEY_LOCATION must be HTTPS on the submitted host.');
   }
 
-  const urls = normalizeUrls(await loadUrlsFromSitemap(sitemapPath), host);
+  const distDir = path.resolve(process.cwd(), process.env.INDEXNOW_DIST || 'dist');
+  const sitemapPath = path.resolve(process.cwd(), process.env.INDEXNOW_SITEMAP || 'dist/sitemap.xml');
+  const urls = await loadCanonicalUrls(sitemapPath, distDir, host);
+  if (!urls.length) throw new Error('No canonical URLs found: refusing to overwrite the IndexNow baseline.');
+  const { pages, missing } = await createPageState(urls, distDir);
+  if (missing.length) {
+    console.warn('IndexNow: ' + missing.length +
+      ' sitemap URL(s) lack local prerendered HTML; new/deleted URL detection remains active.');
+  }
 
-  if (!urls.length) {
-    console.log('No canonical URLs found for IndexNow submission; skipping.');
+  const next = { version: STATE_VERSION, host, pages };
+  const prior = await readSubmittedState(host);
+  if (!prior.state) {
+    // Existing production already submitted its full sitemap. A one-time baseline
+    // avoids reporting every old URL as changed when this implementation is enabled.
+    await saveSubmittedState(process.env.GITHUB_SHA || '', prior, next);
+    console.log('IndexNow incremental baseline established for ' + urls.length +
+      ' canonical URLs. No historical bulk submission made.');
     return;
   }
 
-  const batches = chunk(urls, MAX_URLS_PER_REQUEST);
-  let submitted = 0;
-
-  for (const batch of batches) {
-    const status = await submitBatch({ endpoint, host, key, keyLocation, urls: batch });
-    submitted += batch.length;
-    console.log(`IndexNow accepted batch ${submitted}/${urls.length} URL(s) with status ${status}.`);
+  const changed = changedUrls(prior.state, next);
+  if (!changed.length) {
+    console.log('IndexNow: no changed canonical URLs; no requests sent.');
+    return;
   }
-
-  console.log(`IndexNow submission complete for ${submitted} canonical URL(s).`);
+  const endpoint = (process.env.INDEXNOW_ENDPOINT || DEFAULT_ENDPOINT).trim();
+  if (new URL(endpoint).protocol !== 'https:') throw new Error('INDEXNOW_ENDPOINT must use HTTPS.');
+  console.log('IndexNow: notifying ' + changed.length + ' changed/new/deleted URL(s), individually.');
+  for (const [index, url] of changed.entries()) {
+    const status = await notifyOne({ endpoint, key, keyLocation, url });
+    console.log('IndexNow accepted notification ' + (index + 1) + '/' + changed.length +
+      ' with HTTP ' + status + '.');
+    if (index < changed.length - 1) await sleep(SUBMISSION_GAP_MS);
+  }
+  // Only advance the durable baseline after every notification is accepted.
+  // An interrupted run will retry on the next run or job rerun.
+  await saveSubmittedState(process.env.GITHUB_SHA || '', prior, next);
+  console.log('IndexNow: ' + changed.length + ' notification(s) accepted and state saved.');
 }
 
 main().catch((error) => {
-  console.error(error.message);
+  console.error('IndexNow submission failed: ' + error.message);
   process.exit(1);
 });

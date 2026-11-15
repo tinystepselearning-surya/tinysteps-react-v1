@@ -98,6 +98,14 @@ const firestoreIndexesResult = classifyArtifactChanges(
   currentFirebase,
 );
 
+// Changes to the IndexNow notifier must be activated by a successful Hosting
+// deployment, even when no ordinary frontend artifact changed. This check is
+// deliberately separate from Functions/Firestore deployment classification.
+const indexnowHostingChanged = hostingChangedFiles.some(file =>
+  file === 'scripts/indexnow-submit.mjs'
+    || file === 'scripts/indexnow-change-detection.mjs');
+if (indexnowHostingChanged) hostingResult.hostingChanged = true;
+
 const result = {
   ...artifactResult,
   functionsSourceChanged: functionsResult.functionsSourceChanged,
