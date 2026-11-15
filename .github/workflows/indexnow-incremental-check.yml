@@ -60,6 +60,7 @@ jobs:
           assert.match(job, /run: npm run indexnow:submit/);
           const impact = fs.readFileSync('scripts/resolve-deployment-impact.mjs', 'utf8');
           assert.match(impact, /indexnowHostingChanged = hostingChangedFiles\.some/);
-          assert.match(impact, /hostingChanged: hostingResult\.hostingChanged \|\| indexnowHostingChanged \|\| forceHosting/);
+          assert.match(impact, /if \(indexnowHostingChanged\) hostingResult\.hostingChanged = true/);
+          assert.match(impact, /hostingChanged: hostingResult\.hostingChanged \|\| forceHosting/);
           console.log('IndexNow activates a Hosting deploy while preserving the original main-only post-deploy step.');
           NODE
