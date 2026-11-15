@@ -43,6 +43,8 @@ export default function VisualSpellingPuzzleLab() {
     return practiceRound ? shuffleVisualSpellingPuzzles(selected) : selected;
   }, [stageId, practiceRound]);
   const puzzle = puzzles[index] as VisualSpellingPuzzle | undefined;
+  const selectedStage = VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId);
+  const selectedStageNumber = VISUAL_SPELLING_STAGES.findIndex(stage => stage.id === stageId) + 1;
   const recallWord = puzzles.find(p => p.kind === 'arrange') || puzzles[0];
   const activeSortWord = puzzle?.kind === 'sort'
     ? sortIndex === 0 ? puzzle.word : puzzle.pair.word
@@ -54,9 +56,9 @@ export default function VisualSpellingPuzzleLab() {
   // Heading focus and scroll reset keep successive puzzles easy to find on
   // phones and make new activities discoverable to keyboard/screen-reader users.
   useEffect(() => {
-    if (!stageId) return;
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
+    // Also reset when returning from a long challenge to the level chooser.
+    // The caller's SPA scroll position must not hide the new heading.
+    window.scrollTo(0, 0);
     focusHeadingRef.current?.focus({ preventScroll: true });
   }, [stageId, index, recallMode, finished]);
 
@@ -191,8 +193,8 @@ export default function VisualSpellingPuzzleLab() {
           <section aria-labelledby="choose-stage-heading">
             <div className="mb-6 rounded-3xl border border-white/25 bg-white/10 px-5 py-5 shadow-lg sm:px-7">
               <p className="mb-1 text-xs font-extrabold uppercase tracking-[.18em] text-amber-200">Your next word adventure</p>
-              <h2 id="choose-stage-heading" className="text-2xl font-black sm:text-3xl">Choose a puzzle challenge</h2>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100 sm:text-base">Mix letters, spot tricky spellings, complete missing parts and discover word patterns. Pick any level and play at your own pace.</p>
+              <h2 id="choose-stage-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black outline-none sm:text-3xl">Choose your spelling level</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100 sm:text-base">Each level includes word building, correct-spelling choices, missing letters and sorting. Start with everyday words or choose a harder challenge. No timers.</p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
               {VISUAL_SPELLING_STAGES.map((stage, i) => (
@@ -203,7 +205,8 @@ export default function VisualSpellingPuzzleLab() {
                     <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/55 text-3xl shadow-sm transition-transform group-hover:rotate-6">{STAGE_SYMBOLS[i]}</span>
                   </span>
                   <span className="relative z-10 block text-2xl font-black tracking-tight sm:text-3xl">{stage.title}</span>
-                  <span className="relative z-10 mt-2 block max-w-xs text-sm font-medium leading-6">{stage.subtitle}</span>
+                  <span className="relative z-10 mt-2 block max-w-sm text-sm font-semibold leading-6">{stage.subtitle}</span>
+                  <span className="relative z-10 mt-3 block text-xs font-bold opacity-80">Example words: {stage.examples}</span>
                   <span className="relative z-10 mt-auto flex items-center justify-between gap-2 pt-5">
                     <span className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-extrabold">{VISUAL_SPELLING_PUZZLES.filter(p => p.stage === stage.id).length} puzzles · untimed</span>
                     <span className="text-sm font-black">Let's play <span aria-hidden="true">→</span></span>
@@ -287,7 +290,7 @@ export default function VisualSpellingPuzzleLab() {
           <section className="ts-spelling-board p-5 text-slate-900 sm:p-9" aria-labelledby="puzzle-heading">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <span className="inline-flex items-center gap-2 rounded-full bg-[#efeaff] px-3 py-2 text-xs font-black text-[#4d3db0]">
-                <span aria-hidden="true">✦</span> {VISUAL_SPELLING_STAGES.find(stage => stage.id === stageId)?.title}
+                <span aria-hidden="true">✦</span> Level {selectedStageNumber} · {selectedStage?.title}
               </span>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="rounded-full bg-[#fff2d9] px-3 py-2 text-sm font-black text-[#75502d]">Puzzle {index + 1} of {puzzles.length}</span>
@@ -304,8 +307,9 @@ export default function VisualSpellingPuzzleLab() {
                     : progressIndex === index ? 'ts-spelling-progress--active' : ''}`} />
               ))}
             </div>
+            <p className="mb-2 text-sm font-semibold text-[#62617f]">{selectedStage?.subtitle}</p>
             <div className="mb-3 inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-[#8d579d]">
-              <span aria-hidden="true">✦</span> Word mission
+              <span aria-hidden="true">✦</span> Puzzle activity
             </div>
             <h2 id="puzzle-heading" ref={focusHeadingRef} tabIndex={-1} className="text-2xl font-black tracking-tight text-[#28245f] focus:outline-none sm:text-3xl">
               {puzzle.kind === 'arrange' ? 'Build the correct word' :
