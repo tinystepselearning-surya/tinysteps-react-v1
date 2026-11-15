@@ -94,7 +94,8 @@ test('CLI uses isolated git state, skips unchanged pages, retries failures and r
   git(['config', 'user.name', 'Test CI']);
   git(['remote', 'add', 'origin', bare]);
   await fs.writeFile(path.join(work, 'README.md'), 'simulated checkout\n');
-  git(['add', 'README.md']);
+  await fs.writeFile(path.join(work, '.gitignore'), 'dist/\n');
+  git(['add', 'README.md', '.gitignore']);
   git(['commit', '-m', 'test baseline']);
   git(['push', '-u', 'origin', 'main']);
   const sha = git(['rev-parse', 'HEAD']);
