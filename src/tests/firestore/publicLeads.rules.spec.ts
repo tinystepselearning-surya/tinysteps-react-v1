@@ -79,6 +79,17 @@ suite('public leads firestore rules', () => {
     }
   });
 
+  it('allows only the explicit 13+ age range and preserves exact 3–12 ages', async () => {
+    const db = testEnv.unauthenticatedContext().firestore();
+    await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: 12 })));
+    await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: null, childAgeBand: '13+' })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: 13 })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: 12, childAgeBand: '13+' })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: null, childAgeBand: '12+' })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: null, childAgeBand: '15+' })));
+    await assertFails(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ childAge: null })));
+  });
+
   it('accepts valid group-interest preference and rejects unknown formats', async () => {
     const db = testEnv.unauthenticatedContext().firestore();
     await assertSucceeds(addDoc(collection(db, 'leads'), buildPublicLeadPayload({ classFormatPreference: 'small_group' })));
