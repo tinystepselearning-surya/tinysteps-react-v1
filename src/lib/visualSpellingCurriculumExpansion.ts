@@ -57,7 +57,7 @@ const missingRows: MissingRow[] = [
   ['explorer','mountain','A very high natural hill.',2,'aio','It starts mou-.','Mountain begins m-o-u.'],
   ['builder','beginning','The start of something.',4,'mpt','The middle n is doubled.','Beginning doubles n before -ing.'],
   ['builder','happily','In a cheerful or joyful way.',4,'eou','Happy changes y to i before -ly.','Happily is happy with y changed to i before -ly.'],
-  ['builder','disappear','To go out of sight.',3,'aue','It has the prefix dis-.','Disappear is dis + appear.'],
+  ['builder','disappear','To go out of sight.',3,'iou','It has the prefix dis-.','Disappear is dis + appear.'],
   ['builder','peaceful','Calm and without trouble.',2,'iow','It begins pea-.','Peaceful is peace + ful.'],
   ['expert','successful','Achieving what you hoped to do.',3,'xsk','Look for the doubled c and s.','Successful has double c and double s.'],
   ['expert','experience','Knowledge gained by doing or seeing things.',3,'aou','It begins expe-.','Experience is e-x-p-e-r-i-e-n-c-e.'],
