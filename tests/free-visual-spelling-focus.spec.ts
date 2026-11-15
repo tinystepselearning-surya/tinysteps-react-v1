@@ -43,8 +43,28 @@ for (const viewport of [
     await page.getByRole('button', { name: 'Spelling Game Page' }).click();
     await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
     await expect(page).not.toHaveURL(/\/free-english-games-for-kids$/);
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);
+    await expect(page.getByRole('heading', { name: 'Free Spelling Game for Kids', level: 1 })).toBeVisible();
   });
 }
+
+test('every puzzle level opens an appropriately different child-readable challenge', async ({ page }) => {
+  await page.goto(puzzleUrl, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
+  const cases = [
+    { level: /everyday words/i, heading: 'Build the correct word', clue: 'A trip from one place to another.' },
+    { level: /patterns & endings/i, heading: 'Sort the word', clue: 'Not paying enough attention or care.' },
+    { level: /tricky spellings/i, heading: 'Fill the missing letters', clue: 'Something that is needed or required.' },
+    { level: /long word challenge/i, heading: 'Build the correct word', clue: 'Involving two or more countries.' },
+  ];
+  for (const item of cases) {
+    await page.getByRole('button', { name: item.level }).click();
+    await expect(page.getByRole('heading', { name: item.heading, exact: true })).toBeVisible();
+    await expect(page.getByText(item.clue)).toBeVisible();
+    await page.getByRole('button', { name: 'All Spelling Levels' }).click();
+    await expect(page.getByRole('heading', { name: 'Choose your spelling level' })).toBeVisible();
+  }
+});
 
 test('one concise indexed spelling page presents exactly two distinct free games', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
