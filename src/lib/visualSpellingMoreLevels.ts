@@ -90,7 +90,7 @@ const missing: Missing[] = [
   ['roots','transport','To carry something across a distance.','trans','p','ort','brt','Transport contains port, meaning carry.'],
   ['roots','telescope','A tool for looking at faraway objects.','tele','s','cope','pbt','Telescope contains tele- and -scope.'],
   ['roots','thermometer','An instrument that measures temperature.','thermo','m','eter','pbt','Thermometer includes thermo- and meter.'],
-  ['roots','autograph','A person's handwritten signature.','auto','g','raph','pdt','Autograph includes auto- and graph.'],
+  ['roots','autograph','A handwritten signature.','auto','g','raph','pdt','Autograph includes auto- and graph.'],
 ];
 
 const sorts: Sort[] = [
