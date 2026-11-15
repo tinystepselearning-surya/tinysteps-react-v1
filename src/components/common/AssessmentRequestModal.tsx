@@ -9,6 +9,7 @@ type AssessmentRequestModalProps = {
 export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRequestModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const modalContentRef = useRef<HTMLDivElement | null>(null);
+  const modalHeaderRef = useRef<HTMLDivElement | null>(null);
   const modalScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -31,8 +32,10 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
       const visualHeight = window.visualViewport?.height ?? window.innerHeight;
       const available = Math.max(160, Math.floor(Math.min(window.innerHeight, visualHeight) - 16));
       const maxHeight = `${available}px`;
+      const headerHeight = modalHeaderRef.current?.offsetHeight || 60;
+      const scrollHeight = `${Math.max(80, available - headerHeight)}px`;
       if (modalContentRef.current) modalContentRef.current.style.maxHeight = maxHeight;
-      if (modalScrollRef.current) modalScrollRef.current.style.maxHeight = maxHeight;
+      if (modalScrollRef.current) modalScrollRef.current.style.maxHeight = scrollHeight;
     };
     syncVisibleHeight();
     window.visualViewport?.addEventListener('resize', syncVisibleHeight);
@@ -80,7 +83,7 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
 
   return (
     <div
-      className="fixed inset-0 z-[120] flex items-start justify-center bg-slate-950/70 px-2 py-2 backdrop-blur-sm sm:items-center sm:px-4 sm:py-5"
+      className="fixed inset-0 z-[120] flex items-start justify-center bg-slate-950/65 px-2 py-2 backdrop-blur-[3px] sm:items-center sm:px-4 sm:py-4"
       role="dialog"
       aria-modal="true"
       aria-label="Book an assessment"
@@ -88,20 +91,27 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
     >
       <div
         ref={modalContentRef}
-        className="relative max-h-[calc(100dvh-1rem)] w-full max-w-2xl overflow-hidden rounded-[24px] bg-white shadow-2xl sm:max-h-[92dvh]"
+        className="relative flex max-h-[calc(100dvh-1rem)] w-full max-w-2xl flex-col overflow-hidden rounded-[24px] bg-white shadow-[0_24px_80px_rgba(15,23,42,0.24)] sm:max-h-[calc(100dvh-2rem)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <button
-          ref={closeButtonRef}
-          type="button"
-          onClick={onClose}
-          className="absolute right-3 top-3 z-20 min-h-[44px] rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-md hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-orange-500"
-          aria-label="Close assessment form"
+        <div
+          ref={modalHeaderRef}
+          data-assessment-toolbar="1"
+          className="z-10 flex shrink-0 items-center justify-between gap-3 border-b border-slate-100 bg-white px-4 py-2"
         >
-          Close
-        </button>
-        <div ref={modalScrollRef} className="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[92dvh]">
-          <BookAssessmentForm autoFocusFirstField source="public_assessment_modal" />
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Tiny Steps enquiry</p>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            className="inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm hover:bg-slate-50 focus-visible:outline-2 focus-visible:outline-orange-500"
+            aria-label="Close assessment form"
+          >
+            Close
+          </button>
+        </div>
+        <div ref={modalScrollRef} data-assessment-scroll-region="1" className="min-h-0 flex-1 max-h-[calc(100dvh-4.75rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[calc(100dvh-6rem)]">
+          <BookAssessmentForm source="public_assessment_modal" />
         </div>
       </div>
     </div>

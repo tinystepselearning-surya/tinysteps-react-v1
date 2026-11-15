@@ -30,6 +30,9 @@ on:
       - 'tests/homepage-premium-responsive.spec.ts'
       - 'tests/homepage-seo-runtime-network.spec.ts'
       - 'tests/homepage-gateway-destinations.spec.ts'
+      - 'tests/assessment-booking-ux.spec.ts'
+      - 'src/app/routes.tsx'
+      - 'src/components/forms/PublicAssessmentForm.tsx'
       - '.github/workflows/homepage-mobile-release-gate.yml'
   push:
     branches:
@@ -94,6 +97,7 @@ jobs:
           tests/homepage-premium-responsive.spec.ts
           tests/homepage-seo-runtime-network.spec.ts
           tests/homepage-gateway-destinations.spec.ts
+          tests/assessment-booking-ux.spec.ts
       - name: Build the production Hosting artifact
         run: npm run build:deploy
       - name: Verify production browser SEO requests
