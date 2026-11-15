@@ -81,6 +81,27 @@ describe('publicLeadForm helpers', () => {
     expect(payload.classFormatPreference).toBe('unsure');
   });
 
+  it('adds contact permission only for an explicit enquiry-specific method', () => {
+    const parent = {
+      parentName: 'Parent', childName: 'Child', whatsapp: '919999999999',
+      childAge: '6', mainConcern: 'Blending sounds to read words' as const,
+      classFormatPreference: 'small_group' as const, urgency: '' as const,
+    };
+    const legacy = buildPublicLeadPayload(parent, { source: 'group_phonics_page' });
+    expect(legacy).not.toHaveProperty('contactPreference');
+    expect(legacy).not.toHaveProperty('contactPermission');
+
+    const callback = buildPublicLeadPayload({ ...parent, contactPreference: 'phone' }, { source: 'group_phonics_page' });
+    expect(callback).toMatchObject({
+      contactPreference: 'phone', contactPermission: true,
+      programInterest: 'Phonics', classFormatPreference: 'small_group',
+    });
+    expect(buildPublicWhatsappMessage({ ...parent, contactPreference: 'phone' }))
+      .toContain('Preferred contact for this enquiry: Phone callback');
+    expect(buildPublicWhatsappMessage({ ...parent, contactPreference: 'phone' }))
+      .toContain('Contact number: 919999999999');
+  });
+
   it('builds the complete server-side enrichment payload separately', () => {
     expect(
       buildLeadAttributionEnrichment({
