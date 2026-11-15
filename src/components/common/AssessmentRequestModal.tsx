@@ -9,6 +9,7 @@ type AssessmentRequestModalProps = {
 export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRequestModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const modalContentRef = useRef<HTMLDivElement | null>(null);
+  const modalScrollRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -18,6 +19,20 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
       : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
+    // On Android, the software keyboard can shrink the visual viewport without
+    // changing 100dvh. Keep the scroll region above the keyboard in that case.
+    const syncVisibleHeight = () => {
+      const visualHeight = window.visualViewport?.height ?? window.innerHeight;
+      const available = Math.max(160, Math.floor(Math.min(window.innerHeight, visualHeight) - 16));
+      const maxHeight = `${available}px`;
+      if (modalContentRef.current) modalContentRef.current.style.maxHeight = maxHeight;
+      if (modalScrollRef.current) modalScrollRef.current.style.maxHeight = maxHeight;
+    };
+    syncVisibleHeight();
+    window.visualViewport?.addEventListener('resize', syncVisibleHeight);
+    window.visualViewport?.addEventListener('scroll', syncVisibleHeight);
+    window.addEventListener('resize', syncVisibleHeight);
 
     // Focus the close control first, rather than triggering the mobile keyboard.
     closeButtonRef.current?.focus({ preventScroll: true });
@@ -48,6 +63,9 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
     document.addEventListener('keydown', handleKeyDown);
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
+      window.visualViewport?.removeEventListener('resize', syncVisibleHeight);
+      window.visualViewport?.removeEventListener('scroll', syncVisibleHeight);
+      window.removeEventListener('resize', syncVisibleHeight);
       document.body.style.overflow = previousOverflow;
       previouslyFocused?.focus({ preventScroll: true });
     };
@@ -77,7 +95,7 @@ export default function AssessmentRequestModal({ isOpen, onClose }: AssessmentRe
         >
           Close
         </button>
-        <div className="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[92dvh]">
+        <div ref={modalScrollRef} className="max-h-[calc(100dvh-1rem)] overflow-y-auto overscroll-contain scroll-pb-24 sm:max-h-[92dvh]">
           <BookAssessmentForm autoFocusFirstField source="public_assessment_modal" />
         </div>
       </div>
