@@ -51,7 +51,7 @@ jobs:
           npm ci --prefix functions --include=dev --ignore-scripts --no-audit --no-fund
           npm --prefix functions run build
       - name: Verify exact public form and immutable payload semantics
-        run: npx vitest run src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx
+        run: npx vitest run src/tests/lib/publicLeadForm.spec.ts src/tests/components/PublicAssessmentForm.spec.tsx src/tests/components/AssessmentRequestModal.spec.tsx
       - name: Real Firestore rules emulator
         run: |
           npx --yes firebase-tools@15.30.0 emulators:exec \
