@@ -60,6 +60,9 @@ import {
   resolveSimpleLeadBucket,
   resolveSimpleStatusLabel,
   resolveLeadTriage,
+  resolveEnquiryContactPreference,
+  labelEnquiryContactPreference,
+  type EnquiryContactPreference,
   simpleOutcomeNeedsReason,
   type SimpleLeadAction,
   type SimpleLeadBucket,
@@ -98,6 +101,8 @@ interface LeadRecord {
   mainConcern?: string | null;
   urgency?: string | null;
   classFormatPreference?: string | null;
+  contactPreference?: string | null;
+  contactPermission?: boolean | null;
   source?: string | null;
   sourceDetail?: string | null;
   acquisitionChannel?: string | null;
@@ -145,6 +150,7 @@ interface SimpleRow {
   followUpAtMs: number;
   statusLabel: string;
   classFormatPreference: string;
+  contactPreference: EnquiryContactPreference | null;
   triage: ReturnType<typeof resolveLeadTriage>;
 }
 
@@ -549,6 +555,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         followUpAtMs,
         statusLabel: resolveSimpleStatusLabel(workflow),
         classFormatPreference: normalizeText(lead?.classFormatPreference) || 'one_to_one',
+        contactPreference: resolveEnquiryContactPreference(lead),
       };
       return {
         ...row,
@@ -1051,6 +1058,9 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div>
             <div className="text-sm font-medium text-slate-800">{row.course}</div>
             <div className="text-xs font-semibold text-orange-700">{row.classFormatPreference === 'small_group' ? 'Small-group interest · Awaiting match' : row.classFormatPreference === 'unsure' ? 'Format guidance requested' : 'Premium one-to-one'}</div>
+            {row.contactPreference && (
+              <div className="mt-1 text-xs font-semibold text-sky-800">Parent requested: {labelEnquiryContactPreference(row.contactPreference)}</div>
+            )}
             {row.bucket === 'open' && row.triage.statedUrgency && (
               <div className="mt-1 text-xs font-medium text-slate-700">Parent-stated timing: {row.triage.statedUrgency}</div>
             )}
@@ -1081,7 +1091,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
             {row.followUpAtMs > 0 && <div className={`text-[11px] ${isAdminFollowUpDue(row, todayFollowUpKey) ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{isAdminFollowUpDue(row, todayFollowUpKey) ? 'Follow-up due' : 'Follow-up'} {formatFollowUp(row.followUpAtMs)}</div>}
           </div>
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {row.parentPhone !== '—' && <Button size="sm" variant="ghost" className="gap-1" title="Open WhatsApp; this does not confirm a sent or received message" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> Open WhatsApp</Button>}
+            {row.parentPhone !== '—' && row.contactPreference !== 'phone' && <Button size="sm" variant="ghost" className="gap-1" title="Open WhatsApp; this does not confirm a sent or received message" onClick={() => window.open(buildWhatsAppUrl(row.parentPhone), '_blank', 'noopener,noreferrer')}><MessageCircle className="h-4 w-4" /> Open WhatsApp</Button>}
+            {row.parentPhone !== '—' && row.contactPreference === 'phone' && (
+              <a href={`tel:${row.parentPhone.replace(/[^+\d]/g, '')}`} className="inline-flex items-center rounded-lg border px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                Call parent
+              </a>
+            )}
             {renderAction(row)}
             <LeadAdminToolsMenu row={row as any} deleting={deletingRowId === row.id} showQuickLogButton={row.bucket !== 'closed'} onEdit={() => openEdit(row)} onDelete={() => void deleteRow(row)} onReassign={() => void openAssign(row)} onOutcome={() => openOutcome(row)} onWorkflowChanged={refreshWorkflowSoon} />
           </div>

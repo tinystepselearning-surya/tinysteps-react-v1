@@ -24,6 +24,24 @@ const normalize = (value: unknown): string => String(value || '').trim().toLower
  */
 export type StatedParentUrgency = 'Today' | 'This week' | 'This month' | 'Just exploring';
 
+/** An explicit parent request for this particular enquiry, not proof of
+ * WhatsApp ownership, message receipt or permission for marketing campaigns.
+ * Old leads and malformed data are treated as unknown, never opted in.
+ */
+export type EnquiryContactPreference = 'phone' | 'whatsapp' | 'either';
+
+export const resolveEnquiryContactPreference = (input: unknown): EnquiryContactPreference | null => {
+  // Accept both schema-typed LeadRecord and legacy Firestore map shapes.
+  const lead = input && typeof input === 'object' ? input as Record<string, unknown> : null;
+  if (lead?.contactPermission !== true) return null;
+  const value = String(lead.contactPreference || '').trim().toLowerCase();
+  return value === 'phone' || value === 'whatsapp' || value === 'either' ? value : null;
+};
+
+export const labelEnquiryContactPreference = (preference: EnquiryContactPreference): string =>
+  preference === 'phone' ? 'Phone callback' : preference === 'whatsapp' ? 'WhatsApp reply' : 'Phone or WhatsApp';
+
+
 export type LeadTriageInput = {
   parentName?: unknown;
   parentPhone?: unknown;
