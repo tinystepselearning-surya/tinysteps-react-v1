@@ -35,30 +35,12 @@ const games = [
   },
 ] as const;
 
-const questions = [
-  {
-    question: "Are both games free?",
-    answer: "Yes. Both are free to play in your browser without creating an account. Neither saves individual spelling scores or puzzle progress.",
-  },
-  {
-    question: "Which game should my child choose?",
-    answer: "Choose by reading and spelling confidence, not only age. Spelling Adventure starts with shorter familiar words; Puzzle Lab asks children to work with longer words, spelling patterns and word parts.",
-  },
-  {
-    question: "Does my child need headphones or sound?",
-    answer: "No. Both spelling games can be played silently. Puzzle Lab focuses on visual spelling, meaning clues and word patterns.",
-  },
-  {
-    question: "Can children use a phone or tablet?",
-    answer: "Yes. Children can tap letter tiles and answer choices. Dragging is optional where tapping is available.",
-  },
-  {
-    question: "Do the games replace spelling instruction?",
-    answer: "No. These are short, independent practice activities. Children still benefit from explicit teaching, discussion of patterns and applying spelling in their own writing.",
-  },
-] as const;
+type SpellingGamesLandingProps = {
+  faqs: ReadonlyArray<{ question: string; answer: string }>;
+};
 
-export default function SpellingGamesLanding() {
+// The public page and FAQ JSON-LD share the same content in the route registry.
+export default function SpellingGamesLanding({ faqs }: SpellingGamesLandingProps) {
   return (
     <div className="min-h-screen bg-[#f7f8ff] text-[#232449]">
       <div className="mx-auto max-w-6xl px-4 pb-12 pt-6 sm:px-6 sm:pt-9">
@@ -139,7 +121,7 @@ export default function SpellingGamesLanding() {
         <section aria-labelledby="spelling-parent-faq" className="mt-7">
           <h2 id="spelling-parent-faq" className="text-xl font-black">Questions parents often ask</h2>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
-            {questions.map(item => (
+            {faqs.map(item => (
               <details key={item.question} className="group rounded-xl border border-[#e1e4f0] bg-white p-4 open:border-indigo-300">
                 <summary className="cursor-pointer pr-3 text-sm font-extrabold text-[#292952] marker:text-indigo-600">{item.question}</summary>
                 <p className="mt-3 text-sm leading-6 text-[#515773]">{item.answer}</p>
