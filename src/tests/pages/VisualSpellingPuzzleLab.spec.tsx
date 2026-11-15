@@ -50,7 +50,9 @@ describe('free visual spelling puzzle lab', () => {
     const cases = [
       { level: /everyday words/i, title: 'Everyday Words', activity: 'Build the Word' },
       { level: /patterns & endings/i, title: 'Patterns & Endings', activity: 'Sort by Word Ending' },
+      { level: /longer & compound words/i, title: 'Longer & Compound Words', activity: 'Build from Word Parts' },
       { level: /tricky spellings/i, title: 'Tricky Spellings', activity: 'Fill the Missing Letters' },
+      { level: /prefixes & word parts/i, title: 'Prefixes & Word Parts', activity: 'Build from Word Parts' },
       { level: /long word challenge/i, title: 'Long Word Challenge', activity: 'Build from Word Parts' },
     ];
     for (const item of cases) {
