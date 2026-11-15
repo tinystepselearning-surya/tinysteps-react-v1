@@ -46,9 +46,52 @@ for (const viewport of [
   });
 }
 
-test('classic spelling remains accessible from the same canonical page', async ({ page }) => {
+test('one concise indexed spelling page presents exactly two distinct free games', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/free-spelling-game-for-kids', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Free Spelling Game for Kids', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose your spelling game' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /play spelling adventure/i })).toHaveAttribute(
+    'href', '/free-spelling-game-for-kids?play=1'
+  );
+  await expect(page.getByRole('link', { name: /play spelling puzzle lab/i })).toHaveAttribute(
+    'href', '/free-spelling-game-for-kids?play=1&mode=puzzles'
+  );
+  await expect(page.getByRole('link', { name: 'Play Free', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Ready for the next step?' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Parent FAQ' })).toHaveCount(0);
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href', 'https://tinystepslearning.com/free-spelling-game-for-kids'
+  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)).toBe(false);
+});
+
+test('classic spelling opens at a playable word and scrolls as a normal page on mobile', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 667 });
   await page.goto('/free-spelling-game-for-kids?play=1', { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: 'Spelling Adventure' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Spelling Adventure', level: 1 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Build It', level: 2 })).toBeVisible();
+  await expect(page.getByAltText('cat')).toBeVisible();
+  await expect(page.getByRole('button', { name: /start spelling adventure/i })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Parent FAQ' })).toHaveCount(0);
+  await expect(page.locator('footer')).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 2)).toBe(false);
+  // An ordinary scroll moves the document; there is no fixed overlay or
+  // separate embedded viewport trapping touch/wheel scrolling.
+  expect(await page.evaluate(() => document.querySelector('[data-testid="public-spelling-adventure"]')?.getBoundingClientRect().top)).toBeGreaterThanOrEqual(-1);
+  await page.evaluate(() => window.scrollTo(0, 360));
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(100);
+  await page.getByRole('button', { name: /back to free games/i }).click();
+  await expect(page).toHaveURL(/\/free-spelling-game-for-kids$/);
+});
+
+test('English Games directory has no duplicate standalone Puzzle Lab listing', async ({ page }) => {
+  await page.goto('/free-english-games-for-kids', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: 'Visual Spelling Puzzle Lab', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /play free spelling puzzles/i })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: /play free spelling game for kids/i }).first()).toHaveAttribute(
+    'href', '/free-spelling-game-for-kids'
+  );
 });
 
 
