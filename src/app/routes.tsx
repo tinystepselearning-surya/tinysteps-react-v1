@@ -335,19 +335,18 @@ const Layout: FC = () => {
   const normalizedPath = normalizePathname(location.pathname);
   const isNativeRuntime = isNativeCapacitorRuntime();
   const hideNativeAuthChrome = isNativeRuntime && isAuthEntryRoute(normalizedPath);
-  // Guest spelling puzzles are an immersive, distraction-free public game,
-  // not a protected route. Keep marketing chrome on the canonical landing page.
+  // Both public spelling play variants are immersive, distraction-free games.
+  // Keep global site chrome on the canonical landing page only.
   const focusParams = new URLSearchParams(location.search);
-  const isVisualSpellingFocus =
+  const isSpellingPlayFocus =
     normalizedPath === '/free-spelling-game-for-kids' &&
-    focusParams.get('play') === '1' &&
-    focusParams.get('mode') === 'puzzles';
+    focusParams.get('play') === '1';
   // Keep the protected/public theme boundary independent of the optional
   // public spelling focus view; only its chrome is suppressed during play.
   const hideMarketingChrome = isProtectedAppRoute(normalizedPath) || hideNativeAuthChrome;
-  const suppressMarketingChrome = hideMarketingChrome || isVisualSpellingFocus;
+  const suppressMarketingChrome = hideMarketingChrome || isSpellingPlayFocus;
   const hideSupportWidgets =
-    !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome || isVisualSpellingFocus;
+    !shouldShowPublicSupportWidgets(normalizedPath) || hideNativeAuthChrome || isSpellingPlayFocus;
   const isContactPage = normalizedPath === '/contact';
   const [isAssessmentModalOpen, setIsAssessmentModalOpen] = useState(false);
   const [showDeferredChrome, setShowDeferredChrome] = useState(false);
@@ -579,7 +578,7 @@ const Layout: FC = () => {
       {!suppressMarketingChrome ? <Header /> : null}
       <main
         className={
-          isVisualSpellingFocus
+          isSpellingPlayFocus
             ? 'min-h-screen bg-[#05010f] p-0'
             : isContactPage
               ? `${suppressMarketingChrome ? '' : 'pt-0'} pb-0 min-h-0`
