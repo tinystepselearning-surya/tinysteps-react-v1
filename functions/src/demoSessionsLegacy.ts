@@ -1253,9 +1253,15 @@ export const claimDemoSession = onCall<ClaimDemoSessionRequest>(
         status?: string;
         history?: unknown;
         courseInterested?: string | null;
+        classFormatPreference?: string | null;
+        assessmentFormat?: string | null;
       };
       if (normalizeDemoStatus(demo.status) !== 'open') {
         throw new HttpsError('failed-precondition', 'Demo is no longer available');
+      }
+      if ((demo.classFormatPreference === 'small_group' || demo.classFormatPreference === 'unsure') &&
+        !demo.assessmentFormat) {
+        throw new HttpsError('failed-precondition', 'Admin must choose assessment delivery before a teacher can claim this enquiry.');
       }
 
       const demoTrack = normalizeTrack(demo.courseInterested || '');
