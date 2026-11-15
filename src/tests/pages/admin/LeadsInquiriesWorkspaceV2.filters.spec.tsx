@@ -280,6 +280,44 @@ describe('Leads & Enquiries explicit date filter application', () => {
     expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
   });
 
+  it('offers optional stated-timing sort and details filtering without modifying or fetching leads again', async () => {
+    const todayStart = dateBoundaryMs(todayDateInputIST());
+    const makeLead = (id: string, name: string, created: number, urgency: string, concern: string) => ({
+      id, parentName: name, childName: 'Child ' + id, primaryPhone: '9191000077' + id,
+      childAge: 6, programInterest: 'Reading', mainConcern: concern, source: 'website',
+      status: 'new', urgency, classFormatPreference: 'unsure',
+      createdAt: { toMillis: () => todayStart + created },
+    });
+    mocks.loadedLeads = [
+      makeLead('001', 'Recent Parent', 3_000, 'Just exploring', 'Understanding what they read'),
+      makeLead('002', 'Urgent Parent', 1_000, 'Today', 'Not sure where to start'),
+      makeLead('003', 'Unknown Timing Parent', 2_000, '', 'Reading speed and word accuracy'),
+    ];
+    render(<LeadsInquiriesWorkspaceV2 />);
+
+    const visibleOrder = () => screen.getAllByText(/^(Recent Parent|Urgent Parent|Unknown Timing Parent)$/)
+      .map((item) => item.textContent);
+    expect(visibleOrder()).toEqual(['Recent Parent', 'Unknown Timing Parent', 'Urgent Parent']);
+    expect(screen.getByText('Parent-stated timing: Today')).toBeTruthy();
+    expect(screen.getByText('Learning goal: parent needs guidance')).toBeTruthy();
+    expect(screen.getByText('Check details: course guidance')).toBeTruthy();
+
+    const timingSort = screen.getByRole('button', { name: 'Prioritise stated timing' });
+    fireEvent.click(timingSort);
+    expect(visibleOrder()).toEqual(['Urgent Parent', 'Recent Parent', 'Unknown Timing Parent']);
+    expect(timingSort.getAttribute('aria-pressed')).toBe('true');
+
+    const details = screen.getByRole('button', { name: 'Needs details (1)' });
+    fireEvent.click(details);
+    expect(visibleOrder()).toEqual(['Urgent Parent']);
+    expect(details.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(details);
+    expect(visibleOrder()).toHaveLength(3);
+    expect(mocks.retryDemo).not.toHaveBeenCalled();
+    expect(mocks.getTeachers).not.toHaveBeenCalled();
+    expect(mocks.fetchRange).toHaveBeenCalledTimes(1);
+  });
+
   it('prepares a missing demo only when admin clicks Assign teacher', async () => {
     const todayStart = dateBoundaryMs(todayDateInputIST());
     mocks.loadedLeads = [{
