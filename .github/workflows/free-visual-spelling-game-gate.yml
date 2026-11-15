@@ -7,6 +7,7 @@ on:
       - 'src/lib/visualSpellingPuzzles.ts'
       - 'src/lib/visualSpellingCurriculumExpansion.ts'
       - 'src/lib/visualSpellingBridgeCurriculum.ts'
+      - 'src/lib/visualSpellingMoreLevels.ts'
       - 'src/lib/publicSpellingContent.ts'
       - 'src/lib/publicSpellingCurriculumExpansion.ts'
       - 'src/lib/publicSpellingTwoLetterWords.ts'
