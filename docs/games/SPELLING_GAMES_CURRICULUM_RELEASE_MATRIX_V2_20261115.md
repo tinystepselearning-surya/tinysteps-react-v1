@@ -1,3 +1,5 @@
+> **Archived snapshot (superseded).** The current 10-level, 438-challenge inventory and visual-integrity requirements are in [SPELLING_LEARNING_PATH_AND_IMAGE_INTEGRITY_V3_20261115.md](SPELLING_LEARNING_PATH_AND_IMAGE_INTEGRITY_V3_20261115.md). The figures below describe an earlier iteration and are not current.
+
 # Tiny Steps free spelling games — expanded curriculum and release controls
 
 **Workstream:** `feat/spelling-responsive-full-curriculum-20261115` · **PR:** #907 · **Status:** development / review only
