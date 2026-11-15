@@ -8,6 +8,9 @@ import {
   type VisualSpellingPuzzle,
   type VisualSpellingStage,
 } from '../../../lib/visualSpellingPuzzles';
+import './VisualSpellingPuzzleLab.css';
+
+const STAGE_SYMBOLS = ['🧭', '🧩', '🔎', '🏆'] as const;
 
 type Feedback = 'correct' | 'retry' | null;
 
@@ -80,7 +83,16 @@ export default function VisualSpellingPuzzleLab() {
     setRecallRevealed(false);
   };
 
-  const returnToHub = () => navigate('/free-english-games-for-kids');
+  // A level's back button returns to this game's level chooser, never to
+  // the unrelated English Excellence Games directory. From the chooser,
+  // return to the canonical public spelling-game information page.
+  const returnToSpellingHome = () => {
+    if (stageId) {
+      setStageId(null);
+      return;
+    }
+    navigate('/free-spelling-game-for-kids');
+  };
 
   const submit = (value: string) => {
     if (!puzzle || feedback === 'correct') return;
@@ -156,35 +168,50 @@ export default function VisualSpellingPuzzleLab() {
     : '';
 
   return (
-    <section aria-label="Spelling Puzzle Lab" className="min-h-screen bg-gradient-to-b from-indigo-950 via-slate-900 to-sky-950 px-3 py-5 text-white sm:px-4 sm:py-8">
-      <div className="mx-auto max-w-4xl">
-        <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="mb-1 text-sm font-semibold uppercase tracking-widest text-cyan-200">Tiny Steps · Learning Games</p>
-            <h1 className="text-3xl font-black sm:text-4xl">Spelling Puzzle Lab</h1>
-            <p className="mt-2 text-sm text-slate-200">Free for ages 8–10+ · No login · No sound · Nothing saved</p>
+    <section aria-label="Spelling Puzzle Lab" className="ts-spelling-surface px-3 pb-10 pt-6 text-white sm:px-5 sm:pb-14 sm:pt-9">
+      <span aria-hidden="true" className="ts-spelling-glow ts-spelling-glow--coral" />
+      <span aria-hidden="true" className="ts-spelling-glow ts-spelling-glow--aqua" />
+      <div className="relative z-10 mx-auto max-w-5xl">
+        <header className="mb-7 flex flex-wrap items-start justify-between gap-4 sm:mb-9">
+          <div className="max-w-2xl">
+            <div className="mb-3 flex items-center gap-2">
+              <span aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-2xl bg-amber-300 text-xl text-indigo-950 shadow-lg">✦</span>
+              <p className="text-xs font-extrabold uppercase tracking-[.20em] text-cyan-100">Tiny Steps · Word Games</p>
+            </div>
+            <h1 className="text-3xl font-black tracking-tight sm:text-5xl">Spelling <span className="text-amber-300">Puzzle Lab</span></h1>
+            <p className="mt-2 text-sm font-medium text-indigo-100 sm:text-base">Free for ages 8–10+ · No login · No sound · Nothing saved</p>
           </div>
-          <button type="button" onClick={returnToHub}
-            className="rounded-full border border-white/30 px-4 py-2.5 text-sm font-semibold hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            Exit to Free Games
+          <button type="button" onClick={returnToSpellingHome}
+            className="rounded-full border-2 border-white/40 bg-white/10 px-4 py-3 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-white/20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-300">
+            <span aria-hidden="true">← </span>{stageId ? 'All Spelling Levels' : 'Spelling Game Page'}
           </button>
         </header>
 
         {!stageId && (
           <section aria-labelledby="choose-stage-heading">
-            <h2 id="choose-stage-heading" className="mb-4 text-xl font-bold">Choose a puzzle challenge</h2>
-            <p className="mb-6 text-slate-200">Mix letters, spot incorrect spellings, fill missing parts and sort words by their written patterns. Start at any level that feels right.</p>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="mb-6 rounded-3xl border border-white/25 bg-white/10 px-5 py-5 shadow-lg sm:px-7">
+              <p className="mb-1 text-xs font-extrabold uppercase tracking-[.18em] text-amber-200">Your next word adventure</p>
+              <h2 id="choose-stage-heading" className="text-2xl font-black sm:text-3xl">Choose a puzzle challenge</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-indigo-100 sm:text-base">Mix letters, spot tricky spellings, complete missing parts and discover word patterns. Pick any level and play at your own pace.</p>
+            </div>
+            <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
               {VISUAL_SPELLING_STAGES.map((stage, i) => (
                 <button key={stage.id} type="button" onClick={() => startStage(stage.id)}
-                  className="rounded-3xl border border-white/20 bg-white/10 p-6 text-left shadow-lg transition hover:border-cyan-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-                  <span className="text-xs font-bold uppercase tracking-widest text-cyan-200">Level {i + 1}</span>
-                  <span className="mt-2 block text-2xl font-black">{stage.title}</span>
-                  <span className="mt-2 block text-sm text-slate-200">{stage.subtitle}</span>
-                  <span className="mt-4 block text-xs font-semibold text-emerald-200">{VISUAL_SPELLING_PUZZLES.filter(p => p.stage === stage.id).length} puzzles · untimed</span>
+                  className="ts-spelling-stage-card group flex min-h-56 flex-col p-5 text-left text-[#222052] sm:min-h-64 sm:p-7">
+                  <span className="relative z-10 mb-4 flex items-start justify-between gap-3">
+                    <span className="rounded-full bg-white/75 px-3 py-1.5 text-xs font-black uppercase tracking-widest text-[#423477]">Level {i + 1}</span>
+                    <span aria-hidden="true" className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/55 text-3xl shadow-sm transition-transform group-hover:rotate-6">{STAGE_SYMBOLS[i]}</span>
+                  </span>
+                  <span className="relative z-10 block text-2xl font-black tracking-tight sm:text-3xl">{stage.title}</span>
+                  <span className="relative z-10 mt-2 block max-w-xs text-sm font-medium leading-6">{stage.subtitle}</span>
+                  <span className="relative z-10 mt-auto flex items-center justify-between gap-2 pt-5">
+                    <span className="rounded-full bg-white/65 px-3 py-1.5 text-xs font-extrabold">{VISUAL_SPELLING_PUZZLES.filter(p => p.stage === stage.id).length} puzzles · untimed</span>
+                    <span className="text-sm font-black">Let's play <span aria-hidden="true">→</span></span>
+                  </span>
                 </button>
               ))}
             </div>
+            <p className="mt-7 text-center text-sm font-medium text-indigo-100">No timers. No pressure. Just clever word puzzles and a little discovery.</p>
           </section>
         )}
 
