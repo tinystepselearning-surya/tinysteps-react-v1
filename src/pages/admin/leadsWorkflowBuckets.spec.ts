@@ -147,6 +147,13 @@ describe('guide-inspired lead triage — read-only evidence, never a verificatio
     expect(result.statedUrgency).toBe('Just exploring');
   });
 
+  it('accepts the 13+ enquiry age band without treating it as a missing age', () => {
+    const result = resolveLeadTriage({ ...completeLead, childAge: '13+' });
+    expect(result.detailGaps).not.toContain('child age');
+    const missingAge = resolveLeadTriage({ ...completeLead, childAge: null });
+    expect(missingAge.detailGaps).toContain('child age');
+  });
+
   it('leaves a complete known-goal lead out of missing-detail triage', () => {
     expect(resolveLeadTriage(completeLead).detailGaps).toEqual([]);
     expect(resolveLeadTriage({ ...completeLead, urgency: null }).statedUrgency).toBe(null);
