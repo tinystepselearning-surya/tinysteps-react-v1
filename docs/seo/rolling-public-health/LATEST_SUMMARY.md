@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-15T23:45:39.960Z UTC (16 November 2026 IST, slot 6)
+
+- Tracker validated before writing: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **60/202 distinct URLs attempted (29.70%)**, rows 1–60; **142 not yet attempted**; **0/202 fully origin-verified**. Previous-day checks excluded.
+- Slot 6 rows 51–60: all ten exact-URL web.open retrievals returned page-specific provider-extracted text (refs `turn752771view0`–`turn752771view9`), including phonics app guidance and nine games/practice pages. The provider labels each crawled today; provider text does not establish origin HTTP status or browser gameplay functionality.
+- Direct curl HTTPS attempt at **2026-11-15T23:45:39.960Z** failed before HTTP with `curl: (6) Could not resolve host: tinystepslearning.com`. Origin status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain **UNVERIFIED**. The row timestamp is an evidence-handling marker, not an origin response time.
+- GitHub Actions current in-progress runs and legacy workflow administrative disablement were **not independently checked in this run**; user's explicit confirmation of disabling the old workflow remains operating basis. No GitHub workflow was run or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 7, rows 61–70**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T22:42:07.665Z UTC (16 November 2026 IST, slot 5)
 
 - Tracker validated: **202 selected and unique URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted URLs: **50/202 (24.75%)**, rows 1–50; **152 not yet attempted**; **0/202 fully origin-verified**. Prior-day attempts excluded.
