@@ -5,7 +5,8 @@
  */
 import { VISUAL_SPELLING_EXTRA_PUZZLES } from './visualSpellingCurriculumExpansion';
 import { VISUAL_SPELLING_BRIDGE_PUZZLES } from './visualSpellingBridgeCurriculum';
-export type VisualSpellingStage = 'explorer' | 'builder' | 'syllables' | 'expert' | 'morphology' | 'master';
+import { VISUAL_SPELLING_MORE_LEVELS } from './visualSpellingMoreLevels';
+export type VisualSpellingStage = 'explorer' | 'vowels' | 'builder' | 'syllables' | 'syllable-spelling' | 'inflections' | 'expert' | 'morphology' | 'roots' | 'master';
 type BasePuzzle = {
   id: string;
   stage: VisualSpellingStage;
@@ -33,10 +34,14 @@ export const VISUAL_SPELLING_STAGES: readonly {
   examples: string;
 }[] = [
   { id: 'explorer', title: 'Everyday Words', subtitle: 'Build familiar words, spot mistakes and fill missing letters.', examples: 'friend · school · planet' },
+  { id: 'vowels', title: 'Vowel Spelling Patterns', subtitle: 'Compare ea, ee, ai, ay, oa, ow and other vowel patterns.', examples: 'rain · beach · night' },
   { id: 'builder', title: 'Patterns & Endings', subtitle: 'Match word endings, prefixes and tricky letter patterns.', examples: 'careful · receive · happiness' },
   { id: 'syllables', title: 'Longer & Compound Words', subtitle: 'Build compound words and practise longer written word patterns.', examples: 'sunflower · basketball · umbrella' },
+  { id: 'syllable-spelling', title: 'Syllable Spelling', subtitle: 'Break longer written words into parts and count spoken syllables.', examples: 'picnic · animal · computer' },
+  { id: 'inflections', title: 'Plural & Word Changes', subtitle: 'Learn adding -s, -es, -ed, -ing and when letters change.', examples: 'running · babies · making' },
   { id: 'expert', title: 'Tricky Spellings', subtitle: 'Practise double letters, spelling changes and longer words.', examples: 'necessary · calendar · opportunity' },
   { id: 'morphology', title: 'Prefixes & Word Parts', subtitle: 'Build and recognise words using meaningful beginnings and endings.', examples: 'unhappiness · disapproval · rearrangement' },
+  { id: 'roots', title: 'Word Roots & Meanings', subtitle: 'Notice meaningful roots in familiar science and study words.', examples: 'telephone · biology · photograph' },
   { id: 'master', title: 'Long Word Challenge', subtitle: 'Build and check long words using meaningful word parts.', examples: 'international · accommodation · misunderstanding' },
 ];
 
@@ -285,6 +290,7 @@ export const VISUAL_SPELLING_PUZZLES: readonly VisualSpellingPuzzle[] = [
   },
   ...VISUAL_SPELLING_EXTRA_PUZZLES,
   ...VISUAL_SPELLING_BRIDGE_PUZZLES,
+  ...VISUAL_SPELLING_MORE_LEVELS,
 ];
 
 /**
@@ -317,7 +323,7 @@ export function visualSpellingPracticeRound(
   const selected = VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stage);
   const normalizedRound = Math.max(0, Math.floor(round)) % 3;
   // The four established stages retain their approved first-eight order.
-  if (normalizedRound === 0 && stage !== 'syllables' && stage !== 'morphology') {
+  if (normalizedRound === 0 && ['explorer', 'builder', 'expert', 'master'].includes(stage)) {
     return selected.slice(0, 8);
   }
   const activityKinds = ['arrange', 'correct', 'missing', 'sort'] as const;
