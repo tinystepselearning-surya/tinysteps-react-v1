@@ -21,12 +21,29 @@ export default function VisualSpellingPuzzleLab() {
   const [attempted, setAttempted] = useState(false);
   const [independentCorrect, setIndependentCorrect] = useState(0);
   const [finished, setFinished] = useState(false);
+  const [sortIndex, setSortIndex] = useState(0);
+  const [wrongChoice, setWrongChoice] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const [recallMode, setRecallMode] = useState(false);
+  const [recallValue, setRecallValue] = useState('');
+  const [recallAttempted, setRecallAttempted] = useState(false);
+  const [recallHintUsed, setRecallHintUsed] = useState(false);
+  const [recallCorrect, setRecallCorrect] = useState(false);
+  const [recallFirstTry, setRecallFirstTry] = useState(false);
+  const [recallRevealed, setRecallRevealed] = useState(false);
 
   const puzzles = useMemo(
     () => VISUAL_SPELLING_PUZZLES.filter(puzzle => puzzle.stage === stageId),
     [stageId]
   );
   const puzzle = puzzles[index] as VisualSpellingPuzzle | undefined;
+  const recallWord = puzzles.find(p => p.kind === 'arrange') || puzzles[0];
+  const activeSortWord = puzzle?.kind === 'sort'
+    ? sortIndex === 0 ? puzzle.word : puzzle.pair.word
+    : '';
+  const activeSortAnswer = puzzle?.kind === 'sort'
+    ? sortIndex === 0 ? puzzle.answer : puzzle.pair.answer
+    : '';
 
   const startStage = (id: VisualSpellingStage) => {
     setStageId(id);
@@ -38,18 +55,40 @@ export default function VisualSpellingPuzzleLab() {
     setAttempted(false);
     setIndependentCorrect(0);
     setFinished(false);
+    setSortIndex(0);
+    setWrongChoice(null);
+    setRetryCount(0);
+    setRecallMode(false);
+    setRecallValue('');
+    setRecallAttempted(false);
+    setRecallHintUsed(false);
+    setRecallCorrect(false);
+    setRecallFirstTry(false);
+    setRecallRevealed(false);
   };
 
   const returnToHub = () => navigate('/free-english-games-for-kids');
 
   const submit = (value: string) => {
     if (!puzzle || feedback === 'correct') return;
-    const correct = value.toLocaleLowerCase('en') === visualSpellingAnswer(puzzle).toLocaleLowerCase('en');
+    const expected = puzzle.kind === 'sort' ? activeSortAnswer : visualSpellingAnswer(puzzle);
+    const correct = value.toLocaleLowerCase('en') === expected.toLocaleLowerCase('en');
     if (correct) {
+      // Sort both contrasting words before accepting the puzzle as complete.
+      if (puzzle.kind === 'sort' && sortIndex === 0) {
+        setSortIndex(1);
+        setWrongChoice(null);
+        setFeedback(null);
+        setShowHint(false);
+        return;
+      }
       if (!attempted && !showHint) setIndependentCorrect(count => count + 1);
+      setWrongChoice(null);
       setFeedback('correct');
     } else {
       setAttempted(true);
+      setWrongChoice(value);
+      setRetryCount(count => count + 1);
       setFeedback('retry');
     }
   };
@@ -61,6 +100,17 @@ export default function VisualSpellingPuzzleLab() {
     setFeedback('correct');
   };
 
+  const submitRecall = () => {
+    if (!recallWord || recallCorrect || recallRevealed) return;
+    const correct = recallValue.trim().toLocaleLowerCase('en') === recallWord.word.toLocaleLowerCase('en');
+    if (correct) {
+      setRecallCorrect(true);
+      if (!recallAttempted && !recallHintUsed) setRecallFirstTry(true);
+    } else {
+      setRecallAttempted(true);
+    }
+  };
+
   const pickTile = (tileIndex: number) => {
     if (!puzzle || puzzle.kind !== 'arrange' || feedback === 'correct') return;
     if (chosenIndices.includes(tileIndex) || tileIndex < 0 || tileIndex >= puzzle.tiles.length) return;
@@ -70,7 +120,7 @@ export default function VisualSpellingPuzzleLab() {
 
   const nextPuzzle = () => {
     if (index + 1 >= puzzles.length) {
-      setFinished(true);
+      setRecallMode(true);
       return;
     }
     setIndex(current => current + 1);
@@ -79,6 +129,9 @@ export default function VisualSpellingPuzzleLab() {
     setRevealed(false);
     setShowHint(false);
     setAttempted(false);
+    setWrongChoice(null);
+    setRetryCount(0);
+    setSortIndex(0);
   };
 
   const complete = puzzle?.kind === 'arrange' && chosenIndices.length === puzzle.tiles.length;
@@ -87,7 +140,7 @@ export default function VisualSpellingPuzzleLab() {
     : '';
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-indigo-950 via-slate-900 to-sky-950 px-4 py-8 text-white">
+    <section aria-label="Spelling Puzzle Lab" className="min-h-screen bg-gradient-to-b from-indigo-950 via-slate-900 to-sky-950 px-3 py-5 text-white sm:px-4 sm:py-8">
       <div className="mx-auto max-w-4xl">
         <header className="mb-8 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -96,8 +149,8 @@ export default function VisualSpellingPuzzleLab() {
             <p className="mt-2 text-sm text-slate-200">Free for ages 8–10+ · No login · No sound · Nothing saved</p>
           </div>
           <button type="button" onClick={returnToHub}
-            className="rounded-full border border-white/30 px-5 py-3 text-sm font-semibold hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-            Back to Games Hub
+            className="rounded-full border border-white/30 px-4 py-2.5 text-sm font-semibold hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
+            Exit to Free Games
           </button>
         </header>
 
@@ -124,7 +177,9 @@ export default function VisualSpellingPuzzleLab() {
             <p className="text-xs font-bold uppercase tracking-widest text-indigo-700">Level complete</p>
             <h2 className="mt-2 text-3xl font-black">Nice word work!</h2>
             <p className="mt-3 text-lg">You completed {puzzles.length} visual spelling puzzles.</p>
-            <p className="mt-2 text-sm">Independent first-try answers: {independentCorrect} of {puzzles.length}. Answers reached after hints or retries still count as practice.</p>
+            <p className="mt-2 text-sm">Independent first-try puzzles: {independentCorrect} of {puzzles.length}.</p>
+            <p className="mt-2 text-sm">Final word recall: {recallFirstTry ? 'Correct independently on the first try' : recallCorrect ? 'Correct after practising' : 'Answer studied with help'}.</p>
+            <p className="mt-2 text-sm">Hints and retries are part of learning. These results are not saved.</p>
             <p className="mt-4 text-sm text-slate-600">For lasting spelling confidence, return to these words later and try writing them in your own sentences without looking.</p>
             <div className="mt-6 flex flex-wrap gap-3">
               <button type="button" onClick={() => startStage(stageId)} className="rounded-xl bg-indigo-700 px-5 py-3 font-bold text-white hover:bg-indigo-800">Replay this level</button>
@@ -133,7 +188,55 @@ export default function VisualSpellingPuzzleLab() {
           </section>
         )}
 
-        {stageId && puzzle && !finished && (
+        {stageId && !finished && recallMode && recallWord && (
+          <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="recall-heading">
+            <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">Final challenge · Remember and spell</span>
+            <h2 id="recall-heading" className="mt-5 text-2xl font-black">Can you spell it without the tiles?</h2>
+            <p className="mt-3 rounded-xl bg-sky-50 p-4 text-lg text-slate-800"><strong>Clue:</strong> {recallWord.clue}</p>
+            <p className="mt-3 text-sm text-slate-600">Type the complete word from memory. No sound or picture is needed.</p>
+            {!recallCorrect && !recallRevealed && (
+              <form onSubmit={event => { event.preventDefault(); submitRecall(); }} className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <label className="flex-1">
+                  <span className="mb-2 block text-sm font-bold">Your spelling</span>
+                  <input type="text" value={recallValue} autoComplete="off" spellCheck={false}
+                    onChange={event => { setRecallValue(event.target.value); setRecallAttempted(false); }}
+                    className="w-full rounded-xl border-2 border-slate-300 px-4 py-3 text-lg font-semibold text-slate-950 focus:border-indigo-700 focus:outline-none"
+                    aria-label="Type the spelling from memory" />
+                </label>
+                <button type="submit" disabled={!recallValue.trim()}
+                  className="self-end rounded-xl bg-indigo-700 px-6 py-3.5 font-bold text-white disabled:opacity-50">Check spelling</button>
+              </form>
+            )}
+            {recallAttempted && !recallCorrect && !recallRevealed && (
+              <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">
+                Not quite. Check the order of the letters, then try again.
+              </p>
+            )}
+            {!recallCorrect && !recallRevealed && (
+              <div className="mt-5 flex flex-wrap gap-3">
+                <button type="button" onClick={() => setRecallHintUsed(true)} disabled={recallHintUsed}
+                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold disabled:opacity-50">Need a hint?</button>
+                {(recallAttempted || recallHintUsed) && (
+                  <button type="button" onClick={() => setRecallRevealed(true)}
+                    className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold">Show answer &amp; finish</button>
+                )}
+              </div>
+            )}
+            {recallHintUsed && !recallCorrect && !recallRevealed && (
+              <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">Hint: The word starts with <strong>{recallWord.word.charAt(0).toUpperCase()}</strong>.</p>
+            )}
+            {(recallCorrect || recallRevealed) && (
+              <div role="status" className="mt-5 rounded-xl bg-emerald-50 p-5 text-emerald-950">
+                <h3 className="text-xl font-black">{recallRevealed ? 'Answer: ' : 'Correct! '}{recallWord.word}</h3>
+                <p className="mt-2 text-sm">{recallWord.learningNote}</p>
+                <button type="button" onClick={() => setFinished(true)}
+                  className="mt-4 rounded-xl bg-emerald-700 px-6 py-3 font-bold text-white">See results</button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {stageId && puzzle && !recallMode && !finished && (
           <section className="rounded-3xl bg-white p-5 text-slate-900 shadow-xl sm:p-9" aria-labelledby="puzzle-heading">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <span className="rounded-full bg-indigo-100 px-3 py-1 text-xs font-bold text-indigo-800">
@@ -285,6 +388,6 @@ export default function VisualSpellingPuzzleLab() {
           </section>
         )}
       </div>
-    </main>
+    </section>
   );
 }
