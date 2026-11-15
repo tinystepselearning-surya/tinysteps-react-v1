@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import FreeEnglishGameLandingPage from "../../../pages/public/FreeEnglishGameLandingPage";
 import { PUBLIC_ENGLISH_GAME_LANDING_CONFIGS } from "../../../lib/publicEnglishGames";
+import { ROUTE_SEO_REGISTRY } from "../../../lib/routeSeoRegistry.js";
 import { applySeo } from "../../../lib/seo";
 
 const landingMocks = vi.hoisted(() => ({
@@ -135,6 +136,14 @@ describe("FreeEnglishGameLandingPage", () => {
       .toHaveAttribute("id", "spelling-adventure");
     expect(screen.getByRole("heading", { name: "Spelling Puzzle Lab", level: 3 }).closest("article"))
       .toHaveAttribute("id", "spelling-puzzle-lab");
+
+    const browserMeta = PUBLIC_ENGLISH_GAME_LANDING_CONFIGS.find(
+      ({ publicPath }) => publicPath === "/free-spelling-game-for-kids"
+    );
+    const initialHtmlMeta = ROUTE_SEO_REGISTRY["/free-spelling-game-for-kids"];
+    expect(initialHtmlMeta.title).toBe(browserMeta?.seoTitle);
+    expect(initialHtmlMeta.description).toBe(browserMeta?.seoDescription);
+    expect(initialHtmlMeta.canonicalPath).toBe("/free-spelling-game-for-kids");
 
     const seoCall = vi.mocked(applySeo).mock.calls.find(([settings]) =>
       settings.canonicalPath === "/free-spelling-game-for-kids"
