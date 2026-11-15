@@ -59,6 +59,7 @@ import {
   resolveSimpleLeadAction,
   resolveSimpleLeadBucket,
   resolveSimpleStatusLabel,
+  resolveLeadTriage,
   simpleOutcomeNeedsReason,
   type SimpleLeadAction,
   type SimpleLeadBucket,
@@ -94,6 +95,8 @@ interface LeadRecord {
   childGrade?: string | null;
   interestTrack?: string | null;
   programInterest?: string | null;
+  mainConcern?: string | null;
+  urgency?: string | null;
   classFormatPreference?: string | null;
   source?: string | null;
   sourceDetail?: string | null;
@@ -142,6 +145,7 @@ interface SimpleRow {
   followUpAtMs: number;
   statusLabel: string;
   classFormatPreference: string;
+  triage: ReturnType<typeof resolveLeadTriage>;
 }
 
 interface OutcomeFormState {
@@ -345,6 +349,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
   const [dueTodayOnly, setDueTodayOnly] = useState(false);
+  const [prioritiseParentTiming, setPrioritiseParentTiming] = useState(false);
+  const [needsDetailsOnly, setNeedsDetailsOnly] = useState(false);
   const [pageSize, setPageSize] = useState<LeadPageSize>(25);
   const [pageIndex, setPageIndex] = useState(0);
   const [search, setSearch] = useState('');
@@ -526,7 +532,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
       const createdAtMs = toMs(lead?.createdAt) || toMs(demo?.createdAt) || toMs(lead?.updatedAt) || toMs(demo?.lastUpdatedAt);
       const workflow = { leadStatus: lead?.status, demoStatus, conversionStatus: demo?.conversionStatus, hasDemo: Boolean(demo), hasFollowUp: followUpAtMs > 0, classFormatPreference: lead?.classFormatPreference };
       const attributionDisplay = buildLeadAttributionDisplay(lead || { source: demo?.source });
-      return {
+      const row = {
         id, lead, demo,
         bucket: resolveSimpleLeadBucket(workflow),
         parentName: normalizeText(demo?.parentName || lead?.parentName) || '—',
@@ -543,6 +549,19 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         followUpAtMs,
         statusLabel: resolveSimpleStatusLabel(workflow),
         classFormatPreference: normalizeText(lead?.classFormatPreference) || 'one_to_one',
+      };
+      return {
+        ...row,
+        triage: resolveLeadTriage({
+          parentName: row.parentName,
+          parentPhone: row.parentPhone,
+          childName: row.childName,
+          childAge: lead?.childAge ?? demo?.childAge,
+          course: row.course,
+          mainConcern: lead?.mainConcern,
+          source: row.source,
+          urgency: lead?.urgency,
+        }),
       };
     };
 
@@ -625,6 +644,8 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         row.parentPhone,
         row.course,
         row.classFormatPreference,
+        row.triage.statedUrgency,
+        row.triage.detailGaps.join(' '),
         row.source,
         row.acquisitionLabel,
         row.contentInfluenceLabel,
@@ -671,20 +692,29 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   const todayFollowUpKey = todayDateInputIST();
   const dueTodayCount = filteredRows.filter((row) => isAdminFollowUpDue(row, todayFollowUpKey)).length;
+  const needsDetailsCount = filteredRows.filter((row) => row.bucket === 'open' && row.triage.detailGaps.length > 0).length;
 
   const sortedRows = useMemo(() => {
     const list = filteredRows.filter((row) =>
-      row.bucket === bucket && (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)));
+      row.bucket === bucket &&
+      (!dueTodayOnly || isAdminFollowUpDue(row, todayFollowUpKey)) &&
+      (bucket !== 'open' || !needsDetailsOnly || row.triage.detailGaps.length > 0));
     const rank: Record<SimpleLeadAction, number> = { review_outcome: 0, follow_up_lead: 1, assign_teacher: 1, wait_teacher: 3, view_outcome: 4 };
     return [...list].sort((a, b) => {
-      if (bucket === 'open') return b.createdAtMs - a.createdAtMs;
+      if (bucket === 'open') {
+        if (prioritiseParentTiming) {
+          const urgencyDiff = a.triage.urgencyRank - b.triage.urgencyRank;
+          if (urgencyDiff !== 0) return urgencyDiff;
+        }
+        return b.createdAtMs - a.createdAtMs;
+      }
       if (bucket === 'closed') return b.updatedAtMs - a.updatedAtMs;
       const actionDiff = rank[actionForRow(a)] - rank[actionForRow(b)];
       if (actionDiff !== 0) return actionDiff;
       if (a.followUpAtMs && b.followUpAtMs) return a.followUpAtMs - b.followUpAtMs;
       return b.updatedAtMs - a.updatedAtMs;
     });
-  }, [bucket, dueTodayOnly, filteredRows, todayFollowUpKey]);
+  }, [bucket, dueTodayOnly, filteredRows, needsDetailsOnly, prioritiseParentTiming, todayFollowUpKey]);
 
   const currentTotal = sortedRows.length;
   const totalPages = pageSize === 'all' ? 1 : Math.max(1, Math.ceil(currentTotal / pageSize));
@@ -697,7 +727,7 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
 
   useEffect(() => {
     setPageIndex(0);
-  }, [bucket, dueTodayOnly, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
+  }, [bucket, dueTodayOnly, needsDetailsOnly, prioritiseParentTiming, appliedRange.dateFrom, appliedRange.dateTo, appliedRange.monthFilter, pageSize, search]);
 
   const previousPage = () => setPageIndex((current) => Math.max(0, current - 1));
   const nextPage = () => setPageIndex((current) => Math.min(totalPages - 1, current + 1));
@@ -969,6 +999,31 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
         >
           Follow-ups due today ({loading ? '…' : dueTodayCount})
         </Button>
+        {bucket === 'open' && (
+          <>
+            <Button
+              type="button"
+              size="sm"
+              variant={prioritiseParentTiming ? 'default' : 'outline'}
+              aria-pressed={prioritiseParentTiming}
+              onClick={() => setPrioritiseParentTiming((current) => !current)}
+            >
+              Prioritise stated timing
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant={needsDetailsOnly ? 'default' : 'outline'}
+              aria-pressed={needsDetailsOnly}
+              onClick={() => setNeedsDetailsOnly((current) => !current)}
+            >
+              Needs details ({loading ? '…' : needsDetailsCount})
+            </Button>
+            <p className="text-xs text-slate-500">
+              Timing is stated by the parent, not verified intent. Needs details highlights missing or unclear information; neither control sends messages or changes lead records.
+            </p>
+          </>
+        )}
         <p className="text-xs text-slate-500">
           Scheduled Admin Review follow-ups due by today (IST) within the selected enquiry period only.
           This is not a complete backlog or proof of parent contact.
@@ -996,6 +1051,12 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div>
             <div className="text-sm font-medium text-slate-800">{row.course}</div>
             <div className="text-xs font-semibold text-orange-700">{row.classFormatPreference === 'small_group' ? 'Small-group interest · Awaiting match' : row.classFormatPreference === 'unsure' ? 'Format guidance requested' : 'Premium one-to-one'}</div>
+            {row.bucket === 'open' && row.triage.statedUrgency && (
+              <div className="mt-1 text-xs font-medium text-slate-700">Parent-stated timing: {row.triage.statedUrgency}</div>
+            )}
+            {row.bucket === 'open' && row.triage.needsCourseGuidance && (
+              <div className="mt-1 text-xs text-slate-600">Learning goal: parent needs guidance</div>
+            )}
             <div className="text-xs text-slate-500">{row.source}</div>
             <div className="mt-1 text-xs font-semibold text-slate-700">{row.acquisitionLabel}</div>
             {row.contentInfluenceLabel && (
@@ -1010,6 +1071,11 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
           <div><div className="text-sm font-medium text-slate-800">{row.teacherName}</div><div className="text-xs text-slate-500">Teacher</div></div>
           <div>
             <Badge variant="outline">{row.statusLabel}</Badge>
+            {row.bucket === 'open' && row.triage.detailGaps.length > 0 && (
+              <div className="mt-1 max-w-[220px] text-[11px] text-amber-800" title={row.triage.detailGaps.join(', ')}>
+                Check details: {row.triage.detailGaps.slice(0, 2).join(', ')}{row.triage.detailGaps.length > 2 ? ` +${row.triage.detailGaps.length - 2} more` : ''}
+              </div>
+            )}
             <div className="mt-1 text-xs font-medium text-slate-600">Enquired {formatUpdated(row.createdAtMs)}</div>
             {row.updatedAtMs > row.createdAtMs + 60_000 && <div className="text-[11px] text-slate-400">Updated {formatUpdated(row.updatedAtMs)}</div>}
             {row.followUpAtMs > 0 && <div className={`text-[11px] ${isAdminFollowUpDue(row, todayFollowUpKey) ? 'font-semibold text-amber-800' : 'text-slate-500'}`}>{isAdminFollowUpDue(row, todayFollowUpKey) ? 'Follow-up due' : 'Follow-up'} {formatFollowUp(row.followUpAtMs)}</div>}
