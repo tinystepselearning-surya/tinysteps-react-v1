@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T01:45:19.776Z UTC (16 November 2026 IST, slot 8)
+
+- Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **80/202 distinct URLs attempted (39.60%)**; **122 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Slot 8 rows 71–80: nine exact-URL web.open retrievals returned page-specific provider-extracted text (refs `turn571029view0`–`turn571029view5`, `turn571029view7`–`turn571029view9`). Row 77 `/speaking-progress-framework` returned a retrieval-provider Internal Error (`turn571029view6`), **not a confirmed production failure**. The book-demo page's extracted text includes an enquiry form and a statement that enquiries are saved before WhatsApp; submission behaviour was not tested.
+- Independent curl attempt at **2026-11-16T01:45:19.776Z UTC** failed before HTTP: `curl: (6) Could not resolve host: tinystepslearning.com`. Origin HTTP status, redirects, canonical, robots/noindex, initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. Row timestamps are audit-environment evidence markers, not measured origin response times.
+- GitHub Actions in-progress runs returned `total_count: 0`. Legacy workflow administrative state could not independently be retrieved; user's explicit disable confirmation remains operating basis. No workflow was triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source code, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 9, rows 81–90**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T00:46:44.044Z UTC (16 November 2026 IST, slot 7)
 
 - Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **70/202 distinct URLs attempted (34.65%)**; **132 not yet attempted**; **0/202 fully origin-verified**. Previous-day checks excluded.
