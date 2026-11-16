@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T21:42:04.021Z UTC (17 November 2026 IST, slot 4)
+
+- Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **40/202 (19.80%)**; remaining **162**; fully origin-verified **0/202**. Previous-day checks excluded.
+- Slot 4 rows 31–40: ten exact-URL web.open attempts. Nine returned page-specific provider-extracted text (refs `turn771296view1`–`turn771296view9`), including phonics, grammar, speaking, pricing and contact. Row 31 (`/resources/phonics/ou-ow-phonics`) returned retrieval-provider Internal Error (`turn771296view0`), **not a confirmed production failure**. Provider labelled nine successful retrievals text/html, crawled today. Individual UTC evidence-recording markers are not measured origin response times.
+- **UNVERIFIED**: direct origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. No verified production regression or improvement.
+- GitHub Actions in-progress runs: **0** at preflight. Legacy workflow administrative disabled state not independently confirmed; user-confirmed cutover remains the operating basis.
+- Next eligible batch: **slot 5, rows 41–50**. No production settings, source code or workflows changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T20:41:09.136Z UTC (17 November 2026 IST, slot 3)
 
 - Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **30/202 (14.85%)**; remaining **172**; fully origin-verified **0/202**. Previous-day checks excluded.
