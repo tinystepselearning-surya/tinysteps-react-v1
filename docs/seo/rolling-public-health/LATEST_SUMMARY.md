@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T06:41:14.636Z UTC (16 November 2026 IST, slot 13)
+
+- Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **130/202 distinct URLs attempted (64.36%)**; **72 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Slot 13 rows 121–130: ten exact-URL web.open retrieval attempts; nine returned substantive page-specific provider-extracted text (refs `turn651834view0`–`turn651834view4`, `turn651834view6`–`turn651834view9`). Row 126 (`/blog/how-children-recognise-words-automatically-after-phonics`) returned a provider Internal Error; **not a confirmed production failure**. Evidence-handling UTC marker 2026-11-16T06:41:14.636Z is not an origin request timestamp.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. No direct origin verification performed in this batch.
+- GitHub Actions in-progress runs: `total_count: 0`; legacy workflow administrative state not independently verified. User-confirmed disablement remains operating basis. No workflow triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source code, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 14, rows 131–140**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T05:46:19.141Z UTC (16 November 2026 IST, slot 12)
 
 - Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **120/202 distinct URLs attempted (59.41%)**; **82 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
