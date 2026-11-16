@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T02:42:17.020Z UTC (16 November 2026 IST, slot 9)
+
+- Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **90/202 distinct URLs attempted (44.55%)**; **112 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Slot 9 rows 81–90: all ten exact-URL web.open retrievals returned page-specific provider-extracted content (refs `turn351308view0`–`turn351308view9`), covering writing, phonics fees, grammar levels, spoken English, general and Hyderabad online English classes, and age-specific pages. This is partial retrieval evidence, **not** origin technical verification.
+- Independent HTTPS curl at **2026-11-16T02:42:08.435Z UTC** failed before HTTP: `curl: (6) Could not resolve host: tinystepslearning.com`. Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. Tracker UTC timestamps are evidence-handling markers, not measured origin response times.
+- GitHub Actions in-progress runs returned `total_count: 0`. Administrative state of the legacy workflow could not independently be retrieved (endpoint blocked); user's explicit disable confirmation remains the operating basis. No workflow was triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source code, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 10, rows 91–100**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T01:45:19.776Z UTC (16 November 2026 IST, slot 8)
 
 - Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **80/202 distinct URLs attempted (39.60%)**; **122 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
