@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T18:43:06.828Z UTC (17 November 2026 IST, slot 1)
+
+- Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct attempted URLs: **10/202 (4.95%)**; remaining **192**; fully origin-verified **0/202**. Previous-day checks excluded.
+- Slot 1 rows 1–10: all ten exact-URL web.open retrievals returned substantive page-specific provider-extracted text (refs `turn787053view0`–`turn787053view9`). Homepage, blog, resources and phonics guide pages. Provider said text/html, homepage crawled today and nine pages crawled yesterday. Recorded UTC timestamps are evidence-handling markers, not measured origin request times.
+- **UNVERIFIED**: direct origin HTTP status, redirects, canonical, robots/noindex, initial HTML, JSON-LD and crawler accessibility. No verified regression/improvement.
+- GitHub Actions in-progress runs: **0** at preflight; administrative disabled state not independently established. User-confirmed cutover remains operating basis.
+- Next eligible slot: **slot 2, rows 11–20**. No production settings, source code or workflows changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T15:23:44.827Z UTC (16 November 2026 IST, slot 19 recovery)
 
 - Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **190/202 distinct URLs attempted (94.06%)**; **12 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
