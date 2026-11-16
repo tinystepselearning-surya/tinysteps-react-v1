@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T12:19:16.791Z UTC (16 November 2026 IST, slot 17)
+
+- Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **170/202 distinct URLs attempted (84.16%)**; **32 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Slot 17 rows 161–170: ten exact-URL web.open attempts; nine returned substantive page-specific provider-extracted text (refs `turn241126view0`, `turn241126view2`–`turn241126view9`), covering tricky words, summer reading, public speaking, punctuation, r-controlled vowels, SATPIN, phonics research, screen-smart routines and sight words. Row 162 (`/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics`) returned retrieval-provider Internal Error; this is **not** a verified website failure. Provider-reported crawl age was yesterday for nine successful retrievals.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. UTC evidence-handling markers are not independently measured origin response times.
+- GitHub Actions in-progress runs: `total_count: 0`. Legacy workflow administrative disablement could not independently be verified (workflow endpoint unavailable); user-confirmed disablement remains operating basis. No workflow triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source code or production settings changed.
+- Next eligible batch: **slot 18, rows 171–180**.
+
+## Earlier daily audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T10:52:46.517Z UTC (16 November 2026 IST, slot 16 recovery)
 
 - Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **160/202 distinct URLs attempted (79.21%)**; **42 not yet attempted**; **0/202 fully origin-verified**. Previous-day timestamps excluded.
