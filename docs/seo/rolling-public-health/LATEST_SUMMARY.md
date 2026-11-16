@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T23:42:57.301Z UTC (17 November 2026 IST, slot 6)
+
+- Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **60/202 (29.70%)**; remaining **142**; fully origin-verified **0/202**. Previous-day checks excluded.
+- Slot 6 rows 51–60: ten exact-URL web.open attempts returned substantive page-specific provider-extracted text (refs `turn702782view0`–`turn702782view9`), covering phonics apps, preschool phonics games, digital games subscription, and free English, phonics, letter-sound, word-building, sentence-building, reading and grammar games. Provider labelled text/html, crawled today. Individual UTC evidence-recording markers (2026-11-16T23:42:57.288Z through 2026-11-16T23:42:57.301Z) are not measured origin response times.
+- **UNVERIFIED**: direct origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. No verified production regression or improvement.
+- GitHub Actions in-progress runs: **0** at preflight. Administrative disabled state could not be independently confirmed; user-confirmed cutover remains operating basis.
+- Next eligible batch: **slot 7, rows 61–70**. No production settings, source code or workflows changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-16T22:47:33.005Z UTC (17 November 2026 IST, slot 5)
 
 - Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **50/202 (24.75%)**; remaining **152**; fully origin-verified **0/202**. Previous-day checks excluded.
