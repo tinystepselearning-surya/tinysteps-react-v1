@@ -1,5 +1,18 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-16T00:46:44.044Z UTC (16 November 2026 IST, slot 7)
+
+- Preflight: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **70/202 distinct URLs attempted (34.65%)**; **132 not yet attempted**; **0/202 fully origin-verified**. Previous-day checks excluded.
+- Slot 7 rows 61–70: all ten exact-URL web.open retrievals returned page-specific provider-extracted text (refs `turn937992view0`–`turn937992view9`). Speaking games hub says **0 playable now out of 4 listed**, and speaking-practice game is marked **COMING SOON**; these are provider-visible content observations, not independently verified gameplay failures. Spelling page advertises 36 Adventure challenges and 32 Puzzle Lab puzzles; no game functionality tested.
+- Independent curl HTTPS attempt at **2026-11-16T00:46:44.044Z** failed before HTTP: `curl: (6) Could not resolve host: tinystepslearning.com`. Origin HTTP status, redirect, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain **UNVERIFIED**. Row timestamps are audit-environment evidence markers, not origin response times.
+- GitHub Actions in-progress runs returned `total_count: 0`. Legacy workflow administrative state could not be independently retrieved; user's explicit disable confirmation remains the operating basis. No workflow was triggered or enabled.
+- No verified production regression or improvement; `CHANGES.md` unchanged. No source code, workflows, Firebase, Hosting or production settings changed.
+- Next eligible batch: **slot 8, rows 71–80**.
+
+## Prior summary
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-15T23:45:39.960Z UTC (16 November 2026 IST, slot 6)
 
 - Tracker validated before writing: **202 unique selected URLs, 22 aligned CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today **60/202 distinct URLs attempted (29.70%)**, rows 1–60; **142 not yet attempted**; **0/202 fully origin-verified**. Previous-day checks excluded.
