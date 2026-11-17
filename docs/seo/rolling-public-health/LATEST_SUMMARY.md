@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-17T08:42:18.651Z UTC (17 November 2026 IST, slot 15)
+
+- Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **150/202 (74.26%)**; remaining **52**; fully origin-verified **0/202**. Previous-day checks excluded.
+- Slot 15 rows 141–150: ten exact-URL web.open attempts returned substantive, page-specific provider-extracted content on school-reopening English readiness, long vowels, online English and phonics classes, phonics games, home activities, blending, comprehension and assessment. Refs `turn518015view0`–`turn518015view9`. UTC evidence-recording markers are not independently measured origin response times.
+- **Blocked origin verification:** runtime direct HTTPS probe failed DNS (`curl: (6) Could not resolve host: tinystepslearning.com`). HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. No verified production regression or improvement.
+- GitHub Actions in-progress runs: **0** at preflight. Administrative disabled state not independently confirmed; user-confirmed cutover remains operating basis.
+- Next eligible batch: **slot 16, rows 151–160**. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-17T07:45:20.286Z UTC (17 November 2026 IST, slot 14)
 
 - Preflight: **202 unique URLs, 22 CSV columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **140/202 (69.31%)**; remaining **62**; fully origin-verified **0/202**. Previous-day checks excluded.
