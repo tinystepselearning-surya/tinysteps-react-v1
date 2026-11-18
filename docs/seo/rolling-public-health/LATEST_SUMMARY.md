@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-18T06:40:33.228Z UTC (18 November 2026 IST, slot 13)
+
+- Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **130/202 (64.36%)**; remaining **72**; fully origin-verified **0/202**. Previous-day attempts excluded.
+- Slot 13 rows 121–130: **9** exact-URL web retrievals returned substantive page-specific extracted text (grammar editing, grammar progression, story cards, subject–verb agreement, tenses, blending, phonics duration, reading confidence, phonics classes). One URL, `/blog/how-children-recognise-words-automatically-after-phonics`, returned provider **Internal Error** (not confirmed origin failure). Evidence refs `turn264839view0`–`turn264839view9`. No verified production transition.
+- **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC evidence-recording markers 2026-11-18T06:40:30.827Z–2026-11-18T06:40:30.836Z are not measured origin request times.
+- GitHub Actions: **0 in-progress repository runs** observed; administrative disablement of legacy workflow remains independently unconfirmed. User's explicit disable confirmation remains operating basis. No GitHub workflow executed.
+- Next eligible batch: **slot 14, rows 131–140**. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-18T05:41:19.139Z UTC (18 November 2026 IST, slot 12)
 
 - Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **120/202 (59.41%)**; remaining **82**; fully origin-verified **0/202**. Previous-day attempts excluded.
