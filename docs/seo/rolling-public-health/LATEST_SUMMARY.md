@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 4
+
+- Validated **202 unique selected URLs**, **22 CSV columns**, slots 1–19 with 10 each and slot 20 with 12. **40/202** distinct 19 November IST retrieval attempts; **162/202** not yet attempted today. **0/202** fully origin-verified. Prior-day markers excluded.
+- Exact-URL provider retrievals for rows 31–40: **9** returned substantive page-specific extracted content (J sound spellings, SHUN family, UI vowel, schwa, grammar hub, speaking hub, Jolly Phonics article, pricing and contact); **1** (row 31, OU/OW phonics) returned provider Internal Error (`turn442651view0`). Provider errors do **not** establish production failures. Successful provider results report content crawled yesterday, not independently measured origin responses.
+- **Content WARN requiring business confirmation (not a newly verified regression):** the pricing page provider extract `turn442651view8` states **group classes ₹250 for 50 minutes**, while Tiny Steps' communicated standard class duration is 35 minutes. Confirm whether group classes are intentionally 50 minutes before changing anything. This is provider-extracted page content, not an origin-verified production finding.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. Independent origin HTTPS probe failed with DNS resolution error in the execution environment. UTC evidence-recording markers **2026-11-18T21:45:32.286Z–2026-11-18T21:45:32.295Z** are logging timestamps, not measured response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`; workflow administrative disablement endpoint was inaccessible. User-confirmed disablement remains operating basis. No workflow triggered.
+- No dated origin-verified regression/improvement; CHANGES.md unchanged. No production code or settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 3
 
 - Validated 202 selected unique URLs, 22 CSV columns, slots 1–19 at 10 each and slot 20 at 12. Current-day distinct retrieval attempts: **30/202**; remaining **172/202**. Fully origin-verified today: **0/202**. Previous-day dates excluded.
