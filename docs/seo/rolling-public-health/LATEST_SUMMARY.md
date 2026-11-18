@@ -1,3 +1,16 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — reconciliation
+
+Updated: 2026-11-18T14:48:20.000Z UTC (18 November 2026 IST, slot 21)
+
+- Tracker read and validated: **202 unique URLs, 22 CSV columns, slots 1–19 × 10, slot 20 × 12**, all 202 rows labelled 2026-11-18 IST with parseable UTC evidence timestamps. These are **202 recorded provider retrieval attempts**, not 202 origin-verified passes. Fully origin-verified **0/202**.
+- Reconciliation live retry of three previously blocked URLs: `/blog/how-children-recognise-words-automatically-after-phonics` (row 126), `/blog/phonological-awareness-vs-phonemic-awareness-vs-phonics` (row 162), and `/speaking-progress-framework` (row 77). Each exact-URL web.open returned **“Internal Error” / “not accessible via this tool”** again (current evidence refs turn933911view0–turn933911view2). These are **provider failures, not verified production HTTP failures**. Direct curl from execution environment also could not resolve the site hostname (DNS restriction), so it cannot establish production health.
+- Existing provider failures also appear at rows 22–27 and 29; they remain unresolved, without a new retry this run. No production regression or improvement verified. No indexing/ranking or AI citation claim.
+- **UNVERIFIED** for all rows: origin HTTP status, final redirect URL, canonical, robots/noindex, raw initial HTML, structured data and bot access. Retry observations were not used to overwrite the original daily tracker timestamps or count repeated attempts as new distinct coverage.
+- GitHub Actions repository query returned zero in-progress runs. Administrative disabled state not independently confirmed; user-confirmed disablement remains operating basis. No GitHub Actions workflow started.
+- Tracker CSV and CHANGES.md remain unchanged: no new origin-verified status or meaningful transition. No source, workflow, hosting or production setting changes.
+
+## Earlier audit history
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
 Updated: 2026-11-18T13:46:43.752Z UTC (18 November 2026 IST, slot 20)
@@ -1368,3 +1381,4 @@ Updated: 2026-11-13T13:43:43.474Z UTC (13 November 2026 IST, slot 20 evidence re
 - **16 November retrieval-attempt coverage: 202/202 (100%)**; **fully origin-verified: 0/202**. HTTP response codes, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. Individual UTC evidence-recording times 2026-11-16T16:01:00.080Z through 2026-11-16T16:01:00.080Z are not independently measured origin request timestamps.
 - GitHub Actions in-progress repository query returned zero runs; workflow administrative disablement remains independently unverified (connector rejected workflow-state endpoint), relying on user's explicit confirmation. No verified production regression or improvement, so CHANGES.md remains unchanged.
 - All 202 URLs have current-day retrieval-attempt records. The technical origin-readiness audit is **not complete**; future daily checks and direct-origin verification remain necessary. No production changes.
+
