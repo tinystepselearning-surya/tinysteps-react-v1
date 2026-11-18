@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 5
+
+- Validated **202 unique URLs**, **22 CSV columns**, correct slot allocations (slots 1–19: 10; slot 20: 12), and date/timestamp integrity. **50/202** distinct 19 November IST provider retrieval attempts; **152/202** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrievals for rows **41–50** returned **10/10** substantive page-specific extracted texts: Why Tiny Steps, team, founder profile, class samples, testimonials, careers, courses, curriculum, FAQ and online phonics comparison. Evidence: web.open `turn579729view0`–`turn579729view9`. Provider reported text/html; nine crawled yesterday and curriculum crawled today. These are **provider extracts, not verified origin HTML or response headers**.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and Googlebot/Bingbot/OAI crawler accessibility remain **UNVERIFIED**. Evidence-recording UTC markers **2026-11-18T22:45:00.062Z–2026-11-18T22:45:00.071Z** are not measured origin response times.
+- GitHub Actions repository in-progress runs endpoint returned `{"total_count":0,"workflow_runs":[]}`. Administrative disablement of legacy workflow not independently confirmed; user's explicit disable confirmation remains operating basis. No workflow triggered.
+- Previously flagged pricing-page **₹250/50-minute group-class wording** remains an unconfirmed content discrepancy against communicated 35-minute standard; no new regression or improvement established. `CHANGES.md` unchanged. No production settings or source modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 4
 
 - Validated **202 unique selected URLs**, **22 CSV columns**, slots 1–19 with 10 each and slot 20 with 12. **40/202** distinct 19 November IST retrieval attempts; **162/202** not yet attempted today. **0/202** fully origin-verified. Prior-day markers excluded.
