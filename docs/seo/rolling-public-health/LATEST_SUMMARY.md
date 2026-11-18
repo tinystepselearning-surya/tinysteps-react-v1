@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-18T10:43:02.736Z UTC (18 November 2026 IST, slot 17)
+
+- Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **170/202 (84.16%)**; remaining **32**; fully origin-verified **0/202**. Previous-day attempts excluded.
+- Slot 17 rows 161–170: nine exact-URL provider retrievals returned page-specific text about tricky words, summer reading, public speaking, punctuation, r-controlled vowels, SATPIN, phonics versus sight words and screen-smart learning. Row 162 phonological awareness comparison returned provider Internal Error (turn409628view1), **not a confirmed production failure**. Evidence refs turn409628view0–turn409628view9. No verified production transition.
+- **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC evidence-recording markers 2026-11-18T10:43:02.736Z–2026-11-18T10:43:02.745Z are not measured origin request times.
+- GitHub Actions: **0 in-progress repository runs** observed; administrative disablement of legacy workflow independently unconfirmed (workflow-specific endpoint inaccessible). User's explicit disable confirmation remains operating basis. No GitHub workflow executed.
+- Next eligible batch: **slot 18, rows 171–180**. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-18T09:43:14.831Z UTC (18 November 2026 IST, slot 16)
 
 - Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **160/202 (79.21%)**; remaining **42**; fully origin-verified **0/202**. Previous-day attempts excluded.
