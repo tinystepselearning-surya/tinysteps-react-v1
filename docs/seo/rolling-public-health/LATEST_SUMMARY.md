@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-18T12:49:21.952Z UTC (18 November 2026 IST, slot 19)
+
+- Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **190/202 (94.06%)**; remaining **12**; fully origin-verified **0/202**. Previous-day attempts excluded.
+- Slot 19 rows 181–190: ten exact-URL provider retrievals returned substantive page-specific text covering phonics explanations, blending and comprehension difficulties, school literacy progression, online phonics, public speaking, and Foundation/Early/Advanced Phonics plus beginner Grammar courses. Evidence refs turn419993view0–turn419993view9. No verified production transition.
+- **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC evidence-recording markers 2026-11-18T12:49:14.368Z–2026-11-18T12:49:14.377Z are not measured origin request times. Retrieval provider reported content crawled yesterday.
+- GitHub Actions: zero in-progress repository runs reported; workflow administrative state could not be read through available endpoint. User's explicit disable confirmation remains operating basis. No GitHub workflow executed.
+- Next eligible batch: **slot 20, rows 191–202 (12 URLs)**. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-18T11:47:49.392Z UTC (18 November 2026 IST, slot 18)
 
 - Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **180/202 (89.11%)**; remaining **22**; fully origin-verified **0/202**. Previous-day attempts excluded.
@@ -7,8 +19,6 @@ Updated: 2026-11-18T11:47:49.392Z UTC (18 November 2026 IST, slot 18)
 - **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC evidence-recording markers 2026-11-18T11:47:49.392Z–2026-11-18T11:47:49.401Z are not measured origin request times.
 - GitHub Actions: 0 in-progress repository runs reported. Legacy workflow administrative disablement not independently confirmed; user's explicit confirmation remains operating basis. No GitHub workflow executed.
 - Next eligible batch: **slot 19, rows 181–190**. No production source, workflows or settings changed.
-
-## Earlier audit history
 
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
