@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-18T13:46:43.752Z UTC (18 November 2026 IST, slot 20)
+
+- Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **202/202 (100%)**; remaining **0**; fully origin-verified **0/202**. Previous-day attempts excluded.
+- Slot 20 rows 191–202: twelve exact-URL provider retrievals returned page-specific H1 and substantive text for Advanced Grammar, Public Speaking Foundations/Excellence, Parents Hub, getting started, course choice, progress tracking, homework support, phonics mission, reading at home, speaking confidence and common mistakes. Evidence refs turn535700view0–turn535700view11. No verified production transition.
+- **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC evidence-recording markers 2026-11-18T13:46:43.752Z–2026-11-18T13:46:43.763Z are not measured origin request times. Provider reported content crawled today.
+- GitHub Actions: zero in-progress repository runs reported. Workflow administrative disablement cannot be independently confirmed via available endpoint; user's explicit confirmation remains operating basis. No GitHub workflow executed.
+- Next slots 21–22: reconciliation/recovery, including review of provider retrieval errors in slots 13 and 17; do not infer origin failures. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-18T12:49:21.952Z UTC (18 November 2026 IST, slot 19)
 
 - Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **190/202 (94.06%)**; remaining **12**; fully origin-verified **0/202**. Previous-day attempts excluded.
