@@ -1,3 +1,15 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — slot 22 recovery
+
+Updated: 2026-11-18T15:41:07Z UTC (18 November 2026, 21:11 IST)
+
+- Preflight tracker verified from branch: **202 rows / 202 unique selected URLs, 22 columns, slots 1–19 with 10 URLs each and slot 20 with 12**. All 202 rows carry 2026-11-18 IST dates and parseable UTC evidence markers; these are **202 distinct recorded provider retrieval attempts**, not 202 origin-verified checks. Fully origin-verified **0/202**. Original daily row timestamps preserved.
+- Slot 22 reconciliation retried seven previously blocked exact URLs: rows **22–27 and 29**: `/resources/phonics/soft-c-hard-c-phonics`, `soft-g-hard-g-phonics`, `er-ir-ur-r-controlled-vowels-phonics`, `ar-r-controlled-vowels-phonics`, `or-r-controlled-vowels-phonics`, `y-as-a-vowel-phonics`, and `oi-oy-phonics` (all under `/resources/phonics/`). All seven exact-URL web.open calls returned **"Internal Error" / "not accessible via this tool"** (refs `turn768387view0`–`turn768387view6`). These are retrieval-provider failures **not confirmed production HTTP failures**. Retry evidence timestamp: 2026-11-18T15:41:07Z UTC is the report-recording time, **not** seven individually measured request times.
+- Earlier slot 21 retries for rows 77, 126 and 162 also failed at the provider. Other previously recorded errors, including row 31, remain unresolved. No verified before/after production regression or improvement. Origin HTTP status, redirects, canonical, robots/noindex, initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED** for all 202.
+- GitHub Actions repository in-progress runs endpoint returned `{"total_count":0,"workflow_runs":[]}`; workflow-specific administrative state endpoint was rejected by connector, so disabled status is not independently confirmed. User-confirmed disablement remains operating basis; no workflow executed.
+- CSV and CHANGES.md intentionally unchanged: recovery retries did not establish new origin verification or a meaningful production transition. No source, workflow, Firebase or Hosting changes. Next: slots 23–24 catch-up/reconciliation as needed.
+
+## Earlier audit history
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — reconciliation
 
 Updated: 2026-11-18T14:48:20.000Z UTC (18 November 2026 IST, slot 21)
