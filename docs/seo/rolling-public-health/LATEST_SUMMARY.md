@@ -1,5 +1,17 @@
 # Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
 
+Updated: 2026-11-18T03:42:56.192Z UTC (18 November 2026 IST, slot 10)
+
+- Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **100/202 (49.50%)**; remaining **102**; fully origin-verified **0/202**. Previous-day attempts excluded.
+- Slot 10 rows 91–100: all ten exact-URL provider retrievals returned substantive page-specific text on reading difficulties, slow reading, shy speaking, reading fluency, confidence building, English foundations, and archived 2026 summer programmes. Evidence refs `turn773626view0`–`turn773626view9`. The summer pages explicitly describe the 2026 camp as concluded on 13 June 2026; this is not a verified regression.
+- **UNVERIFIED:** origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility. UTC markers are evidence-logging timestamps, not individually measured origin response times. No verified production transition.
+- GitHub Actions reported **0** in-progress repository runs; legacy workflow administrative disablement remains unconfirmed. User-confirmed disablement remains operating basis. No GitHub workflow executed.
+- Next eligible batch: **slot 11, rows 101–110**. No production source, workflows or settings changed.
+
+## Earlier audit history
+
+# Tiny Steps rolling public SEO/AEO/GEO audit — latest summary
+
 Updated: 2026-11-18T02:47:10.491Z UTC (18 November 2026 IST, slot 9)
 
 - Preflight: **202 unique URLs, 22 columns, slots 1–19 × 10 and slot 20 × 12**. Today's distinct retrieval attempts: **90/202 (44.55%)**; remaining **112**; fully origin-verified **0/202**. Previous-day attempts excluded.
