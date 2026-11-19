@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 13
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **130/202** distinct URLs have current-day retrieval attempts; **72/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
+- Exact-URL web provider retrieval for rows **121–130** returned **9/10** substantive page-specific extracted articles about grammar editing, grammar progression, story cards, subject–verb agreement, tenses, blending, phonics duration, reading confidence and phonics classes. Evidence: `turn264591view0`–`turn264591view4`, `turn264591view6`–`turn264591view9`. **Row 126** `/blog/how-children-recognise-words-automatically-after-phonics` returned a provider Internal Error (`turn264591view5`), **not** a confirmed production failure.
+- Provider reports text/html crawled today for nine pages, but origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and crawler access remain **UNVERIFIED**. UTC evidence-recording markers 2026-11-19T06:39:44.444Z–06:39:44.453Z are not measured origin response times.
+- GitHub Actions in-progress runs query returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disabled state remains independently unverified; user's confirmation is operating basis. No workflow triggered.
+- Previously flagged pricing duration discrepancy and speaking-games availability warning remain unresolved. No verified production regression or improvement; `CHANGES.md` unchanged. No production changes.
+- Tracker update commit `bef80dbb82cfad759bc0d60cd36a3005ac3bfdf0`. Next eligible batch: slot 14, rows 131–140.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 12
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **120/202** distinct URLs have current-day provider retrieval attempts; **82/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
