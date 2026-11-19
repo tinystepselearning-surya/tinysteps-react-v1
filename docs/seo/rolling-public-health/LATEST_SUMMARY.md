@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 12
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **120/202** distinct URLs have current-day provider retrieval attempts; **82/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
+- Exact-URL web provider retrieval for rows **111–120** returned **10/10** substantive page-specific extracted article text on grammar transfer, reading transfer, reluctant speaking, conversation skills, CVC decoding, digraphs/tricky words, CBSE/NCF phonics, grammar assessment, conjunctions and creative writing. Evidence: `turn165070view0`–`turn165070view9`. Provider reports text/html **crawled yesterday**, not independently re-fetched from origin.
+- Direct HTTPS origin attempt for the conjunctions URL failed local DNS resolution; this is an **audit-environment limitation, not a confirmed production outage**. HTTP status, redirects, canonical, robots/noindex, raw origin HTML, JSON-LD and Googlebot/Bingbot/OAI crawler access remain **UNVERIFIED**. Per-row UTC evidence-recording markers are not measured origin response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`. Administrative disabled state of the legacy workflow not independently established; user-confirmed disablement remains operating basis. No workflow triggered.
+- Previously identified pricing-page duration discrepancy and speaking-games availability warning remain unresolved. No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified.
+- Tracker update commit `e33b782a7c956334a392a823c45a1f53f4209599`. Next eligible batch: slot 13, rows 121–130.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 11
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **110/202** distinct URLs have current-day provider retrieval attempts; **92/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
