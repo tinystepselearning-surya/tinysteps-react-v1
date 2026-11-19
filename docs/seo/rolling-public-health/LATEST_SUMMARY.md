@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 4
+
+- Validated **202 unique URLs**, **22 CSV columns**, correct 10-per-slot allocation for slots 1–19 and 12 for slot 20. **40/202** distinct current-day retrieval attempts (19.80%); **162** remain. **0/202** fully origin-verified.
+- Exact-URL provider retrieval for rows **31–40**: **9/10** returned substantive page-specific extracted content (J sound, SHUN family, UI vowel, schwa, grammar hub, speaking hub, Jolly Phonics article, pricing and contact). Provider evidence `turn626293view1`–`turn626293view9`. Row **31** OU/OW returned a provider access error (`turn626293view0`); **not** a verified production failure.
+- **Content consistency review:** pricing page provider text (`turn626293view8`) states group classes are **50 minutes** at ₹250 per child. Confirm operational duration before treating this as a confirmed mismatch; not a technical SEO FAIL. The same page states standard 1:1 is ₹400 for 35 minutes.
+- Provider crawl labels were yesterday except pricing (today). Fresh origin HTTP status, redirect destinations, canonical, robots/noindex, initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. UTC evidence-recording markers 2026-11-19T22:44:22.077Z onward are not origin response timestamps.
+- GitHub Actions API returned **zero in-progress repository runs**. Legacy workflow administrative disablement not independently confirmed; user's prior confirmation remains operating basis. No GitHub workflow triggered.
+- No verified production regression or improvement. `CHANGES.md` unchanged. No production changes. Next eligible slot 5: rows 41–50.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 3
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **30/202** distinct current-day provider retrieval attempts (14.85%); **172** remain for scheduled slots. **0/202** fully origin-verified; 19 November attempts excluded.
