@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 2
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **20/202** distinct current-day provider retrieval attempts (9.90%); **182** remain for scheduled slots. **0/202** fully origin-verified; 19 November attempts excluded.
+- Exact-URL provider retrieval for rows **11–20** returned **10/10** substantive page-specific phonics content (SH, TH, AI, CH/TCH, EA, EE, IE, OA, Magic E and consonant-LE). Evidence: `turn920854view0`–`turn920854view9`. All were labelled `text/html`, `Crawled: yesterday`, so a fresh origin fetch was **not** independently established.
+- Direct HTTPS origin probe of row 11 from this runtime failed DNS resolution before HTTP; this is a **probe-environment limitation**, not evidence of production downtime. Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. UTC evidence-recording markers **2026-11-19T20:49:11.205Z–2026-11-19T20:49:11.214Z** are not measured origin response times.
+- GitHub Actions API showed **zero in-progress repository runs**. Legacy workflow administrative disablement was not independently established; user-confirmed disablement remains the operating basis. No workflow was triggered.
+- No verified production regression or improvement. `CHANGES.md` unchanged. No production changes. Tracker commit `598f40522bd9de82a85a607761bb523c587c5f4a`. Next eligible slot 3: rows 21–30.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 1
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **10/202** distinct current-day provider retrieval attempts; **192** remain for today's scheduled slots. **0/202** fully origin-verified; 19 November timestamps excluded.
