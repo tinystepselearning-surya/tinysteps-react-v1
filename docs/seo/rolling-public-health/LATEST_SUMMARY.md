@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 11
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **110/202** distinct URLs have current-day provider retrieval attempts; **92/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
+- Exact-URL provider retrieval for rows **101–110** returned **10/10** substantive page-specific extracted text. Rows 101–103 are explicitly historical 2026 summer-camp tracks, concluded 13 June 2026, with year-round course and assessment links. Rows 104–110 are substantial parent/school guides on phonics apps, school confidence, phonics benefits, 10-day expectations, CBSE phonics, one-word answers and ABC-to-reading. Evidence: `turn735567view0`–`turn735567view9`. Provider reports text/html crawled today; this is **not independent origin HTTP/header or raw HTML verification**.
+- HTTP status, final redirect, canonical, robots/noindex, raw origin HTML, JSON-LD and Googlebot/Bingbot/OAI crawler access remain **UNVERIFIED**. Per-row UTC evidence-recording markers are not measured origin response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disablement could not be independently verified (workflow endpoint unsupported); user-confirmed disablement remains the operating basis. No workflow triggered.
+- Previously identified pricing-page duration discrepancy and speaking-games availability warning remain unresolved. No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 10
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **100/202** distinct URLs have current-day provider retrieval attempts; **102/202** remain without today's attempt. **0/202** fully origin-verified. Prior-day timestamps excluded.
