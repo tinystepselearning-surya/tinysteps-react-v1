@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 7
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **70/202** distinct URLs have current-day provider retrieval attempts; **132/202** remain without today's attempt. **0/202** fully origin-verified; prior-day timestamps excluded.
+- Exact-URL web.open for rows **61–70** returned **10/10** substantive page-specific extracts (speaking games, letter sounds, listening, word-building, spelling, sentences, reading, grammar, speaking practice, and letter tracing). Evidence: `turn292770view0` through `turn292770view9`. Provider reported text/html and crawled today. This is **provider-only extraction**, not independent origin HTTP/header or raw HTML verification.
+- **Content warning for follow-up:** row 61 speaking games category displays **4 games listed, 0 playable now**; row 69 speaking practice explicitly says **COMING SOON**. This is not an origin technical failure or proven regression. The existing pricing-page duration discrepancy remains unresolved.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. UTC evidence-recording timestamps were saved per row but are not measured origin response times.
+- GitHub Actions in-progress repository runs returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disablement remains independently unconfirmed; user-confirmed disablement remains the operating basis. No workflow triggered.
+- No verified production transition; `CHANGES.md` unchanged. No source, hosting, or production settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 6
 
 - Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **60/202** distinct URLs have 19 November IST retrieval attempts; **142/202** remain without a current-day attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
