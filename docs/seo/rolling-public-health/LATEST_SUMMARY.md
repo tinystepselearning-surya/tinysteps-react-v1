@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 10
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **100/202** distinct URLs have current-day provider retrieval attempts; **102/202** remain without today's attempt. **0/202** fully origin-verified. Prior-day timestamps excluded.
+- Exact-URL provider retrieval for rows **91–100** returned **10/10** substantive page-specific text covering reading difficulties, slow reading, speaking confidence, fluency, foundation programmes and 2026 summer-camp archives. Evidence: `turn526724view0`–`turn526724view9`. Provider reports text/html crawled yesterday; these observations are **not independent origin HTTP/header or raw HTML verification**.
+- The summer pages explicitly identify the 2026 camp as concluded on **13 June 2026** and present themselves as archives or planning guides; no stale active-camp claim was observed in extracted content.
+- HTTP status, final redirect, canonical, robots/noindex, raw origin HTML, JSON-LD and Googlebot/Bingbot/OAI crawler access remain **UNVERIFIED**. UTC evidence-recording markers are not measured origin response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disablement remains independently unconfirmed; user-confirmed disablement is the operating basis. No workflow triggered.
+- Previously noted pricing-page duration discrepancy and speaking-games availability warning remain unresolved. No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 9
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **90/202** distinct URLs have current-day provider retrieval attempts; **112/202** remain without today's attempt. **0/202** fully origin-verified. Prior-day timestamps excluded.
