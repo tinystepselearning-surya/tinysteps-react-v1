@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 8
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs and slot 20 at 12. **80/202** distinct URLs have current-day provider retrieval attempts; **122/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
+- Exact-URL provider retrieval for rows **71–80**: **9/10** returned substantive page-specific extracted text (letter tracing, Balloon Pop, vocabulary game, Phonics, Grammar, Speaking, school partnerships, demo booking, reading classes). **Row 77** `/speaking-progress-framework` returned provider Internal Error; this is **not a confirmed production failure**. Evidence: `turn268467view0`–`turn268467view9`. Provider-extracted text is not independently verified origin HTML or headers.
+- HTTP status, final redirect, canonical, robots/noindex, raw HTML, JSON-LD and Googlebot/Bingbot/OAI crawler access remain **UNVERIFIED**. Per-row UTC evidence-recording markers are not measured origin response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disablement could not be independently verified; user-confirmed disablement remains the operating basis. No workflow triggered.
+- Previously noted pricing-page duration discrepancy and speaking-games availability warning remain unresolved. No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 7
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **70/202** distinct URLs have current-day provider retrieval attempts; **132/202** remain without today's attempt. **0/202** fully origin-verified; prior-day timestamps excluded.
