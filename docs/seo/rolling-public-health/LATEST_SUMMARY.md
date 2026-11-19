@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 9
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **90/202** distinct URLs have current-day provider retrieval attempts; **112/202** remain without today's attempt. **0/202** fully origin-verified. Prior-day timestamps excluded.
+- Exact-URL provider retrieval for rows **81–90** returned **10/10** substantive page-specific text: writing classes, phonics fee benchmark, grammar level guide, spoken English, broad English classes, Hyderabad service page and age-based classes (4, 5, 6 and 7–10). Evidence: `turn291730view0`–`turn291730view9`. The provider reported text/html, crawled today; this is **not independent raw origin HTML/header verification**.
+- HTTP status, final redirect, canonical, robots/noindex, raw HTML, JSON-LD and Googlebot/Bingbot/OAI crawler access remain **UNVERIFIED**. UTC evidence-recording markers were saved but several share the same millisecond; they are not measured origin response times.
+- GitHub Actions repository in-progress runs returned `{"total_count":0,"workflow_runs":[]}`. Legacy workflow administrative disablement remains independently unconfirmed; user-confirmed disablement is the operating basis. No workflow triggered.
+- Previously noted pricing-page duration discrepancy and speaking-games availability warning remain unresolved. No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 8
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs and slot 20 at 12. **80/202** distinct URLs have current-day provider retrieval attempts; **122/202** remain without today's attempt. **0/202** fully origin-verified. Previous-day timestamps excluded.
