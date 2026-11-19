@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 20
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **202/202** distinct URLs have current-day provider retrieval attempts; **0** missing current-day attempts. **0/202** fully origin-verified; prior-day timestamps excluded.
+- Exact-URL provider retrieval for rows **191–202** returned **12/12** substantive page-specific extracted content: three course pages and nine parent guides. Evidence: `turn406621view0`–`turn406621view10`, plus `turn396078view0` for the Parents Hub. Provider reported text/html crawled today for row 191 and yesterday for other rows; fresh origin retrieval not independently established.
+- HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and crawler accessibility remain **UNVERIFIED**. Distinct UTC evidence-recording markers begin **2026-11-19T14:43:05.290Z**, not measured origin response times.
+- GitHub Actions in-progress repository runs returned `{"total_count":0,"workflow_runs":[]}`. Administrative disablement of legacy audit workflow not independently confirmed; user's explicit confirmation remains operating basis. No GitHub audit workflow triggered.
+- No newly verified production regression or improvement; `CHANGES.md` unchanged. No production changes.
+- Tracker update commit `054bb182b3ed3aca77389bc015c1c1e839d914e6`. Next eligible slots 21–22: reconciliation and recovery only, no rechecks of already attempted URLs.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 19 November 2026 IST, slot 19
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **190/202** distinct URLs have current-day provider retrieval attempts; **12/202** remain without today's attempt. **0/202** fully origin-verified; previous-day timestamps excluded.
