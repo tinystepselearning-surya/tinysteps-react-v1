@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 18
+
+- Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **180/202 (89.11%)**; **22** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **171–180**: **10/10** returned substantive page-specific extracted text about public speaking competition preparation, speaking confidence, debate, family showcases, speech structure, video feedback, visual aids, synthetic phonics, systematic school phonics and phonics readiness. Evidence: `turn646677view0`–`turn646677view9`. Nine provider results labelled crawled yesterday, one today. UTC evidence-recording markers **2026-11-20T12:46:26.142Z–2026-11-20T12:46:26.151Z** are logging times, not measured origin response times.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. GitHub Actions in-progress repository query returned `{"total_count":0,"workflow_runs":[]}`; administrative disabled state not independently confirmed. User-confirmed disablement remains operating basis. No workflow triggered.
+- No new verified production regression or improvement; CHANGES.md unchanged. No production source or settings changed. Next eligible slot 19, rows 181–190.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 16
 
 - Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **160/202 (79.21%)**; **42** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
