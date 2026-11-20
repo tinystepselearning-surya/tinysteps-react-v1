@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 13
+
+- Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **130/202 (64.36%)**; **72** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **121–130**: **9/10** returned substantive page-specific extracted text on grammar editing, grammar progression, story cards, subject-verb agreement, tenses, blending, phonics duration, reading confidence and class-to-reading transfer. Evidence: `turn826684view0`–`turn826684view4`, `turn826684view6`–`turn826684view9`. Row **126** (`/blog/how-children-recognise-words-automatically-after-phonics`) returned provider Internal Error on two attempts (`turn826684view5`, `turn234925view0`); this is **not** a verified production failure. All successful results labelled crawled yesterday. UTC evidence-recording timestamps 2026-11-20T07:40:39.386Z–2026-11-20T07:40:39.387Z are logging markers, not measured origin response times.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access **UNVERIFIED**. GitHub Actions in-progress repository runs query returned `{"total_count":0,"workflow_runs":[]}`; administrative disabled state not independently established. User-confirmed disablement remains operating basis. No workflow triggered.
+- No verified production regression/improvement. `CHANGES.md` unchanged. No production settings modified. Next eligible batch **slot 14, rows 131–140**.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 12
 
 - Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **120/202 (59.41%)**; **82** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
