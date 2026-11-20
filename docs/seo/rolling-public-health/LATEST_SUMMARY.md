@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 7
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **70/202** distinct current-day provider retrieval attempts (34.65%); **132** remaining. **0/202** fully origin-verified.
+- Rows **61–70**: **10/10** exact-URL provider retrievals returned page-specific extracted content covering speaking, phonics, word building, spelling, sentence making, reading fluency, grammar and letter tracing games. Evidence: turn979077view0–turn979077view9. All provider crawl labels said **yesterday**; current origin retrieval was not established.
+- **Content review (not a verified regression):** The speaking games category explicitly says **0 playable now** and lists four **COMING SOON** activities (turn979077view0). The separate speaking practice page also says **COMING SOON** (turn979077view8). These pages should not be represented as playable speaking games in promotional copy until functionality is available.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, structured data and bot accessibility remain **UNVERIFIED**. Distinct UTC evidence-recording markers **2026-11-20T01:43:41.300Z–2026-11-20T01:43:41.309Z** are not measured origin response times.
+- GitHub Actions workflow state/runs could not be independently established through the available read endpoint in this run; user's confirmed disablement remains operating basis. No workflow triggered.
+- No verified production regression or improvement. `CHANGES.md` unchanged. No production changes. Next eligible slot 8: rows 71–80.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 6
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **60/202** distinct current-day provider retrieval attempts (29.70%); **142** remaining. **0/202** fully origin-verified.
