@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 11
+
+- Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **110/202 (54.46%)**; **92** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval for rows **101–110** returned **10/10** substantive page-specific extracted content. Three summer fast-track pages explicitly label the 2026 programme historical and concluded on 13 June 2026; seven blog articles cover phonics apps, back-to-school confidence, phonics benefits, ten-day learning expectations, CBSE versus systematic phonics, one-word answers, and alphabet-to-reading difficulties. Evidence: `turn308941view0`–`turn308941view9`. All provider pages labelled crawled yesterday; this does not establish current origin retrieval. UTC evidence-recording timestamps 2026-11-20T05:43:20.988Z through 2026-11-20T05:43:20.988Z are log times, not measured origin response times.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access **UNVERIFIED**. GitHub Actions in-progress repository runs query returned `{"total_count":0,"workflow_runs":[]}`; administrative disabled state not independently established. User-confirmed disablement remains operating basis. No workflow triggered.
+- No verified production regression/improvement. `CHANGES.md` unchanged. No production settings modified. Next eligible batch **slot 12, rows 111–120**.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 10
 
 - Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **100/202 (49.50%)**; **102** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
