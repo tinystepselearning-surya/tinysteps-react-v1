@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 6
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **60/202** distinct current-day provider retrieval attempts (29.70%); **142** remaining. **0/202** fully origin-verified.
+- Rows **51–60**: **10/10** exact-URL provider retrievals returned page-specific extracted content: preschool phonics apps/games, phonics-learning games, and free English, phonics, letter-sound, word-building, sentence-building, reading and grammar games. Evidence: turn284301view0–turn284301view9. All provider crawl labels said **yesterday**; current origin retrieval was not established.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, structured data and bot accessibility remain **UNVERIFIED**. Distinct UTC evidence-recording markers **2026-11-20T00:44:11.027Z–2026-11-20T00:44:11.036Z** are not measured origin response times.
+- GitHub Actions API returned **zero in-progress repository runs**. Administrative disablement of the legacy workflow was not independently confirmed; user's prior confirmation remains operating basis. No GitHub workflow triggered.
+- No verified production regression or improvement. `CHANGES.md` unchanged. No production changes. Next eligible slot 7: rows 61–70.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 5
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **50/202** distinct current-day provider retrieval attempts (24.75%); **152** remaining. **0/202** fully origin-verified.
