@@ -925,6 +925,26 @@ export default function PhonicsPage({
         observation="sound–spelling accuracy, whether the child blends or guesses, which prerequisite pattern is insecure, and when independent reading is ready to increase."
       />
 
+      <SectionShell className="py-4 sm:py-5">
+        <div className="rounded-2xl border border-slate-200 bg-white px-5 py-4 sm:px-6">
+          <p className="text-sm leading-6 text-slate-700">
+            Want to check who teaches, see a class or understand parent policies before enrolling?
+            Explore the supporting information directly.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm font-semibold">
+            <Link to="/team" className="text-blue-800 underline underline-offset-4 hover:text-blue-950">
+              Meet our educators and teaching standards
+            </Link>
+            <Link to="/class-samples" className="text-blue-800 underline underline-offset-4 hover:text-blue-950">
+              Watch real class samples
+            </Link>
+            <Link to="/faq" className="text-blue-800 underline underline-offset-4 hover:text-blue-950">
+              Read parent FAQs and policies
+            </Link>
+          </div>
+        </div>
+      </SectionShell>
+
       <SectionShell id="personalized-plan">
         <div className="rounded-[2rem] border border-violet-100 bg-gradient-to-br from-[#FBF8FF] via-white to-[#F3FAFF] p-6 shadow-xl sm:p-8">
           <SectionHeader
