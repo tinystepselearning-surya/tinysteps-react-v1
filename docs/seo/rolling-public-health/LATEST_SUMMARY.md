@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 9
+
+- Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 each 10 and slot 20 12. Today's distinct retrieval attempts: **90/202** (44.55%); **112** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval of rows **81–90** returned **10/10** substantive page-specific extracted content: writing, phonics fee comparison, grammar levels, spoken English, broad online English, Hyderabad, and age-specific pages for 4, 5, 6 and 7–10. Evidence: `turn315464view0`–`turn315464view9`. Nine provider pages labelled crawled yesterday; broad English page labelled crawled today. Provider crawl labels do not establish fresh origin retrieval.
+- Independent HTTPS HEAD probe of broad English page at approximately **2026-11-20T03:45:38Z** failed DNS (`curl: (6) Could not resolve host: tinystepslearning.com`) before HTTP. This is an audit-environment limitation, **not a production outage**. Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access **UNVERIFIED**. Per-row UTC evidence-recording markers **2026-11-20T03:45:41.298Z–03:45:41.474Z** are not measured origin response times.
+- GitHub Actions in-progress repository runs query returned `{"total_count":0,"workflow_runs":[]}`. Legacy audit workflow administrative disablement endpoint was inaccessible; user's explicit disable confirmation remains operating basis. No workflow triggered.
+- No newly verified production regression or improvement; `CHANGES.md` unchanged. No production settings modified. Next eligible batch: **slot 10, rows 91–100**.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 8
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **80/202** distinct current-day provider retrieval attempts (39.60%); **122** remaining. **0/202** fully origin-verified.
