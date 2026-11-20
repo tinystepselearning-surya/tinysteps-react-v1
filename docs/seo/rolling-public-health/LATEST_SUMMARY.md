@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 10
+
+- Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. Today's distinct provider retrieval attempts: **100/202 (49.50%)**; **102** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval for rows **91–100** returned **10/10** substantive page-specific extracted content: reading difficulties, slow reading, shy-child speaking, reading fluency, confidence building, English foundation, and four summer planning/archive pages. Evidence: `turn515759view0`–`turn515759view9`. Nine provider pages labelled crawled yesterday and slow-reader page today; labels do not establish current origin retrieval. UTC evidence-recording markers start **2026-11-20T04:42:06.111Z**, incremented by 1 ms per record for unique log markers; these are not measured origin response times.
+- Summer pages explicitly identify 2026 season as concluded 13 June 2026 and describe archival/planning content, not active camp enrolment. No new verified production regression or improvement.
+- Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access **UNVERIFIED**. GitHub Actions in-progress repository runs query returned `{"total_count":0,"workflow_runs":[]}`; administrative disabled state not independently established. User's confirmed disablement remains operating basis. No workflow triggered.
+- `CHANGES.md` unchanged: no verified production transition. No production settings modified. Next eligible batch **slot 11, rows 101–110**.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 9
 
 - Tracker validated: **202 unique URLs**, **22 CSV columns**, slots 1–19 each 10 and slot 20 12. Today's distinct retrieval attempts: **90/202** (44.55%); **112** not attempted today. **0/202 fully origin-verified**. Previous-day timestamps excluded.
