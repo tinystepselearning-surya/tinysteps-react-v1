@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 8
+
+- Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **80/202** distinct current-day provider retrieval attempts (39.60%); **122** remaining. **0/202** fully origin-verified.
+- Rows **71–80**: **10/10** provider retrievals returned page-specific extracted content: letter tracing, balloon phonics, vocabulary, phonics, grammar, speaking, speaking progress framework, schools, demo booking and reading classes. Evidence: turn373099view0, turn373099view1, turn373099view2, turn373099view3, turn373099view4, turn373099view5, turn840310view0, turn373099view7, turn373099view8, turn373099view9. The speaking-progress-framework direct retrieval failed, but an internal link from the demo page returned its extracted text. Provider crawl labels range from today to last week; fresh origin retrieval was not established.
+- No verified production FAIL, regression or improvement. Origin HTTP status, redirects, canonical, robots/noindex, raw HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. Evidence-recording UTC markers 2026-11-20T02:48:58.457Z–2026-11-20T02:48:58.461Z are not measured origin response times.
+- GitHub Actions in-progress repository runs query returned **0**; administrative disabled state not independently confirmed. User's disable confirmation remains operating basis. No workflow triggered.
+- `CHANGES.md` unchanged; no verified production transition. No production changes. Next eligible slot 9: rows 81–90.
+
+## Previous summary
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 20 November 2026 IST, slot 7
 
 - Validated **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 each and slot 20 at 12. **70/202** distinct current-day provider retrieval attempts (34.65%); **132** remaining. **0/202** fully origin-verified.
