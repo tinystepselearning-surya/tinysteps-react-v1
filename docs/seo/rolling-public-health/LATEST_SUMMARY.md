@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 15
+
+- Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **Today's distinct retrieval attempts: 150/202 (74.26%)**; **52** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **141–150**: **10/10** returned substantive page-specific extracted content covering school reopening readiness, long vowels, choosing online English classes, school versus online phonics, phonics games, home practice, blending, reading comprehension and parent phonics assessment. Evidence `turn959881view0`–`turn959881view9`; all labelled crawled today.
+- UTC evidence-recording markers **2026-11-21T08:47:37.742Z–2026-11-21T08:47:37.743Z**. These are tracker logging markers (several share a millisecond), not individually measured URL-request times or origin response times.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. GitHub Actions in-progress repository query returned 0 runs; legacy workflow administrative disabled state not independently verified. No workflow triggered. `CHANGES.md` unchanged: no verified production transition. No production changes. Next eligible slot 16, rows 151–160.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 14
 
 - Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each and slot 20 at 12. **Today's distinct retrieval attempts: 140/202 (69.31%)**; **62** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
