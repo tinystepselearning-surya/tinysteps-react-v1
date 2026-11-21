@@ -1,0 +1,31 @@
+name: Leads Firestore Read Optimization Gate
+
+on:
+  pull_request:
+    paths:
+      - 'src/pages/admin/leadsPaged.ts'
+      - 'src/pages/admin/LeadsInquiriesWorkspaceV2.tsx'
+      - 'src/tests/pages/admin/leadsPaged.spec.tsx'
+      - '.github/workflows/leads-read-optimization.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate lead freshness, read bounds and returning enquiries
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.22.1'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test lead date lanes, live updates, pagination and returners
+        run: npx vitest run src/tests/pages/admin/leadsPaged.spec.tsx src/tests/pages/admin/LeadsInquiriesWorkspaceV2.filters.spec.tsx src/pages/admin/leadsDueFollowUps.spec.ts src/pages/admin/leadAdminReadPolicy.test.ts
+      - name: TypeScript validation
+        run: npm run typecheck
