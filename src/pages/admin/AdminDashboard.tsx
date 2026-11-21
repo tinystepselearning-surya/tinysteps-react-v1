@@ -51,7 +51,7 @@ import LessonLibrary from './LessonLibrary/LessonLibraryAdminPage';
 import ClassRecordingsManagement from './ClassRecordings/ClassRecordingsManagement';
 import ClassSamplesManagement from './ClassSamplesManagement';
 import TestimonialsManagement from './TestimonialsManagement';
-import LeadsInquiriesWorkspace, { type LeadsWorkspaceView } from './LeadsInquiriesWorkspace';
+import LeadsInquiriesWorkspace from './LeadsInquiriesWorkspace';
 import TeacherInquiriesWorkspace from './TeacherInquiriesWorkspace';
 import TodaysNotifications from './TodaysNotifications';
 import AnalyticsDashboard from './AnalyticsDashboard';
@@ -571,7 +571,6 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
   const basePath = isFounderPortal ? '/founder' : '/surya';
   const defaultTab = isFounderPortal ? 'editorial-reviews' : 'users';
   const [selectedTab, setSelectedTab] = useState(defaultTab);
-  const [leadsWorkspaceView, setLeadsWorkspaceView] = useState<LeadsWorkspaceView>('leads');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // ✅ FIX: local reload key for EnrollmentsList (required prop)
@@ -586,12 +585,6 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
     const params = new URLSearchParams(location.search);
     const tabFromUrl = params.get('tab');
     const validTabs = isFounderPortal ? FOUNDER_VALID_TABS : ADMIN_VALID_TABS;
-
-    if (tabFromUrl === 'leads') {
-      setLeadsWorkspaceView(params.get('leadView') === 'demos' ? 'demos' : 'leads');
-    } else {
-      setLeadsWorkspaceView('leads');
-    }
 
     if (tabFromUrl && validTabs.has(tabFromUrl)) {
       setSelectedTab(tabFromUrl);
@@ -611,17 +604,6 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
     setSelectedTab(defaultTab);
   }, [defaultTab, isFounderPortal, location.pathname, location.search]);
 
-  const handleLeadsWorkspaceViewChange = (nextView: LeadsWorkspaceView) => {
-    startTransition(() => {
-      setLeadsWorkspaceView(nextView);
-      const params = new URLSearchParams(location.search);
-      params.set('tab', 'leads');
-      if (nextView === 'demos') params.set('leadView', 'demos');
-      else params.delete('leadView');
-      navigate(`${basePath}?${params.toString()}`, { replace: true });
-    });
-  };
-
   const handleTabChange = (nextTab: string) => {
     startTransition(() => {
       setSelectedTab(nextTab);
@@ -630,6 +612,7 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(
     canViewPortal && !isFounderPortal,
+    false, // Only counts are displayed here. Sessions load on Analytics when needed.
   );
 
   if (authLoading) return <AccessMessage>Checking your permissions...</AccessMessage>;
@@ -702,10 +685,7 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
             </TabsContent>
 
             <TabsContent value="leads" className="mt-0">
-              <LeadsInquiriesWorkspace
-                view={leadsWorkspaceView}
-                onViewChange={handleLeadsWorkspaceViewChange}
-              />
+              <LeadsInquiriesWorkspace />
             </TabsContent>
 
             <TabsContent value="teacher-inquiries" className="mt-0">

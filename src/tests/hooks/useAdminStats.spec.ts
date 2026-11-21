@@ -65,6 +65,22 @@ describe('fetchAdminStats', () => {
     expect(getCountFromServerMock).toHaveBeenCalledTimes(3);
   });
 
+  it('does not load class session documents when the caller only displays counts', async () => {
+    getCountFromServerMock
+      .mockResolvedValueOnce(countSnapshot(12))
+      .mockResolvedValueOnce(countSnapshot(8))
+      .mockResolvedValueOnce(countSnapshot(3));
+
+    await expect(fetchAdminStats(false)).resolves.toEqual({
+      totalUsers: 12,
+      totalStudents: 8,
+      totalCourses: 3,
+      sessionsToday: 0, // Intentionally not fetched for the footer-only query key.
+    });
+    expect(getDocsMock).not.toHaveBeenCalled();
+    expect(getCountFromServerMock).toHaveBeenCalledTimes(3);
+  });
+
   it('surfaces Firestore failures instead of returning believable all-zero stats', async () => {
     getCountFromServerMock.mockRejectedValueOnce(new Error('permission denied'));
     getCountFromServerMock.mockResolvedValue(countSnapshot(0));

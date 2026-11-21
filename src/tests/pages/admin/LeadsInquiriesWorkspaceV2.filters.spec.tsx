@@ -51,10 +51,6 @@ vi.mock('../../../services/leadsAdminService', () => ({
   adminUpdateLeadWorkflowRecord: vi.fn(),
 }));
 
-vi.mock('../../../pages/admin/LeadsInquiriesWorkspaceLegacy', () => ({
-  default: () => null,
-}));
-
 vi.mock('../../../pages/admin/LeadAdminToolsMenu', () => ({
   default: () => null,
 }));
