@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 11
+
+- Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 110/202 (54.46%)**; **92** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **101–110**: **10/10** returned substantive page-specific extracted content: three historical summer fast-track pages and seven parent/school learning guides. Evidence `turn557079view0`–`turn557079view9`; provider labelled crawled today. UTC evidence-recording markers **2026-11-21T04:44:37.261Z–2026-11-21T04:44:37.270Z** are logging times, not origin response measurements.
+- The three fast-track pages explicitly state the 2026 camp concluded on **13 June 2026** and offer year-round programme/assessment pathways; this is not a verified production transition.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. GitHub Actions in-progress repository query returned zero runs; legacy workflow administrative state was not independently verified. No workflow triggered. `CHANGES.md` unchanged because no verified meaningful transition. No production changes. Next eligible slot 12, rows 111–120.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 10
 
 - Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 100/202 (49.50%)**; **102** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
