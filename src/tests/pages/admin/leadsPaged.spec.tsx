@@ -237,7 +237,7 @@ describe('canonical enquiry received date', () => {
     const canonical = makeDoc('canonical', 'demo_pending_schedule', 9_000, 'manual', 2_000);
     const legacy = makeDoc('legacy', 'no_response', 4_000);
     firestoreMocks.getDocs
-      .mockRejectedValueOnce(new Error('OR index not deployed'))
+      .mockRejectedValueOnce(Object.assign(new Error('OR index not deployed'), { code: 'failed-precondition' }))
       .mockResolvedValueOnce(makeSnapshot([canonical]))
       .mockResolvedValueOnce(makeSnapshot([]))
       .mockResolvedValueOnce(makeSnapshot([legacy, canonical]))
