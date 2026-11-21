@@ -608,15 +608,14 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         observedDemoLinks = nextDemoLinks;
 
         const now = Date.now();
-        const newWebsiteLeads = changes
-          .filter((change) => {
-            if (change.type !== 'added' || change.doc.metadata.hasPendingWrites) return false;
-            const data = change.doc.data();
-            if (normalizeText(data.source) !== 'website') return false;
-            const receivedAtMs = leadReceivedAtMillis(data);
-            return receivedAtMs > 0 && now - receivedAtMs <= RECENT_NOTIFICATION_WINDOW_MS;
-          })
-          .map((change) => toLeadRecord<T>(change.doc));
+        const newWebsiteLeadChanges = changes.filter((change) => {
+          if (change.type !== 'added' || change.doc.metadata.hasPendingWrites) return false;
+          const data = change.doc.data();
+          if (normalizeText(data.source) !== 'website') return false;
+          const receivedAtMs = leadReceivedAtMillis(data);
+          return receivedAtMs > 0 && now - receivedAtMs <= RECENT_NOTIFICATION_WINDOW_MS;
+        });
+        const newWebsiteLeads = newWebsiteLeadChanges.map((change) => toLeadRecord<T>(change.doc));
         if (newWebsiteLeads.length === 0 && !demoLinkChangedWithinRange) return;
         if (newWebsiteLeads.length > 0) onNewWebsiteLeadsRef.current(newWebsiteLeads);
         smallBucketCacheRef.current.clear();
@@ -627,12 +626,7 @@ export function usePagedLeads<T extends PagedLeadRecord>({
           (demoLinkChangedWithinRange || (newWebsiteLeads.length > 0 && rangeIncludesNow))) {
           const changedDocs = [
             ...changedDemoLinks.map((change) => change.doc),
-            ...changes.filter((change) => change.type === 'added' &&
-              !change.doc.metadata.hasPendingWrites &&
-              normalizeText(change.doc.data().source) === 'website' &&
-              now - leadReceivedAtMillis(change.doc.data()) <= RECENT_NOTIFICATION_WINDOW_MS &&
-              now >= leadReceivedAtMillis(change.doc.data()))
-              .map((change) => change.doc),
+            ...newWebsiteLeadChanges.map((change) => change.doc),
           ];
           if (!applyLiveLeadDocs(changedDocs)) {
             receivedRangeCacheRef.current = null;
