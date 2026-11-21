@@ -7,7 +7,6 @@ import {
   Clock3,
   MessageCircle,
   Search,
-  Settings2,
 } from 'lucide-react';
 import { Badge } from '@components/ui/badge';
 import { Button } from '@components/ui/button';
@@ -54,7 +53,6 @@ import {
   isReturningWebsiteEnquiryInRange,
   type LeadPageSize,
 } from './leadsPaged';
-import LegacyLeadsInquiriesWorkspace from './LeadsInquiriesWorkspaceLegacy';
 import LeadAdminToolsMenu from './LeadAdminToolsMenu';
 import { isAdminFollowUpDue, parseAdminFollowUpDateIstMs } from './leadsDueFollowUps';
 import {
@@ -70,8 +68,6 @@ import {
   type SimpleLeadAction,
   type SimpleLeadBucket,
 } from './leadsWorkflowBuckets';
-
-export type LeadsWorkspaceView = 'leads' | 'demos';
 
 type LeadStatus =
   | 'new'
@@ -182,11 +178,6 @@ interface LeadEditFormState {
   preferredTimingText: string;
   timezone: string;
   notes: string;
-}
-
-interface LeadsInquiriesWorkspaceProps {
-  view?: LeadsWorkspaceView;
-  onViewChange?: (nextView: LeadsWorkspaceView) => void;
 }
 
 const OUTCOME_OPTIONS: Array<{ value: DemoConversionStatus; label: string; help: string }> = [
@@ -358,7 +349,7 @@ const isActiveTeacherStatus = (value: unknown): boolean => {
 
 const rowTeacherWasAssigned = (row: SimpleRow): boolean => Boolean(row.demo?.assignedTeacherId);
 
-export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange }: LeadsInquiriesWorkspaceProps) {
+export default function LeadsInquiriesWorkspaceV2() {
   const { toast } = useToast();
   const [bucket, setBucket] = useState<SimpleLeadBucket>('open');
   const [dueTodayOnly, setDueTodayOnly] = useState(false);
@@ -980,16 +971,6 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     return <Button size="sm" variant="outline" onClick={() => openOutcome(row)}>View outcome</Button>;
   };
 
-  if (view === 'demos') {
-    return <div className="space-y-3">
-      <Card className="flex flex-wrap items-center justify-between gap-3 p-4">
-        <div><p className="font-semibold text-slate-900">Legacy / bulk tools</p><p className="text-sm text-slate-500">Reserved for exceptional corrections, exports and old-data maintenance.</p></div>
-        <Button variant="outline" onClick={() => onViewChange?.('leads')}>Back to Leads & Enquiries</Button>
-      </Card>
-      <LegacyLeadsInquiriesWorkspace view="leads" />
-    </div>;
-  }
-
   const loading = leadsLoading || !demosLoaded;
   const pageLabel = `Page ${pageNumber} of ${totalPages}`;
   const listSummary = loading
@@ -1004,7 +985,6 @@ export default function LeadsInquiriesWorkspaceV2({ view = 'leads', onViewChange
     <Card className="p-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><h1 className="text-xl font-bold text-slate-950">Leads & Enquiries</h1><p className="mt-1 text-sm text-slate-600">Open → With Teacher → Admin Review → Closed.</p></div>
-        <Button variant="outline" className="gap-2" onClick={() => onViewChange?.('demos')}><Settings2 className="h-4 w-4" /> Legacy / bulk tools</Button>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         <div className="rounded-xl border border-slate-200 bg-slate-50/80 p-4 text-left text-slate-950">
