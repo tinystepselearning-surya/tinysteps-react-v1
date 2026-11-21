@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 8
+
+- Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 80/202 (39.60%)**; **122** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **71–80**: **9/10** returned substantive page-specific text, including commercial Phonics, Grammar, Speaking, school partnerships, demo booking and Reading pages; **1/10** (speaking-progress-framework) returned provider Internal Error/not accessible. Evidence `turn802689view0`–`turn802689view9`. UTC evidence-recording markers **2026-11-21T01:39:55.635Z–2026-11-21T01:39:55.644Z** are logging times, not origin response measurements.
+- **Audit-access warning only** for `https://tinystepslearning.com/speaking-progress-framework`; not a confirmed production outage. Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED** for all ten.
+- GitHub Actions in-progress repository query returned zero runs; legacy workflow administrative disabled state not independently confirmed. No workflow triggered. No verified production transition; `CHANGES.md` unchanged. No production changes. Next eligible slot 9, rows 81–90.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 7
 
 - Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 70/202 (34.65%)**; **132** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
