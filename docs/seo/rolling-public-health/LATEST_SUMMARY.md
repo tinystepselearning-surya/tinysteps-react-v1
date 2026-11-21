@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 22 November 2026 IST, slot 1
+
+- Tracker integrity validated: **202 rows, 202 unique URLs, 22 aligned CSV columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **Today's distinct provider retrieval attempts: 10/202 (4.95%). Remaining: 192.** Exact-URL provider retrieval for slot 1 rows 1–10 returned page-specific extracted text, including the homepage, blog, resources hub, phonics hub and six phonics-pattern guides. Provider evidence: turn533368view0, turn533368view1, turn533368view2, turn533368view3, turn533368view4, turn533368view5, turn533368view6, turn533368view7, turn533368view8, turn533368view9. Provider labelled these pages crawled today; direct origin request timing is not established.
+- **Fully origin-verified: 0/202.** HTTP response codes, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain UNVERIFIED. UTC check markers record evidence logging, not independent origin network timings. No verified production transition established.
+- GitHub Actions repository in-progress query returned **0 runs**; legacy workflow administrative state could not be independently read. User-confirmed disablement remains operative. No GitHub Actions workflow triggered; no production changes. `CHANGES.md` unchanged.
+- Next eligible slot 2, rows 11–20. Yesterday's timestamps excluded from today's coverage.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 21 reconciliation
 
 - Re-read and parsed the current tracker on branch `seo-url-health-tracker`: **202 rows, 202 unique URLs, 22 aligned columns**, slots 1–19 at 10 each and slot 20 at 12. All **202/202** rows carry today's IST date and a nonempty UTC evidence-recording marker; these are **provider retrieval attempts**, not independently measured origin requests. No earlier-day records were counted.
