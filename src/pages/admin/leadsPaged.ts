@@ -238,8 +238,13 @@ const getReceivedDateRangeDocs = async (
     const snapshot = await getDocs(query(collection(db, LEADS_COLLECTION), or(...dateLanes)));
     docs = snapshot.docs;
   } catch (error) {
-    // Legacy lane queries remain a safe compatibility path for missing indexes.
-    // Do not risk omitting past or returning enquiries to save reads.
+    // Only index/unsupported-query failures should invoke the legacy lanes.
+    // For permission, network or auth errors, surface the original error instead
+    // of multiplying requests that cannot succeed.
+    const code = (error as { code?: string } | null)?.code;
+    if (code !== 'failed-precondition' && code !== 'unimplemented' && code !== 'invalid-argument') {
+      throw error;
+    }
     console.warn('[usePagedLeads] Combined date query unavailable; using compatibility lanes.', error);
     const [receivedSnapshot, requestedSnapshot, createdSnapshot, returningSnapshot] = await Promise.all([
       getDocs(query(collection(db, LEADS_COLLECTION),
