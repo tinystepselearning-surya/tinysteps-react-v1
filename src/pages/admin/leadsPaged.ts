@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  and,
   collection,
   getCountFromServer,
   getDocs,
   limit,
   onSnapshot,
+  or,
   orderBy,
   query,
   startAfter,
@@ -211,52 +213,52 @@ const isWithinReceivedDateRange = (
 };
 
 /**
- * Date-scoped operational read. First-touch receivedAt remains immutable; legacy
- * requestedAt/createdAt lanes remain. A fourth indexed lastInquiryAt lane makes
- * returning website parents visible on the day of their newest submission.
- * Rows stay unique by canonical lead ID, including repeated same-day submits.
+ * Four date fields are needed for historical leads and returning enquiries. A
+ * Firestore OR query returns each matching document only once, avoiding duplicate
+ * document reads when a lead has multiple timestamp fields in the same range.
+ *
+ * Keep the four-lane fallback for projects where the necessary OR-query indexes
+ * have not yet been deployed. No historical records are changed or backfilled.
  */
 const getReceivedDateRangeDocs = async (
   dateFromMs: number,
   dateToMs: number,
 ): Promise<QueryDocumentSnapshot<DocumentData>[]> => {
-  const [receivedSnapshot, requestedSnapshot, createdSnapshot, returningSnapshot] = await Promise.all([
-    getDocs(query(
-      collection(db, LEADS_COLLECTION),
-      ...buildReceiptRangeConstraints('receivedAt', dateFromMs, dateToMs),
-    )),
-    getDocs(query(
-      collection(db, LEADS_COLLECTION),
-      ...buildReceiptRangeConstraints('requestedAt', dateFromMs, dateToMs),
-    )),
-    getDocs(query(
-      collection(db, LEADS_COLLECTION),
-      ...buildReceiptRangeConstraints('createdAt', dateFromMs, dateToMs),
-    )),
-    getDocs(query(
-      collection(db, LEADS_COLLECTION),
-      ...buildReceiptRangeConstraints('lastInquiryAt', dateFromMs, dateToMs),
-    )),
-  ]);
+  const fields = ['receivedAt', 'requestedAt', 'createdAt', 'lastInquiryAt'] as const;
+  let docs: QueryDocumentSnapshot<DocumentData>[];
+
+  try {
+    const dateLanes = fields.map((field) => {
+      const bounds = [];
+      if (dateFromMs) bounds.push(where(field, '>=', Timestamp.fromMillis(dateFromMs)));
+      if (dateToMs) bounds.push(where(field, '<=', Timestamp.fromMillis(dateToMs)));
+      if (bounds.length === 0) throw new Error('Date-scoped lead query requires at least one bound.');
+      return bounds.length === 1 ? bounds[0] : and(...bounds);
+    });
+    const snapshot = await getDocs(query(collection(db, LEADS_COLLECTION), or(...dateLanes)));
+    docs = snapshot.docs;
+  } catch (error) {
+    // Legacy lane queries remain a safe compatibility path for missing indexes.
+    // Do not risk omitting past or returning enquiries to save reads.
+    console.warn('[usePagedLeads] Combined date query unavailable; using compatibility lanes.', error);
+    const [receivedSnapshot, requestedSnapshot, createdSnapshot, returningSnapshot] = await Promise.all([
+      getDocs(query(collection(db, LEADS_COLLECTION),
+        ...buildReceiptRangeConstraints('receivedAt', dateFromMs, dateToMs))),
+      getDocs(query(collection(db, LEADS_COLLECTION),
+        ...buildReceiptRangeConstraints('requestedAt', dateFromMs, dateToMs))),
+      getDocs(query(collection(db, LEADS_COLLECTION),
+        ...buildReceiptRangeConstraints('createdAt', dateFromMs, dateToMs))),
+      getDocs(query(collection(db, LEADS_COLLECTION),
+        ...buildReceiptRangeConstraints('lastInquiryAt', dateFromMs, dateToMs))),
+    ]);
+    const unique = new Map<string, QueryDocumentSnapshot<DocumentData>>();
+    [...receivedSnapshot.docs, ...requestedSnapshot.docs, ...createdSnapshot.docs, ...returningSnapshot.docs]
+      .forEach((docSnapshot) => unique.set(docSnapshot.id, docSnapshot));
+    docs = [...unique.values()];
+  }
 
   const docsById = new Map<string, QueryDocumentSnapshot<DocumentData>>();
-  receivedSnapshot.docs.forEach((docSnapshot) => docsById.set(docSnapshot.id, docSnapshot));
-  requestedSnapshot.docs.forEach((docSnapshot) => {
-    const data = docSnapshot.data();
-    if (!timestampToMillis(data.receivedAt)) docsById.set(docSnapshot.id, docSnapshot);
-  });
-  createdSnapshot.docs.forEach((docSnapshot) => {
-    const data = docSnapshot.data();
-    if (!timestampToMillis(data.receivedAt) && !timestampToMillis(data.requestedAt)) {
-      docsById.set(docSnapshot.id, docSnapshot);
-    }
-  });
-  returningSnapshot.docs.forEach((docSnapshot) => {
-    if (isReturningWebsiteEnquiryInRange(docSnapshot.data(), dateFromMs, dateToMs)) {
-      docsById.set(docSnapshot.id, docSnapshot);
-    }
-  });
-
+  docs.forEach((docSnapshot) => docsById.set(docSnapshot.id, docSnapshot));
   return Array.from(docsById.values())
     .filter((docSnapshot) => isWithinReceivedDateRange(docSnapshot, dateFromMs, dateToMs))
     .sort((left, right) =>
