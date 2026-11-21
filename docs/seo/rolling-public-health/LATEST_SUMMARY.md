@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 10
+
+- Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 100/202 (49.50%)**; **102** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **91–100**: **10/10** returned substantive page-specific extracted content across reading difficulty, slow-reader support, shy-child confidence, reading fluency, confidence building, English foundation and four summer/archive guides. Evidence `turn571699view0`–`turn571699view9`; provider labelled crawled today. UTC evidence-recording markers **2026-11-21T03:49:19.886Z–2026-11-21T03:49:19.898Z** are logging times, not measured origin response times.
+- Summer pages explicitly identify the 2026 camp as concluded on **13 June 2026**, retained as archive/planning material, not current enrolment offers. No verified production regression or improvement established.
+- Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain **UNVERIFIED**. GitHub Actions in-progress repository query returned zero runs; legacy workflow administrative state could not be read via available GitHub endpoint. No workflow triggered. `CHANGES.md` unchanged. No production changes. Next eligible slot 11, rows 101–110.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 9
 
 - Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 90/202 (44.55%)**; **112** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
