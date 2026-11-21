@@ -3,8 +3,6 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-libra
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const firestoreMocks = vi.hoisted(() => ({
-  and: vi.fn(),
-  or: vi.fn(),
   collection: vi.fn(() => ({ kind: 'collection' })),
   getCountFromServer: vi.fn(),
   getDocs: vi.fn(),
@@ -18,8 +16,6 @@ const firestoreMocks = vi.hoisted(() => ({
 }));
 
 vi.mock('firebase/firestore', () => ({
-  and: firestoreMocks.and,
-  or: firestoreMocks.or,
   collection: firestoreMocks.collection,
   getCountFromServer: firestoreMocks.getCountFromServer,
   getDocs: firestoreMocks.getDocs,
@@ -141,8 +137,6 @@ beforeEach(() => {
   subscriptions.length = 0;
   Object.values(firestoreMocks).forEach((mock) => mock.mockReset());
   firestoreMocks.collection.mockImplementation(() => ({ kind: 'collection' }));
-  firestoreMocks.and.mockImplementation((...args: unknown[]) => ({ kind: 'and', args }));
-  firestoreMocks.or.mockImplementation((...args: unknown[]) => ({ kind: 'or', args }));
   firestoreMocks.limit.mockImplementation((value: number) => ({ kind: 'limit', value }));
   firestoreMocks.orderBy.mockImplementation((...args: unknown[]) => ({ kind: 'orderBy', args }));
   firestoreMocks.query.mockImplementation((...args: unknown[]) => ({ kind: 'query', args }));
@@ -178,7 +172,11 @@ describe('all-bucket range loading', () => {
     const review = makeDoc('review', 'demo_completed', 9_200, 'manual', 3_000);
     const closed = makeDoc('closed', 'no_response', 9_300, 'manual', 3_500);
 
-    firestoreMocks.getDocs.mockResolvedValueOnce(makeSnapshot([open, teacher, review, closed]));
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([open, teacher, review, closed]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness bucket="all" pageSize="all" dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -199,14 +197,17 @@ describe('canonical enquiry received date', () => {
     expect(leadReceivedAtMillis({ createdAt: timestamp(3_000) })).toBe(3_000);
   });
 
-  it('uses one OR date query for canonical, legacy and returning enquiries', async () => {
+  it('uses four indexed date lanes and shares them across card counts and rows', async () => {
     const canonicalOpen = makeDoc('canonical-open', 'demo_pending_schedule', 9_000, 'manual', 2_000);
     const canonicalTeacher = makeDoc('canonical-teacher', 'demo_booked', 9_100, 'manual', 2_500);
     const legacyRequested = makeDoc('legacy-requested', 'demo_completed', 9_500, 'manual', undefined, 3_000);
     const legacyCreated = makeDoc('legacy-created', 'no_response', 4_000);
-    firestoreMocks.getDocs.mockResolvedValueOnce(
-      makeSnapshot([canonicalOpen, canonicalTeacher, legacyRequested, legacyCreated]),
-    );
+
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([canonicalOpen, canonicalTeacher]))
+      .mockResolvedValueOnce(makeSnapshot([legacyRequested]))
+      .mockResolvedValueOnce(makeSnapshot([legacyCreated]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -218,39 +219,27 @@ describe('canonical enquiry received date', () => {
     expect(screen.getByTestId('filtered-total')).toHaveTextContent('1');
     expect(screen.getByTestId('ids')).toHaveTextContent('canonical-open');
     expect(screen.getByTestId('created-at')).toHaveTextContent('2000');
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
     expect(firestoreMocks.getCountFromServer).not.toHaveBeenCalled();
 
-    const filters = getDataQueryArgs(0);
-    const orFilter = filters.find((arg) => (arg as {kind?: string})?.kind === 'or') as
-      { args: Array<{kind: string; args: unknown[]}> };
-    expect(orFilter.args).toHaveLength(4);
-    expect(orFilter.args.map((lane) =>
-      (lane.args[0] as {args: string[]}).args[0])).toEqual(
-        ['receivedAt', 'requestedAt', 'createdAt', 'lastInquiryAt'],
-      );
-    expect(JSON.stringify(orFilter)).toContain('"value":1000');
-    expect(JSON.stringify(orFilter)).toContain('"value":5000');
-  });
+    expect(getDataQueryArgs(0)).toContainEqual({
+      kind: 'where',
+      args: ['receivedAt', '>=', { kind: 'timestamp', value: 1_000 }],
+    });
+    expect(getDataQueryArgs(0)).toContainEqual({
+      kind: 'where',
+      args: ['receivedAt', '<=', { kind: 'timestamp', value: 5_000 }],
+    });
+    expect(getDataQueryArgs(0)).toContainEqual({ kind: 'orderBy', args: ['receivedAt', 'desc'] });
+    expect(getDataQueryArgs(1)).toContainEqual({ kind: 'orderBy', args: ['requestedAt', 'desc'] });
+    expect(getDataQueryArgs(2)).toContainEqual({ kind: 'orderBy', args: ['createdAt', 'desc'] });
+    expect(getDataQueryArgs(3)).toContainEqual({ kind: 'orderBy', args: ['lastInquiryAt', 'desc'] });
 
-  it('falls back to all four historical lanes when the OR query is unavailable', async () => {
-    const canonical = makeDoc('canonical', 'demo_pending_schedule', 9_000, 'manual', 2_000);
-    const legacy = makeDoc('legacy', 'no_response', 4_000);
-    firestoreMocks.getDocs
-      .mockRejectedValueOnce(Object.assign(new Error('OR index not deployed'), { code: 'failed-precondition' }))
-      .mockResolvedValueOnce(makeSnapshot([canonical]))
-      .mockResolvedValueOnce(makeSnapshot([]))
-      .mockResolvedValueOnce(makeSnapshot([legacy, canonical]))
-      .mockResolvedValueOnce(makeSnapshot([]));
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      render(<Harness bucket="all" pageSize="all" dateFromMs={1_000} dateToMs={5_000} />);
-      await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
-      expect(screen.getByTestId('ids')).toHaveTextContent('legacy,canonical');
-      expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(5);
-      expect(warn).toHaveBeenCalled();
-    } finally {
-      warn.mockRestore();
+    for (let index = 0; index < 4; index += 1) {
+      expect(getDataQueryArgs(index)).not.toContainEqual({
+        kind: 'where',
+        args: ['status', 'in', [...LEAD_STATUSES_BY_BUCKET.open]],
+      });
     }
   });
 
@@ -262,7 +251,11 @@ describe('canonical enquiry received date', () => {
       ...canonical,
       data: () => ({ ...canonical.data(), lastInquiryAt: timestamp(returned) }),
     } as unknown as TestDoc;
-    firestoreMocks.getDocs.mockResolvedValueOnce(makeSnapshot([active, active]));
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([active, active]));
 
     render(<Harness bucket="all" pageSize="all"
       dateFromMs={Date.parse('2026-12-06T18:30:00Z')}
@@ -272,8 +265,11 @@ describe('canonical enquiry received date', () => {
     expect(screen.getByTestId('ids')).toHaveTextContent('canonical');
     expect(screen.getByTestId('filtered-total')).toHaveTextContent('1');
     expect(screen.getByTestId('created-at')).toHaveTextContent(String(first));
-    expect(JSON.stringify(getDataQueryArgs(0))).toContain('lastInquiryAt');
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
+    expect(getDataQueryArgs(3)).toContainEqual({
+      kind: 'where', args: ['lastInquiryAt', '>=', {
+        kind: 'timestamp', value: Date.parse('2026-12-06T18:30:00Z'),
+      }],
+    });
   });
 
   it('does not treat same-day repeat submissions or unrelated edits as new enquiries', () => {
@@ -296,7 +292,11 @@ describe('canonical enquiry received date', () => {
     const canonicalOutside = makeDoc('canonical-outside', 'demo_pending_schedule', 2_000, 'manual', 9_000, 3_000);
     const canonicalInside = makeDoc('canonical-inside', 'demo_pending_schedule', 9_000, 'manual', 2_000, 3_000);
 
-    firestoreMocks.getDocs.mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]));
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([canonicalOutside, canonicalInside]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -321,7 +321,11 @@ describe('canonical enquiry received date', () => {
       data: () => ({ ...originalData, receivedAt: { malformed: true } }),
     } as unknown as TestDoc;
 
-    firestoreMocks.getDocs.mockResolvedValueOnce(makeSnapshot([malformedReceivedAt]));
+    firestoreMocks.getDocs
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([malformedReceivedAt]))
+      .mockResolvedValueOnce(makeSnapshot([]))
+      .mockResolvedValueOnce(makeSnapshot([]));
 
     render(<Harness dateFromMs={1_000} dateToMs={5_000} />);
 
@@ -515,7 +519,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
     render(<Harness bucket="all" pageSize="all"
       dateFromMs={now - 3_600_000} dateToMs={now + 3_600_000} />);
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
     expect(subscriptions).toHaveLength(2);
     await act(async () => {
       subscriptions[1].next(makeSnapshot([])); // establish server baseline
@@ -526,7 +530,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
         docChanges: () => [{ type: 'added' as const, doc: returned }],
       });
     });
-    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8));
     // A second identical snapshot cannot falsely create an additional enquiry.
     await act(async () => {
       subscriptions[1].next({
@@ -534,7 +538,7 @@ describe('usePagedLeads bounded Firestore reads', () => {
         docChanges: () => [{ type: 'modified' as const, doc: returned }],
       });
     });
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8);
     expect(firestoreMocks.onSnapshot.mock.calls.every((call) =>
       (call[0] as { args: unknown[] }).args.some((arg) =>
         (arg as { kind?: string; value?: number }).kind === 'limit' &&
