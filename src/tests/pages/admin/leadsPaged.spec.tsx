@@ -576,6 +576,9 @@ describe('usePagedLeads bounded Firestore reads', () => {
     render(<Harness bucket="all" pageSize="all" dateFromMs={oldRangeStart}
       dateToMs={oldRangeStart + 86_400_000 - 1} />);
     await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    // The global latest-five notification remains; the returning-date watcher
+    // cannot match an enquiry more than two minutes outside this old range.
+    expect(subscriptions).toHaveLength(1);
     await act(async () => {
       subscriptions[0].next(makeSnapshot([]));
       subscriptions[0].next({
