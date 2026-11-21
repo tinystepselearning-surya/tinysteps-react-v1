@@ -368,10 +368,14 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         }
       });
       return [...byId.values()].sort((left, right) => {
+        // PagedLeadRecord has known fields rather than an index signature; its
+        // Firestore-derived values are still the same record data being sorted.
+        const leftData = left as unknown as Record<string, unknown>;
+        const rightData = right as unknown as Record<string, unknown>;
         const timeDiff = hasDateFilter
-          ? enquiryActivityInRange(right, dateFromMs, dateToMs) -
-            enquiryActivityInRange(left, dateFromMs, dateToMs)
-          : leadReceivedAtMillis(right) - leadReceivedAtMillis(left);
+          ? enquiryActivityInRange(rightData, dateFromMs, dateToMs) -
+            enquiryActivityInRange(leftData, dateFromMs, dateToMs)
+          : leadReceivedAtMillis(rightData) - leadReceivedAtMillis(leftData);
         return timeDiff || right.id.localeCompare(left.id);
       });
     });
