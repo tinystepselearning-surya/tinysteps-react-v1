@@ -612,6 +612,7 @@ export default function AdminDashboard({ portal = 'admin' }: AdminDashboardProps
 
   const { data: stats, isLoading: statsLoading, error: statsError } = useAdminStats(
     canViewPortal && !isFounderPortal,
+    false, // Only counts are displayed here. Sessions load on Analytics when needed.
   );
 
   if (authLoading) return <AccessMessage>Checking your permissions...</AccessMessage>;
