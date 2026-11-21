@@ -1,3 +1,12 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 7
+
+- Tracker integrity: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs each, slot 20 at 12. **Today's distinct retrieval attempts: 70/202 (34.65%)**; **132** not attempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
+- Exact-URL provider retrieval rows **61–70**: **10/10** returned substantive page-specific text (speaking games, letter sounds, sound listening, word building, spelling, sentence making, reading fluency, grammar, speaking practice and letter tracing). Evidence `turn272057view0`–`turn272057view9`; provider labelled crawled today. UTC evidence-recording markers **2026-11-21T00:41:02.257Z–2026-11-21T00:41:02.266Z** are logging times, not origin response measurements.
+- Notable content observation: speaking category shows **0 playable now** and four coming-soon activities; speaking practice page explicitly says **COMING SOON**. These are disclosed content states, not verified new regressions. Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain **UNVERIFIED**.
+- GitHub Actions in-progress repository query returned zero runs; administrative disabled state of legacy workflow not independently confirmed. No workflow triggered. No verified production transition; `CHANGES.md` unchanged. No production changes. Next eligible slot 8, rows 71–80.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 21 November 2026 IST, slot 6
 
 - Tracker integrity verified: **202 unique URLs**, **22 CSV columns**, slots 1–19 at 10 URLs and slot 20 at 12. **Today's distinct provider retrieval attempts: 60/202 (29.70%)**; **142** unattempted today. Fully origin-verified: **0/202**. Previous-day timestamps excluded.
