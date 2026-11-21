@@ -325,6 +325,9 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   const onErrorRef = useRef(onError);
   const onNewWebsiteLeadsRef = useRef(onNewWebsiteLeads);
   const requestIdRef = useRef(0);
+  // Only an already-loaded, complete all-bucket range can be safely updated
+  // in memory. Cursor pages and in-flight requests retain the server refresh.
+  const completeRangeKeyRef = useRef<string | null>(null);
   const pageStartCursorsRef = useRef<Array<QueryDocumentSnapshot<DocumentData> | null>>([null]);
   const smallBucketCacheRef = useRef(new Map<SimpleLeadBucket, QueryDocumentSnapshot<DocumentData>[]>());
   const receivedRangeCacheRef = useRef<{
@@ -342,6 +345,38 @@ export function usePagedLeads<T extends PagedLeadRecord>({
     receivedRangeCacheRef.current = { key, promise };
     return promise;
   }, [dateFromMs, dateToMs, reloadVersion]);
+
+  // The operational workspace already has every lead in the selected range:
+  // bucket='all', pageSize='all'. Server-authoritative listener changes can
+  // update those exact records without rerunning four overlapping date queries.
+  // Preserve the first-touch and returning enquiry filters, and never use this
+  // shortcut for a cursor page or a loading/changed range.
+  const applyLiveLeadDocs = useCallback((
+    changedDocs: QueryDocumentSnapshot<DocumentData>[],
+  ): boolean => {
+    if (bucket !== 'all' || pageSize !== 'all' ||
+      completeRangeKeyRef.current !== optionKey) return false;
+    if (changedDocs.length === 0) return true;
+
+    setLeads((current) => {
+      const byId = new Map(current.map((lead) => [lead.id, lead]));
+      changedDocs.forEach((snapshot) => {
+        if (hasDateFilter && !isWithinReceivedDateRange(snapshot, dateFromMs, dateToMs)) {
+          byId.delete(snapshot.id);
+        } else {
+          byId.set(snapshot.id, toLeadRecord<T>(snapshot));
+        }
+      });
+      return [...byId.values()].sort((left, right) => {
+        const timeDiff = hasDateFilter
+          ? enquiryActivityInRange(right, dateFromMs, dateToMs) -
+            enquiryActivityInRange(left, dateFromMs, dateToMs)
+          : leadReceivedAtMillis(right) - leadReceivedAtMillis(left);
+        return timeDiff || right.id.localeCompare(left.id);
+      });
+    });
+    return true;
+  }, [bucket, dateFromMs, dateToMs, hasDateFilter, optionKey, pageSize]);
 
   const refreshCounts = useCallback(async () => {
     setCountsLoading(true);
@@ -394,17 +429,21 @@ export function usePagedLeads<T extends PagedLeadRecord>({
 
   useEffect(() => {
     if (pageState.key !== optionKey) return;
+    completeRangeKeyRef.current = null;
     const requestId = ++requestIdRef.current;
     let cancelled = false;
 
     const publish = (docs: QueryDocumentSnapshot<DocumentData>[]) => {
       if (cancelled || requestId !== requestIdRef.current) return;
       setLeads(docs.map((docSnapshot) => toLeadRecord<T>(docSnapshot)));
+      completeRangeKeyRef.current =
+        bucket === 'all' && pageSize === 'all' ? optionKey : null;
       setIsLoading(false);
     };
 
     const fail = (error: unknown) => {
       if (cancelled || requestId !== requestIdRef.current) return;
+      completeRangeKeyRef.current = null;
       setLeads([]);
       setFilteredHasNext(false);
       setIsLoading(false);
@@ -558,15 +597,14 @@ export function usePagedLeads<T extends PagedLeadRecord>({
           return;
         }
         const changes = snapshot.docChanges();
-        const demoLinkChangedWithinRange = changes.some((change) => {
+        const changedDemoLinks = changes.filter((change) => {
           if (change.type !== 'modified' || change.doc.metadata.hasPendingWrites) return false;
           const previousLink = observedDemoLinks.get(change.doc.id);
-          if (previousLink === undefined || previousLink === normalizeText(change.doc.data().demoSessionId)) return false;
-          const received = leadReceivedAtMillis(change.doc.data());
-          return received > 0 &&
-            (!dateFromMs || received >= dateFromMs) &&
-            (!dateToMs || received <= dateToMs);
+          return previousLink !== undefined &&
+            previousLink !== normalizeText(change.doc.data().demoSessionId) &&
+            (!hasDateFilter || isWithinReceivedDateRange(change.doc, dateFromMs, dateToMs));
         });
+        const demoLinkChangedWithinRange = changedDemoLinks.length > 0;
         observedDemoLinks = nextDemoLinks;
 
         const now = Date.now();
@@ -582,19 +620,31 @@ export function usePagedLeads<T extends PagedLeadRecord>({
         if (newWebsiteLeads.length === 0 && !demoLinkChangedWithinRange) return;
         if (newWebsiteLeads.length > 0) onNewWebsiteLeadsRef.current(newWebsiteLeads);
         smallBucketCacheRef.current.clear();
-        receivedRangeCacheRef.current = null;
-        void refreshCounts();
+        if (bucket !== 'all') void refreshCounts();
         const rangeIncludesNow =
           (!dateFromMs || now >= dateFromMs) && (!dateToMs || now <= dateToMs);
         if ((bucket === 'open' || bucket === 'all') && effectivePageIndex === 0 &&
           (demoLinkChangedWithinRange || (newWebsiteLeads.length > 0 && rangeIncludesNow))) {
-          pageStartCursorsRef.current = [null];
-          setReloadVersion((current) => current + 1);
+          const changedDocs = [
+            ...changedDemoLinks.map((change) => change.doc),
+            ...changes.filter((change) => change.type === 'added' &&
+              !change.doc.metadata.hasPendingWrites &&
+              normalizeText(change.doc.data().source) === 'website' &&
+              now - leadReceivedAtMillis(change.doc.data()) <= RECENT_NOTIFICATION_WINDOW_MS &&
+              now >= leadReceivedAtMillis(change.doc.data()))
+              .map((change) => change.doc),
+          ];
+          if (!applyLiveLeadDocs(changedDocs)) {
+            receivedRangeCacheRef.current = null;
+            pageStartCursorsRef.current = [null];
+            setReloadVersion((current) => current + 1);
+          }
         }
       },
       (error) => onErrorRef.current(error as Error),
     );
-  }, [bucket, dateFromMs, dateToMs, effectivePageIndex, refreshCounts]);
+  }, [applyLiveLeadDocs, bucket, dateFromMs, dateToMs, effectivePageIndex,
+    hasDateFilter, refreshCounts]);
 
   // A returning parent updates an older canonical lead, not a newly created
   // document. The existing createdAt watcher won't see that row; this additional
@@ -616,23 +666,27 @@ export function usePagedLeads<T extends PagedLeadRecord>({
           return;
         }
         const now = Date.now();
-        const hasNewReturningEnquiry = snapshot.docChanges().some((change) => {
-          if (change.type === 'removed' || change.doc.metadata.hasPendingWrites) return false;
-          const data = change.doc.data();
-          const latest = leadLatestInquiryAtMillis(data);
-          return isReturningWebsiteEnquiryInRange(data, dateFromMs, dateToMs) &&
-            priorInquiryTimes.get(change.doc.id) !== latest &&
-            latest > 0 && now - latest >= 0 &&
-            now - latest <= RECENT_NOTIFICATION_WINDOW_MS;
-        });
+        const freshReturningDocs = snapshot.docChanges()
+          .filter((change) => {
+            if (change.type === 'removed' || change.doc.metadata.hasPendingWrites) return false;
+            const data = change.doc.data();
+            const latest = leadLatestInquiryAtMillis(data);
+            return isReturningWebsiteEnquiryInRange(data, dateFromMs, dateToMs) &&
+              priorInquiryTimes.get(change.doc.id) !== latest &&
+              latest > 0 && now - latest >= 0 &&
+              now - latest <= RECENT_NOTIFICATION_WINDOW_MS;
+          })
+          .map((change) => change.doc);
         priorInquiryTimes = nextTimes;
-        if (!hasNewReturningEnquiry) return;
-        receivedRangeCacheRef.current = null;
-        setReloadVersion((current) => current + 1);
+        if (freshReturningDocs.length === 0) return;
+        if (!applyLiveLeadDocs(freshReturningDocs)) {
+          receivedRangeCacheRef.current = null;
+          setReloadVersion((current) => current + 1);
+        }
       },
       (error) => onErrorRef.current(error as Error),
     );
-  }, [bucket, dateFromMs, dateToMs, effectivePageIndex, hasDateFilter]);
+  }, [applyLiveLeadDocs, bucket, dateFromMs, dateToMs, effectivePageIndex, hasDateFilter]);
 
   const reloadPage = useCallback((resetToFirst = false) => {
     if (bucket !== 'all') smallBucketCacheRef.current.delete(bucket);
