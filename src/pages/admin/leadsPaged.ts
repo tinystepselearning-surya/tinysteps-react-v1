@@ -645,6 +645,12 @@ export function usePagedLeads<T extends PagedLeadRecord>({
   // five-row watch refreshes Today when the server-side merge arrives.
   useEffect(() => {
     if (!hasDateFilter || (bucket !== 'all' && bucket !== 'open') || effectivePageIndex !== 0) return undefined;
+    // A historical/future range cannot receive a qualifying live returning
+    // enquiry. Its lastInquiryAt would have to be within the two-minute watch
+    // window and inside the selected period. Avoid five unnecessary live reads.
+    const now = Date.now();
+    if ((dateFromMs && dateFromMs > now) ||
+      (dateToMs && dateToMs < now - RECENT_NOTIFICATION_WINDOW_MS)) return undefined;
     let hasBaseline = false;
     let priorInquiryTimes = new Map<string, number>();
     return onSnapshot(
