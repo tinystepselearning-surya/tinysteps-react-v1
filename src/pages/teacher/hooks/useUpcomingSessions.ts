@@ -51,6 +51,13 @@ interface UseUpcomingSessionsResult {
 export const getDefaultUpcomingSelectedDate = (timeZone = getViewerTimeZone()): string =>
   shiftYmd(formatYmdInTimeZone(new Date(), timeZone), 1);
 
+/** Upcoming must never synthesize past classes without authoritative attendance. */
+export const isHistoricalUpcomingDate = (
+  selectedDate: string,
+  timeZone: string,
+  now = new Date(),
+): boolean => selectedDate < formatYmdInTimeZone(now, timeZone);
+
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
 };
@@ -410,7 +417,8 @@ export const useUpcomingSessions = (
     const viewerTimeZone = timeZone;
     const candidateDates = indiaDateWindowForLocalDate(targetDate);
     const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
-    if (candidateDates.toYmd < shiftYmd(todayIst, -2)) {
+    if (isHistoricalUpcomingDate(targetDate, viewerTimeZone) ||
+      candidateDates.toYmd < shiftYmd(todayIst, -2)) {
       // Monthly summaries, not historical classSessions, serve history.
       setSessions([]);
       setEnrollmentsById(new Map());
