@@ -16,7 +16,12 @@ import {
 import { toast } from '@components/hooks/use-toast';
 import { useTeacherFilteredStudents } from '@/hooks/useTeacherFilteredData';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import { getSessionStartDate } from '../../../../lib/sessionTime';
+import {
+  formatYmdInTimeZone,
+  getSessionStartDate,
+  getViewerTimeZone,
+  shiftYmd,
+} from '../../../../lib/sessionTime';
 import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
@@ -27,6 +32,7 @@ import {
 } from '../../utils/resolveTeacherSessionStudentName';
 import {
   classifyTodaySession,
+  partitionTeacherLocalDaySessions,
   summarizeTodaySessions,
   TEACHER_ATTENDANCE_OPEN_DELAY_MS,
 } from './todaySessionViewState';
@@ -40,7 +46,13 @@ type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
   const ATTENDANCE_OPEN_DELAY_MS = TEACHER_ATTENDANCE_OPEN_DELAY_MS;
   const { user } = useAuthStore();
-  const { sessions, isLoading, error, refresh: refreshSessions } = useTeacherSessions(teacherId);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  const viewerTimeZone = getViewerTimeZone();
+  const todayYmd = new Date(nowMs + 330 * 60_000).toISOString().slice(0, 10);
+  const localTodayYmd = formatYmdInTimeZone(new Date(nowMs), viewerTimeZone);
+  const { sessions, isLoading, error, refresh: refreshSessions } = useTeacherSessions(
+    teacherId, shiftYmd(todayYmd, -2), shiftYmd(todayYmd, 1),
+  );
   const { students, loading: studentsLoading, refresh: refreshEnrollments } = useTeacherFilteredStudents();
   const refreshCalendar = () => {
     refreshSessions();
@@ -49,8 +61,6 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewFilter, setViewFilter] = useState<SessionViewFilter>('all');
-  const [nowMs, setNowMs] = useState(() => Date.now());
-  const todayYmd = new Date(nowMs+330*60_000).toISOString().slice(0,10);
   const canOverrideAttendanceTime = String((user as any)?.role || '').trim().toLowerCase() === 'admin';
 
   useEffect(() => {
@@ -159,7 +169,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     const projections = buildRollingScheduleCalendarProjections({
       enrollments,
       realSessions: sessions as unknown as Record<string, unknown>[],
-      fromYmd: todayYmd, toYmd: todayYmd,
+      fromYmd: shiftYmd(todayYmd, -2), toYmd: shiftYmd(todayYmd, 1),
     });
     return projections.map(row => ({
       id:row.id, enrollmentId:row.enrollmentId,
@@ -235,36 +245,37 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   const normalizedSearch = searchQuery.trim().toLowerCase();
 
+  const { today: localDaySessions, recentPending } = useMemo(
+    () => partitionTeacherLocalDaySessions(sortedSessions, nowMs, viewerTimeZone),
+    [nowMs, sortedSessions, viewerTimeZone],
+  );
   const summary = useMemo(
-    () => summarizeTodaySessions(sortedSessions, nowMs),
-    [nowMs, sortedSessions],
+    () => summarizeTodaySessions(localDaySessions, nowMs),
+    [localDaySessions, nowMs],
   );
 
-  const filteredSessions = useMemo(() => {
-    const nowMs = Date.now();
-    return sortedSessions.filter((session) => {
-      const names = getKnownNames(session);
-      const haystack = [
-        ...names,
-        resolveTeacherSessionCourseLabel(session),
-        session.courseId,
-        session.startTime,
-        session.endTime,
-      ]
-        .filter((value): value is string => typeof value === 'string')
-        .join(' ')
-        .toLowerCase();
+  const matchesSearch = (session: TeacherSession): boolean => {
+    if (!normalizedSearch) return true;
+    const names = getKnownNames(session);
+    return [
+      ...names,
+      resolveTeacherSessionCourseLabel(session),
+      session.courseId,
+      session.startTime,
+      session.endTime,
+    ].filter((value): value is string => typeof value === 'string')
+      .join(' ').toLowerCase().includes(normalizedSearch);
+  };
 
-      if (normalizedSearch && !haystack.includes(normalizedSearch)) return false;
-
-      const state = classifyTodaySession(session, nowMs);
-
-      if (viewFilter === 'completed') return state.completed;
-      if (viewFilter === 'pending') return state.pending;
-      if (viewFilter === 'soon') return state.soon;
-      return true;
-    });
-  }, [normalizedSearch, nowMs, sortedSessions, viewFilter]);
+  const filteredSessions = localDaySessions.filter(session => {
+    if (!matchesSearch(session)) return false;
+    const state = classifyTodaySession(session, nowMs);
+    if (viewFilter === 'completed') return state.completed;
+    if (viewFilter === 'pending') return state.pending;
+    if (viewFilter === 'soon') return state.soon;
+    return true;
+  });
+  const filteredRecentPending = recentPending.filter(matchesSearch);
 
   if (isLoading || studentsLoading) {
     return (
@@ -283,10 +294,10 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
     );
   }
 
-  if (!orderedSessions.length) {
+  if (!localDaySessions.length && !recentPending.length) {
     return (
       <Card className="p-6 text-center space-y-3">
-        <p className="text-sm text-muted-foreground">No sessions scheduled for today.</p>
+        <p className="text-sm text-muted-foreground">No sessions scheduled for your local day ({viewerTimeZone}).</p>
         <Button size="sm" variant="outline" onClick={refreshCalendar}>Refresh schedule</Button>
       </Card>
     );
@@ -294,6 +305,9 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
 
   return (
     <div className="space-y-4">
+      <p className="text-sm text-slate-600">
+        Today: {localTodayYmd} · Times shown in {viewerTimeZone}, with IST for reference.
+      </p>
       <Card className="border-slate-200 bg-white/95 p-3 shadow-sm">
         <div className="flex flex-col gap-3">
           <div className="flex justify-end">
@@ -382,6 +396,31 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
           </div>
         </div>
       </Card>
+
+      {filteredRecentPending.length > 0 && (
+        <Card className="overflow-hidden border-amber-200 bg-white shadow-sm">
+          <div className="border-b border-amber-100 bg-amber-50 px-4 py-3">
+            <h2 className="text-sm font-semibold text-amber-900">
+              Previous classes · Attendance pending ({filteredRecentPending.length})
+            </h2>
+            <p className="mt-1 text-xs text-amber-800">
+              Unmarked sessions from the past 48 hours remain available across the IST date change.
+            </p>
+          </div>
+          <div className="overflow-x-auto">
+            <div className="min-w-[980px]">
+              {filteredRecentPending.map(session => (
+                <SessionCard
+                  key={session.id}
+                  session={session}
+                  studentNames={getKnownNames(session)}
+                  onMarkAttendance={setSelectedSession}
+                />
+              ))}
+            </div>
+          </div>
+        </Card>
+      )}
 
       <AttendanceForm
         open={Boolean(selectedSession)}
