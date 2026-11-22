@@ -97,6 +97,17 @@ describe('todaySessionViewState', () => {
     expect(recentPending.map(row => row.id)).toEqual(['yesterday-unmarked']);
   });
 
+  it('keeps a class open across Pacific midnight before attendance becomes pending', () => {
+    const now = Date.parse('2026-11-23T00:05:00-08:00');
+    const crossing = session('cross-midnight', '13:20', '13:55', { date: '2026-11-23' });
+    // 13:20 IST = 23:50 Pacific on November 22.
+    const { today, recentPending } = partitionTeacherLocalDaySessions(
+      [crossing], now, 'America/Los_Angeles',
+    );
+    expect(today).toEqual([]);
+    expect(recentPending.map(row => row.id)).toEqual(['cross-midnight']);
+  });
+
   it('does not recover completed classes, old classes or other teacher days', () => {
     const now = Date.parse('2026-11-23T13:30:00+05:30');
     const old = session('old', '08:00', '08:35', { date: '2026-11-19' });
