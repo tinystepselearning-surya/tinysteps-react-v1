@@ -216,7 +216,7 @@ function deriveEndAt(
   return null;
 }
 
-function getTimeZoneLabel(date: Date, timeZone: string, locale: string): string {
+function getTimeZoneLabel(date: Date, timeZone: string): string {
   if (timeZone === INDIA_TIME_ZONE) return 'IST';
 
   // en-GB commonly returns GMT-8/GMT-7 instead of PST/PDT.
@@ -334,7 +334,7 @@ export function formatSessionTimeRange(
 
   const startLabel = formatInTimeZone(startAt, timeZone, locale, timeOptions);
   const endLabel = endAt ? formatInTimeZone(endAt, timeZone, locale, timeOptions) : '';
-  const zoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone, locale) : '';
+  const zoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone) : '';
   const legacyLabel = includeLegacyLabel && source === 'legacy_fields' ? ' (legacy schedule)' : '';
 
   const timeLabel = endLabel ? `${startLabel} - ${endLabel}` : startLabel;
