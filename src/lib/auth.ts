@@ -493,6 +493,7 @@ export async function performAppLogout(reason: AppLogoutReason): Promise<void> {
   clearSessionsManagementSnapshotCache();
   // Read-once calendar queries are deliberately login-scoped. Never keep a
   // previous user's enrollment or attendance rows across sign-out.
+  queryClient.removeQueries({ queryKey: ['teacherProfileTimeZone'] });
   queryClient.removeQueries({ queryKey: ['teacherFilteredStudents'] });
   queryClient.removeQueries({ queryKey: ['kidEnrollments'] });
   queryClient.removeQueries({ queryKey: ['kidSessions'] });
