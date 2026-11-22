@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 22 November 2026 IST, slot 9
+
+- Tracker integrity: **202 rows, 202 unique URLs, 22 aligned columns**, slots 1–19 at 10 each and slot 20 at 12.
+- **Today's distinct provider retrieval attempts: 90/202 (44.55%). Remaining: 112.** Slot 9 rows 81–90: all ten exact URLs returned substantive page-specific extracted content (writing, phonics fees, grammar levels, spoken English, broad online English, Hyderabad and age-specific classes). Evidence: turn223682view0, turn223682view1, turn223682view2, turn223682view3, turn223682view4, turn223682view5, turn223682view6, turn223682view7, turn223682view8, turn223682view9. These are provider-extracted text observations, not direct origin technical verification.
+- **Fully origin-verified: 0/202.** Origin HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED. UTC evidence-recording markers 2026-11-22T02:41:12.774Z through 2026-11-22T02:41:12.783Z are logging markers, not measured origin response times. No verified production transition.
+- GitHub Actions in-progress repository runs: **0** at this check. Legacy workflow administrative state not independently readable; user-confirmed disablement remains operative. No production changes; CHANGES.md unchanged.
+- Next eligible slot 10, rows 91–100. Previous-day records excluded.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 22 November 2026 IST, slot 8
 
 - Tracker integrity: **202 rows, 202 unique URLs, 22 aligned columns**, slots 1–19 at 10 each and slot 20 at 12.
