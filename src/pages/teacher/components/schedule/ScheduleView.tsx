@@ -47,6 +47,7 @@ import {
 
 interface ScheduleViewProps {
   teacherId?: string;
+  timeZone?: string;
 }
 
 type TopicUpdatePayload = {
@@ -203,8 +204,8 @@ const getIndiaCalendarDay = (): Date => {
   return new Date(year, month - 1, day);
 };
 
-export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
-  const viewerTimeZone = getViewerTimeZone();
+export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId, timeZone }) => {
+  const viewerTimeZone = timeZone || getViewerTimeZone();
   const indiaTodayYmd = formatYmdInTimeZone(new Date(), INDIA_TIME_ZONE);
   // My Schedule and ad hoc booking intentionally remain in canonical IST.
   const [currentDate, setCurrentDate] = useState(getIndiaCalendarDay);
@@ -978,6 +979,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
         attendanceOnly
+        timeZone={viewerTimeZone}
       />
     </div>
   );
