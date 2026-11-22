@@ -21,10 +21,11 @@ import { resolveTodaySessionStatusBadge } from './todaySessionViewState';
 interface SessionCardProps {
   session: TeacherSession;
   studentNames?: string[];
+  timeZone?: string;
   onMarkAttendance: (session: TeacherSession) => void;
 }
 
-export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
+export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance, timeZone }) => {
   const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
   const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
@@ -175,7 +176,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       ? resolvedStudentNames.join(', ')
       : 'Student';
 
-  const viewerTimeZone = getViewerTimeZone();
+  const viewerTimeZone = timeZone || getViewerTimeZone();
   const localDateText = formatSessionDate(session, { timeZone: viewerTimeZone });
   const localTimeText = formatSessionTimeRange(session, { timeZone: viewerTimeZone, includeTimeZone: true });
   const indiaTimeText = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE, includeTimeZone: true });
