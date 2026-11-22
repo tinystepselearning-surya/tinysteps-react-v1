@@ -26,7 +26,12 @@ on:
       - 'src/tests/hooks/useUpcomingSessions.spec.tsx'
       - 'src/tests/teacher/TeacherCalendarReadOnce.spec.ts'
       - 'src/lib/sessionTime.ts'
+      - 'src/components/common/PortalTimeZoneClocks.tsx'
+      - 'src/components/common/AuthBootstrap.tsx'
       - 'src/tests/lib/sessionTime.spec.ts'
+      - 'src/tests/components/PortalTimeZoneClocks.spec.tsx'
+      - 'src/tests/components/AuthBootstrap.spec.tsx'
+      - 'src/tests/pages/UpcomingSessionsView.spec.tsx'
       - 'src/tests/pages/todaySessionViewState.spec.ts'
       - 'src/tests/teacher/useTeacherDisplayTimeZone.spec.tsx'
       - 'src/tests/pages/parentClassSessionReadPolicy.spec.ts'
@@ -72,7 +77,7 @@ jobs:
       - name: Virtual timetable and attendance unit tests
         run: |
           npx vitest run --config functions/vitest.config.ts functions/test/teacherCalendarActions.spec.ts
-          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/TodaysNotificationsManualRefresh.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx src/tests/hooks/useTeacherSessions.spec.tsx src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/hooks/useTeacherStudents.spec.tsx src/tests/teacher/TeacherCalendarReadOnce.spec.ts src/tests/lib/sessionTime.spec.ts src/tests/pages/todaySessionViewState.spec.ts src/tests/teacher/useTeacherDisplayTimeZone.spec.tsx src/tests/pages/parentClassSessionReadPolicy.spec.ts src/tests/pages/ParentDashboardClassSessionReadPlan.spec.ts
+          npx vitest run src/tests/scheduling/RollingScheduleCalendarProjection.spec.ts src/tests/scheduling/VirtualCalendarAdHocIntegrity.spec.ts src/tests/lib/sessionScheduleIntegrity.spec.ts src/tests/pages/TodaysNotificationsVirtualTimetable.spec.ts src/tests/pages/TodaysNotificationsManualRefresh.spec.ts src/tests/pages/parent/ParentClassesView.spec.tsx src/tests/hooks/useTeacherSessions.spec.tsx src/tests/hooks/useUpcomingSessions.spec.tsx src/tests/hooks/useTeacherStudents.spec.tsx src/tests/teacher/TeacherCalendarReadOnce.spec.ts src/tests/lib/sessionTime.spec.ts src/tests/pages/todaySessionViewState.spec.ts src/tests/teacher/useTeacherDisplayTimeZone.spec.tsx src/tests/components/PortalTimeZoneClocks.spec.tsx src/tests/components/AuthBootstrap.spec.tsx src/tests/pages/UpcomingSessionsView.spec.tsx src/tests/pages/TeacherDashboard.spec.tsx src/tests/pages/parentClassSessionReadPolicy.spec.ts src/tests/pages/ParentDashboardClassSessionReadPlan.spec.ts
       - name: Admin historical attendance retirement and attendance-status regressions
         run: npx vitest run src/tests/pages/HistoricalAttendanceCorrectionRouting.spec.ts src/tests/attendance/attendanceStatusSimplification.spec.ts
       - name: Full backend regression

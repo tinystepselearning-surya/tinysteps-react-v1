@@ -2,6 +2,7 @@ import React, { StrictMode } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import useAuthStore from '../../store/useAuthStore';
+import { queryClient } from '../../lib/queryClient';
 
 type FirebaseUserFixture = {
   uid: string;
@@ -45,9 +46,10 @@ vi.mock('../../lib/nativeAuthDiagnostics', () => ({
 import AuthBootstrap from '../../components/common/AuthBootstrap';
 
 describe('AuthBootstrap', () => {
-  let authCallback: ((user: FirebaseUserFixture | null) => void) | undefined;
+  let authCallback: ((user: FirebaseUserFixture | null) => Promise<void> | void) | undefined;
 
   beforeEach(() => {
+    queryClient.removeQueries({ queryKey: ['teacherProfileTimeZone'] });
     vi.spyOn(console, 'info').mockImplementation(() => undefined);
     authStateChangedMock.mockReset();
     ensurePersistenceMock.mockReset();
@@ -71,6 +73,40 @@ describe('AuthBootstrap', () => {
       isLoading: true,
       authRecoveryError: null,
     });
+  });
+
+  it('clears a cached teacher zone when the authentication session ends', async () => {
+    queryClient.setQueryData(['teacherProfileTimeZone', 'teacher-1'], 'America/Los_Angeles');
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    // onAuthStateChanged uses an async callback: always await React's act()
+    // so cleanup and subsequent tests do not inherit an unflushed act scope.
+    await act(async () => {
+      await authCallback?.(null);
+    });
+    expect(queryClient.getQueryData(['teacherProfileTimeZone', 'teacher-1'])).toBeUndefined();
+  });
+
+  it('clears a previous teacher zone on direct account switching', async () => {
+    queryClient.setQueryData(['teacherProfileTimeZone', 'teacher-1'], 'America/Los_Angeles');
+    useAuthStore.setState({
+      user: { uid: 'teacher-1', role: 'teacher', email: 'teacher@example.com', displayName: 'Teacher' },
+      authStatus: 'authenticated',
+      isLoading: false,
+      authRecoveryError: null,
+    });
+    render(<AuthBootstrap />);
+    await waitFor(() => expect(authCallback).toBeTypeOf('function'));
+    await act(async () => {
+      await authCallback?.({
+        uid: 'teacher-2',
+        role: 'teacher',
+        email: 'teacher2@example.com',
+        displayName: 'Teacher Two',
+        getIdTokenResult: vi.fn().mockResolvedValue({ claims: { role: 'teacher' } }),
+      } as FirebaseUserFixture);
+    });
+    expect(queryClient.getQueryData(['teacherProfileTimeZone', 'teacher-1'])).toBeUndefined();
   });
 
   it('waits for state readiness, then attaches exactly one listener', async () => {

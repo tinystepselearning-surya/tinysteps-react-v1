@@ -335,11 +335,17 @@ export function formatSessionTimeRange(
 
   const startLabel = formatInTimeZone(startAt, timeZone, locale, timeOptions);
   const endLabel = endAt ? formatInTimeZone(endAt, timeZone, locale, timeOptions) : '';
-  const zoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone) : '';
+  const startZoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone) : '';
+  const endZoneLabel = includeTimeZone && endAt ? getTimeZoneLabel(endAt, timeZone) : '';
   const legacyLabel = includeLegacyLabel && source === 'legacy_fields' ? ' (legacy schedule)' : '';
 
+  // A session spanning a DST boundary must label *both* sides of the
+  // transition. Otherwise a range like 01:50 - 01:25 PDT is misleading.
+  if (endLabel && startZoneLabel && endZoneLabel && startZoneLabel !== endZoneLabel) {
+    return `${startLabel} ${startZoneLabel} - ${endLabel} ${endZoneLabel}${legacyLabel}`;
+  }
   const timeLabel = endLabel ? `${startLabel} - ${endLabel}` : startLabel;
-  if (zoneLabel) return `${timeLabel} ${zoneLabel}${legacyLabel}`;
+  if (startZoneLabel) return `${timeLabel} ${startZoneLabel}${legacyLabel}`;
   return `${timeLabel}${legacyLabel}`;
 }
 

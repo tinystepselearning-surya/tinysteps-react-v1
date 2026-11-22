@@ -16,6 +16,8 @@ import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { app } from '../../lib/firebaseConfig';
 import { useTeacherDisplayTimeZone } from './hooks/useTeacherDisplayTimeZone';
+import PortalTimeZoneClocks from '../../components/common/PortalTimeZoneClocks';
+import { queryClient } from '../../lib/queryClient';
 
 // Lazy-loaded views
 const TodaySessionsView = React.lazy(() =>
@@ -287,6 +289,16 @@ export default function TeacherDashboard() {
               <div id="teacher-lessons-controls-slot" className="mt-3 w-full" />
             ) : null}
           </div>
+          <PortalTimeZoneClocks
+            timeZone={displayTimeZone}
+            zoneSource="profile"
+            onRefreshTimeZone={() => {
+              if (teacherId) void queryClient.invalidateQueries({
+                queryKey: ['teacherProfileTimeZone', teacherId],
+                refetchType: 'active',
+              });
+            }}
+          />
           <Tabs
             value={tab}
             onValueChange={setTabAndUrl}

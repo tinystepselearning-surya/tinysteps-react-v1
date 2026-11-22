@@ -30,6 +30,7 @@ import ParentDashboardKpis from "./components/ParentDashboardKpis";
 import ParentInsightsView from "./components/insights/ParentInsightsView";
 import ParentLearningInsights from "./components/ParentLearningInsights";
 import ParentMobileHeader from "./components/ParentMobileHeader";
+import PortalTimeZoneClocks from "../../components/common/PortalTimeZoneClocks";
 import ParentPaymentOptionsDialog from "./components/payments/ParentPaymentOptionsDialog";
 import ParentPaymentsView from "./components/payments/ParentPaymentsView";
 import ParentProfilePaymentsPanel from "./components/payments/ParentProfilePaymentsPanel";
@@ -5111,6 +5112,7 @@ export default function ParentDashboard() {
                   : "ts-native-scroll ts-native-no-x-scroll ts-native-tabbar-reserve flex-1"
                 : "pb-6 lg:overflow-y-auto"
             }`}>
+              {!isNativeMessagesThreadFocus && <PortalTimeZoneClocks zoneSource="device" />}
               {/* Content */}
               {activeTab === "dashboard" && renderDashboardHome()}
 

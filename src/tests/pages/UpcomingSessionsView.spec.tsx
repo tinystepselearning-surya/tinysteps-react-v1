@@ -13,6 +13,7 @@ const {
 
 vi.mock('../../pages/teacher/hooks/useUpcomingSessions', () => ({
   getDefaultUpcomingSelectedDate: () => format(addDays(new Date(), 1), 'yyyy-MM-dd'),
+  isHistoricalUpcomingDate: (date: string) => date < format(new Date(), 'yyyy-MM-dd'),
   useUpcomingSessions: useUpcomingSessionsSpy,
 }));
 
@@ -80,18 +81,27 @@ describe('UpcomingSessionsView', () => {
 
     render(<UpcomingSessionsView teacherId="teacher-1" />);
 
-    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', tomorrow);
+    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', tomorrow, expect.any(String));
 
-    const dateInput = screen.getByLabelText('Upcoming session date') as HTMLInputElement;
+    const dateInput = screen.getByLabelText('Upcoming session date in your local time zone') as HTMLInputElement;
     expect(dateInput.value).toBe(tomorrow);
 
     fireEvent.change(dateInput, { target: { value: anotherDate } });
 
-    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', tomorrow);
+    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', tomorrow, expect.any(String));
 
     fireEvent.click(screen.getByRole('button', { name: 'Load' }));
 
-    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', anotherDate);
+    expect(useUpcomingSessionsSpy).toHaveBeenLastCalledWith('teacher-1', anotherDate, expect.any(String));
+  });
+
+  it('does not display past class projections as new scheduled sessions', () => {
+    render(<UpcomingSessionsView teacherId="teacher-1" timeZone="America/Los_Angeles" />);
+    const dateInput = screen.getByLabelText('Upcoming session date in your local time zone');
+    fireEvent.change(dateInput, { target: { value: '2020-01-01' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Load' }));
+    expect(screen.getByText(/Past dates aren't available in Upcoming Sessions/)).toBeTruthy();
+    expect(screen.queryByText('No sessions found for this date.')).toBeNull();
   });
 
   it('shows the updated helper and empty-state copy', () => {
