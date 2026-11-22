@@ -403,10 +403,10 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId,
         <Card className="overflow-hidden border-amber-200 bg-white shadow-sm">
           <div className="border-b border-amber-100 bg-amber-50 px-4 py-3">
             <h2 className="text-sm font-semibold text-amber-900">
-              Previous classes · Attendance pending ({filteredRecentPending.length})
+              Recent classes · Attendance to review ({filteredRecentPending.length})
             </h2>
             <p className="mt-1 text-xs text-amber-800">
-              Unmarked sessions from the past 48 hours remain available across the IST date change.
+              Ongoing or unmarked sessions from the past 48 hours remain available across date changes.
             </p>
           </div>
           <div className="overflow-x-auto">
