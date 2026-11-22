@@ -2178,3 +2178,12 @@ Updated: 2026-11-13T13:43:43.474Z UTC (13 November 2026 IST, slot 20 evidence re
 - **Today's distinct retrieval-attempt coverage: 202/202 (100%). Fully origin-verified: 0/202.** This completes provider retrieval-attempt coverage, **not** the technical origin SEO/AEO/GEO audit. HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED.
 - Evidence-recording UTC markers span 2026-11-21T13:41:26.767Z–2026-11-21T13:41:26.768Z; they are logging markers, not measured individual origin request times. No verified production regression or improvement; CHANGES.md unchanged.
 - GitHub Actions in-progress repository query returned zero runs; workflow administrative disablement remains independently unverified, relying on user's explicit confirmation. No production changes. Slots 21–24 reserved for reconciliation/recovery and future daily cycles remain required.
+
+
+## Slot 18 — 22 November 2026 IST (rows 171–180)
+
+- Pre-batch tracker validation: 202 unique URLs, 22 CSV columns, slots 1–19 have 10 URLs each and slot 20 has 12. Before this batch, 170 distinct URLs had 22 November retrieval-attempt records; rows 171–180 retained 21 November records.
+- Ten exact-URL web provider extractions returned substantive page-specific text: turn455551view0 through turn455551view9. Seven speaking articles and three phonics/reading articles. Provider labelled each text/html, crawled yesterday; this is provider metadata, not verified origin freshness.
+- **Today's distinct retrieval-attempt coverage: 180/202 (89.11%); remaining 22. Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED. Provider-extracted text does not prove production technical health.
+- UTC evidence-recording markers span 2026-11-22T11:48:46.973Z–2026-11-22T11:48:46.982Z; they are recording markers, not independently measured origin request timestamps. No verified production regression/improvement; CHANGES.md unchanged.
+- GitHub Actions in-progress repository query returned zero runs; legacy workflow administrative disablement not independently verified, relying on user's explicit confirmation. No production changes. Next eligible slot 19, rows 181–190.
