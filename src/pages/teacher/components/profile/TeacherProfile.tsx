@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@components/hooks/use-toast';
 import { db, functions } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { queryClient } from '../../../../lib/queryClient';
 
 interface TeacherProfileProps {
   teacherId?: string;
@@ -231,6 +232,7 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
         emailAlerts: profile.emailAlerts,
         paymentSchedule: profile.paymentSchedule,
       });
+      queryClient.setQueryData(['teacherProfileTimeZone', resolvedTeacherId], profile.timezone.trim());
       setSavedProfile(profile);
       setIsEditing(false);
       toast({
