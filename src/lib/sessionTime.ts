@@ -219,7 +219,9 @@ function deriveEndAt(
 function getTimeZoneLabel(date: Date, timeZone: string, locale: string): string {
   if (timeZone === INDIA_TIME_ZONE) return 'IST';
 
-  const parts = new Intl.DateTimeFormat(locale, {
+  // en-GB commonly returns GMT-8/GMT-7 instead of PST/PDT.
+  // Use en-US for an explicit local daylight-saving abbreviation.
+  const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
     timeZoneName: 'short',
   }).formatToParts(date);
