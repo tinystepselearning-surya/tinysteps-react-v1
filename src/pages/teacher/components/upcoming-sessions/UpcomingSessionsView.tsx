@@ -69,7 +69,19 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   const [draftSelectedDate, setDraftSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
   const [appliedSelectedDate, setAppliedSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
   const [selectionTimeZone, setSelectionTimeZone] = useState(viewerTimeZone);
-  const historicalDate = isHistoricalUpcomingDate(appliedSelectedDate, viewerTimeZone);
+  // Keep historical projections blocked even when the tab stays open past
+  // the teacher's local midnight; a date selector change is not required.
+  const [currentInstant, setCurrentInstant] = useState(() => new Date());
+  useEffect(() => {
+    const refreshNow = () => setCurrentInstant(new Date());
+    const timer = window.setInterval(refreshNow, 60_000);
+    window.addEventListener('focus', refreshNow);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refreshNow);
+    };
+  }, []);
+  const historicalDate = isHistoricalUpcomingDate(appliedSelectedDate, viewerTimeZone, currentInstant);
   useEffect(() => {
     if (selectionTimeZone === viewerTimeZone) return;
     const nextDate = getDefaultUpcomingSelectedDate(viewerTimeZone);
