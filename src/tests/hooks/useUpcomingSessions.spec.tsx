@@ -23,7 +23,7 @@ vi.mock('../../lib/sessionScheduleIntegrity',()=>({
   isScheduleExceptionSession:()=>false,
   shouldAllowTeacherOwnedScheduleExceptionWithoutEnrollment:()=>false,
 }));
-import { useUpcomingSessions } from '../../pages/teacher/hooks/useUpcomingSessions';
+import { isHistoricalUpcomingDate, useUpcomingSessions } from '../../pages/teacher/hooks/useUpcomingSessions';
 import { teacherCalendarSessionReadCache } from '../../pages/teacher/hooks/teacherCalendarSessionReadCache';
 
 const date='2099-06-08';
@@ -97,6 +97,14 @@ describe('Upcoming teacher read-once date cache',()=>{
     render(<Fixture />);
     await waitFor(()=>expect(screen.getByText('ready')).toBeTruthy());
     expect(screen.getByTestId('count').textContent).toBe('0');
+  });
+
+  it('interprets past dates in the teacher local zone, not the IST service date', () => {
+    const now = new Date('2026-11-22T20:00:00.000Z'); // Nov 22 PST, Nov 23 IST
+    expect(isHistoricalUpcomingDate('2026-11-21', 'America/Los_Angeles', now)).toBe(true);
+    expect(isHistoricalUpcomingDate('2026-11-22', 'America/Los_Angeles', now)).toBe(false);
+    expect(isHistoricalUpcomingDate('2026-11-23', 'Asia/Kolkata', now)).toBe(false);
+    expect(isHistoricalUpcomingDate('2026-11-22', 'Asia/Kolkata', now)).toBe(true);
   });
 
   it('never retrieves historical classSessions from the browsing calendar',async()=>{
