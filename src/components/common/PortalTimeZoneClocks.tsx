@@ -82,7 +82,7 @@ export default function PortalTimeZoneClocks({
         </p>
         <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400 sm:text-xs">{local.date}</p>
         <p className="mt-0.5 break-words text-[10px] leading-4 text-slate-500 dark:text-slate-400 sm:text-xs">
-          {localZone} ({zoneSource === 'profile' ? 'saved profile' : 'device'})
+          {localZone} ({zoneSource === 'profile' ? 'profile / device fallback' : 'device'})
         </p>
       </div>
       <div data-testid="portal-india-clock" className="min-w-0 rounded-lg bg-slate-50 px-2.5 py-2 dark:bg-slate-800/70 sm:px-3">
