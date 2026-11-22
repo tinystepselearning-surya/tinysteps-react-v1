@@ -42,6 +42,7 @@ describe('Teacher calendar browser-session read-once model', () => {
     expect(teacherCalendarReadWindow('2026-10-11', today))
       .toEqual(teacherCalendarReadWindow('2026-11-15', today));
     expect(teacherCalendarReadWindow('2027-02-01', today).end).toBe('2027-02-01');
+    expect(teacherCalendarReadWindow('2026-10-11', today).start).toBe('2026-10-09');
   });
 
   beforeEach(() => { mockGetDoc.mockReset(); });
