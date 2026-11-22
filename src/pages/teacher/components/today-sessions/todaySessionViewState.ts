@@ -144,9 +144,13 @@ export const partitionTeacherLocalDaySessions = (
       return;
     }
     const startedAt = start.getTime();
+    const state = classifyTodaySession(session, nowMs);
+    const endAt = getSessionEndDate(session)?.getTime() ?? 0;
+    const isOngoing = startedAt <= nowMs && endAt >= nowMs;
     if (startedAt >= nowMs - pendingLookbackMs &&
-        startedAt < nowMs &&
-        classifyTodaySession(session, nowMs).pending) {
+        startedAt <= nowMs &&
+        !state.resolved &&
+        (state.pending || isOngoing)) {
       recentPending.push(session);
     }
   });
