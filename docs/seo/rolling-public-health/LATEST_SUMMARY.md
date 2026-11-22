@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 4
+
+- Tracker validated before batch: **202 unique URLs, 202 records, 22 columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Prior current-day evidence: 30 distinct URLs; prior-day timestamps excluded.
+- **23 November distinct provider-retrieval attempts: 40/202 (19.80%); remaining 162.** Rows 31–40 were retrieved individually using exact public URLs. All ten returned substantive page-specific provider-extracted text: five phonics guides, grammar and speaking hubs, Jolly Phonics article, pricing and contact. Evidence: web.open turn466623view0–turn466623view9.
+- **Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED. Distinct UTC evidence-recording markers 2026-11-22T21:45:05.307Z through 2026-11-22T21:45:05.316Z are logging markers, not measured origin response times.
+- **Content-alignment warning (not a verified new regression):** pricing page provider-extracted text states group classes ₹250 per child for **50 minutes** (turn466623view8, lines 13–15, 78–85), whereas Tiny Steps' current standard class duration is 35 minutes. Confirm whether group duration differs intentionally before changing published content. No technical production FAIL asserted.
+- No dated verified production regression/improvement established; CHANGES.md unchanged. GitHub Actions API returned zero in-progress repository runs; legacy audit workflow administrative disabled state not independently confirmed. No workflow or production changes.
+- Next eligible scheduled batch: slot 5, rows 41–50.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 3
 
 - Tracker validated before batch: **202 unique URLs, 202 records, 22 columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Previous current-day evidence: 20 distinct URLs; prior-day timestamps excluded.
