@@ -116,6 +116,24 @@ describe('sessionTime', () => {
       .toBe('2026-11-22');
   });
 
+  it('labels each endpoint when a class crosses a Pacific daylight saving change', () => {
+    const fallBack = {
+      startAt: makeTimestamp('2026-11-01T08:50:00.000Z'),
+      endAt: makeTimestamp('2026-11-01T09:25:00.000Z'),
+    };
+    const springForward = {
+      startAt: makeTimestamp('2026-03-08T09:50:00.000Z'),
+      endAt: makeTimestamp('2026-03-08T10:25:00.000Z'),
+    };
+    expect(formatSessionTimeRange(fallBack, {
+      timeZone: 'America/Los_Angeles', includeTimeZone: true,
+    })).toBe('01:50 PDT - 01:25 PST');
+    expect(formatSessionTimeRange(springForward, {
+      timeZone: 'America/Los_Angeles', includeTimeZone: true,
+    })).toBe('01:50 PST - 03:25 PDT');
+    expect(formatIndiaTimeRange(fallBack)).toBe('14:20 - 14:55 IST');
+  });
+
   it('parses serialized Firestore timestamp-like objects with _seconds fields', () => {
     const serializedSession = {
       startAt: { _seconds: 1782096300, _nanoseconds: 0 },
