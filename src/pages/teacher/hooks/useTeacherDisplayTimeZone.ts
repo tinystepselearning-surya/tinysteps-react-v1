@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../lib/firebaseConfig';
-import { getViewerTimeZone } from '../../../lib/sessionTime';
+import { INDIA_TIME_ZONE, getViewerTimeZone } from '../../../lib/sessionTime';
 
 /**
  * The saved teacher profile wins over a different device setting. Never use a
@@ -15,7 +15,8 @@ export const resolveTeacherDisplayTimeZone = (
   const text = typeof configured === 'string' ? configured.trim() : '';
   if (text) {
     try {
-      return new Intl.DateTimeFormat('en-US', { timeZone: text }).resolvedOptions().timeZone;
+      const zone = new Intl.DateTimeFormat('en-US', { timeZone: text }).resolvedOptions().timeZone;
+      return zone === 'Asia/Calcutta' ? INDIA_TIME_ZONE : zone;
     } catch {
       // Older profiles may contain a description rather than an IANA zone.
     }
