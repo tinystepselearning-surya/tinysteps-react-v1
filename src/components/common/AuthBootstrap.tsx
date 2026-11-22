@@ -9,6 +9,7 @@ import useAuthStore, {
 } from '../../store/useAuthStore';
 import { logFirebaseAuthKeyPresence } from '../../lib/nativeAuthDiagnostics';
 import { normalizeAuthRole } from '../../constants/roles';
+import { queryClient } from '../../lib/queryClient';
 
 const logBootstrap = (event: string) => {
   console.info(`[auth-bootstrap] ${event}`);
@@ -78,10 +79,15 @@ export default function AuthBootstrap() {
         logBootstrap('callback');
 
         if (!firebaseUser) {
+          queryClient.removeQueries({ queryKey: ['teacherProfileTimeZone'] });
           clearSessionsManagementSnapshotCache();
           observeSessionsManagementAuthUid(null);
           resolveUnauthenticated();
           return;
+        }
+        // A different account must never see a previously cached teacher zone.
+        if (useAuthStore.getState().user?.uid !== firebaseUser.uid) {
+          queryClient.removeQueries({ queryKey: ['teacherProfileTimeZone'] });
         }
         // Clear cached operational rows immediately on an account change,
         // before the asynchronous claims lookup or route transition.
