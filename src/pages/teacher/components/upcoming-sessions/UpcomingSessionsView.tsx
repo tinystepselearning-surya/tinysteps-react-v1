@@ -4,7 +4,7 @@ import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Badge } from '@components/ui/badge';
-import { getDefaultUpcomingSelectedDate, useUpcomingSessions } from '../../hooks/useUpcomingSessions';
+import { getDefaultUpcomingSelectedDate, isHistoricalUpcomingDate, useUpcomingSessions } from '../../hooks/useUpcomingSessions';
 import {
   INDIA_TIME_ZONE,
   formatSessionDate,
@@ -69,6 +69,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   const [draftSelectedDate, setDraftSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
   const [appliedSelectedDate, setAppliedSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
   const [selectionTimeZone, setSelectionTimeZone] = useState(viewerTimeZone);
+  const historicalDate = isHistoricalUpcomingDate(appliedSelectedDate, viewerTimeZone);
   useEffect(() => {
     if (selectionTimeZone === viewerTimeZone) return;
     const nextDate = getDefaultUpcomingSelectedDate(viewerTimeZone);
@@ -108,6 +109,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   // An upcoming calendar date is driven by Student Management recurrence even
   // when the old future classSessions have all been cleared.
   const projectedUpcoming = useMemo<TeacherSession[]>(() => {
+    if (historicalDate) return [];
     const candidateDates = indiaDateWindowForLocalDate(appliedSelectedDate);
     const projected = buildRollingScheduleCalendarProjections({
       enrollments:teacherEnrollments,
@@ -127,11 +129,11 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
       startAt:Timestamp.fromDate(row.startAt),endAt:Timestamp.fromDate(row.endAt),
       source:row.source,status:'scheduled',
     }));
-  },[appliedSelectedDate,sessions,teacherEnrollments,teacherId,viewerTimeZone]);
+  },[appliedSelectedDate,sessions,teacherEnrollments,teacherId,viewerTimeZone,historicalDate]);
 
   const visibleSessions=useMemo(
-    ()=>[...sessions,...projectedUpcoming],
-    [sessions,projectedUpcoming],
+    ()=>historicalDate ? [] : [...sessions,...projectedUpcoming],
+    [sessions,projectedUpcoming,historicalDate],
   );
 
   const openUpcomingMeeting=(session:TeacherSession)=>{
@@ -428,7 +430,9 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
 
       {filteredSessions.length === 0 ? (
         <Card className="p-6 text-center">
-          <p>No sessions found for this date.</p>
+          <p>{historicalDate
+            ? "Past dates aren't available in Upcoming Sessions. Use Today's Sessions for recent pending attendance, or monthly summaries for completed classes."
+            : 'No sessions found for this date.'}</p>
         </Card>
       ) : (
         <Card className="overflow-hidden border-slate-200 bg-white/95 shadow-sm">
