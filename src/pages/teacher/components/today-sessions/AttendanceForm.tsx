@@ -20,6 +20,7 @@ import {
 interface AttendanceFormProps {
   open: boolean;
   session: TeacherSession | null;
+  timeZone?: string;
   onClose: () => void;
   onSubmit: (data: {
     attendance: Record<string, { status: AttendanceStatus; notes?: string }>;
@@ -383,8 +384,8 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
             <div>
               <p className="text-sm font-medium">{session.courseName || session.courseId || 'Course'}</p>
               <p className="text-xs text-muted-foreground">
-                {formatSessionDate(session, { timeZone: getViewerTimeZone() })} · {formatSessionTimeRange(session, { timeZone: getViewerTimeZone(), includeTimeZone: true })}
-                {getViewerTimeZone() !== INDIA_TIME_ZONE && (
+                {formatSessionDate(session, { timeZone: props.timeZone || getViewerTimeZone() })} · {formatSessionTimeRange(session, { timeZone: props.timeZone || getViewerTimeZone(), includeTimeZone: true })}
+                {(props.timeZone || getViewerTimeZone()) !== INDIA_TIME_ZONE && (
                   <span className="ml-2 text-xs text-slate-500">
                     ({formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE, includeTimeZone: true })})
                   </span>
