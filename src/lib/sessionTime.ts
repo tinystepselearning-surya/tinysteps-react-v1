@@ -254,7 +254,8 @@ export function sessionIsOnLocalDate(
 
 export function getViewerTimeZone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    return zone === 'Asia/Calcutta' ? INDIA_TIME_ZONE : zone;
   } catch {
     return 'UTC';
   }
