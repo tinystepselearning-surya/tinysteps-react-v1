@@ -349,8 +349,11 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
               value={profile.timezone}
               onChange={(e) => setProfile(p => ({ ...p, timezone: e.target.value }))}
               disabled={!isEditing}
-              placeholder="Asia/Kolkata"
+              placeholder="America/Los_Angeles"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              Use America/Los_Angeles for Pacific time (automatic PST/PDT). Leave blank to use your device time zone.
+            </p>
           </div>
           <div>
             <Label>Emergency Contact Name</Label>
