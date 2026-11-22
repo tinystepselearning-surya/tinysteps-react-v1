@@ -39,15 +39,16 @@ import {
 
 interface TodaySessionsListProps {
   teacherId?: string;
+  timeZone?: string;
 }
 
 type SessionViewFilter = 'all' | 'soon' | 'pending' | 'completed';
 
-export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId }) => {
+export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId, timeZone }) => {
   const ATTENDANCE_OPEN_DELAY_MS = TEACHER_ATTENDANCE_OPEN_DELAY_MS;
   const { user } = useAuthStore();
   const [nowMs, setNowMs] = useState(() => Date.now());
-  const viewerTimeZone = getViewerTimeZone();
+  const viewerTimeZone = timeZone || getViewerTimeZone();
   const todayYmd = new Date(nowMs + 330 * 60_000).toISOString().slice(0, 10);
   const localTodayYmd = formatYmdInTimeZone(new Date(nowMs), viewerTimeZone);
   const { sessions, isLoading, error, refresh: refreshSessions } = useTeacherSessions(
@@ -390,6 +391,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
                   session={session}
                   studentNames={getKnownNames(session)}
                   onMarkAttendance={setSelectedSession}
+                  timeZone={viewerTimeZone}
                 />
               ))
             )}
@@ -415,6 +417,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
                   session={session}
                   studentNames={getKnownNames(session)}
                   onMarkAttendance={setSelectedSession}
+                  timeZone={viewerTimeZone}
                 />
               ))}
             </div>
@@ -428,6 +431,7 @@ export const TodaySessionsList: React.FC<TodaySessionsListProps> = ({ teacherId 
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
         attendanceOnly
+        timeZone={viewerTimeZone}
       />
     </div>
   );
