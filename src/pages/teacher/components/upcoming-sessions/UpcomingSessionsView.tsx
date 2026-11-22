@@ -33,6 +33,7 @@ import {
 
 interface UpcomingSessionsViewProps {
   teacherId?: string;
+  timeZone?: string;
 }
 
 export const getSessionInlineStudentNames = (session: TeacherSession): string[] => {
@@ -63,13 +64,22 @@ const readLookupName = (row: Record<string, unknown>): string => {
   return '';
 };
 
-export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
-  const viewerTimeZone = getViewerTimeZone();
-  const [draftSelectedDate, setDraftSelectedDate] = useState(getDefaultUpcomingSelectedDate);
-  const [appliedSelectedDate, setAppliedSelectedDate] = useState(getDefaultUpcomingSelectedDate);
+export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId, timeZone }) => {
+  const viewerTimeZone = timeZone || getViewerTimeZone();
+  const [draftSelectedDate, setDraftSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
+  const [appliedSelectedDate, setAppliedSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
+  const [selectionTimeZone, setSelectionTimeZone] = useState(viewerTimeZone);
+  useEffect(() => {
+    if (selectionTimeZone === viewerTimeZone) return;
+    const nextDate = getDefaultUpcomingSelectedDate(viewerTimeZone);
+    setDraftSelectedDate(nextDate);
+    setAppliedSelectedDate(nextDate);
+    setSelectionTimeZone(viewerTimeZone);
+  }, [selectionTimeZone, viewerTimeZone]);
   const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh: refreshSessions } = useUpcomingSessions(
     teacherId,
     appliedSelectedDate,
+    viewerTimeZone,
   );
   const { students, refresh: refreshEnrollments } = useTeacherFilteredStudents();
   const refreshCalendar = () => {
