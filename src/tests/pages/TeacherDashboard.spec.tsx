@@ -29,6 +29,10 @@ vi.mock('../../hooks/useMessageThreads', () => ({
   }),
 }));
 
+vi.mock('../../pages/teacher/hooks/useTeacherDisplayTimeZone', () => ({
+  useTeacherDisplayTimeZone: () => 'America/Los_Angeles',
+}));
+
 vi.mock('../../lib/firebaseConfig', () => ({
   app: {
     options: {
