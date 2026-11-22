@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { TeacherSession } from '../../types/Teacher';
 import {
   classifyTodaySession,
+  partitionTeacherLocalDaySessions,
   summarizeTodaySessions,
 } from '../../pages/teacher/components/today-sessions/todaySessionViewState';
 
@@ -80,6 +81,43 @@ describe('todaySessionViewState', () => {
     const withinHour = Date.parse('2026-09-22T19:15:00+05:30');
 
     expect(classifyTodaySession(row, withinHour).soon).toBe(true);
+  });
+
+  it('keeps the IST previous date in Pacific Today after IST midnight', () => {
+    const now = Date.parse('2026-11-23T00:40:00+05:30');
+    const todayPacific = session('pacific-today', '23:50', '00:25', { date: '2026-11-22' });
+    const yesterdayPending = session('yesterday-unmarked', '08:00', '08:35', { date: '2026-11-22' });
+    const resolvedAbsent = session('recorded-absent', '07:00', '07:35', {
+      date: '2026-11-22', attendance: { 'kid-1': { status: 'absent' } },
+    });
+    const { today, recentPending } = partitionTeacherLocalDaySessions(
+      [todayPacific, yesterdayPending, resolvedAbsent], now, 'America/Los_Angeles',
+    );
+    expect(today.map(row => row.id)).toEqual(['pacific-today']);
+    expect(recentPending.map(row => row.id)).toEqual(['yesterday-unmarked']);
+  });
+
+  it('keeps a class open across Pacific midnight before attendance becomes pending', () => {
+    const now = Date.parse('2026-11-23T00:05:00-08:00');
+    const crossing = session('cross-midnight', '13:20', '13:55', { date: '2026-11-23' });
+    // 13:20 IST = 23:50 Pacific on November 22.
+    const { today, recentPending } = partitionTeacherLocalDaySessions(
+      [crossing], now, 'America/Los_Angeles',
+    );
+    expect(today).toEqual([]);
+    expect(recentPending.map(row => row.id)).toEqual(['cross-midnight']);
+  });
+
+  it('does not recover completed classes, old classes or other teacher days', () => {
+    const now = Date.parse('2026-11-23T13:30:00+05:30');
+    const old = session('old', '08:00', '08:35', { date: '2026-11-19' });
+    const completed = session('completed', '08:00', '08:35', {
+      date: '2026-11-22', status: 'completed',
+    });
+    const { recentPending } = partitionTeacherLocalDaySessions(
+      [old, completed], now, 'America/Los_Angeles',
+    );
+    expect(recentPending).toEqual([]);
   });
 
   it('matches the Sejal audit shape without converting elapsed scheduled rows to completed', () => {

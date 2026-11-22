@@ -10,7 +10,14 @@ import {
 import { db } from '../../../lib/firebaseConfig';
 import { getDocLogged, getDocsLogged } from '../../../lib/firestoreReadLogging';
 import { getCachedTeacherEnrollmentSnapshots, teacherCalendarReadWindow, teacherCalendarSessionReadCache } from './teacherCalendarSessionReadCache';
-import { getSessionStartDate } from '../../../lib/sessionTime';
+import {
+  formatYmdInTimeZone,
+  getSessionStartDate,
+  getViewerTimeZone,
+  indiaDateWindowForLocalDate,
+  sessionIsOnLocalDate,
+  shiftYmd,
+} from '../../../lib/sessionTime';
 import {
   isScheduleExceptionSession,
   isSessionCanonicalForEnrollment,
@@ -41,8 +48,8 @@ interface UseUpcomingSessionsResult {
   refresh: () => void;
 }
 
-export const getDefaultUpcomingSelectedDate = (): string =>
-  new Date(Date.now() + 330 * 60_000 + 86_400_000).toISOString().slice(0, 10);
+export const getDefaultUpcomingSelectedDate = (timeZone = getViewerTimeZone()): string =>
+  shiftYmd(formatYmdInTimeZone(new Date(), timeZone), 1);
 
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
@@ -367,6 +374,7 @@ const withEnrollmentIdentitySnapshots = (
 export const useUpcomingSessions = (
   teacherId?: string,
   selectedDate = getDefaultUpcomingSelectedDate(),
+  timeZone = getViewerTimeZone(),
 ): UseUpcomingSessionsResult => {
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!teacherId);
@@ -399,8 +407,10 @@ export const useUpcomingSessions = (
 
     const baseCollection = collection(db, 'classSessions');
     const targetDate = cleanString(selectedDate) || getDefaultUpcomingSelectedDate();
+    const viewerTimeZone = timeZone;
+    const candidateDates = indiaDateWindowForLocalDate(targetDate);
     const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
-    if (targetDate < todayIst) {
+    if (candidateDates.toYmd < shiftYmd(todayIst, -2)) {
       // Monthly summaries, not historical classSessions, serve history.
       setSessions([]);
       setEnrollmentsById(new Map());
@@ -408,7 +418,7 @@ export const useUpcomingSessions = (
       setIsLoading(false);
       return;
     }
-    const readWindow = teacherCalendarReadWindow(targetDate, todayIst);
+    const readWindow = teacherCalendarReadWindow(candidateDates.toYmd, todayIst);
 
     const buildScopedTeacherQuery = (
       field: 'teacherId' | 'teacherIds' | 'assignedTeacherId' | 'primaryTeacherId' | 'teacherUid' | 'teacher_id',
@@ -455,7 +465,9 @@ export const useUpcomingSessions = (
       );
 
       const next = Array.from(merged.values()).filter((session) =>
-        String(session.date || '') === targetDate &&
+        String(session.date || '') >= candidateDates.fromYmd &&
+        String(session.date || '') <= candidateDates.toYmd &&
+        sessionIsOnLocalDate(session, targetDate, viewerTimeZone) &&
         sessionBelongsToTeacher(session as any, teacherId),
       );
 
@@ -612,7 +624,7 @@ export const useUpcomingSessions = (
       cancelled = true;
       unsubscribe();
     };
-  }, [teacherId, selectedDate, manualRefresh]);
+  }, [teacherId, selectedDate, timeZone, manualRefresh]);
 
   return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh };
 };

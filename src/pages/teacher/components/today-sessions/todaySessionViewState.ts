@@ -1,4 +1,4 @@
-import { getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
+import { formatYmdInTimeZone, getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
 import { TeacherSession } from '../../../../types/Teacher';
 
 export type TodaySessionBadge = {
@@ -121,4 +121,39 @@ export const summarizeTodaySessions = (
     pending,
     completed,
   };
+};
+
+/** Partition teacher-owned sessions by the viewer's day, not the IST service date.
+ * Recent unresolved classes remain reachable when IST advances to tomorrow.
+ */
+export const partitionTeacherLocalDaySessions = (
+  sessions: TeacherSession[],
+  nowMs: number,
+  timeZone: string,
+  pendingLookbackMs = 48 * 60 * 60 * 1000,
+): { today: TeacherSession[]; recentPending: TeacherSession[] } => {
+  const localToday = formatYmdInTimeZone(new Date(nowMs), timeZone);
+  const today: TeacherSession[] = [];
+  const recentPending: TeacherSession[] = [];
+
+  sessions.forEach(session => {
+    const start = getSessionStartDate(session);
+    if (!start) return;
+    if (formatYmdInTimeZone(start, timeZone) === localToday) {
+      today.push(session);
+      return;
+    }
+    const startedAt = start.getTime();
+    const state = classifyTodaySession(session, nowMs);
+    const endAt = getSessionEndDate(session)?.getTime() ?? 0;
+    const isOngoing = startedAt <= nowMs && endAt >= nowMs;
+    if (startedAt >= nowMs - pendingLookbackMs &&
+        startedAt <= nowMs &&
+        !state.resolved &&
+        (state.pending || isOngoing)) {
+      recentPending.push(session);
+    }
+  });
+
+  return { today, recentPending };
 };

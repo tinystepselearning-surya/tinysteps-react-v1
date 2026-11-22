@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 import { useToast } from '@components/hooks/use-toast';
 import { db, functions } from '../../../../lib/firebaseConfig';
 import { useAuthStore } from '../../../../store/useAuthStore';
+import { queryClient } from '../../../../lib/queryClient';
 
 interface TeacherProfileProps {
   teacherId?: string;
@@ -231,6 +232,7 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
         emailAlerts: profile.emailAlerts,
         paymentSchedule: profile.paymentSchedule,
       });
+      queryClient.setQueryData(['teacherProfileTimeZone', resolvedTeacherId], profile.timezone.trim());
       setSavedProfile(profile);
       setIsEditing(false);
       toast({
@@ -347,8 +349,11 @@ export const TeacherProfile: React.FC<TeacherProfileProps> = ({ teacherId }) => 
               value={profile.timezone}
               onChange={(e) => setProfile(p => ({ ...p, timezone: e.target.value }))}
               disabled={!isEditing}
-              placeholder="Asia/Kolkata"
+              placeholder="America/Los_Angeles"
             />
+            <p className="mt-1 text-xs text-slate-500">
+              Use America/Los_Angeles for Pacific time (automatic PST/PDT). Leave blank to use your device time zone.
+            </p>
           </div>
           <div>
             <Label>Emergency Contact Name</Label>

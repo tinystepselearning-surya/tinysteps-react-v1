@@ -15,6 +15,7 @@ import useMessageThreads from '../../hooks/useMessageThreads';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { app } from '../../lib/firebaseConfig';
+import { useTeacherDisplayTimeZone } from './hooks/useTeacherDisplayTimeZone';
 
 // Lazy-loaded views
 const TodaySessionsView = React.lazy(() =>
@@ -166,6 +167,7 @@ export default function TeacherDashboard() {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const teacherId = user?.uid;
+  const displayTimeZone = useTeacherDisplayTimeZone(user?.role === 'teacher' ? teacherId : undefined);
   const { threads: messageThreads } = useMessageThreads({
     userId: user?.uid,
     isAdmin: false,
@@ -294,7 +296,7 @@ export default function TeacherDashboard() {
             <TabsContent value="today">
               {tab === 'today' && (
                 <React.Suspense fallback={<div className="text-sm text-gray-600">Loading sessions…</div>}>
-                  <TodaySessionsView teacherId={teacherId} />
+                  <TodaySessionsView teacherId={teacherId} timeZone={displayTimeZone} />
                 </React.Suspense>
               )}
             </TabsContent>
@@ -303,7 +305,7 @@ export default function TeacherDashboard() {
             <TabsContent value="upcoming">
               {tab === 'upcoming' && (
                 <React.Suspense fallback={<div className="text-sm text-gray-600">Loading upcoming sessions…</div>}>
-                  <UpcomingSessionsView teacherId={teacherId} />
+                  <UpcomingSessionsView teacherId={teacherId} timeZone={displayTimeZone} />
                 </React.Suspense>
               )}
             </TabsContent>
@@ -354,7 +356,7 @@ export default function TeacherDashboard() {
             <TabsContent value="schedule">
               {tab === 'schedule' && (
                 <React.Suspense fallback={<div className="text-sm text-gray-600">Loading schedule…</div>}>
-                  <ScheduleView teacherId={teacherId} />
+                  <ScheduleView teacherId={teacherId} timeZone={displayTimeZone} />
                 </React.Suspense>
               )}
             </TabsContent>

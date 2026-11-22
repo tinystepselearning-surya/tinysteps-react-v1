@@ -49,7 +49,12 @@ export const teacherCalendarReadWindow = (selectedEndYmd: string, todayYmd?: str
   const today = todayYmd || new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
   const horizon = new Date(Date.parse(today + 'T00:00:00.000Z') +
     TEACHER_CALENDAR_READ_AHEAD_DAYS * 86_400_000).toISOString().slice(0, 10);
-  if (selectedEndYmd <= horizon) return { start: today, end: horizon };
+  // Two prior IST dates cover the teacher's local day across midnight and
+  // allow a bounded 48-hour recovery window for unmarked attendance.
+  // This is still one shared read-once query, not a historical scan.
+  const lookback = new Date(Date.parse(today + 'T00:00:00.000Z') -
+    2 * 86_400_000).toISOString().slice(0, 10);
+  if (selectedEndYmd <= horizon) return { start: lookback, end: horizon };
   // Explicitly browsing a remote month still uses no more than 60 days of
   // real exceptions, not an unbounded now-to-arbitrary-future query.
   const boundedStart = new Date(Date.parse(selectedEndYmd + 'T00:00:00.000Z') -

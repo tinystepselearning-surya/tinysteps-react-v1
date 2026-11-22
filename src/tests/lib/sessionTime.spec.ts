@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   formatIndiaTimeRange,
+  formatYmdInTimeZone,
+  indiaDateWindowForLocalDate,
+  sessionIsOnLocalDate,
+  shiftYmd,
   formatSessionDate,
   formatSessionDateTimeRange,
   formatSessionTimeRange,
@@ -84,6 +88,32 @@ describe('sessionTime', () => {
 
     expect(resolveSessionTimeRange(scheduledSession).source).toBe('scheduled_timestamp');
     expect(formatSessionTimeRange(scheduledSession, { timeZone: 'Asia/Kolkata' })).toBe('08:15 - 08:50');
+  });
+
+  it('maps the Pacific local day across IST midnight without changing the service date', () => {
+    const slot = { date: '2026-11-22', startTime: '23:50', endTime: '00:25' };
+    expect(formatSessionDate(slot, { timeZone: 'America/Los_Angeles' })).toBe('Sun 22 Nov');
+    expect(formatSessionTimeRange(slot, { timeZone: 'America/Los_Angeles', includeTimeZone: true }))
+      .toBe('10:20 - 10:55 PST');
+    expect(formatSessionTimeRange(slot, { timeZone: 'Asia/Kolkata', includeTimeZone: true }))
+      .toBe('23:50 - 00:25 IST');
+    expect(sessionIsOnLocalDate(slot, '2026-11-22', 'America/Los_Angeles')).toBe(true);
+    expect(sessionIsOnLocalDate(slot, '2026-11-23', 'America/Los_Angeles')).toBe(false);
+    expect(indiaDateWindowForLocalDate('2026-11-22')).toEqual({
+      fromYmd: '2026-11-21', toYmd: '2026-11-23',
+    });
+    expect(shiftYmd('2026-02-28', 1)).toBe('2026-03-01');
+  });
+
+  it('automatically handles the Pacific daylight saving transition', () => {
+    const winter = { date: '2026-03-07', startTime: '23:00', endTime: '23:35' };
+    const summer = { date: '2026-03-09', startTime: '08:00', endTime: '08:35' };
+    expect(formatSessionTimeRange(winter, { timeZone: 'America/Los_Angeles', includeTimeZone: true }))
+      .toBe('09:30 - 10:05 PST');
+    expect(formatSessionTimeRange(summer, { timeZone: 'America/Los_Angeles', includeTimeZone: true }))
+      .toBe('19:30 - 20:05 PDT');
+    expect(formatYmdInTimeZone(new Date('2026-11-22T18:35:00.000Z'), 'America/Los_Angeles'))
+      .toBe('2026-11-22');
   });
 
   it('parses serialized Firestore timestamp-like objects with _seconds fields', () => {

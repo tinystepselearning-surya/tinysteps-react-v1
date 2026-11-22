@@ -5,7 +5,15 @@ import { Input } from '@components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@components/ui/select';
 import { Badge } from '@components/ui/badge';
 import { getDefaultUpcomingSelectedDate, useUpcomingSessions } from '../../hooks/useUpcomingSessions';
-import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
+import {
+  INDIA_TIME_ZONE,
+  formatSessionDate,
+  formatSessionTimeRange,
+  getSessionStartDate,
+  getViewerTimeZone,
+  indiaDateWindowForLocalDate,
+  sessionIsOnLocalDate,
+} from '../../../../lib/sessionTime';
 import { TeacherSession } from '../../../../types/Teacher';
 import { CanvaLessonPlanModal } from '../lesson-plan/CanvaLessonPlanModal';
 import { FileText } from 'lucide-react';
@@ -25,6 +33,7 @@ import {
 
 interface UpcomingSessionsViewProps {
   teacherId?: string;
+  timeZone?: string;
 }
 
 export const getSessionInlineStudentNames = (session: TeacherSession): string[] => {
@@ -55,12 +64,22 @@ const readLookupName = (row: Record<string, unknown>): string => {
   return '';
 };
 
-export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId }) => {
-  const [draftSelectedDate, setDraftSelectedDate] = useState(getDefaultUpcomingSelectedDate);
-  const [appliedSelectedDate, setAppliedSelectedDate] = useState(getDefaultUpcomingSelectedDate);
+export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teacherId, timeZone }) => {
+  const viewerTimeZone = timeZone || getViewerTimeZone();
+  const [draftSelectedDate, setDraftSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
+  const [appliedSelectedDate, setAppliedSelectedDate] = useState(() => getDefaultUpcomingSelectedDate(viewerTimeZone));
+  const [selectionTimeZone, setSelectionTimeZone] = useState(viewerTimeZone);
+  useEffect(() => {
+    if (selectionTimeZone === viewerTimeZone) return;
+    const nextDate = getDefaultUpcomingSelectedDate(viewerTimeZone);
+    setDraftSelectedDate(nextDate);
+    setAppliedSelectedDate(nextDate);
+    setSelectionTimeZone(viewerTimeZone);
+  }, [selectionTimeZone, viewerTimeZone]);
   const { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh: refreshSessions } = useUpcomingSessions(
     teacherId,
     appliedSelectedDate,
+    viewerTimeZone,
   );
   const { students, refresh: refreshEnrollments } = useTeacherFilteredStudents();
   const refreshCalendar = () => {
@@ -89,11 +108,12 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
   // An upcoming calendar date is driven by Student Management recurrence even
   // when the old future classSessions have all been cleared.
   const projectedUpcoming = useMemo<TeacherSession[]>(() => {
+    const candidateDates = indiaDateWindowForLocalDate(appliedSelectedDate);
     const projected = buildRollingScheduleCalendarProjections({
       enrollments:teacherEnrollments,
       realSessions:sessions as unknown as Record<string,unknown>[],
-      fromYmd:appliedSelectedDate,toYmd:appliedSelectedDate,
-    });
+      fromYmd:candidateDates.fromYmd,toYmd:candidateDates.toYmd,
+    }).filter(row => sessionIsOnLocalDate(row, appliedSelectedDate, viewerTimeZone));
     return projected.map(row=>({
       id:row.id,enrollmentId:row.enrollmentId,
       teacherId:row.teacherId || teacherId || '',
@@ -107,7 +127,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
       startAt:Timestamp.fromDate(row.startAt),endAt:Timestamp.fromDate(row.endAt),
       source:row.source,status:'scheduled',
     }));
-  },[appliedSelectedDate,sessions,teacherEnrollments,teacherId]);
+  },[appliedSelectedDate,sessions,teacherEnrollments,teacherId,viewerTimeZone]);
 
   const visibleSessions=useMemo(
     ()=>[...sessions,...projectedUpcoming],
@@ -296,10 +316,10 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
     return [...resolvedSessions]
       .filter(({ session, resolved }) => {
         const displayDate = formatSessionDate(session, {
-          timeZone: INDIA_TIME_ZONE,
+          timeZone: viewerTimeZone,
           dateOptions: { weekday: 'short', day: '2-digit', month: 'short' },
         });
-        const displayTime = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE });
+        const displayTime = formatSessionTimeRange(session, { timeZone: viewerTimeZone });
 
         const haystack = [
           session.courseName || '',
@@ -323,7 +343,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
         const bStart = getSessionStartDate(b.session)?.getTime() ?? Number.MAX_SAFE_INTEGER;
         return aStart - bStart;
       });
-  }, [resolvedSessions, normalizedSearch, courseFilter]);
+  }, [resolvedSessions, normalizedSearch, courseFilter, viewerTimeZone]);
 
   if (isLoading) {
     return (
@@ -348,7 +368,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
             <Input
               type="date"
-              aria-label="Upcoming session date"
+              aria-label="Upcoming session date in your local time zone"
               value={draftSelectedDate}
               onChange={(e) => setDraftSelectedDate(e.target.value)}
               className="h-10 md:w-[220px]"
@@ -400,6 +420,9 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
               </SelectContent>
             </Select>
           </div>
+          <p className="mt-2 text-xs text-slate-600">
+            Selected date is in {viewerTimeZone}. Class times include IST for reference.
+          </p>
         </div>
       </Card>
 
@@ -433,13 +456,18 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
                     <div className="grid grid-cols-[1fr_0.9fr_1.2fr_1fr_0.8fr_260px] items-center gap-3">
                       <div className="text-sm font-medium text-slate-700">
                         {formatSessionDate(session, {
-                          timeZone: INDIA_TIME_ZONE,
+                          timeZone: viewerTimeZone,
                           dateOptions: { weekday: 'short', day: '2-digit', month: 'short' },
                         })}
                       </div>
 
                       <div className="text-sm font-medium text-slate-900">
-                        {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                        <div>{formatSessionTimeRange(session, { timeZone: viewerTimeZone, includeTimeZone: true })}</div>
+                        {viewerTimeZone !== INDIA_TIME_ZONE && (
+                          <div className="text-xs text-slate-500">
+                            {formatSessionDate(session, { timeZone: INDIA_TIME_ZONE })} · {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE, includeTimeZone: true })}
+                          </div>
+                        )}
                       </div>
 
                       <div className="truncate text-sm font-semibold text-slate-900">
@@ -489,7 +517,7 @@ export const UpcomingSessionsView: React.FC<UpcomingSessionsViewProps> = ({ teac
             setSelectedSession(null);
           }}
           lessonPlanUrl={selectedSession.lessonPlanUrl}
-          sessionTitle={`${selectedSession.courseName} - ${formatSessionTimeRange(selectedSession, { timeZone: INDIA_TIME_ZONE })}`}
+          sessionTitle={`${selectedSession.courseName} - ${formatSessionTimeRange(selectedSession, { timeZone: viewerTimeZone, includeTimeZone: true })}`}
           courseName={selectedSession.courseName}
         />
       )}

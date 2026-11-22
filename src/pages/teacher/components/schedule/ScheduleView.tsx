@@ -25,7 +25,7 @@ import { Timestamp } from 'firebase/firestore';
 import { auth } from '../../../../lib/firebaseConfig';
 import { resolveSessionJoinLink } from '../../../../lib/sessionJoinLink';
 import { toast } from '@components/hooks/use-toast';
-import { INDIA_TIME_ZONE, formatSessionTimeRange } from '../../../../lib/sessionTime';
+import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, formatYmdInTimeZone, getViewerTimeZone } from '../../../../lib/sessionTime';
 import {
   buildRollingScheduleCalendarProjections,
   isRollingScheduleProjection,
@@ -43,11 +43,11 @@ import {
   addDays,
   subDays,
   eachDayOfInterval,
-  isToday,
 } from 'date-fns';
 
 interface ScheduleViewProps {
   teacherId?: string;
+  timeZone?: string;
 }
 
 type TopicUpdatePayload = {
@@ -198,8 +198,17 @@ const completeSessionViaBackend = async (
   });
 };
 
-export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+const getIndiaCalendarDay = (): Date => {
+  const ymd = formatYmdInTimeZone(new Date(), INDIA_TIME_ZONE);
+  const [year, month, day] = ymd.split('-').map(Number);
+  return new Date(year, month - 1, day);
+};
+
+export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId, timeZone }) => {
+  const viewerTimeZone = timeZone || getViewerTimeZone();
+  const indiaTodayYmd = formatYmdInTimeZone(new Date(), INDIA_TIME_ZONE);
+  // My Schedule and ad hoc booking intentionally remain in canonical IST.
+  const [currentDate, setCurrentDate] = useState(getIndiaCalendarDay);
   const [view, setView] = useState<'month' | 'week' | 'workweek' | 'day'>('day');
   const [selectedSession, setSelectedSession] = useState<TeacherSession | null>(null);
   const [selectedStudentId, setSelectedStudentId] = useState<string>('all');
@@ -532,7 +541,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     let absentMissed = 0;
     let rescheduled = 0;
     let upcoming = 0;
-    const todayYmd = format(new Date(), 'yyyy-MM-dd');
+    const todayYmd = indiaTodayYmd;
 
     filteredSessions.forEach((session) => {
       const tone = resolveSessionBadgeTone(session);
@@ -543,7 +552,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     });
 
     return { completedPresent, absentMissed, rescheduled, upcoming };
-  }, [filteredSessions]);
+  }, [filteredSessions, indiaTodayYmd]);
 
   const sessionsByDate = useMemo(
     () => filteredSessions.reduce((acc, session) => {
@@ -652,7 +661,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
     }
   };
 
-  const handleToday = () => setCurrentDate(new Date());
+  const handleToday = () => setCurrentDate(getIndiaCalendarDay());
 
   const getTitle = () => {
     if (view === 'month') {
@@ -686,7 +695,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-900">Teacher Schedule</h2>
             <p className="mt-1 text-sm text-slate-500">
-              Classes follow the saved student timetable. Join Teams or mark Present/Absent.
+              Calendar dates and ad hoc booking times use IST. Class cards also show your local time ({viewerTimeZone}).
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -766,7 +775,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 const daySessions = sessionsByDate[dateStr] || [];
                 const dayOfWeek = day.getDay();
                 const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-                const dayCellToneClass = isToday(day)
+                const dayCellToneClass = dateStr === indiaTodayYmd
                   ? 'border-sky-300 bg-gradient-to-br from-sky-100 to-cyan-50 shadow-sm'
                   : daySessions.length > 0
                     ? 'border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/80'
@@ -810,7 +819,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                 <div
                   key={day.toString()}
                   className={`rounded-xl border p-3 ${
-                    isToday(day)
+                    dateStr === indiaTodayYmd
                       ? 'border-sky-200 bg-sky-50/50 shadow-sm'
                       : daySessions.length > 0
                         ? 'border-slate-200 bg-white shadow-sm'
@@ -837,7 +846,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                           title={attendanceFinalised ? ATTENDANCE_FINALISED_MESSAGE : undefined}
                         >
                           <div className="font-medium">
-                            {sessionBadgeToneLabel[badgeTone]} · {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                            {sessionBadgeToneLabel[badgeTone]} · {formatSessionDate(session, { timeZone: viewerTimeZone })} · {formatSessionTimeRange(session, { timeZone: viewerTimeZone, includeTimeZone: true })}
+                          {viewerTimeZone !== INDIA_TIME_ZONE && (
+                            <span className="block text-[11px] opacity-75">
+                              IST: {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                            </span>
+                          )}
                           </div>
                           <div className="mt-1 truncate text-[11px]">{kidNames}</div>
                           {courseLabel ? <div className="mt-1 truncate text-[11px] opacity-80">{truncateLabel(courseLabel, 20)}</div> : null}
@@ -884,7 +898,12 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-slate-900">
-                        {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                        {formatSessionDate(session, { timeZone: viewerTimeZone })} · {formatSessionTimeRange(session, { timeZone: viewerTimeZone, includeTimeZone: true })}
+                          {viewerTimeZone !== INDIA_TIME_ZONE && (
+                            <span className="block text-[11px] opacity-75">
+                              IST: {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                            </span>
+                          )}
                       </div>
                       <div className="mt-1 text-sm text-slate-600">{kidNames}</div>
                       {courseLabel ? <div className="mt-1 text-xs text-slate-500">{truncateLabel(courseLabel, 30)}</div> : null}
@@ -919,7 +938,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
       <Dialog open={adHocOpen} onOpenChange={setAdHocOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add ad hoc class · {format(currentDate, 'd MMM yyyy')}</DialogTitle>
+            <DialogTitle>Add ad hoc class · {format(currentDate, 'd MMM yyyy')} IST</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -960,6 +979,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({ teacherId }) => {
         onClose={() => setSelectedSession(null)}
         onSubmit={handleAttendanceSubmit}
         attendanceOnly
+        timeZone={viewerTimeZone}
       />
     </div>
   );

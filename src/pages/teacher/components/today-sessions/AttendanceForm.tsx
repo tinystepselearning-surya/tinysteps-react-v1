@@ -11,7 +11,7 @@ import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import { INDIA_TIME_ZONE, formatSessionTimeRange, getSessionStartDate } from '../../../../lib/sessionTime';
+import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionStartDate, getViewerTimeZone } from '../../../../lib/sessionTime';
 import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
@@ -20,6 +20,7 @@ import {
 interface AttendanceFormProps {
   open: boolean;
   session: TeacherSession | null;
+  timeZone?: string;
   onClose: () => void;
   onSubmit: (data: {
     attendance: Record<string, { status: AttendanceStatus; notes?: string }>;
@@ -383,7 +384,12 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = (props) => {
             <div>
               <p className="text-sm font-medium">{session.courseName || session.courseId || 'Course'}</p>
               <p className="text-xs text-muted-foreground">
-                {formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE })}
+                {formatSessionDate(session, { timeZone: props.timeZone || getViewerTimeZone() })} · {formatSessionTimeRange(session, { timeZone: props.timeZone || getViewerTimeZone(), includeTimeZone: true })}
+                {(props.timeZone || getViewerTimeZone()) !== INDIA_TIME_ZONE && (
+                  <span className="ml-2 text-xs text-slate-500">
+                    ({formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE, includeTimeZone: true })})
+                  </span>
+                )}
               </p>
             </div>
 

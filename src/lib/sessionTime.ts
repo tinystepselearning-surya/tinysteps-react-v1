@@ -150,7 +150,7 @@ function formatInTimeZone(
   }).format(date);
 }
 
-function formatYmdInTimeZone(date: Date, timeZone: string): string {
+export function formatYmdInTimeZone(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-GB', {
     timeZone,
     year: 'numeric',
@@ -216,10 +216,12 @@ function deriveEndAt(
   return null;
 }
 
-function getTimeZoneLabel(date: Date, timeZone: string, locale: string): string {
+function getTimeZoneLabel(date: Date, timeZone: string): string {
   if (timeZone === INDIA_TIME_ZONE) return 'IST';
 
-  const parts = new Intl.DateTimeFormat(locale, {
+  // en-GB commonly returns GMT-8/GMT-7 instead of PST/PDT.
+  // Use en-US for an explicit local daylight-saving abbreviation.
+  const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
     timeZoneName: 'short',
   }).formatToParts(date);
@@ -227,9 +229,33 @@ function getTimeZoneLabel(date: Date, timeZone: string, locale: string): string 
   return parts.find((part) => part.type === 'timeZoneName')?.value || '';
 }
 
+/** Add calendar days to an ISO day key, without using the browser's timezone. */
+export function shiftYmd(dateKey: string, deltaDays: number): string {
+  if (!YMD_RE.test(dateKey) || !Number.isInteger(deltaDays)) return '';
+  const start = Date.parse(`${dateKey}T00:00:00.000Z`);
+  if (!Number.isFinite(start)) return '';
+  const shifted = new Date(start + deltaDays * 86_400_000);
+  return shifted.toISOString().slice(0, 10);
+}
+
+/** An IANA local calendar date can span parts of three IST dates. */
+export function indiaDateWindowForLocalDate(dateKey: string): { fromYmd: string; toYmd: string } {
+  return { fromYmd: shiftYmd(dateKey, -1), toYmd: shiftYmd(dateKey, 1) };
+}
+
+export function sessionIsOnLocalDate(
+  session: SessionTimeLike,
+  dateKey: string,
+  timeZone: string,
+): boolean {
+  const start = getSessionStartDate(session);
+  return Boolean(start && formatYmdInTimeZone(start, timeZone) === dateKey);
+}
+
 export function getViewerTimeZone(): string {
   try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    return zone === 'Asia/Calcutta' ? INDIA_TIME_ZONE : zone;
   } catch {
     return 'UTC';
   }
@@ -309,7 +335,7 @@ export function formatSessionTimeRange(
 
   const startLabel = formatInTimeZone(startAt, timeZone, locale, timeOptions);
   const endLabel = endAt ? formatInTimeZone(endAt, timeZone, locale, timeOptions) : '';
-  const zoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone, locale) : '';
+  const zoneLabel = includeTimeZone ? getTimeZoneLabel(startAt, timeZone) : '';
   const legacyLabel = includeLegacyLabel && source === 'legacy_fields' ? ' (legacy schedule)' : '';
 
   const timeLabel = endLabel ? `${startLabel} - ${endLabel}` : startLabel;

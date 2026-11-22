@@ -6,7 +6,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../lib/firebaseConfig';
 import { toast } from '@components/hooks/use-toast';
 import { useAuthStore } from '../../../../store/useAuthStore';
-import { INDIA_TIME_ZONE, formatSessionTimeRange, getSessionEndDate, getSessionStartDate } from '../../../../lib/sessionTime';
+import { INDIA_TIME_ZONE, formatSessionDate, formatSessionTimeRange, getSessionEndDate, getSessionStartDate, getViewerTimeZone } from '../../../../lib/sessionTime';
 import {
   ATTENDANCE_FINALISED_MESSAGE,
   getTeacherAttendanceCorrectionCutoffMillis,
@@ -21,10 +21,11 @@ import { resolveTodaySessionStatusBadge } from './todaySessionViewState';
 interface SessionCardProps {
   session: TeacherSession;
   studentNames?: string[];
+  timeZone?: string;
   onMarkAttendance: (session: TeacherSession) => void;
 }
 
-export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance }) => {
+export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames, onMarkAttendance, timeZone }) => {
   const ATTENDANCE_OPEN_DELAY_MS = 30 * 60 * 1000;
   const { user } = useAuthStore();
   const [isStartingClass, setIsStartingClass] = useState(false);
@@ -175,7 +176,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
       ? resolvedStudentNames.join(', ')
       : 'Student';
 
-  const timeText = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE });
+  const viewerTimeZone = timeZone || getViewerTimeZone();
+  const localDateText = formatSessionDate(session, { timeZone: viewerTimeZone });
+  const localTimeText = formatSessionTimeRange(session, { timeZone: viewerTimeZone, includeTimeZone: true });
+  const indiaTimeText = formatSessionTimeRange(session, { timeZone: INDIA_TIME_ZONE, includeTimeZone: true });
 
   return (
     <div className="border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50/40">
@@ -203,7 +207,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({ session, studentNames,
         </div>
 
         <div className="min-w-0">
-          <div className="text-sm font-medium text-slate-900">{timeText}</div>
+          <div className="text-sm font-medium text-slate-900">{localDateText} · {localTimeText}</div>
+          {viewerTimeZone !== INDIA_TIME_ZONE && (
+            <div className="text-xs text-slate-500">{indiaTimeText}</div>
+          )}
         </div>
 
         <div className="min-w-0">
