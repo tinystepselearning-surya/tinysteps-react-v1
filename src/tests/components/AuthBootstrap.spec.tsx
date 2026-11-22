@@ -46,7 +46,7 @@ vi.mock('../../lib/nativeAuthDiagnostics', () => ({
 import AuthBootstrap from '../../components/common/AuthBootstrap';
 
 describe('AuthBootstrap', () => {
-  let authCallback: ((user: FirebaseUserFixture | null) => void) | undefined;
+  let authCallback: ((user: FirebaseUserFixture | null) => Promise<void> | void) | undefined;
 
   beforeEach(() => {
     queryClient.removeQueries({ queryKey: ['teacherProfileTimeZone'] });
@@ -79,7 +79,11 @@ describe('AuthBootstrap', () => {
     queryClient.setQueryData(['teacherProfileTimeZone', 'teacher-1'], 'America/Los_Angeles');
     render(<AuthBootstrap />);
     await waitFor(() => expect(authCallback).toBeTypeOf('function'));
-    act(() => authCallback?.(null));
+    // onAuthStateChanged uses an async callback: always await React's act()
+    // so cleanup and subsequent tests do not inherit an unflushed act scope.
+    await act(async () => {
+      await authCallback?.(null);
+    });
     expect(queryClient.getQueryData(['teacherProfileTimeZone', 'teacher-1'])).toBeUndefined();
   });
 
@@ -94,7 +98,7 @@ describe('AuthBootstrap', () => {
     render(<AuthBootstrap />);
     await waitFor(() => expect(authCallback).toBeTypeOf('function'));
     await act(async () => {
-      authCallback?.({
+      await authCallback?.({
         uid: 'teacher-2',
         role: 'teacher',
         email: 'teacher2@example.com',
