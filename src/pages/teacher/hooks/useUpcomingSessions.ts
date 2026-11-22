@@ -48,8 +48,8 @@ interface UseUpcomingSessionsResult {
   refresh: () => void;
 }
 
-export const getDefaultUpcomingSelectedDate = (): string =>
-  shiftYmd(formatYmdInTimeZone(new Date(), getViewerTimeZone()), 1);
+export const getDefaultUpcomingSelectedDate = (timeZone = getViewerTimeZone()): string =>
+  shiftYmd(formatYmdInTimeZone(new Date(), timeZone), 1);
 
 const cleanString = (value: unknown): string => {
   return typeof value === 'string' ? value.trim() : '';
@@ -374,6 +374,7 @@ const withEnrollmentIdentitySnapshots = (
 export const useUpcomingSessions = (
   teacherId?: string,
   selectedDate = getDefaultUpcomingSelectedDate(),
+  timeZone = getViewerTimeZone(),
 ): UseUpcomingSessionsResult => {
   const [sessions, setSessions] = useState<TeacherSession[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(!!teacherId);
@@ -406,7 +407,7 @@ export const useUpcomingSessions = (
 
     const baseCollection = collection(db, 'classSessions');
     const targetDate = cleanString(selectedDate) || getDefaultUpcomingSelectedDate();
-    const viewerTimeZone = getViewerTimeZone();
+    const viewerTimeZone = timeZone;
     const candidateDates = indiaDateWindowForLocalDate(targetDate);
     const todayIst = new Date(Date.now() + 330 * 60_000).toISOString().slice(0, 10);
     if (candidateDates.toYmd < shiftYmd(todayIst, -2)) {
@@ -623,7 +624,7 @@ export const useUpcomingSessions = (
       cancelled = true;
       unsubscribe();
     };
-  }, [teacherId, selectedDate, manualRefresh]);
+  }, [teacherId, selectedDate, timeZone, manualRefresh]);
 
   return { sessions, isLoading, error, enrollmentsById, entityDocById, deniedLookups, refresh };
 };
