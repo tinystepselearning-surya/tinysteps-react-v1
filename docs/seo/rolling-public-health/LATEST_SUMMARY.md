@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 7
+
+- Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Previous 23 November coverage: 60 distinct attempted URLs; previous-day timestamps excluded.
+- **23 November distinct provider-retrieval attempts: 70/202 (34.65%); remaining 132.** Rows 61–70 individually retrieved at exact public URLs: speaking games, letter sounds, sound listening, word building, spelling, sentence making, reading fluency, grammar, speaking practice and letter tracing. All ten returned substantive page-specific extracted text (web.open turn628996view0–turn628996view9). UTC evidence-recording markers: 2026-11-23T00:47:54.109Z through 2026-11-23T00:47:54.118Z; these are logging markers, not measured origin response times. Provider reported cached crawl as yesterday.
+- **Fully origin-verified: 0/202.** Origin HTTP status, final redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED. No verified dated production transition. Existing provider content on speaking-games collection lists four games and zero playable now; individual speaking-practice page states COMING SOON. These are descriptive content observations, not established regressions. 
+- GitHub Actions API returned **zero in-progress repository runs**. Legacy audit workflow administrative disabled state not independently confirmed; user-confirmed disabled state remains operating assumption. CHANGES.md unchanged; no production or workflow modifications.
+- Next eligible batch: slot 8, rows 71–80.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 6
 
 - Tracker validated before batch: **202 records, 202 unique URLs, 22 correctly aligned columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Prior 23 November coverage: 50 distinct attempted URLs; prior-day evidence excluded.
