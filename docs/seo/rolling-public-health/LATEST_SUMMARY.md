@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 16
+
+- Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12. Previously recorded today: 150 distinct URLs; previous-day records excluded.
+- **23 November provider-retrieval attempts: 160/202 (79.21%); remaining 42.** Rows 151–160 individually retrieved by exact public URL via web.open turn327303view0–turn327303view9. All ten returned substantive page-specific extracted text and matching H1 headings. UTC evidence-recording timestamps 2026-11-23T09:45:41.453Z–2026-11-23T09:45:41.453Z; these are logging timestamps, **not measured origin response times**.
+- Topics: parent phonics guidance, letter-sound games, long vowels, multisyllabic reading, r-controlled vowels, beginner sequencing, SATPIN, CBSE scope and sequence, summer phonics practice and teacher training for schools.
+- **Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, initial raw HTML, JSON-LD and bot access remain **UNVERIFIED**. Provider text is partial verification only. No verified before/after regression or improvement; CHANGES.md unchanged.
+- GitHub Actions repository in-progress runs query returned zero; administrative disablement of legacy workflow not independently verified. User-confirmed disablement remains operating assumption; no GitHub workflow triggered.
+- Next eligible batch: **slot 17, rows 161–170**. No production settings changed.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 15
 
 - Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12. Previously recorded today: 140 distinct URLs; previous-day records excluded.
