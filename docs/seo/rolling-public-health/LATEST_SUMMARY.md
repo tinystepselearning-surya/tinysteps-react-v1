@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 19
+
+- Validated 202 records, 202 unique URLs, 22 columns; slots 1–19 contain 10 each, slot 20 contains 12. Before this batch, 180 distinct URLs had 23 November IST evidence dates; prior-day rows excluded. All current CSV rows passed 22-column and timestamp parsing checks.
+- **Provider-text retrievals today: 190/202 (94.06%); 12 remaining.** Exact public URLs 181–190 individually retrieved via web.open turn268197view0–turn268197view9. All ten returned matching H1 and substantive page-specific extracted content. Evidence-recording UTC markers 2026-11-23T12:42:49.688Z–2026-11-23T12:42:49.697Z; **not independently measured per-URL HTTP request times**.
+- Topics: six parent/research blog guides about phonics, reading comprehension and public speaking, plus four commercial course pages (Foundation, Early and Advanced Phonics, Beginner Grammar). All four course pages visibly advertise ₹400/class and a free 35-minute demo in provider-extracted text.
+- **Fully origin-verified: 0/202.** HTTP status, final redirects, canonical, robots/noindex, initial HTML, JSON-LD and bot access remain UNVERIFIED. No verified before/after regression or improvement; CHANGES.md unchanged.
+- GitHub Actions repository in-progress runs API returned zero; legacy workflow administrative disabled state not independently verified. No workflow triggered and no production settings changed.
+- Next eligible batch: **slot 20, rows 191–202**.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 18
 
 - Validated 202 records, 202 unique URLs, 22 columns; slots 1–19 contain 10 each, slot 20 contains 12. Before this batch, 170 distinct URLs had 23 November IST evidence dates; prior-day rows excluded.
