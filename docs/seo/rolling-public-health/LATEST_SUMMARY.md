@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 15
+
+- Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12. Previously recorded today: 140 distinct URLs; previous-day records excluded.
+- **23 November provider-retrieval attempts: 150/202 (74.26%); remaining 52.** Rows 141–150 individually retrieved by exact public URL via web.open turn914102view0–turn914102view9. All ten returned substantive page-specific extracted text and matching H1 headings. UTC evidence-recording markers 2026-11-23T08:39:55.672Z–2026-11-23T08:39:55.681Z; these are logging markers, **not measured origin response times**.
+- Topics: school-reopening English readiness, long vowels, choosing online English/phonics classes, phonics games, home phonics and blending routines, comprehension and phonics assessment.
+- **Fully origin-verified: 0/202.** HTTP status, redirects, canonical, robots/noindex, initial raw HTML, JSON-LD and bot access remain **UNVERIFIED**. Provider text is partial verification only, not production-origin health certification. No verified before/after regression or improvement; CHANGES.md unchanged.
+- GitHub Actions repository in-progress runs query returned zero; administrative disablement of legacy workflow could not be independently verified (workflow-specific endpoint unavailable). User-confirmed disablement remains the operating assumption; no GitHub workflow was triggered.
+- Next eligible batch: **slot 16, rows 151–160**. No production settings changed.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 14
 
 - Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12. Previously recorded on 23 November: 130 distinct URLs; previous-day records excluded.
