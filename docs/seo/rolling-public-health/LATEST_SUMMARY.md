@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 13
+
+- Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 have 10 URLs each and slot 20 has 12. Previously checked on 23 November: 120 distinct URLs; prior-day timestamps excluded.
+- **23 November provider-retrieval attempts: 130/202 (64.36%); remaining 72.** Rows 121–130 retrieved individually using exact public URLs via web.open turn541757view0–turn541757view9. All ten returned substantive page-specific extracted text. UTC evidence-recording markers 2026-11-23T06:45:52.585Z through 2026-11-23T06:45:52.594Z (not measured origin response times).
+- Topics: grammar editing, grammar foundations, story cards, subject-verb agreement, tenses, orthographic mapping, blending, phonics timelines, reading confidence and phonics-class transfer. No verified production regression or improvement.
+- **Fully origin-verified: 0/202.** Origin HTTP status, redirect chain, canonical, robots/noindex, initial raw HTML, JSON-LD and bot accessibility remain UNVERIFIED. No verified transition; CHANGES.md unchanged.
+- GitHub Actions API returned zero in-progress repository runs. Legacy workflow administrative disabled state could not independently be read; user's explicit disable confirmation remains operating assumption. No workflow or production changes.
+- Next eligible batch: slot 14, rows 131–140.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 12
 
 - Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**; slots 1–19 contain 10 URLs each and slot 20 contains 12. Prior current-day retrieval attempts: 110 distinct URLs; 22 November timestamps excluded.
