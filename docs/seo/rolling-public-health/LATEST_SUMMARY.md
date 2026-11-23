@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 24 November 2026 IST, slot 1
+
+- Validated 202 tracker rows, 202 unique URLs, 22 CSV columns, slots 1–19 at 10 URLs and slot 20 at 12. Before this run, **0 URLs** had 24 November IST evidence dates; yesterday's 202 records were excluded from today's coverage.
+- **24 November provider-text retrievals: 10/202 (4.95%); 192 remaining. Fully origin-verified: 0/202.** Exact public URLs in rows 1–10 individually retrieved via provider web.open `turn507693view0`–`turn507693view9`. Each returned a page-specific H1 and substantive extracted text. The homepage returned H1 **"Online English Classes for Kids."**; the phonics hub returned **"Phonics & Reading Resources"**; the remaining pages included the blog, resource directory and six specific phonics pattern guides.
+- Provider reported text/html and crawled today or yesterday, **not** an independently measured live origin HTTP response. Origin status, redirects, canonical, robots/noindex, raw initial HTML, JSON-LD and bot access remain **UNVERIFIED**. UTC evidence-recording markers were logged as `2026-11-23T18:44:36.791Z` for all ten records; **distinct per-URL observation/request timestamps could not be established**. These are recording markers, not origin response times.
+- GitHub Actions in-progress repository runs query returned **zero**; administrative disabled state of the legacy workflow could not be independently verified. The user-confirmed disablement remains the operating assumption. No workflow was run or enabled.
+- No verified before/after production regression or improvement; `CHANGES.md` unchanged. Next eligible scheduled batch: **slot 2, rows 11–20**. No source, Firebase, Hosting or production changes.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 21 reconciliation
 
 - Re-read the current tracker: **202 records, 202 distinct URLs, 22 columns**, with 10 URLs in each slot 1–19 and 12 in slot 20. All 202 rows carry 23 November IST evidence dates; all timestamps parse. **No new URL retrievals or origin HTTP checks were performed during this reconciliation.**
