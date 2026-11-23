@@ -1,3 +1,14 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 10
+
+- Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Prior current-day retrieval-attempt coverage: 90 distinct URLs; previous-day records excluded.
+- **23 November distinct provider-retrieval attempts: 100/202 (49.50%); remaining 102.** Rows 91–100 individually retrieved at exact public URLs, covering reading difficulty, slow reading, speaking confidence, reading fluency, confidence building, English foundations, and four summer learning pages. All ten returned substantive page-specific extracted text (web.open turn660380view0–turn660380view9). UTC evidence-recording markers: 2026-11-23T03:40:27.526Z through 2026-11-23T03:40:27.535Z; these are logging markers, not measured origin response times.
+- Summer Camp 2026 pages explicitly identify the season as concluded on 13 June 2026 and describe themselves as historical/evergreen resources, not active enrolment pages. No new verified production regression or improvement.
+- **Fully origin-verified: 0/202.** Origin HTTP status, redirect chain, canonical, robots/noindex, raw initial HTML, JSON-LD and bot accessibility remain UNVERIFIED. No dated verified production transition; CHANGES.md unchanged.
+- GitHub Actions API returned **zero in-progress repository runs**. Legacy audit workflow administrative disabled state not independently confirmed; user-confirmed disabled state remains operating assumption. No production or workflow modifications.
+- Next eligible batch: slot 11, rows 101–110.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 23 November 2026 IST, slot 9
 
 - Tracker validated before batch: **202 records, 202 unique URLs, 22 columns**, slots 1–19 at 10 URLs each and slot 20 at 12. Previous current-day coverage 80 distinct retrieval attempts; prior-day checks excluded.
