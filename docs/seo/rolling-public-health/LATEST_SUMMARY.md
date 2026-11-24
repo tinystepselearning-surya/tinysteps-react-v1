@@ -1,3 +1,13 @@
+# Tiny Steps rolling public SEO/AEO/GEO audit — 24 November 2026 IST, slot 13 recovery
+
+- Validated 202 unique URLs, 22 columns, correct slot allocations and date alignment; prior coverage 120/202.
+- Provider-text retrieval coverage: **130/202 (64.36%); 72 remaining. Fully origin-verified today: 0/202.** Rows 121–130 returned substantive extracted text, turn449289view0–turn449289view9, crawled yesterday. Shared evidence-recording UTC 2026-11-24T09:44:21.597Z; individual request times unavailable.
+- Origin HTTP, redirects, canonical, robots/noindex, raw HTML, JSON-LD and crawler access UNVERIFIED. No verified production transition.
+- Workflow administrative state and concurrent runs unavailable through connector; relying on user-confirmed disablement. No workflow started or enabled.
+- CHANGES.md unchanged. Next recovery slot 14, rows 131–140.
+
+---
+
 # Tiny Steps rolling public SEO/AEO/GEO audit — 24 November 2026 IST, slot 12 recovery
 
 - Validated 202 unique URLs, 22 columns, correct slots and date/timestamp alignment. Prior coverage 110/202.
