@@ -15,7 +15,7 @@ const only=(o,keys)=>record(o)&&Object.keys(o).every(k=>keys.includes(k));
 function signature(index,source){
   requireOK(only(index,source?['collectionGroup','queryScope','fields','density','apiScope']:['name','queryScope','fields','density','apiScope','state']));
   requireOK(['COLLECTION','COLLECTION_GROUP'].includes(index.queryScope));
-  requireOK((index.density??'SPARSE_ALL')==='SPARSE_ALL'&&(index.apiScope??'ANY_API')==='ANY_API');
+  requireOK((!Object.hasOwn(index,'density')||index.density==='SPARSE_ALL')&&(!Object.hasOwn(index,'apiScope')||index.apiScope==='ANY_API'));
   requireOK(Array.isArray(index.fields)&&index.fields.length>=2&&index.fields.length<=100);
   const seen=new Set();
   const fields=index.fields.map((f,i)=>{
@@ -61,7 +61,7 @@ export function reconcileIndexEvidence(source,evidence){
     try{
       requireOK(only(page,['indexes','nextPageToken'])&&(!Object.hasOwn(page,'nextPageToken')||typeof page.nextPageToken==='string'));
       if(page.nextPageToken)return {...base,status:'INCOMPLETE_PAGE'};
-      const indexes=page.indexes??[];requireOK(Array.isArray(indexes)&&indexes.length<=500);
+      const indexes=Object.hasOwn(page,'indexes')?page.indexes:[];requireOK(Array.isArray(indexes)&&indexes.length<=500);
       const observed=new Map(),names=new Set(),prefix=evidence.databaseResource+'/collectionGroups/'+group+'/indexes/';
       for(const index of indexes){
         requireOK(record(index)&&typeof index.name==='string'&&index.name.startsWith(prefix)&&
