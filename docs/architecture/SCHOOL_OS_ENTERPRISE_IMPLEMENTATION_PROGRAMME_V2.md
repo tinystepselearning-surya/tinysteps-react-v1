@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 55 (B02-R1B accepted; transport and privacy review next)  
+**Version:** 2.0 programme baseline, revision 56 (B02-R1C scoped offline acceptance; effective on isolated merge)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B02-R1C scoped offline transport feasibility and privacy enforcement review; B02-R2 remains held. B01, B02-R1A and B02-R1B isolated engineering accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: isolated Firestore backend compatibility preparation and independent security/privacy review; B02-R2 remains HOLD. B01, B02-R1A/B and B02-R1C scoped offline engineering accepted (505/505); Revision 56 effective upon verified isolated integration; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -310,6 +310,8 @@ P09-A is a vertical slice, not a second application or a bypass of security. Imm
 8. **Freeze and retire:** verify zero required legacy consumers, approved retention, restore rehearsal, explicit owner approval. Prefer forward repair; code rollback does not undo historical writes.
 
 At any failed gate, stop expansion and disable the new path if safe; do not delete new or old data as an automatic rollback. Quarantine unresolved operations, restore the prior *compatible* routing/authority where possible, drain/reconcile in-flight jobs, preserve financial/evidence history, and escalate. Backup restore to isolated destination for validation before production recovery. A rollback after canonical writes may require a forward-compatible repair or synchronized legacy mirror, not simply git revert. Record actual recovery impact.
+
+**Owner-confirmed progressive replacement:** Apply this protocol per module. Keep main/production intact while developing in isolation; for each release start a focused integration branch from current main, reconcile source/deployed markers, test affected dependencies, inspect deployment impact, verify staging and obtain explicit release acceptance. No wholesale merge of the architecture branch into main. Replace obsolete legacy functions, data paths and fields permanently only after cutover, reconciliation, dependency closure, retention/recovery and specific retirement approval. Keep temporary compatibility bounded and single-authority; avoid unnecessary historical migrations. See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). No production authorization or phase gate waiver.
 
 ## 5. Release protection and measurable gates
 
@@ -654,6 +656,12 @@ Dependency hygiene follow-up: npm reported deprecated inflight 1.0.6, phin 3.7.1
 
 Next recommended B02-R1C: separately scope offline transport feasibility and privacy enforcement review against exact installed Firestore SDK APIs and dependency versions; establish server field masks, exact path/query approval enforcement, transport deadlines/cancellation/retries, stop/drain, consistency and revocation evidence, least privilege, private approval requirements and measured read budgets. Prefer existing supported mechanisms; no live adapter activation, cloud access, account changes, new IAM, Rules, runtime writes or production approval. If transport cannot satisfy the requirements, HOLD and document alternatives. Independent security/privacy review and controlled live evidence remain required for R2; P01/P02/P03/M3 and subsequent gates retained. No repeat R1B verification unless relevant executable or dependency inputs change.
 
+### Revision 56 — B02-R1C scoped offline acceptance and progressive replacement
+
+Owner authorizes AI-led technical acceptance and continuation of isolated work following the explicit discussion distinguishing offline integration from independent security acceptance. Under this narrow prospective sequencing decision, exact offline candidate 92fc9d630383da6b591540932225d64f6894bf59 is accepted for isolated integration only: owner Mac Node 22.22.1, 313 foundation + 132 identity/canonical/request/watchdog + 60 actual local SDK tests = 505/505, zero failures/cancellations/skips/todo; all eight tested script pins matched at 23756ab482fd5a56da211ff973c4eb6befb843f2; subsequent changes documentation only. No independent security certification or fresh CI claimed. [PR #950](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/950) may integrate solely into docs/tsos-v2-p01-source-baseline; this revision becomes effective only on verified merge. See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). Independent security/privacy review remains mandatory before live operator/R2; actual backend semantics, private signed approvals, effective IAM, process isolation and browser canaries remain unverified. No application, registry, Rules, dependencies, production data or workflow changes. No main merge. Preserve direct premium 1:1, current authorization/transactions Tier 1, T-1 nonurgent reporting, existing financial/attendance/learning semantics and single authority. Owner confirms module-by-module progressive replacement and specific legacy retirement under section 4; no wholesale architecture merge or destructive migration.
+
+Next permitted work: scope isolated backend compatibility verification (R1C follow-up, not R2 execution), using exact existing SDK, disposable synthetic Firestore emulator and controlled tests for actual readTime, masks, empty/progress frames and post-revocation snapshot behavior. No production endpoints, live credentials, new runtime adapter, real actor records or security-policy activation. Prepare explicit acceptance and environment requirements; if emulator semantics are unsupported, report inconclusive and retain live hold. Independent review and existing P01/P02/P03/M3 and release gates remain open; no new identity authority or registry adoption.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -764,3 +772,6 @@ Next recommended B02-R1C: separately scope offline transport feasibility and pri
 - Revision 54: owner authorizes isolated compiled canonical integration tests and transport design review, no live activation or wider gate waiver.
 
 - Revision 55: B02-R1B 406/406 pinned regression and actual compiled canonical integration accepted; PR #949 integrated; existing dependency warnings recorded for separate review. B02-R1C scope next; live and independent security gates retained.
+
+
+- Revision 56 (effective on verified isolated merge): owner-authorized scoped AI-led B02-R1C offline acceptance PASS, 505/505 pinned regression; progressive replacement policy and R2 readiness handoff documented; independent security and live gates remain HOLD. Next isolated backend compatibility preparation.
