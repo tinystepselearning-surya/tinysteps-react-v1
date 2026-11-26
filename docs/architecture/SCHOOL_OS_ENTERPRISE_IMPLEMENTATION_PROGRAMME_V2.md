@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 42 (B01-B.2 isolated configuration prototype authorized)  
+**Version:** 2.0 programme baseline, revision 43 (B01-B.2 accepted and integrated; business rule framework next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.2 isolated configuration resolver and synthetic verification. B01-A and B01-B.1 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.3 scoped Business Rule Framework design and authorization. B01-A, B01-B.1 and B01-B.2 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -574,6 +574,12 @@ Owner explicitly directs the next implementation following B01-B.1 acceptance. A
 
 Resolve only explicitly supplied exact ancestor lineage snapshots in order platform -> tenant -> organisation -> optional campus -> optional programme. Require explicit schema version, one revision per scope snapshot, typed allowlisted settings and per-key permitted scopes, reject foreign/malformed lineage, duplicates, unknown keys, invalid values even if overridden, and missing required settings. Explicit default only; distinguish absent, false, zero, empty, and explicit nullable null. Return immutable value/provenance snapshots; fail closed with no partial output on errors. No selecting latest revisions, fetching data, effective-dated rules, secrets, formulas, authorization, or policy execution. Existing pricing/public offer, attendance organizer and curriculum config remain authoritative and unchanged. CFG structured value and runtime scope contracts remain held. No runtime imports, Firebase, dependency, CI or registry modifications. Verify exact commit, cumulative pinned Node 22.22.1 suite, scope and compatibility before isolated integration; all independent schema/security/finance/migration and production gates retained. B01-B.3 onward separately scoped.
 
+### Revision 43 — B01-B.2 accepted and integrated into isolated baseline
+
+Owner-operated Mac verification at exact candidate 0349e9fde3502ffc298d91a7cfa1a7f0bbba2d50, Node v22.22.1, combined registry, typed-schema and configuration Node suite: 158/158 passed, zero failed/cancelled/skipped/todo, 1104.965542 ms. Includes 66 registry, 43 typed schema and 49 configuration cases. Supplied Terminal evidence, not CI. Re-fetched exact committed resolver and reran 49 cases and eight additional boundary probes; scope confirmed four added offline files only. AI-led technical acceptance PASS under revision 42 for synthetic configuration inheritance prototype only, not independent certification or runtime/tenant security approval. [PR #944](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/944) merged solely into `docs/tsos-v2-p01-source-baseline` at abaf81c188ff531992358760a1d7e59b426e87e2; zero file differences between tested and merged trees. Main unchanged during integration; no deployment, cloud operation, registry changes, dependency or CI modification. All existing configuration authorities remain unchanged. Proposed programme lineage and CFG structured values remain unadopted; snapshot authenticity/completeness, effective dating and live authorization remain outside scope. Preserve all broader P01/P02/P03/P04/M3, schema, security, finance, migration and production gates.
+
+Next: B01-B.3 scoped Business Rule Framework design and authorization. Define pure versioned/effective-dated synthetic rule evaluation, explicit date basis and boundaries, deterministic precedence/conflict handling, decision provenance and safe rejection of unknown/malformed policy inputs. Preserve existing attendance, billing, teacher earnings, admission and enrolment policy authorities and historical outcomes; no actual policy activation or runtime wiring. B01-B.4 and B01-B.5 separately scoped. No repeat B01-B.2 terminal verification unless relevant code/metadata changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -656,3 +662,5 @@ Resolve only explicitly supplied exact ancestor lineage snapshots in order platf
 - Revision 41: B01-B.1 109/109 pinned Node regression, scoped AI-led acceptance PASS, PR #942 integrated into isolated baseline; tested tree unchanged. B01-B.2 scope next; broader gates retained.
 
 - Revision 42: owner authorizes isolated configuration inheritance prototype; no runtime adoption or broader gate waiver.
+
+- Revision 43: B01-B.2 158/158 pinned Node regression, scoped AI-led acceptance PASS, PR #944 integrated into isolated baseline; tested tree unchanged. B01-B.3 scope next; broader gates retained.
