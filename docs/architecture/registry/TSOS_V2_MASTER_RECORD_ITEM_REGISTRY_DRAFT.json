@@ -1,0 +1,697 @@
+{
+  "formatVersion": 2,
+  "registryVersion": "0.6-draft",
+  "status": "design-only; no allocated identifiers or executable dependencies",
+  "sourcePin": "701c7ec832dbe9c531964496fa09cd4a4948ddd2",
+  "idPolicy": "record code and qualified item ID are proposed reservations only; no reuse after adoption; not document IDs",
+  "previousSnapshot": {
+    "commit": "a743ece8566013e281d7ab1ad7dfceb6c74e5ae2",
+    "path": "docs/architecture/registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json",
+    "registryVersion": "0.5-draft",
+    "recordCount": 129,
+    "itemCount": 879
+  },
+  "registryAuthority": "This manifest plus its five owner-domain-grouped shards are the sole editable design registry. No separate master record array. Load every shard for cross-domain validation. Blob SHAs identify this reviewed snapshot; update manifest when shard changes.",
+  "counts": {
+    "records": 129,
+    "detailedRecords": 129,
+    "items": 971,
+    "valueSets": 38,
+    "sourceInterfaceFields": 43,
+    "historicalPlannerFields": 92,
+    "legacyValueUnvalidated": 45,
+    "structuredFields": 24
+  },
+  "valueSets": [
+    {
+      "id": "personKind",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "adult",
+        "learner",
+        "unknown"
+      ]
+    },
+    {
+      "id": "personStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "suspended",
+        "archived"
+      ]
+    },
+    {
+      "id": "authProvider",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "firebase"
+      ]
+    },
+    {
+      "id": "authStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "disabled",
+        "archived"
+      ]
+    },
+    {
+      "id": "canonicalRole",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "admin",
+        "founder",
+        "teacher",
+        "parent",
+        "kid",
+        "learningPartner",
+        "schoolAdmin"
+      ]
+    },
+    {
+      "id": "roleScope",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "global",
+        "organisation",
+        "household"
+      ]
+    },
+    {
+      "id": "activeInactive",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "inactive"
+      ]
+    },
+    {
+      "id": "guardianType",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "parent",
+        "guardian",
+        "other"
+      ]
+    },
+    {
+      "id": "guardianStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "ended"
+      ]
+    },
+    {
+      "id": "householdStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "archived"
+      ]
+    },
+    {
+      "id": "organisationType",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "school",
+        "company",
+        "partner",
+        "other"
+      ]
+    },
+    {
+      "id": "organisationStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "active",
+        "paused",
+        "archived"
+      ]
+    },
+    {
+      "id": "membershipRole",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "schoolAdmin",
+        "teacher",
+        "learningPartner",
+        "member"
+      ]
+    },
+    {
+      "id": "legacyEnrollmentStatus",
+      "version": 1,
+      "evidence": "source-contract",
+      "codes": [
+        "pending_teacher",
+        "pending_lp_assignment",
+        "pending_payment",
+        "active",
+        "cancelled"
+      ]
+    },
+    {
+      "id": "offeringMode",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "oneToOne",
+        "smallGroup",
+        "schoolProgramme"
+      ]
+    },
+    {
+      "id": "offeringStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "planned",
+        "active",
+        "retired"
+      ]
+    },
+    {
+      "id": "relationshipStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "planned",
+        "active",
+        "ended"
+      ]
+    },
+    {
+      "id": "assignmentTarget",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "enrollment",
+        "learningGroup"
+      ]
+    },
+    {
+      "id": "householdMembershipStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "active",
+        "ended"
+      ]
+    },
+    {
+      "id": "tenantStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "active",
+        "suspended",
+        "closed"
+      ]
+    },
+    {
+      "id": "programmeStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "draft",
+        "active",
+        "retired"
+      ]
+    },
+    {
+      "id": "courseStatus",
+      "version": 1,
+      "evidence": "source-interface",
+      "codes": [
+        "active",
+        "inactive",
+        "draft"
+      ]
+    },
+    {
+      "id": "courseArea",
+      "version": 1,
+      "evidence": "source-interface",
+      "codes": [
+        "Phonics",
+        "Grammar",
+        "Speaking"
+      ]
+    },
+    {
+      "id": "curriculumStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "draft",
+        "published",
+        "retired"
+      ]
+    },
+    {
+      "id": "academicYearStatus",
+      "version": 1,
+      "evidence": "source-interface",
+      "codes": [
+        "planned",
+        "current",
+        "closed"
+      ]
+    },
+    {
+      "id": "deliveryChannel",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "online",
+        "inPerson",
+        "hybrid"
+      ]
+    },
+    {
+      "id": "skillStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "active",
+        "retired"
+      ]
+    },
+    {
+      "id": "catalogueScope",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "platformShared",
+        "tenantOwned"
+      ]
+    },
+    {
+      "id": "exceptionAction",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "cancel",
+        "reschedule",
+        "override"
+      ]
+    },
+    {
+      "id": "onlineAttendanceDecision",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "present",
+        "absent"
+      ]
+    },
+    {
+      "id": "publishedVersionStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "draft",
+        "published",
+        "retired"
+      ]
+    },
+    {
+      "id": "assignmentLifecycle",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "draft",
+        "assigned",
+        "closed",
+        "cancelled"
+      ]
+    },
+    {
+      "id": "evidenceSourceKind",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "activity",
+        "assessment",
+        "observation"
+      ]
+    },
+    {
+      "id": "schoolAttendanceDecision",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "present",
+        "absent",
+        "excused"
+      ]
+    },
+    {
+      "id": "recordingAssociationKind",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "session",
+        "learnerFolder"
+      ]
+    },
+    {
+      "id": "providerEvidenceState",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "verified",
+        "inconclusive",
+        "stale"
+      ]
+    },
+    {
+      "id": "sessionOrigin",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "onDemandAttendance",
+        "adHoc",
+        "historical"
+      ]
+    },
+    {
+      "id": "platformReferenceScope",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "platform",
+        "tenant"
+      ]
+    }
+  ],
+  "sharedFieldSets": [
+    {
+      "id": "identityAuditV1",
+      "evidence": "functions/src/schoolOS/identity/contracts.ts",
+      "fields": [
+        {
+          "name": "schemaVersion",
+          "type": "literal 1",
+          "required": true
+        },
+        {
+          "name": "createdAt",
+          "type": "Timestamp or write-time FieldValue",
+          "required": true
+        },
+        {
+          "name": "updatedAt",
+          "type": "Timestamp or write-time FieldValue",
+          "required": true
+        },
+        {
+          "name": "createdBy",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "updatedBy",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "migration",
+          "type": "MigrationProvenance|null",
+          "required": false,
+          "fields": [
+            "migrationId:string",
+            "sourceCollection:string",
+            "sourceId:string",
+            "sourceFieldVersion?:number|null"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "profileMigrationAuditV1",
+      "evidence": "scripts/migrations/wave1-identity-profile-retirement-lib.mjs",
+      "fields": [
+        {
+          "name": "schemaVersion",
+          "type": "literal 1",
+          "required": true
+        },
+        {
+          "name": "createdBy",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "updatedBy",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "migration",
+          "type": "structured migrationId/sourceCollection/sourceId",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "shards": [
+    {
+      "path": "domains/identity-institutional.json",
+      "blobSha": "f4f0efc8e54b749148f5b54e1b1d37ee807e5ee1",
+      "ownerDomains": [
+        "identity",
+        "learner-enrollment",
+        "school-partnerships"
+      ],
+      "records": 24,
+      "items": 161,
+      "recordCodes": [
+        "PER",
+        "AUT",
+        "ROL",
+        "LRN",
+        "GUA",
+        "HOU",
+        "ORG",
+        "MEM",
+        "CAM",
+        "ENR",
+        "CNT",
+        "PLC",
+        "LDT",
+        "PPR",
+        "APR",
+        "LRM",
+        "LPV",
+        "HMB",
+        "TEN",
+        "TMB",
+        "OPR",
+        "OAS",
+        "IPL",
+        "BPT"
+      ]
+    },
+    {
+      "path": "domains/academic-delivery.json",
+      "blobSha": "3d661e8dd3bc09feed5b666a7ebf7fc0648f8601",
+      "ownerDomains": [
+        "academic-catalogue",
+        "scheduling",
+        "attendance"
+      ],
+      "records": 28,
+      "items": 217,
+      "recordCodes": [
+        "PRG",
+        "CRS",
+        "CUR",
+        "DLV",
+        "GRP",
+        "GPL",
+        "TAS",
+        "SCP",
+        "SES",
+        "SPT",
+        "SST",
+        "ATT",
+        "AEV",
+        "PCM",
+        "UNT",
+        "SKL",
+        "USK",
+        "AYR",
+        "TRM",
+        "GRD",
+        "SEC",
+        "SEX",
+        "CAC",
+        "MTR",
+        "ACR",
+        "AVC",
+        "AVD",
+        "SAD"
+      ]
+    },
+    {
+      "path": "domains/learning-resources.json",
+      "blobSha": "c20fbafee877e47fea59a25f2033e19d9213900a",
+      "ownerDomains": [
+        "learning",
+        "assessment-mastery",
+        "content-resources",
+        "credentials-reporting"
+      ],
+      "records": 22,
+      "items": 174,
+      "recordCodes": [
+        "REC",
+        "RFL",
+        "LSN",
+        "RES",
+        "LAC",
+        "ASN",
+        "SUB",
+        "FBK",
+        "ASD",
+        "RUB",
+        "ASE",
+        "OBS",
+        "SKE",
+        "MAS",
+        "CPG",
+        "PEV",
+        "SAG",
+        "RLA",
+        "RPT",
+        "CED",
+        "WRS",
+        "GRS"
+      ]
+    },
+    {
+      "path": "domains/commerce-operations.json",
+      "blobSha": "d5a8f9bf9dae3c3f875a243522bb3c782784be32",
+      "ownerDomains": [
+        "finance",
+        "commerce-entitlements",
+        "growth-crm",
+        "admissions",
+        "student-success",
+        "faculty-workforce",
+        "safeguarding-consent",
+        "communication",
+        "support"
+      ],
+      "records": 47,
+      "items": 363,
+      "recordCodes": [
+        "CHG",
+        "PAY",
+        "PAL",
+        "ERN",
+        "POT",
+        "CNS",
+        "FPR",
+        "LPP",
+        "SPR",
+        "PDT",
+        "COF",
+        "CAG",
+        "ENT",
+        "BAC",
+        "WAL",
+        "WTX",
+        "TOF",
+        "TWH",
+        "EAD",
+        "FRC",
+        "LED",
+        "INQ",
+        "CMP",
+        "ADC",
+        "DEM",
+        "DPR",
+        "ARQ",
+        "SSC",
+        "GLD",
+        "ITV",
+        "FUP",
+        "FAC",
+        "RCT",
+        "AVL",
+        "TRN",
+        "QAR",
+        "SGC",
+        "PUP",
+        "PUE",
+        "HLT",
+        "CON",
+        "MSG",
+        "NIN",
+        "NTF",
+        "NDA",
+        "NDT",
+        "SUP"
+      ]
+    },
+    {
+      "path": "domains/platform.json",
+      "blobSha": "1f116526d1bbd9017dbcd26aaed0277766e5079d",
+      "ownerDomains": [
+        "platform"
+      ],
+      "records": 8,
+      "items": 56,
+      "recordCodes": [
+        "CFG",
+        "AUD",
+        "OUT",
+        "IJR",
+        "EXT",
+        "PMD",
+        "BPM",
+        "BPC"
+      ]
+    }
+  ],
+  "reviewNotes": [
+    "Source contract fields are matched for presence, optionality and explicit nullability; this is not runtime or production validation.",
+    "Person and LearnerProfile countryCode coexist in source: semantic equivalence, ownership and compatibility unresolved; no new duplicate authority approved.",
+    "Target type and lifecycle mapping for Enrollment remain draft; existing status strings are not a final canonical lifecycle or allowed transition graph.",
+    "Target types, classifications, path candidates, commands and policies are design proposals; no runtime dependency.",
+    "Shared identity audit fields are inherited source fields; qualified item IDs for their reusable field group and nested members deferred pending namespace review.",
+    "D01 extends the catalogue with ten permanent profile/evidence/projection concepts documented by the existing Wave 1 migration contract and a proposed HouseholdMembership record. Historical migration evidence is not current live coverage. New profile fields and field-set bindings remain unallocated; preserve the existing profile contract.",
+    "Household membership is not evidence of guardianship, billing responsibility, consent or application access. Household membership candidate path requires collision/dependency review; no automatic historical backfill.",
+    "M01 design additions are proposed target fields, not verified source fields. Academic nested keys are contextual; organisation/year/grade/section references require explicit school-to-organisation binding and parent path resolution. No bare local ID accepted as a global key.",
+    "ENR-1004 preserves prior item ID but target value set is unresolved: source interface omits operational trial/paused/discontinued/completed and aliases. No implicit normalization or schema adoption.",
+    "TEN/ORG scope fields and paths are proposed, not a permission grant. ContextualRoleGrant remains an alternative only; ROL authority retained. Catalogue visibility/tenant sharing and exact scope field contract require review.",
+    "Final M01 cross-check: DLV has explicit tenant ownership; root programme/course/skill catalogue has explicit platformShared or tenantOwned scope. Curriculum and nested units inherit verified course scope; PCM and USK require compatible source/target catalogue scope. Scope fields are design proposals and not new required fields on current production data.",
+    "M02 adds proposed target fields, not source-backed field verification. Retain existing classSessions IDs, online IST calendar claims and source status/finance behavior. No reactivation of automatic session creation. Session participant/staff, official attendance, AVS evidence and financial events are separate facts.",
+    "SCP recurrence structure, SES lifecycle/status and finance snapshot, ACR changes, assessment results/rubric and projection fields require typed shapes and mapping before adoption. Nested contextual keys resolve via parent scope; no bare local ID is globally unique. Existing raw status and prior item IDs preserved.",
+    "All new tenant-owned roots require scope checks; catalogue definition visibility follows M01. Provider/recording references are restricted, never independent entitlements. Existing parentClassRecordings/OneDrive mapping and external provider permission require D10 review. School attendance status is a separate proposed policy, not online billing.",
+    "M01–M02 review corrections: HMB tenant scope; MTR group ownership (exactly one parent); REC optional learner for session asset and RLA link, not permission; SKE assessment-mastery owner; SPT/SST revision fields. No prior item IDs removed. See M01_M02_CROSS_MILESTONE_REVIEW.md.",
+    "M03 seed: proposed field semantics only. Finance minor units do not replace existing source amount authority until exact conversion and reconciliation; preserve service/cash period, settlement, offsets, source and replay. Payer context exactly one approved person or organisation; historical uncertainty held.",
+    "Platform scope and shared catalogue visibility are explicit conditional contracts; BPM/BPC retain platform-admin-only aggregate scope. No new runtime metadata or broad provider rights. D01 ten profile records remain catalogue-only; full field, lifecycle, contextual keys, access and migration mapping closure M04.",
+    "Final M03 readback: value-set fields explicitly typed enum and platform/tenant context enum added. Near 1 MB registry; plan manifest plus domain-sharded registry in M04 before further expansion, retaining stable codes and aggregate validation.",
+    "Revision 31 M04: all ten former catalogue-only records seeded with 92 historical planner fields, not verified live schema. 45 legacy copied fields remain unvalidated; 24 structured fields need typed shape review; shared audit field identifiers not adopted. Identity migration planner output is not the live schema. Preserve prior item definitions verbatim.",
+    "Scope exceptions and storage keys require M04 closure packet and independent review. Do not stamp global identity/legacy records indiscriminately. No runtime loader or validator adopted."
+  ]
+}

@@ -1,0 +1,38 @@
+# MacBook execution model — infrastructure evidence and remaining acceptance
+
+**Status:** owner-directed MacBook-first engineering model; operator-reported connectivity and permission assessment recorded; no live identity-sampling authority. R59 accepted offline 570/570. Independent security acceptance remains HOLD. No new cloud server is selected. This document is a sanitized summary and proposal; private account identifiers, raw IAM policies, resource details, private key material and private manifests are not retained here.
+
+## 1. Evidence and scope
+
+Owner Terminal reports successful restricted and database-administration impersonated metadata connectivity, no user-managed keys for either identity, and local disk protection enabled. The restricted identity project-resource IAM Troubleshooter results granted all three tested metadata/read/query permissions and did not grant the nine tested write/administrative operations. The separate database administrator passed all fourteen tested project-resource permission checks. These are project-level results, not database-specific or exhaustive authorization certification, and not an independent assessment. Metadata-only connectivity is not an application document read. No application data mutations reported. Owner separately enabled whole-database deletion protection and received a successful update response; this is an actual production database metadata configuration change, not a document mutation. Recovery retention/backup/restore and PITR readiness remain for separate review, including cost; deletion protection does not prevent document/bulk deletions or an authorized administrator from disabling it. No recovery guarantee is inferred. Keep detailed private evidence off Git.
+
+Previous P01 metadata-only packet is stricter than broad document-read capability and remains controlling. Do not repurpose the restricted analytics identity to run the remaining P01 metadata batch if it carries document access outside that packet; use separately approved metadata-only scope. The database administrator is NEVER an identity-verification or routine analytics principal. Existing CI deployment identity and application runtime identities are unchanged.
+
+## 2. Execution modes and boundaries
+
+| Mode | Allowed intent | Identity and authority |
+|---|---|---|
+| Engineering/offline | Git, compile, synthetic tests and local emulator | No cloud credentials needed; no live data or deployment |
+| Metadata assessment | Explicitly authorized bounded infrastructure metadata | Narrow metadata-only identity; no document permissions under P01 packet |
+| Business analytics | Existing approved bounded reporting | Existing restricted analytics identity; existing approval applies to analytics only |
+| Identity sampler | Future approved bounded read-only identity sample | Separately approved restricted identity and exact signed scope; never admin, never analytics approval by implication |
+| Browser verification | Separate designated actors' server-forced point reads | Their legitimate client sessions and exact approved fixture paths; no service account substitution |
+| Migration/administration | Specific approved plan, backup/reconciliation, bounded writes or operational changes | Separate administrator by explicit impersonation per action; no automatic fallback |
+| Deployment | Reviewed release and deployment markers | Existing CI release workflow; not a local blanket admin deployment |
+
+No persistent global impersonation configuration, no permanent JSON key, no admin ADC for ordinary engineering, no arbitrary token forwarding to scripts, no ambient credential fallback. Use separate explicit command invocations; never put administrative credentials into an execution worker. A future approved operator needs fail-closed identity/target and manifest validation, not simply a flag named read-only. Project owner authentication on the host is not a security boundary. A keyless grant follows the authorized Google identity, not the physical device.
+
+## 3. Proposed simplest enforceable local host boundary
+
+Keep development on the existing Mac; no new hosted machine by default. For live verification propose a dedicated local unprivileged execution identity and isolated local guest if needed, with a clean immutable approved bundle and no mounted owner home, cloud CLI credential store, Keychain, Git credentials, Docker socket, or writable code from the host. Use a trusted outside process supervisor with deadline and descendant cleanup, and an independently enforced network boundary that denies all nonapproved destinations. Only a short-lived restricted credential from the approved trusted issuance path may enter the workload; no owner/admin refresh token. No claim that env sanitization, FileVault, a separate user, container or VM alone provides egress or hard-deadline enforcement. No isolation tooling was observed in the supplied inventory; implementation choice remains subject to reviewer assessment. Prototype with dummy credentials and synthetic endpoints only. If local controls cannot be demonstrated, consider a narrow temporary isolated execution environment; do not provision by default.
+
+For single-host execution, propose a stable protected journal and single authorized execution identity rather than a distributed service. Require atomic reservation, durable sync, no refund, independent control of journal root and restore/rollback prevention (including no reset/recreation to replay an approval). If concurrency across machines or failover is later required, revisit the design. Existing R59 journal is a fixture, not this production implementation. Trusted signer custody, immutable bundle/deployed digest, exact scope, independent credential and privacy review remain mandatory. Two distinct signers must actually be independent; AI technical review cannot sign as the independent human security reviewer. Never store real signing keys, tokens, identifiers or raw records in this repository.
+
+## 4. Next concrete actions, no duplicate synthetic test expansion
+
+1. Review owner-private infrastructure evidence and existing P01 metadata residuals against the controlling P01 packet. Classify complete, incomplete, unauthorized, and deferred; do not rerun confirmed metadata solely to raise a count. Remaining metadata scope needs explicit authorization, least privilege and corrected API contracts.
+2. Independent reviewer and owner select the local isolation mechanism, verify no ambient/admin access, approve actual signing/credential custody and stable journal/restore semantics. Demonstrate negative egress and external deadline controls using only harmless fixtures. Approve exact bundle and execution design before any live runner is implemented.
+3. Separate owner-approved identity-sampling scope, actual restricted IAM/resource conditions, browser actor sessions and approved evidence retention. Recheck current source/deployment markers and applicable holds. No live reads until all required gates are satisfied.
+4. Continue P01 source/metadata acceptance work and P02/P03 design only within already permitted scope. No P02/P03 formal implementation authorization, M3 exit, tenant migration or release is inferred. Preserve existing authority, Tier 1 current transactions and auth, T-1 nonurgent reporting and progressive migration.
+
+No cloud permission changes or document access by the author of this note. The infrastructure assessment advances preparedness only, not independent security or production verification. No new executable changes or regression claims. R59 remains the accepted engineering baseline; this is an evidence-only increment.
