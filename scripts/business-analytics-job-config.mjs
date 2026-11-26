@@ -1,5 +1,6 @@
 // Private runtime configuration for a bounded periodic analytics refresh.
 // No Firebase imports or credential resolution here. Disabled by default.
+import {dailyBusinessCutoff,requireDailyReadWindow} from './business-analytics-daily-cutoff.mjs';
 const PROJECT='tinysteps-react-v1';
 const assert=(ok,message)=>{if(!ok)throw Error(message);};
 const integer=(raw,name,min,max)=>{
@@ -26,8 +27,14 @@ export function resolveBusinessRefreshJob(env,now=new Date()){
 export async function runBusinessRefreshJob({env,now,openStore,refresh,log}){
  const config=resolveBusinessRefreshJob(env,now);
  if(!config.enabled){log({outcome:'disabled'});return {outcome:'disabled'};}
+ const cutoff=dailyBusinessCutoff(now);
  const opened=await openStore(config.project);
  try{
+  if(config.apply){
+   assert(typeof opened.store.publishedThrough==='function','Published cutoff check required');
+   if((await opened.store.publishedThrough())>=cutoff.throughDate){const result={outcome:'already-published',throughDate:cutoff.throughDate};log(result);return result;}
+  }
+  requireDailyReadWindow(now,cutoff);
   assert(typeof opened.store.inventory==='function','Source inventory required');
   const inventory=await opened.store.inventory();
   assert(Number.isSafeInteger(inventory.total)&&inventory.total>=0,'Invalid source inventory');
@@ -35,9 +42,9 @@ export async function runBusinessRefreshJob({env,now,openStore,refresh,log}){
    log({outcome:'budget-exceeded',estimatedSourceDocuments:inventory.total,maxDocuments:config.maxDocuments});
    throw Error('Source inventory exceeds approved document budget');
   }
-  const result=await refresh({source:opened.store,publisher:opened.store,years:config.years,maxDocuments:config.maxDocuments,pageSize:config.pageSize,maxPages:config.maxPages,apply:config.apply});
+  const result=await refresh({source:opened.store,publisher:opened.store,years:config.years,maxDocuments:config.maxDocuments,pageSize:config.pageSize,maxPages:config.maxPages,apply:config.apply,cutoff});
   // Do not log annual/monthly totals, source document IDs, names, or raw records.
-  const summary={outcome:result.outcome,readTime:result.readTime,sourceDocuments:result.sourceDocuments,sourcePages:result.sourcePages,projectionWrites:result.projectionWrites,inventoryAggregateQueries:inventory.aggregateQueries,years:result.years};
+  const summary={outcome:result.outcome,throughDate:cutoff.throughDate,readTime:result.readTime,sourceDocuments:result.sourceDocuments,sourcePages:result.sourcePages,projectionWrites:result.projectionWrites,inventoryAggregateQueries:inventory.aggregateQueries,years:result.years};
   log(summary);
   return summary;
  }finally{await opened.close();}
