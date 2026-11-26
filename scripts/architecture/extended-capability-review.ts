@@ -66,8 +66,9 @@ function command(v:unknown):Command{
     }
     case 'partner.manageAssignedSchool':{
       need(s.kind==='organisation','SCOPE');operation='fixture.partnerManage';targetKind='partnerSchool';purpose='partnerManagement';
-      const p=row(q.payload,['schoolId','change']);need(id(p.schoolId)===targetId&&p.change==='requestReview','INVALID');
-      payload={schoolId:targetId,change:'requestReview'};break;
+      const p=row(q.payload,['schoolId','providerTenantId','change']);need(id(p.schoolId)===targetId&&p.change==='requestReview','INVALID');
+      const providerTenantId=id(p.providerTenantId);need(providerTenantId!==s.tenantId,'SCOPE');
+      payload={schoolId:targetId,providerTenantId,change:'requestReview'};break;
     }
     case 'platform.supportScoped':{
       need(s.kind==='tenant','SCOPE');operation='fixture.scopedSupport';targetKind='supportCase';purpose='supportCaseReview';
@@ -129,8 +130,8 @@ export function reviewExtendedCapability(request:unknown,evidence:unknown,routeP
     need(id(domain.targetId)===q.targetId&&same(scope(domain.scope),s),'DOMAIN');
     switch(q.action){
       case 'institution.create':case 'campus.create':{
-        const d=row(domain.record,['parentId','provisioningState']);
-        need(id(d.parentId)===(s.kind==='tenant'?s.tenantId:s.organisationId)&&d.provisioningState==='reservedForRequest','DOMAIN');break;
+        const d=row(domain.record,['parentId','provisioningState','reservedOperationId']);
+        need(id(d.parentId)===(s.kind==='tenant'?s.tenantId:s.organisationId)&&d.provisioningState==='reservedForRequest'&&id(d.reservedOperationId)===q.operationId,'DOMAIN');break;
       }
       case 'institution.manageRoster':{
         const d=row(domain.record,['placementId','learnerId','placementStatus','schoolKind']);
@@ -143,7 +144,7 @@ export function reviewExtendedCapability(request:unknown,evidence:unknown,routeP
       case 'partner.manageAssignedSchool':{
         const d=row(domain.record,['schoolId','customerTenantId','providerTenantId','assignedPersonId','partnershipStatus','assignmentStatus','start','end']);
         const start=time(d.start),end=time(d.end);
-        need(id(d.schoolId)===q.targetId&&id(d.customerTenantId)===s.tenantId&&id(d.providerTenantId)!==s.tenantId&&id(d.assignedPersonId)===actor&&d.partnershipStatus==='active'&&d.assignmentStatus==='active'&&start<=at&&at<end,'DOMAIN');break;
+        need(id(d.schoolId)===q.targetId&&id(d.customerTenantId)===s.tenantId&&id(d.providerTenantId)===q.payload.providerTenantId&&id(d.assignedPersonId)===actor&&d.partnershipStatus==='active'&&d.assignmentStatus==='active'&&start<=at&&at<end,'DOMAIN');break;
       }
       case 'platform.supportScoped':{
         const d=row(domain.record,['caseId','tenantId','assignedPersonId','caseStatus','start','end','allowedField']);
