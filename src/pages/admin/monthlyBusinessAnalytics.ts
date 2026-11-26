@@ -26,8 +26,8 @@ export const BUSINESS_METRICS = {
 export type BusinessTab = keyof typeof BUSINESS_METRICS;
 export type BusinessMetric = (typeof BUSINESS_METRICS)[BusinessTab][number][0];
 export type MonthRow = { monthKey: string; metrics: Partial<Record<BusinessMetric, number | null>> };
-export type YearProjection = { year: string; updatedAt: string; months: MonthRow[] };
-export type CurrentProjection = { updatedAt: string; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
+export type YearProjection = { year: string; updatedAt: string; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; };
+export type CurrentProjection = { updatedAt: string; availableRecords: boolean; unresolvedRecords: number; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const count = (v: unknown): number | null => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : null;
@@ -51,13 +51,17 @@ export function parseBusinessYear(input: unknown, year: string): YearProjection 
     for (const key of metricKeys) parsed[key] = count(metrics[key]);
     months.push({ monthKey: row.monthKey, metrics: parsed });
   }
-  return { year, updatedAt: r.updatedAt as string, months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)) };
+  const issues = record(r.issues);
+  const undatedRecords = ['undatedEnquiries','undatedCharges','invalidChargeAmounts','undatedAdmissions','undatedCourseEnds','ambiguousStudentExits','unresolvedEnrollmentIdentity','unresolvedEnrollmentStatus'].reduce((sum, key) => sum + (count(issues?.[key]) ?? 0), 0);
+  return { year, updatedAt: r.updatedAt as string, months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords };
 }
 export function parseBusinessCurrent(input: unknown): CurrentProjection | null {
   const r = record(input);
   if (!validEnvelope(r)) return null;
   return {
     updatedAt: r.updatedAt as string,
+    availableRecords: r.coverageMode === 'available_records',
+    unresolvedRecords: (count(record(r.issues)?.unresolvedEnrollmentIdentity) ?? 0) + (count(record(r.issues)?.unresolvedEnrollmentStatus) ?? 0),
     activeStudents: count(r.activeStudents), activeEnrollments: count(r.activeEnrollments),
     pausedStudents: count(r.pausedStudents), retainedStudents: count(r.retainedStudents),
   };
