@@ -53,13 +53,16 @@ export async function superviseSyntheticCanonical({directory,ownerKey,reviewerKe
   const input=Buffer.from(JSON.stringify({approval,deadlineMs:end}));
   if(input.length>32768)return report('SUPERVISOR_INPUT_LIMIT',{cleanupPending:!cleanup()});
   return new Promise(resolveReport=>{
-    let child,watch,grace,reap,done=false,started=false,escalated=false,code=null,output=Buffer.alloc(0),received=0;
+    let child,watch,grace,reap,done=false,started=false,spawnFailed=false,escalated=false,code=null,output=Buffer.alloc(0),received=0;
     function finish(reaped){
       if(done)return;done=true;clearInterval(watch);clearTimeout(grace);clearTimeout(reap);
       if(!reaped&&child){child.stdin?.destroy();child.stdout?.destroy();child.stderr?.destroy();child.unref();}
       // Never remove a stage which an unconfirmed child may still be using.
-      const cleanupPending=started&&!reaped?true:!cleanup();
+      const unconfirmed=Boolean(child)&&!reaped&&!spawnFailed;
+      const cleanupPending=unconfirmed?true:!cleanup();
+      if(unconfirmed)started=true; // conservatively unknown, not zero work
       if(cleanupPending&&!code)code='SUPERVISOR_CLEANUP_PENDING';
+      if(!code&&expired())code='SUPERVISOR_DEADLINE';
       resolveReport(report(code,{started,reaped,escalated,cleanupPending,result:code===null?expected:null}));
     }
     function stop(reason){
@@ -75,7 +78,7 @@ export async function superviseSyntheticCanonical({directory,ownerKey,reviewerKe
         env:{PATH:dirname(process.execPath),HOME:join(stage,'home'),TMPDIR:join(stage,'tmp'),TZ:'UTC',TSOS_OFFLINE_LOOPBACK:'1'}
       });
       child.on('spawn',()=>{started=true;if(expired())stop('SUPERVISOR_DEADLINE');});
-      child.on('error',()=>{if(!started){code='SUPERVISOR_SPAWN_FAILED';finish(false);}else stop('SUPERVISOR_CHILD_ERROR');});
+      child.on('error',()=>{if(!started){spawnFailed=true;code='SUPERVISOR_SPAWN_FAILED';finish(false);}else stop('SUPERVISOR_CHILD_ERROR');});
       child.stdin.on('error',()=>stop('SUPERVISOR_PIPE_ERROR'));
       child.stdout.on('error',()=>stop('SUPERVISOR_PIPE_ERROR'));
       child.stderr.on('error',()=>stop('SUPERVISOR_PIPE_ERROR'));
