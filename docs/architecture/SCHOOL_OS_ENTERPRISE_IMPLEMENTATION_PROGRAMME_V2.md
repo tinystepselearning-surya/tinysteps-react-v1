@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 4 (proposed evidence update)  
+**Version:** 2.0 programme baseline, revision 5 (proposed evidence update)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -357,7 +357,7 @@ Maintain this table as the authoritative programme status index. Each brick has 
 
 | ID | Status at this baseline | Next action |
 |---|---|---|
-| P01 | IN PROGRESS / scoped source evidence verified | [P01.1-A baseline](discovery/P01_SOURCE_BASELINE_2026-11-26.md); [P01.1-B role/automation](discovery/P01_AUTH_AUTOMATION_TOPOLOGY_2026-11-26.md); [P01.1-C Function topology and ownership seed](discovery/P01_FUNCTION_EXPORT_TOPOLOGY_2026-11-26.md); finish remaining root classification in bounded batches; P01.2/live P01.3 HOLD |
+| P01 | IN PROGRESS / source export classification complete | [P01.1-A baseline](discovery/P01_SOURCE_BASELINE_2026-11-26.md); [P01.1-B role/automation](discovery/P01_AUTH_AUTOMATION_TOPOLOGY_2026-11-26.md); [P01.1-C topology and ownership seed](discovery/P01_FUNCTION_EXPORT_TOPOLOGY_2026-11-26.md); [198/198 reconciled root manifest](discovery/P01_FUNCTION_ROOT_MANIFEST_2026-11-26.md); next P01.1-D resource/write dependency closure; P01.2/live P01.3 HOLD |
 | P02 | PROPOSED | Review ADRs and v1 alignment after discovery |
 | P03 | PROPOSED | Confirm existing schemas, seed registry |
 | P04 | HOLD / IN PROGRESS | M3 approved role-canary/freshness gate, no broad switch |
@@ -407,3 +407,5 @@ The research supports principles, not a claim of exact proprietary Epic schemas 
 - Revision 3 (26 Nov 2026): P01.1-B adds scoped role/authorization, seven scheduled definitions, 28 trigger roots, integrations, PR overlap and proposed metadata approval plan. P01.1 incomplete, live and merge gates remain HOLD; M3 ledger unchanged.
 
 - Revision 4 (26 Nov 2026): P01.1-C identifies 198 unique named Function exports, adds 13 trigger roots (41 cumulatively mapped), verifies 50 scoped callable constructors and seeds eight identity field contracts. Connector batch limit prevented complete root classification; P01.1 remains IN PROGRESS; live and merge holds unchanged.
+
+- Revision 5 (26 Nov 2026): completed P01.1-C source export constructor classification, 198/198 unique roots, zero missing/duplicate; 149 callable, 41 Firestore, seven scheduled, one HTTP. P01.1 overall remains IN PROGRESS; no production certification; next P01.1-D resource and write dependency closure; M3 and release gates unchanged.
