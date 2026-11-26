@@ -26,8 +26,8 @@ export const BUSINESS_METRICS = {
 export type BusinessTab = keyof typeof BUSINESS_METRICS;
 export type BusinessMetric = (typeof BUSINESS_METRICS)[BusinessTab][number][0];
 export type MonthRow = { monthKey: string; metrics: Partial<Record<BusinessMetric, number | null>> };
-export type YearProjection = { year: string; updatedAt: string; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; };
-export type CurrentProjection = { updatedAt: string; availableRecords: boolean; unresolvedRecords: number; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
+export type YearProjection = { year: string; updatedAt: string; throughDate: string | null; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; };
+export type CurrentProjection = { updatedAt: string; throughDate: string | null; availableRecords: boolean; unresolvedRecords: number; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const count = (v: unknown): number | null => typeof v === 'number' && Number.isSafeInteger(v) && v >= 0 ? v : null;
@@ -35,6 +35,7 @@ const timestamp = (v: unknown): v is string => typeof v === 'string' && Number.i
 const validEnvelope = (r: Record<string, unknown> | null): r is Record<string, unknown> =>
   !!r && r.schemaVersion === BUSINESS_ANALYTICS_SCHEMA && r.metricDefinitionVersion === 1 &&
   r.verificationStatus === 'verified' && timestamp(r.updatedAt);
+const throughDate = (r: Record<string, unknown>): string | null => r.refreshMode === 'daily_closed_day' && typeof r.throughDate === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(r.throughDate) ? r.throughDate : null;
 const metricKeys = Object.values(BUSINESS_METRICS).flat().map(([key]) => key);
 export function parseBusinessYear(input: unknown, year: string): YearProjection | null {
   const r = record(input);
@@ -53,13 +54,14 @@ export function parseBusinessYear(input: unknown, year: string): YearProjection 
   }
   const issues = record(r.issues);
   const undatedRecords = ['undatedEnquiries','undatedCharges','invalidChargeAmounts','undatedAdmissions','undatedCourseEnds','ambiguousStudentExits','unresolvedEnrollmentIdentity','unresolvedEnrollmentStatus'].reduce((sum, key) => sum + (count(issues?.[key]) ?? 0), 0);
-  return { year, updatedAt: r.updatedAt as string, months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords };
+  return { year, updatedAt: r.updatedAt as string, throughDate: throughDate(r), months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords };
 }
 export function parseBusinessCurrent(input: unknown): CurrentProjection | null {
   const r = record(input);
   if (!validEnvelope(r)) return null;
   return {
     updatedAt: r.updatedAt as string,
+    throughDate: throughDate(r),
     availableRecords: r.coverageMode === 'available_records',
     unresolvedRecords: (count(record(r.issues)?.unresolvedEnrollmentIdentity) ?? 0) + (count(record(r.issues)?.unresolvedEnrollmentStatus) ?? 0),
     activeStudents: count(r.activeStudents), activeEnrollments: count(r.activeEnrollments),
