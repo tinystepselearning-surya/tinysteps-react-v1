@@ -1,3 +1,4 @@
+import {reviewRow,isReviewId,isReviewInteger,REVIEW_MIN_TIME,REVIEW_MAX_TIME} from './offline-review-validation.ts';
 // Unified OFFLINE synthetic framework. Not an application authorization API.
 // All source rows and fences are stipulated test-harness fixtures, not trusted live facts.
 import {inspectInstitutionalFixture} from './institutional-context-contracts.ts';
@@ -13,20 +14,11 @@ type Result=Readonly<{scope:'unified-offline-review';productionAuthorization:fal
 class Reject extends Error{readonly reason:Reason;constructor(reason:Reason){super(reason);this.reason=reason;}}
 function need(x:unknown,reason:Reason):asserts x{if(!x)throw new Reject(reason);}
 function row(v:unknown,required:readonly string[],optional:readonly string[]=[]):Row{
-  need(v!==null&&typeof v==='object'&&!Array.isArray(v),'INVALID');
-  const p=Object.getPrototypeOf(v);need(p===Object.prototype||p===null,'INVALID');
-  const keys=Reflect.ownKeys(v);need(keys.length<=required.length+optional.length,'INVALID');
-  const out:Row=Object.create(null);
-  for(const k of keys){
-    need(typeof k==='string'&&(required.includes(k)||optional.includes(k)),'INVALID');
-    const d=Object.getOwnPropertyDescriptor(v,k);need(d&&d.enumerable&&Object.hasOwn(d,'value'),'INVALID');out[k]=d.value;
-  }
-  for(const k of required)need(Object.hasOwn(out,k),'INVALID');
-  return out;
+  const x=reviewRow(v,required,optional);need(x,'INVALID');return x;
 }
-function id(v:unknown):string{need(typeof v==='string'&&v.trim()===v&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'INVALID');return v;}
-function revision(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>0,'INVALID');return v;}
-function instant(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>=-62135596800000&&v<=253402300799999,'INVALID');return v;}
+function id(v:unknown):string{need(isReviewId(v),'INVALID');return v;}
+function revision(v:unknown):number{need(isReviewInteger(v,1),'INVALID');return v;}
+function instant(v:unknown):number{need(isReviewInteger(v,REVIEW_MIN_TIME,REVIEW_MAX_TIME),'INVALID');return v;}
 function source(v:unknown,rev:number):{documentId:string;record:unknown;revision:number}{
   const x=row(v,['documentId','record','revision']);
   need(revision(x.revision)===rev,'STALE');
