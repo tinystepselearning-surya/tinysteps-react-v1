@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 56 (B02-R1C scoped offline acceptance; effective on isolated merge)  
+**Version:** 2.0 programme baseline, revision 57 (B02-R1C emulator compatibility accepted; effective on isolated merge)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next gate: isolated Firestore backend compatibility preparation and independent security/privacy review; B02-R2 remains HOLD. B01, B02-R1A/B and B02-R1C scoped offline engineering accepted (505/505); Revision 56 effective upon verified isolated integration; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: B02-R2 readiness and independent security/privacy review; live execution remains HOLD. B01 and B02-R1A/B/C offline engineering including emulator compatibility accepted (506/506); Revision 57 effective upon verified isolated integration; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -662,6 +662,12 @@ Owner authorizes AI-led technical acceptance and continuation of isolated work f
 
 Next permitted work: scope isolated backend compatibility verification (R1C follow-up, not R2 execution), using exact existing SDK, disposable synthetic Firestore emulator and controlled tests for actual readTime, masks, empty/progress frames and post-revocation snapshot behavior. No production endpoints, live credentials, new runtime adapter, real actor records or security-policy activation. Prepare explicit acceptance and environment requirements; if emulator semantics are unsupported, report inconclusive and retain live hold. Independent review and existing P01/P02/P03/M3 and release gates remain open; no new identity authority or registry adoption.
 
+### Revision 57 — Actual Firestore emulator compatibility accepted
+
+Owner-operated same-head cumulative verification at 2b2e72d66e61e3249b3de7091bda8a516e6948d5, Node 22.22.1, Java 21.0.13.1, checksum-pinned Firestore emulator 1.19.8: 313 architecture + 132 strict identity/request/watchdog + 60 actual locked SDK loopback/canonical + 1 actual emulator experiment = 506/506, zero fail/cancel/skip/todo. Owner evidence, not CI or independent security acceptance. Probe and runner blob pins verified; prior 505 executable sources unchanged. [PR #951](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/951) scoped AI-led offline acceptance under existing owner authorization; effective only on verified merge into docs/tsos-v2-p01-source-baseline. [Emulator evidence](design/B02_R1C_EMULATOR_BACKEND_COMPATIBILITY.md). Seven logical local reads, five fixture writes in two commits; no production billed-read evidence. Tested server masks, exact readTime, filtered query, empty/missing and historical versus fresh state after synthetic revocation. Not whole canonical sampler on emulator, real IAM, browser Rules, production revocation propagation or process egress proof. No application, registry, Rules, dependencies, workflow, main or production change. Preserve current business rules, premium direct 1:1, current authorization Tier 1, T-1 reporting, progressive migration and specific retirement approval.
+
+Next: targeted B02-R2 readiness assessment against the existing M3 approval packet; classify residuals into independent review/private scope, controlled operator implementation, and live evidence only. Reuse accepted evidence and existing controls rather than another generic test expansion. If a required operator control is missing, define a separately bounded offline implementation increment; no executable production operator, real account reads, credential provisioning or live canary until independently reviewed authorization, exact private scope, effective IAM, enforced process/transport limits, privacy and stop conditions are satisfied. P01/P02/P03/M3 and release gates remain unchanged. No further owner Terminal regression solely for unchanged sources.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -775,3 +781,5 @@ Next permitted work: scope isolated backend compatibility verification (R1C foll
 
 
 - Revision 56 (effective on verified isolated merge): owner-authorized scoped AI-led B02-R1C offline acceptance PASS, 505/505 pinned regression; progressive replacement policy and R2 readiness handoff documented; independent security and live gates remain HOLD. Next isolated backend compatibility preparation.
+
+- Revision 57 (effective on verified isolated merge): cumulative 506/506 emulator follow-up accepted for isolated engineering; PR #951, all independent security and live gates held. Next targeted R2 readiness.
