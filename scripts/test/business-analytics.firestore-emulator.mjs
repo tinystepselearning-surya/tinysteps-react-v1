@@ -115,3 +115,38 @@ test('preserves only a verified exact month-end enrollment observation over late
  assert.equal(next.months[0].metrics.activeEnrollmentsAtClose,41);
  assert.deepEqual(preserveObservedEnrollmentClosings(next,{...previous,verificationStatus:'unverified'}),next);
 });
+
+import {captureDailyBusinessTrends,publishDailyBusinessTrends} from '../../functions/src/businessAnalytics/scheduled-refresh.mjs';
+test('capture once, publish at 01:00 without a rescan, reject missing and late stages',async()=>{
+ const {db,close}=createAnalyticsEmulatorStore();
+ try {
+  const captureTime='2026-11-26T18:45:00.000Z',publishTime='2026-11-26T19:30:00.000Z';
+  const readTime='2026-11-26T18:29:59.999Z';
+  let scans=0;
+  const source={inventory:async()=>({total:1}),readSnapshot:async(fn,opts)=>{
+   scans++;assert.equal(opts.sourceReadTime,readTime);
+   return fn({page:async(kind)=>({readTime,rows:kind==='leads'?[{path:'leads/scheduled-test',data:{receivedAt:'2026-11-26'}}]:[]})});
+  }};
+  const store=createBusinessRefreshStore(db);
+  // Only isolated emulator fixtures; production is never used.
+  await db.doc(root+'/businessAnalyticsControl/refresh').delete();
+  await db.doc(root+'/businessAnalyticsControl/staged').delete();
+  await assert.rejects(publishDailyBusinessTrends({db,now:new Date(publishTime),scheduleTime:publishTime,store}),/staged cutoff/);
+  const capture=await captureDailyBusinessTrends({db,now:new Date(captureTime),scheduleTime:captureTime,store:source});
+  assert.equal(capture.outcome,'staged');
+  const replay=await captureDailyBusinessTrends({db,now:new Date(captureTime),scheduleTime:captureTime,store:source});
+  assert.equal(replay.outcome,'already-staged');
+  assert.equal(scans,1);
+  const pub=await publishDailyBusinessTrends({db,now:new Date(publishTime),scheduleTime:publishTime,store});
+  assert.equal(pub.outcome,'published');
+  const annual=(await db.doc(root+'/businessAnalyticsYears/2026').get()).data();
+  assert.equal(annual.throughDate,'2026-11-26');
+  assert.equal(annual.updatedAt,readTime);
+  assert.equal(annual.months[10].metrics.leadEnquiries,1);
+  assert.equal((await publishDailyBusinessTrends({db,now:new Date(publishTime),scheduleTime:publishTime,store})).outcome,'already-published');
+  assert.equal(scans,1);
+  await assert.rejects(captureDailyBusinessTrends({db,now:new Date('2026-11-27T19:30:00Z'),scheduleTime:'2026-11-27T18:45:00Z',store:source}),/window closed/);
+  await assert.rejects(publishDailyBusinessTrends({db,now:new Date('2026-11-27T19:30:00Z'),scheduleTime:'2026-11-27T19:30:00Z',store}),/staged cutoff/);
+  assert.equal((await db.doc(root+'/businessAnalyticsYears/2026').get()).data().updatedAt,readTime);
+ }finally{await close();}
+});
