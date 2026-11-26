@@ -8,7 +8,7 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
 export async function refreshBusinessTrends({source,publisher,years,maxDocuments,pageSize,maxPages,apply=false,cutoff}){
  assert(Array.isArray(years)&&years.length>0&&years.length<=15&&new Set(years).size===years.length&&years.every(y=>typeof y==='string'&&/^\d{4}$/.test(y)),'Select 1–15 distinct reporting years');
  const result=await collectBusinessSources(source,{maxDocuments,pageSize,maxPages,sourceReadTime:cutoff?.sourceReadTime});
- const currentYear=istDateKey(result.readTime).slice(0,4);
+ const currentYear=cutoff?istDateKey(new Date(Date.parse(result.readTime)+1)).slice(0,4):istDateKey(result.readTime).slice(0,4);
  if(cutoff)assert(cutoff.throughDate===istDateKey(result.readTime)&&cutoff.sourceReadTime===result.readTime,'Daily snapshot cutoff mismatch');
  assert(years.every(y=>y<=currentYear),'Future reporting years are not supported');
  const reports=years.map(year=>buildAvailableBusinessTrends({year,updatedAt:result.readTime,...result.rows}));
