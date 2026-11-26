@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 59 (B02-R2.2D supervised canonical offline composition accepted; effective on isolated merge)  
+**Version:** 2.0 programme baseline, revision 60 (Mac-first infrastructure evidence; R59 offline engineering acceptance unchanged; effective on isolated merge)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted (570/570); Revision 59 effective upon verified isolated integration; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted at R59 (570/570). R60 records owner-reported infrastructure readiness, not additional engineering or production acceptance; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -676,6 +676,10 @@ Owner directs continued isolated implementation. [R2 readiness and signed approv
 
 Owner directs continued implementation after R58. New fixed synthetic child composes actual compiled canonical sampler and locked SDK loopback with signed exact actor plan, durable local approval consumption and parent process supervision; no live operator or production authority. Three new verification files; prior 565 accepted executable sources unchanged. [Composition and independent trust handoff](design/B02_R2D_SUPERVISED_CANONICAL_AND_TRUST_HANDOFF.md). Owner exact beda947a135242918d6a0ea31946ecf6e761821f, Node 22.22.1, Java 21.0.13.1, checksum-pinned emulator 1.19.8: 313+196+60+1 = 570/570, zero fail/cancel/skip/todo; all three new executable blob pins matched. Owner Terminal evidence, not CI or independent certification. Scoped AI-led acceptance under existing owner direction in [PR #953](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/953), effective only after verified isolated merge. Independent trust custody, stable replay governance, host-level egress/external deadline, actual bundle/deployment digests, effective IAM, private scope and browser/production evidence remain held. Revision 59 effective only on verified isolated integration. Preserve current business authorities, premium direct 1:1, Tier 1 current authorization/transactions, Tier 2 T-1 nonurgent reporting, progressive migration and specific retirement approvals. Next after pinned offline acceptance is real independent review and concrete host/trust decisions, not generic test expansion.
 
+### Revision 60 — Mac-first infrastructure evidence and execution model
+
+Owner directs reuse of the existing MacBook and keyless purpose-specific access, not a new hosted server by default. [Sanitized infrastructure and execution handoff](design/B02_MAC_EXECUTION_AND_INFRASTRUCTURE_HANDOFF.md) records reported restricted/admin connectivity, project-level permission results, local disk protection and owner-approved database protection change; private evidence and configuration remain outside Git. Separate administrative capability from operational authority; no administrative principal for routine analytics or identity sampling. Existing P01 metadata-only restrictions, exact private M3 scope, independent trust/host approval and release gates remain controlling. Proposed local host isolation and stable single-host replay governance require independent review and actual enforcement evidence; not implemented or certified. No further synthetic regression solely for documentation. R59 engineering evidence 570/570 unchanged; P01/P02/P03 and M3 holds remain. Next close residual infrastructure/security acceptance through the existing packets, no new IAM or production data work implied.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -795,3 +799,5 @@ Owner directs continued implementation after R58. New fixed synthetic child comp
 - Revision 58 (effective on verified isolated merge): R2.1 and R2.2A/B/C synthetic-only acceptance, 565/565 pinned same-head; no live operator or production authorization. R2.2D independent review required; durable replay remains local and supervisor is not wired to canonical transport. No changes to business policies, main or production artifacts.
 
 - Revision 59 (effective on verified isolated merge): supervised signed synthetic canonical composition, 570/570 pinned same-head; no production execution, no main merge. Independent R2.2D trust/host acceptance and all live gates HOLD. Next independent review and concrete execution boundary decisions, not generic synthetic test expansion.
+
+- Revision 60 (effective on verified isolated merge): sanitized owner-reported infrastructure evidence and proposed Mac-first execution model. Documentation only; R59 570/570 engineering acceptance retained. Independent security and live gates HOLD.
