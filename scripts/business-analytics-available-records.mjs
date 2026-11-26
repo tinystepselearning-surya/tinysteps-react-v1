@@ -34,20 +34,22 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   const d=date(row.data.receivedAt,row.data.requestedAt,row.data.originalCreatedAt,row.data.createdAt);
   if(eventIds.has(id)){assert(eventIds.get(id)===d,'Conflicting copies of one source inquiry');continue;}
   eventIds.set(id,d);
-  if(d)add(d.slice(0,7),'leadEnquiries');else issues.undatedEnquiries++;
+  if(d){if(d<=asOf)add(d.slice(0,7),'leadEnquiries');}else issues.undatedEnquiries++;
  }
  for(const {id,data} of exact(leads,'leads')){
   if(eventIds.has(id))continue;
   // Canonical lead may have been retained from a different event: avoid counting its
   // fallback twice when the supplied event history already contains the same source ID.
   const d=date(data.receivedAt,data.requestedAt,data.createdAt,data.firstInquiryAt);
-  if(d)add(d.slice(0,7),'leadEnquiries');else issues.undatedEnquiries++;
+  if(d){if(d<=asOf)add(d.slice(0,7),'leadEnquiries');}else issues.undatedEnquiries++;
  }
  // Match canonical billing's exclusion of archived and void/cancelled/reversed charge records.
  // This is billed charges, not payment/refund accounting. Never read payment records here.
  for(const {data} of exact(billingCharges,'billingCharges')){
   if(data.archived===true||data.isArchived===true||excludedCharge.has(status(data.status))||data.isVoided===true)continue;
-  const m=month(data.monthKey)||date(data.serviceDate,data.date,data.classDate)?.slice(0,7);
+  const serviceDay=date(data.serviceDate,data.date,data.classDate);
+  if(serviceDay&&serviceDay>asOf)continue;
+  const m=month(data.monthKey)||serviceDay?.slice(0,7);
   if(!m){issues.undatedCharges++;continue;}
   const amount=money(data.amount);
   if(amount===null){issues.invalidChargeAmounts++;continue;}
@@ -64,16 +66,17 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   const isPaused=s==='paused'&&data.archived!==true&&data.isArchived!==true&&!data.archivedAt;
   const isTerminal=terminal.has(s)||data.archived===true||data.isArchived===true||Boolean(data.archivedAt);
   if(!isActive&&!isPaused&&!isTerminal){issues.unresolvedEnrollmentStatus++;continue;}
+  const start=date(data.enrollmentDate,data.createdAt,data.activatedAt,data.enrollmentStartDate,data.classesStartDateYmd,data.classesStartDate,data.startDate);
+  if(start&&start>asOf)continue;
   if(isActive){activeKids.add(child);activeEnrollments++;}
   if(isPaused)pausedKids.add(child);
-  const start=date(data.enrollmentDate,data.createdAt,data.activatedAt,data.enrollmentStartDate,data.classesStartDateYmd,data.classesStartDate,data.startDate);
   const end=isTerminal?date(data.completedAt,data.endedAt,data.discontinuedAt,data.expiredAt,data.cancelledAt,data.canceledAt,data.archivedAt):null;
   const correction=Boolean(data.correctedToEnrollmentId||data.supersededByEnrollmentId||data.transitionType==='correction');
   if(!start)issues.undatedAdmissions++;
   if(isTerminal&&!end)issues.undatedCourseEnds++;
   if(start&&!correction)add(start.slice(0,7),'newEnrollments');
-  if(end&&!correction&&s==='completed')add(end.slice(0,7),'courseCompletions');
-  if(end&&!correction&&s==='discontinued')add(end.slice(0,7),'courseDiscontinuations');
+  if(end&&end<=asOf&&!correction&&s==='completed')add(end.slice(0,7),'courseCompletions');
+  if(end&&end<=asOf&&!correction&&s==='discontinued')add(end.slice(0,7),'courseDiscontinuations');
   const rows=children.get(child)||[];rows.push({id,start,end,s,isTerminal,correction});children.set(child,rows);
  }
  for(const rows of children.values()){
@@ -84,6 +87,7 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   if(rows.some(r=>!r.start||(r.isTerminal&&(!r.end||r.end<r.start)))){issues.ambiguousStudentExits++;continue;}
   const ends=[...new Set(rows.filter(r=>r.isTerminal&&r.end&&!r.correction).map(r=>r.end))].sort();
   for(const end of ends){
+   if(end>asOf)continue;
    const retained=rows.some(r=>r.start<=end&&(!r.isTerminal||r.end>end));
    if(retained)continue;
    const ended=rows.filter(r=>r.end===end&&!r.correction);
