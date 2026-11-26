@@ -16,3 +16,26 @@ This is a first integrated offline slice, not a completed production resolver. E
 ## Verification
 
 At exact clean candidate: Node 22.22.1, Functions locked TS 5.9.3, package-lock blob 9acb6ce6fd6881f3606853ca534939ff79649fe4. Prior strict noEmit flags against six TS modules; node --experimental-strip-types --unhandled-rejections=strict --test against six test files. Expected 173 focused cases, zero fail/cancel/skip/todo. Prior 570 accepted tests retained separately; no new test pass or CI claim. Review actual diff, legacy source pins, and coverage before acceptance.
+
+## Extended command and support review — all 15 candidate pairs modeled
+
+Owner directs next offline development. Seven additional candidate role/action/scope combinations now have a narrow synthetic command/case contract; no policy adoption or actual grants. Same central capability catalogue unchanged. New `reviewUnifiedOperation` entry dispatches exact contextual or command envelopes, preserves the original contextual-only function and its held-command regression cases. The seven additional pairs require a distinct typed payload, explicit target/expected revision and exact request-bound approval. Tenant-only scope contains no fabricated organisation or campus. Existing route labels remain illustrative, not actual callable mapping. Added five route labels (institution creation, two roster scopes, finance posting, scoped support). Eight existing contextual positives retained.
+
+| Pair | Narrow synthetic scenario | Required additional evidence |
+|---|---|---|
+| Institution creation / tenant | Prospective organisation | Active parent, target absent, revision zero, exact reserved operation ID and valid prospective record |
+| Campus creation / organisation | Prospective campus | Active tenant/org, target absent, revision zero, exact reserved operation ID and valid IANA time zone |
+| Roster / organisation | End one placement | Exact active owned-school placement and learner, current target revision |
+| Roster / campus | End one placement | Same plus exact active campus owner |
+| Finance post / organisation | Full outstanding INR charge amount in integer minor units | Open ledger, unsettled exact charge, matching amount and revision |
+| Partner manage / organisation | Request one review | Exact customer/provider pair, current partnership, assigned actor and target |
+| Scoped support / tenant | Inspect case status only | Exact open assigned case, current finite interval and field |
+
+These deliberately narrow fixture operations are design decisions, not approved business rules or full domain functionality. Finance fixture does not prescribe live payment behavior, create a ledger entry or implement settlement. Partner fixture requires synthetic customer membership as well as explicit partnership and assignment; actual provider-side eligibility and delegation contract remains unresolved, not proof of partner access. Support does not return case data or confer write rights. Creation absence/reservation is stipulated evidence, not a transaction or absence check against a database. Request fingerprint is canonical SHA-256 over validated request, actor, current time, source revision and route epoch; approval binding is synthetic, not a cryptographic signature, replay prevention, durable idempotency or independent evidence. Exact target revision is a fixture check, not atomic compare-and-set. No mutations, runtime imports or live authorization. All prior independent review and release gates remain.
+
+- scripts/architecture/extended-capability-review.ts blob dd2310186aff61775efcb6b73b036cbd63e718a6
+- scripts/architecture/extended-capability-review.node-test.mjs blob e05e2ba9426c163db52ef44350d049eb2212372e: 31 new tests authored, seven positives plus action-specific denial, fingerprint/approval, tenant-only scope, route, source revision and unified dispatch checks.
+- scripts/architecture/unified-context-review-framework.ts blob 6cb2841cbfe673ab098621f5cd9c170715dc125a
+- scripts/architecture/authority-lane-review-prototype.ts blob e682e2557061c6a2f090e7bd87a63941da35240a
+
+Expected combined focused cases: 147 original + 26 composition + 31 extended = 204. All seven test files, strict noEmit across seven TS modules, exact pinned Node 22.22.1/TS 5.9.3 and Functions lock. Not executed on this head. No main merge, no production deployment or change in accepted R62 baseline. Prior 570 accepted cases separate. Next: combined Mac verification and source/security review of evidence authenticity, actual domain semantics, shared validation, transaction revocation, request binding and reader/writer compatibility; do not equate synthetic positives with authorization certification.
