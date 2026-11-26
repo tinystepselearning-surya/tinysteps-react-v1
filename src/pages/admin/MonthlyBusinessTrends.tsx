@@ -19,6 +19,7 @@ const monthName = (month: string) => new Intl.DateTimeFormat('en-IN', { month: '
 const showTime = (value?: string) => value ? new Intl.DateTimeFormat('en-IN', {
   dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata',
 }).format(new Date(value)) : 'Not available';
+const showDay = (value: string) => new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeZone: 'UTC' }).format(new Date(value + 'T00:00:00Z'));
 const count = (value: number | null | undefined) => value == null ? 'Not available' : new Intl.NumberFormat('en-IN').format(value);
 
 export default function MonthlyBusinessTrends({ active }: { active: boolean }): JSX.Element | null {
@@ -84,13 +85,13 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Monthly business trends">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-lg font-semibold">Monthly business trends</h3>
-          <p className="text-sm text-slate-600">Calendar months (IST). Enquiries received, class charges billed and enrollment movement.</p></div>
+          <p className="text-sm text-slate-600">Daily closed-day snapshot (IST). Enquiries received, class charges billed and enrollment movement.</p></div>
         <div className="flex items-center gap-2">
           <label htmlFor="business-trends-year">Year</label>
           <select id="business-trends-year" className="rounded border p-2" value={year} onChange={(e) => setYear(e.target.value)}>
             {Array.from({ length: 15 }, (_, i) => String(Number(thisYear) - i)).map((y) => <option key={y}>{y}</option>)}
           </select>
-          <button className="rounded border px-3 py-2" disabled={loading} onClick={refresh}>Refresh trends</button>
+          <button className="rounded border px-3 py-2" disabled={loading} onClick={refresh}>Reload saved report</button>
         </div>
       </div>
       <nav aria-label="Monthly trend sections" className="flex flex-wrap gap-2">
@@ -99,6 +100,8 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
       {loading && <p role="status">Loading aggregate documents…</p>}
       {error && <p role="alert" className="text-amber-800">An aggregate could not be fetched. Refresh to retry; no raw-data fallback is used.</p>}
       {!loading && !annual && <p role="status" className="text-amber-800">Verified historical analytics are not available for this year.</p>}
+      {annual?.throughDate && <p className="rounded-lg bg-slate-50 p-2 text-sm">Data through <strong>{showDay(annual.throughDate)}</strong> (IST). Updated once daily; today's activity is excluded.</p>}
+      {tab === 'enrollments' && current?.throughDate && <p className="text-xs text-slate-600">Student totals as of {showDay(current.throughDate)}.</p>}
       {annual?.availableRecords && <p className="text-xs text-slate-600">Historical totals use available recorded dates. {annual.undatedRecords > 0 ? 'Some source records have missing dates or unresolved details and cannot be assigned reliably.' : 'No unresolved details were flagged in the supplied records.'}</p>}
       {tab === 'enrollments' && current?.availableRecords && current.unresolvedRecords > 0 && <p className="text-xs text-slate-600">Current totals exclude records with unresolved identity or status.</p>}
       {tab === 'enrollments' && <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
@@ -125,9 +128,9 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
       <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-600 border-t pt-3">
         <span>Aggregate document fetch attempts this page session: {attempts}</span>
         <span>Operational query calls from this panel: 0</span>
-        <span>Historical projection updated: {showTime(annual?.updatedAt)}</span>
-        <span>Current projection updated: {showTime(current?.updatedAt)}</span>
-        <span>Cache: up to 5 minutes. Fetch attempts are not billed-read totals.</span>
+        <span>Historical source snapshot: {showTime(annual?.updatedAt)}</span>
+        <span>Current source snapshot: {showTime(current?.updatedAt)}</span>
+        <span>Reload only fetches saved aggregates; never starts a backend refresh. Fetch attempts are not billed-read totals.</span>
       </div>
     </section>
   );
