@@ -7,8 +7,6 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// Focused transport-status correction awaiting independent review; do not execute.
-throw Error('R5D_STATUS_CORRECTION_REVIEW_HOLD');
 const project='demo-tsos-r5d-transaction',host='127.0.0.1',port=8792;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5D_EMULATOR_ONLY,'1');
