@@ -7,6 +7,21 @@ const assert=(ok,message)=>{if(!ok)throw Error(message);};
 export function createBusinessRefreshStore(db){
  assert(db&&typeof db.runTransaction==='function','Firestore instance required');
  return {
+  // Metadata-style aggregate count preflight; no source documents or IDs returned.
+  // Counts are advisory (not snapshot-consistent); the hard collector budget remains mandatory.
+  inventory:async()=>{
+   const entries=await Promise.all([...allowed].map(async kind=>{
+    const query=kind==='inquiries'?db.collectionGroup('inquiries'):db.collection(kind);
+    const result=await query.count().get();
+    const count=result.data().count;
+    assert(Number.isSafeInteger(count)&&count>=0,'Invalid source count');
+    return [kind,count];
+   }));
+   const counts=Object.fromEntries(entries);
+   const total=entries.reduce((sum,[,count])=>sum+count,0);
+   assert(Number.isSafeInteger(total),'Unsafe source count');
+   return {counts,total,aggregateQueries:entries.length};
+  },
   readSnapshot:fn=>db.runTransaction(tx=>fn({
    async page(kind,{after,limit,fields}){
     assert(allowed.has(kind)&&Number.isSafeInteger(limit)&&limit>0&&limit<=500,'Invalid source query');
