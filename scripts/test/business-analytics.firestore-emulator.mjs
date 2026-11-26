@@ -53,6 +53,10 @@ test('real isolated Firestore refresh reads existing records once and publishes 
   batch.set(db.doc('enrollments/refresh-enrollment'),{kidId:'refresh-child',status:'active',createdAt:'2026-10-03'});
   await batch.commit();
   const store=createBusinessRefreshStore(db);
+  const inventory=await store.inventory();
+  assert.equal(inventory.total,5);
+  assert.equal(inventory.aggregateQueries,4);
+  assert.deepEqual(inventory.counts,{leads:1,inquiries:2,billingCharges:1,enrollments:1});
   const year=new Intl.DateTimeFormat('en-CA',{year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date());
   // CI clock may precede the fixture dates in a future replay; fixtures are fixed for reproducibility.
   const years=[...new Set(['2026',year])].sort().filter(y=>y<=year);
