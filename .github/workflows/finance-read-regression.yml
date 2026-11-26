@@ -1,0 +1,49 @@
+name: Finance Read Regression
+
+on:
+  pull_request:
+    paths:
+      - 'functions/src/financeReconciliationReport.ts'
+      - 'functions/src/helpers/financeReconciliationCompletedSessions.ts'
+      - 'functions/src/helpers/financeReconciliationProtectedLifecycleSessions.ts'
+      - 'functions/src/helpers/teacherEarningsRollupDelta.ts'
+      - 'functions/src/helpers/teacherEarningsCoordinatedRecompute.ts'
+      - 'functions/src/teacherEarningsRollupTrigger.ts'
+      - 'functions/test/financeReconciliation*.spec.ts'
+      - 'functions/test/teacherEarnings*.spec.ts'
+      - '.github/workflows/finance-read-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backend-finance:
+    name: Build and backend finance regressions (no deployment)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            functions/package-lock.json
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts && npm ci --prefix functions --include=dev --ignore-scripts
+      - name: Functions TypeScript build
+        run: npm --prefix functions run build
+      - name: Focused finance regressions
+        run: |
+          npx vitest run --config functions/vitest.config.ts \
+            functions/test/financeReconciliationCompletedSessions.spec.ts \
+            functions/test/financeReconciliationSharedMonthCandidates.spec.ts \
+            functions/test/teacherEarningsRollupDelta.spec.ts \
+            functions/test/teacherEarningsIncrementalExecutor.spec.ts \
+            functions/test/teacherEarningsCoordinatedRecompute.spec.ts
+      - name: All Functions regression tests
+        run: npm --prefix functions test
+      - name: Functions source lint
+        run: npm --prefix functions run lint

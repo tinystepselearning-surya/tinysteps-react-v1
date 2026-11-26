@@ -3,6 +3,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as admin from 'firebase-admin';
 import { ensureCanonicalAdmin } from './helpers/canonicalAdminGuard';
 import { fetchCompletedSessionsForFinanceReconciliation } from './helpers/financeReconciliationCompletedSessions';
+import { fetchMonthBoundedFinanceSessionCandidates } from './helpers/financeReconciliationCompletedSessions';
 import { fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation } from './helpers/financeReconciliationProtectedLifecycleSessions';
 import { isFinanciallyEarnedAttendanceStatus } from './helpers/status';
 import {
@@ -490,6 +491,11 @@ async function buildFinanceReconciliationReport(
   const { monthKey, sampleLimit, maxDocsPerCollection, maxLinkedLookups } = options;
   const db = admin.firestore();
   const warnings: string[] = [];
+  // One canonical month query union per report, reused by both downstream checks.
+  // All-time reports keep their original status-scoped reads.
+  const monthCandidates = monthKey
+    ? fetchMonthBoundedFinanceSessionCandidates({ db, monthKey, maxDocs: maxDocsPerCollection })
+    : undefined;
 
   const [repairSnap, completedSnap, protectedLifecycleSnap, chargesSnap, earningsSnap, paymentsSnap, payoutsSnap, parentReadModelsSnap] =
     await Promise.all([
@@ -498,11 +504,13 @@ async function buildFinanceReconciliationReport(
         db,
         monthKey,
         maxDocs: maxDocsPerCollection,
+        monthCandidates,
       }),
       fetchFinanciallyEarnedProtectedLifecycleSessionsForFinanceReconciliation({
         db,
         monthKey,
         maxDocs: maxDocsPerCollection,
+        monthCandidates,
       }),
       fetchLimitedDocs(
         monthKey
