@@ -1,6 +1,6 @@
 # P01.2 residual index evidence — offline reconciliation increment
 
-Status: implementation candidate; no additional live metadata access, document reads, index edits or deployment. R60 and 570 accepted engineering tests remain unchanged. Existing P01.2 authorization packet and R60 host/trust gates remain controlling.
+Status: scoped offline utility validation PASS; isolated acceptance under existing owner direction, effective on verified merge; no additional live metadata access, document reads, index edits or deployment. R60 and 570 accepted engineering tests remain unchanged. Existing P01.2 authorization packet and R60 host/trust gates remain controlling.
 
 ## Source finding
 
@@ -25,8 +25,12 @@ Run on clean isolated candidate with pinned Node 22.22.1:
     node scripts/discovery/reconcile-priority-index-evidence.mjs --source-only
     node scripts/discovery/reconcile-priority-index-evidence.mjs --self-check
 
-The self-check uses actual pinned source and disposable in-memory synthetic metadata; no cloud calls. Expected 34/32/2 with selfCheck PASS. New script has been reviewed but not executed in the pinned Mac environment; prior 570 unaffected. No full cumulative rerun required solely for this separately scoped tool.
+The self-check uses actual pinned source and disposable in-memory synthetic metadata; no cloud calls. Expected 34/32/2 with selfCheck PASS. Owner Mac execution passed at exact candidate cd9fe9e380aacee94cd0cd1e56b1cbcbe8a6b76d, with Node 22.22.1 and clean checkout enforced by the submitted command chain; prior 570 unaffected. No full cumulative rerun required solely for this separately scoped tool.
 
 Future use only AFTER separate metadata authorization and independently reviewed collection; keep private evidence file outside the repository with restrictive permissions. Input shape: databaseResource (exact approved project/database resource string), databaseEdition STANDARD, groups mapping only the four above to individual index-list response pages. Approved API field mask should include indexes(name,queryScope,apiScope,density,fields,state),nextPageToken; no pagination beyond separately approved scope. Empty API list may omit indexes. Nonempty page token is incomplete, not evidence of missing indexes. No request is made by this tool. Use --evidence-file followed by private local path; report aggregate only. Exit 2 means supplied scope not matched/ready; exit 1 malformed/unsupported input or source drift. Never take actions based solely on a match; source-vs-deployed digest, effective resource permissions, evidence provenance and independent acceptance remain required.
 
 References: Google Cloud Firestore Standard edition index overview (https://docs.cloud.google.com/firestore/native/docs/standard-index-overview), REST index definition (https://docs.cloud.google.com/firestore/docs/reference/rest/Shared.Types), density (https://firebase.google.com/docs/firestore/reference/rest/Shared.Types/Density), API scope (https://docs.cloud.google.com/firestore/docs/reference/rest/Shared.Types/ApiScope). No expanded metadata batch approved. P01.2 and M3 HOLD; no phase advancement, production writes, deployment, admin execution or changes to existing business semantics.
+
+## Owner execution evidence and disposition
+
+Owner-provided Terminal output confirms both source-only and self-check commands completed on the pinned candidate. Both report 34 declarations, 32 unique definitions and two duplicate declarations, with the per-group counts above; selfCheck PASS. Both correctly retain liveVerified false, productionWritesPerformed false and NOT_ACCEPTED/NOT_VERIFIED in the absence of live metadata. Tool and index source blobs re-fetched and matched. This is scoped offline validation, not CI, independent review, actual deployed index parity or P01.2 acceptance. Do not add self-check assertions to the previously accepted 570-test total. No need to repeat unchanged suites. Merge PR #955 only into the isolated architecture baseline after verifying the final documentation-only delta, exact head and base, and unchanged production refs. R61 effective only on verified merge; all existing independent review, metadata approval and live gates remain HOLD. No remediation or deletion of duplicate declarations is authorized by this acceptance.
