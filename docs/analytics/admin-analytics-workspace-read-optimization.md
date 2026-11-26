@@ -23,7 +23,7 @@ Fixed 13 aggregate count calls; no document contents or IDs are retrieved. Run o
 
 ## Metric and architecture decisions
 - Freeze management reporting at previous day IST; preserve live parent/teacher payments, lead/demo operations, attendance, scheduling, reconciliation and all source writes.
-- Keep existing 00:15 capture and 01:00 publish timing. First verify the currently deployed Monthly Trends first scheduled capture and publication. Do not change its budget or implementation until read-window/latency and exact cutoffs are verified.
+- Preserve existing Monthly Trends 00:15 capture and 01:00 publish timing; use the staggered reporting calendar below for expansion. First verify the currently deployed Monthly Trends first scheduled capture and publication. Do not change its budget or implementation until read-window/latency and exact cutoffs are verified.
 - Reuse the existing bounded historical snapshot transaction and source masks where practicable. Read leads/enrollments/charges once across reports; reuse existing certified read models where proven equivalent. Do not repeat source scans per month/view; count distinct incremental sources. Use shared pure reducers extracted from existing metric logic rather than independently redefining funnel, attribution, settlement, earnings or recurrence.
 - Keep admissions cohort and activity semantics separate from Monthly Trends recorded enquiry counts; preserve exclusions, source attribution categories, Speaking-origin cohort and forward-only milestone cutover. As-of cutoff applies to event evidence and snapshot state. No prospective demo backfill. Do not alter shared operational DemoSessionsManagement behaviour.
 - Keep canonical service-month billed, settled, outstanding and collection-rate normalization. No replacement with Monthly Trends billed charges (different metric). Historical finance can change after settlement/correction: track source changes and recompute affected service months, do not permanently freeze historical balances. Keep forecast explicit as forecast based on schedules as of cutoff, with future planned sessions distinct from actuals.
@@ -31,12 +31,44 @@ Fixed 13 aggregate count calls; no document contents or IDs are retrieved. Run o
 - Candidate namespace: adminStats/businessWorkspaceV1/months/{YYYY-MM}, with split per-view subdocuments if payload size requires it; manifest carries schemaVersion, metricDefinitionVersion, throughDate, sourceReadTime, publication generation, completeness and state. Admin/founder only; no client writes. No raw personal or source document payloads. Limit aggregate size, explicit path allowlist, atomically publish compatible snapshots, fail closed on stale/invalid/missing generation, preserve previous good snapshot. No browser raw fallback after cutover; not available rather than zero. One to three aggregate reads per uncached view target; no operational reads; shared cache by generation and month, including refresh.
 - No historical migration or additional independent nightly scans by default. Reporting month selection preserved; future forecast selection only if a verified saved forecast exists; unsupported periods explicit.
 
+## Owner-approved platform-wide data freshness policy (26 November 2026)
+
+Default to persisted reporting projections, not realtime operational collection access. Realtime is an explicit exception justified by an immediate action, safety, correctness or transactional dependency. This policy applies to future Tiny Steps OS modules as well as the current Analytics workspace. Audit existing modules before changing them; do not indiscriminately remove listeners or weaken consistency.
+
+| Freshness class | Use cases | Read policy |
+| --- | --- | --- |
+| Operational realtime | Newly received leads requiring response, demo assignments/bookings, ongoing class/attendance operations, pending operational alerts, payment or wallet actions and confirmations | Narrow indexed query or document listener only while the relevant workflow is active; unsubscribe on exit; paginate; no full-history subscription |
+| On-demand current | Individual detail investigation, explicit reconciliation or exception review that genuinely needs today's state | Targeted authorized one-time query, bounded by entity and period; avoid implicit refreshes |
+| T-1 management reporting | Overview, Growth, Acquisition, Monthly Trends, finance reporting, delivery/teacher economics, historical dashboards, nonurgent management statistics | Published aggregate documents only; data through previous IST day; reload reads aggregates, never triggers raw scan |
+| Static/reference | Stable catalogue/configuration/lookup data where immediate updates are not required | Reuse existing versioned or cached read model, invalidate on relevant changes; no nightly reread solely because a batch exists |
+
+Classify each dataset or feature, not just the page. A live action and a historical KPI may coexist on one screen but must use separate paths and explicit freshness labels. Correctness-sensitive transactions, authorization, attendance and payment invariants remain authoritative. Historical finance balances and other corrected periods must be recomputed through verified dirty-month/change detection where applicable; T-1 does not mean permanently immutable history.
+
+### Proposed staggered overnight processing calendar (Asia/Kolkata)
+
+Preserve existing deployed Monthly Trends jobs and their first-run verification. The following is a planning allocation, not deployed schedules. Finalize against actual project-wide Cloud Scheduler inventory, measured job durations, quotas, dependencies and marginal read costs before implementation. Leave approximately 15–20 minutes of minimum breathing room between heavy jobs, with longer gaps for dependent jobs; do not start all jobs at 01:00.
+
+| IST slot | Proposed work |
+| --- | --- |
+| 00:15 | Existing exact closed-day capture; extend shared bounded capture only after evidence supports it |
+| 01:00 | Existing Monthly Trends publication |
+| 01:30 | Growth, admissions, acquisition and overview admissions components |
+| 02:00 | Finance management reporting and overview finance components |
+| 02:30 | Existing globalLearnersRollup; reserve this slot pending complete scheduler inventory |
+| 03:00 | Delivery and teacher economics reporting, subject to dependency and runtime verification |
+
+Overview must not claim a coherent new generation until all its required components have completed. Shared inputs may be staged as sufficient aggregate/intermediate values with bounded storage and no unnecessary personal records. Later jobs should consume staged data or certified cutoff-consistent projections, not repeat scans. Dependency checks and non-overlap guards must hold even if a prior job overruns. No requirement to schedule a separate job for every tab.
+
+Important exact-cutoff constraint: PITR was disabled in the verified Monthly Trends design; ordinary historical reads have a one-hour window. At 01:30–03:00, a direct query cannot reliably recover the exact prior-day midnight database state. Capture necessary cutoff-consistent state within the allowed window, using shared bounded reads or validated change-driven projections; then stagger computation/publication after midnight. Do not substitute today's mutable statuses with a timestamp filter and call it T-1. If a source cannot support exact cutoff, retain the last verified snapshot and label freshness/coverage honestly; propose a separate measured solution rather than enabling PITR or granting IAM without review.
+
+Each scheduled unit needs a documented input/output, owner, read/write budget, cadence, dependencies, cutoff, timeout, idempotency, run lock, stale/error policy, and measured read savings. Failed or skipped batches must not trigger raw client fallback. Prior verified snapshots remain readable. Track source documents, aggregate/index queries, writes, compute, runtime, coverage and cost. No new recurring job if incremental/change-driven reuse is cheaper. No live operational regressions; no production changes solely from this policy update.
+
 ## Release phases and acceptance
 1. Inventory and cost baseline: current status count-only tooling in review. Measure actual baseline visits, relevant read SKU and free quota, source counts and rollup readiness. Compare expected reads removed against incremental reads, index scans, writes, storage, compute. Do not claim rupee savings until measured. Use existing read-only identity; production output private.
 2. Extract pure growth/overview/acquisition reducers with parity fixtures and existing definitions. Shadow snapshots first; no change to live admin UI. Validate cutoff, source attribution, historical events, future-only cutover.
 3. Finance/delivery parity and certified rollup strategy; late corrections, missing fees, exact monetary units, future recurrence forecasts, parent-month group scope. Avoid nightly full history scans; use bounded dirty-month strategy if evidence supports it.
 4. Teacher Economics parity, auth and bounded summary rows; preserve archived/deleted and pending semantics.
-5. Extend the existing capture/publish pipeline under hard shared budgets. Stage incremental reports with separate failure isolation so Monthly Trends is not blocked by expansion. Ensure one consistent cutoff, no new IAM, no source mutations, no per-tab jobs; test capture inside retention window and publication idempotency. Only enable if cost evidence supports net benefit.
+5. Extend shared cutoff-consistent capture and stagger reporting computation/publication using the owner-approved overnight calendar. Inventory existing jobs first, set non-overlap/dependency guards and hard shared budgets, and isolate failures so Monthly Trends is not blocked by expansion. One consistent cutoff, no new IAM, no source mutations, no redundant per-tab jobs; test capture inside retention window and publication idempotency. Only enable if cost evidence supports net benefit.
 6. Shadow compare every field to current calculations on the same source state, including missing-data states; test read-plan via mocked Firebase queries and emulator authorization. Record source counts, duration, aggregate sizes and expected billed read difference. Actual production parity required, not just synthetic tests.
 7. Release tab by tab with snapshot readiness gate; remove Analytics-only raw listeners and loaders after parity. Preserve operational pages. Verify no unintended functions or Hosting/rules/index changes, no live user workflows affected, cold/warm opens, reload and selected month reads. Failures retain prior good report; rollback isolated UI release and/or disable extension, not existing Monthly Trends.
 
