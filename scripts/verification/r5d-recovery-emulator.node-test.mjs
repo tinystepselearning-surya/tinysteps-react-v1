@@ -7,7 +7,8 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// Independently reviewed bounded experiment; R5-C owner-local PASS prerequisite satisfied.
+// Focused transport-status correction awaiting independent review; do not execute.
+throw Error('R5D_STATUS_CORRECTION_REVIEW_HOLD');
 const project='demo-tsos-r5d-transaction',host='127.0.0.1',port=8792;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5D_EMULATOR_ONLY,'1');
@@ -149,7 +150,7 @@ test('R5-D fixed receipt recovery phase '+phase,{timeout:150000},async t=>{
   // The upstream request is the closed-over, locally validated fixture write set.
   // Cut the downstream RPC by shutting the service before any response is sent.
   async function loseResponse(prepared,forward){
-    let requests=0,handlerError=null,clientError=null,handlerDone;
+    let requests=0,handlerError=null,clientError=null,handlerDone,shutdownRequested=false,handlerCompleted=false;
     const finished=new Promise(resolve=>{handlerDone=resolve;});
     const server=new grpc.Server({'grpc.max_receive_message_length':65536});
     const descriptor={commit:{path:'/google.firestore.v1.Firestore/Commit',requestStream:false,responseStream:false,requestDeserialize:b=>b,responseSerialize:()=>Buffer.alloc(0),requestSerialize:b=>b,responseDeserialize:b=>b,originalName:'commit'}};
@@ -160,7 +161,11 @@ test('R5-D fixed receipt recovery phase '+phase,{timeout:150000},async t=>{
       void (async()=>{
         try{inc('relayCalls');if(forward){inc('relayForwards');await commit(prepared.writes,prepared.tx,'transaction');}}
         catch(err){handlerError=err;}
-        finally{server.forceShutdown();handlerDone();}
+        finally{
+          shutdownRequested=true;
+          try{server.forceShutdown();handlerCompleted=true;}catch(err){handlerError=handlerError??err;}
+          finally{handlerDone();}
+        }
       })();
     }});
     let downstream;
@@ -170,11 +175,20 @@ test('R5-D fixed receipt recovery phase '+phase,{timeout:150000},async t=>{
       downstream=client(relayPort);
       try{await downstream.commit({database,writes:prepared.writes,transaction:prepared.tx},options());}
       catch(err){clientError=err;}
-      // No accepted deadline, successful downstream response, or unobserved handler.
-      assert.equal(clientError?.code,grpc.status.UNAVAILABLE,'EXPECTED_DOWNSTREAM_TRANSPORT_LOSS');
+      // A caller-visible error is not evidence that the backend did not commit.
+      // grpc-js 1.14.1 forceShutdown destroys sessions with NGHTTP2_CANCEL;
+      // subchannel-call maps it to CANCELLED / Call cancelled, or UNAVAILABLE /
+      // Connection dropped. Match only these documented fault-specific pairs.
+      assert.ok(clientError,'UNEXPECTED_DOWNSTREAM_SUCCESS');
+      assert.equal(requests,1,'EXPECTED_ONE_FAULT_HANDLER');
       await finished;
       if(handlerError)throw handlerError;
-      assert.equal(requests,1);
+      assert.equal(requests,1,'EXPECTED_ONE_FAULT_HANDLER');
+      assert.ok(shutdownRequested&&handlerCompleted,'EXPECTED_COMPLETED_INJECTED_SHUTDOWN');
+      const cancelled=clientError.code===grpc.status.CANCELLED&&clientError.details==='Call cancelled';
+      const unavailable=clientError.code===grpc.status.UNAVAILABLE&&clientError.details==='Connection dropped';
+      assert.ok(cancelled||unavailable,'UNEXPECTED_DOWNSTREAM_FAULT_STATUS '+String(clientError.code));
+      t.diagnostic('R5-D_FAULT_OBSERVED status='+ (cancelled?'CANCELLED':'UNAVAILABLE')+' handler=completed forward='+Number(forward));
       return {kind:'indeterminate'};
     }finally{server.forceShutdown();if(downstream)await downstream.close();}
   }
