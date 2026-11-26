@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 40 (B01-B.1 isolated typed schema tooling authorized)  
+**Version:** 2.0 programme baseline, revision 41 (B01-B.1 accepted and integrated; configuration engine next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.1 isolated typed-schema tooling and synthetic verification. B01-A accepted; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.2 scoped configuration engine design and authorization. B01-A and B01-B.1 accepted in isolated baseline; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -562,6 +562,12 @@ Increment sequence:
 
 Each subsequent increment needs scoped authorization under controlling gates; no claim of executable schema completeness or production readiness. Preserve one-to-one delivery first, current business rules, bounded read costs, and single authority per fact. No production or existing application changes.
 
+### Revision 41 — B01-B.1 accepted and integrated into isolated baseline
+
+Owner-operated Mac verification at exact candidate e4730d4198f1de8380444f2c5415fbace3a120c0, Node v22.22.1, combined registry and typed-schema Node suite: 109/109 passed, zero failed/cancelled/skipped/todo, 1110.150333 ms. Includes 66 registry and 43 synthetic typed schema cases. Supplied Terminal evidence, not CI. Re-fetched committed source, reran 43 typed cases and extra boundary probes; scope confirmed four added files, no runtime or registry changes. AI-led technical acceptance PASS under revision 40 for offline synthetic-shape prototype only, not independent or executable-schema certification. [PR #942](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/942) merged solely into `docs/tsos-v2-p01-source-baseline` at 2f186f18d7ba58e42d0f1ac4df45c98f8780a386; zero file differences between tested and merged trees. Main unchanged during integration; production deployment workflow restricted to main, no deployment or cloud access initiated. Existing 45 legacy and 24 structured fields remain held; Timestamp representation additionally held by prototype. No real records, reference existence, tenant authorization, resource bounds or hostile object certification. Preserve P01.9 and all broader P02/P03/P04/M3, migration, runtime and production gates.
+
+Next: B01-B.2 scoped configuration inheritance design and isolated prototype authorization. Define explicit precedence, scope lineage, typed values, unknown/missing/null distinction, immutable provenance and fail-closed conflicts using synthetic fixtures only; no live config, business policy change or runtime wiring. Subsequent increments remain separately scoped. No repeat B01-B.1 terminal verification unless relevant code or metadata changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -640,3 +646,5 @@ Each subsequent increment needs scoped authorization under controlling gates; no
 - Revision 39: B01-A corrected-head 66/66 pinned Node verification; scoped AI-led acceptance PASS and PR #940 merged only to isolated discovery branch; tested tree unchanged. B01-B scope next; all broader gates retained.
 
 - Revision 40: owner authorizes next isolated B01-B.1 tooling increment; five-step B01-B plan recorded. All broader gates retained.
+
+- Revision 41: B01-B.1 109/109 pinned Node regression, scoped AI-led acceptance PASS, PR #942 integrated into isolated baseline; tested tree unchanged. B01-B.2 scope next; broader gates retained.
