@@ -7,8 +7,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// Independent review and prerequisite R5-B PASS required; do not bypass.
-throw Error('R5C_EXECUTION_REVIEW_HOLD');
+// Independently reviewed bounded experiment; R5-B owner-local PASS prerequisite satisfied.
 const project='demo-tsos-r5c-transaction',host='127.0.0.1',port=8791;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5C_EMULATOR_ONLY,'1');
