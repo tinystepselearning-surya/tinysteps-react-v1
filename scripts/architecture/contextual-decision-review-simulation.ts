@@ -1,3 +1,4 @@
+import {reviewRow,isReviewId,isReviewInteger,REVIEW_MIN_TIME,REVIEW_MAX_TIME} from './offline-review-validation.ts';
 // B02-R3.4 standalone review simulation, never a live authorization decision.
 // All evidence and the independent fence are synthetic fixtures supplied by a test harness.
 type Row=Record<string,unknown>;
@@ -22,16 +23,11 @@ type Outcome=Readonly<{simulation:'synthetic-only';productionAuthorization:false
 class Denied extends Error{readonly reason:Denial;constructor(reason:Denial){super(reason);this.reason=reason;}}
 function need(x:unknown,reason:Denial):asserts x{if(!x)throw new Denied(reason);}
 function row(v:unknown,fields:readonly string[]):Row{
-  need(v!==null&&typeof v==='object'&&!Array.isArray(v),'MALFORMED');
-  const proto=Object.getPrototypeOf(v);need(proto===Object.prototype||proto===null,'MALFORMED');
-  const keys=Reflect.ownKeys(v);need(keys.length===fields.length,'MALFORMED');
-  const out:Row=Object.create(null);
-  for(const k of keys){need(typeof k==='string'&&fields.includes(k),'MALFORMED');const d=Object.getOwnPropertyDescriptor(v,k);need(d&&d.enumerable&&Object.hasOwn(d,'value'),'MALFORMED');out[k]=d.value;}
-  return out;
+  const x=reviewRow(v,fields);need(x,'MALFORMED');return x;
 }
-function id(v:unknown):string{need(typeof v==='string'&&v.trim()===v&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'MALFORMED');return v;}
-function time(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>=-62135596800000&&v<=253402300799999,'MALFORMED');return v;}
-function revision(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>0,'MALFORMED');return v;}
+function id(v:unknown):string{need(isReviewId(v),'MALFORMED');return v;}
+function time(v:unknown):number{need(isReviewInteger(v,REVIEW_MIN_TIME,REVIEW_MAX_TIME),'MALFORMED');return v;}
+function revision(v:unknown):number{need(isReviewInteger(v,1),'MALFORMED');return v;}
 function scope(v:unknown):Scope{
   const s=row(v,['tenantId','organisationId','campusId']);
   return {tenantId:id(s.tenantId),organisationId:id(s.organisationId),campusId:s.campusId===null?null:id(s.campusId)};
