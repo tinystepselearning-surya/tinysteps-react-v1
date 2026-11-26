@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 31 (M04 integrated architecture review and gated build plan)  
+**Version:** 2.0 programme baseline, revision 32 (B00 acceptance packet prepared; B01-A held)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -513,6 +513,10 @@ All ten design packages have initial coverage. M04 is next: integrated consisten
 
 At the M04 review snapshot main was 82 commits ahead of historical pin; eight directly compared source blobs (identity contracts, profile planner, status helper, retired scheduler, Functions index, Firestore/Storage Rules, indexes) unchanged. No full rebaseline or deployed parity. M04 structural validation passed, independent acceptance and executable-contract closure remain OPEN. B00 next: named owner/reviewer decisions on residual P01 evidence, P02 ADRs and scope of first P03 registry increment. B01 proposed first isolated development milestone (manifest/typed schema and validation, synthetic fixtures, compatibility checks), but not yet authorized. No live database, runtime code, Rules, CI or production changes, deployment, migration or phase gate change. Preserve P01/P02/P03/P04/M3 and all affected release/retirement holds. No new Terminal work requested solely to complete design.
 
+### Revision 32 — B00 implementation acceptance
+
+Owner endorses the recommended B00-to-B01 direction. [B00 acceptance packet and B01-A scope](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md) proposes a prospective sequencing amendment solely for isolated registry tooling, subject to independent review and explicit named owner approval. It distinguishes required-now evidence from proposed live-evidence deferrals (not adopted), defines the first read-only manifest/shard validator and negative-fixture acceptance criteria, and excludes runtime wiring, Firebase access, CI integration, schema adoption, deployment and migration. Current package requires Node 22.22.1; main push deployment workflow remains unchanged. Original P01-to-P02-to-P03 dependency and all production gates stand until reviewed amendment or original acceptance. B00 packet prepared, approval OPEN; B01-A not started. No new Terminal or production activity required to review this packet.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -573,3 +577,5 @@ At the M04 review snapshot main was 82 commits ahead of historical pin; eight di
 - Revision 30 (26 Nov 2026): re-audited M01/M02, corrected cross-milestone design inconsistencies and added M03 integrated design and registry v0.5 (129 proposed records, 119 detailed, 879 items, 38 value sets). All previous IDs preserved; ten D01 profiles and M04 design closure remain. Source/structural checks only, independent review and all existing implementation/production gates retained.
 
 - Revision 31 (26 Nov 2026): M04 integrated review, v0.6 registry split into five owner-domain shards, 129/129 record seeds, 971 items, 38 value sets, all 879 prior item definitions unchanged. Added record-key/scope matrix and B00–B08 build roadmap. Structural design checks passed; independent acceptance and executable-contract closure OPEN. No production access, runtime code, CI execution, release or gate changes.
+
+- Revision 32 (26 Nov 2026): owner endorsed B00/B01 direction; prepared scoped B00 acceptance and proposed B01-A isolated tooling contract. Independent signature and explicit phase sequencing approval remain open; no code or cloud changes.
