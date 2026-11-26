@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Explicit operator command. Dry-run by default. No deployment, no operational writes.
 // Production execution requires a separate owner-approved read/write scope and ADC.
+import {dailyBusinessCutoff,requireDailyReadWindow} from './business-analytics-daily-cutoff.mjs';
 import {parseArgs} from 'node:util';
 import {initializeApp,deleteApp} from 'firebase-admin/app';
 import {getFirestore} from 'firebase-admin/firestore';
@@ -12,11 +13,13 @@ async function main(){
  const {values:v}=parseArgs({options:{
   project:{type:'string'},years:{type:'string'},'max-documents':{type:'string'},
   'page-size':{type:'string',default:'250'},'max-pages':{type:'string',default:'400'},
+  'daily-cutoff':{type:'boolean',default:false},
   'inventory-only':{type:'boolean',default:false},
   apply:{type:'boolean',default:false},'approve-production-read':{type:'boolean',default:false},
   'confirm-production-aggregate-write':{type:'string'},
  },strict:true,allowPositionals:false});
  assert([PROD,DEMO].includes(v.project),'Explicit supported project required');
+ if(v.project===PROD&&v.apply)assert(v['daily-cutoff'],'Production publication requires closed-day cutoff');
  assert(!(v['inventory-only']&&v.apply),'Inventory mode is read-only');
  if(!v['inventory-only'])assert(v.years&&v['max-documents'],'Explicit years and document budget required');
  if(v.project===PROD){
@@ -34,7 +37,10 @@ async function main(){
    console.log(JSON.stringify({project:v.project,outcome:'inventory-only',...(await store.inventory())},null,2));
    return;
   }
-  const result=await refreshBusinessTrends({source:store,publisher:store,years:v.years.split(',').map(x=>x.trim()),maxDocuments:Number(v['max-documents']),pageSize:Number(v['page-size']),maxPages:Number(v['max-pages']),apply:v.apply});
+  const now=new Date(),cutoff=v['daily-cutoff']?dailyBusinessCutoff(now):undefined;
+  if(cutoff){if(v.apply&&(await store.publishedThrough())>=cutoff.throughDate){console.log(JSON.stringify({outcome:'already-published',throughDate:cutoff.throughDate}));return;}
+   requireDailyReadWindow(now,cutoff);}
+  const result=await refreshBusinessTrends({source:store,publisher:store,years:v.years.split(',').map(x=>x.trim()),maxDocuments:Number(v['max-documents']),pageSize:Number(v['page-size']),maxPages:Number(v['max-pages']),apply:v.apply,cutoff});
   console.log(JSON.stringify({project:v.project,...result},null,2));
  }finally{await db.terminate();await deleteApp(app);}
 }
