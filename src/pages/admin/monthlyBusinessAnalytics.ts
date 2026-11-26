@@ -74,3 +74,40 @@ export function formatBusinessMetric(key: BusinessMetric, value: number | null |
     ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(value / 100)
     : new Intl.NumberFormat('en-IN').format(value);
 }
+
+/** Display-only insights from the saved projection. No inferred historical coverage or extra reads. */
+export function businessSnapshotDay(annual: YearProjection): string {
+  if (annual.throughDate) return annual.throughDate;
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date(annual.updatedAt));
+  const part = (type: string) => parts.find(p => p.type === type)?.value ?? '';
+  return part('year') + '-' + part('month') + '-' + part('day');
+}
+export function businessTrendSummary(annual: YearProjection, metric: BusinessMetric) {
+  const day = businessSnapshotDay(annual);
+  const boundary = day.slice(0, 7);
+  const lastDay = new Date(Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)), 0)).getUTCDate();
+  const partialMonth = !annual.throughDate || Number(day.slice(8, 10)) !== lastDay ? boundary : null;
+  const months = Array.from({ length: 12 }, (_, i) => annual.year + '-' + String(i + 1).padStart(2, '0'));
+  const rows = months.map(monthKey => ({
+    monthKey,
+    value: monthKey <= boundary ? annual.months.find(m => m.monthKey === monthKey)?.metrics[metric] ?? null : null,
+    partial: monthKey === partialMonth,
+  }));
+  const elapsed = rows.filter(r => r.monthKey <= boundary);
+  const latest = elapsed.length ? elapsed[elapsed.length - 1] : null;
+  const completed = elapsed.filter(r => !r.partial);
+  const known = elapsed.filter((r): r is typeof r & { value: number } => r.value !== null);
+  const completeKnown = completed.filter((r): r is typeof r & { value: number } => r.value !== null);
+  const peak = completeKnown.reduce<typeof completeKnown[number] | null>((best, r) => !best || r.value > best.value ? r : best, null);
+  const lastComplete = completed.length ? completed[completed.length - 1] : null;
+  const previousComplete = completed.length > 1 ? completed[completed.length - 2] : null;
+  const change = lastComplete?.value != null && previousComplete?.value != null && previousComplete.value > 0
+    ? (lastComplete.value - previousComplete.value) / previousComplete.value * 100 : null;
+  return {
+    rows, latest, peak, lastComplete, previousComplete, change,
+    total: known.length ? known.reduce((sum, r) => sum + r.value, 0) : null,
+    knownMonths: known.length, elapsedMonths: elapsed.length,
+    average: completeKnown.length ? Math.round(completeKnown.reduce((sum, r) => sum + r.value, 0) / completeKnown.length) : null,
+    averageMonths: completeKnown.length,
+  };
+}
