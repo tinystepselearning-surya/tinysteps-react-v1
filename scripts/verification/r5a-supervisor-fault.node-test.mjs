@@ -2,11 +2,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import net from 'node:net';
+import {inspect} from 'node:util';
 import {createOwnedGroups,waitBounded} from './r5a-owned-process-groups.mjs';
 
 const listenerSource = `
   const net=require('node:net');
   const server=net.createServer(socket=>socket.destroy());
+  // Independent fixture lifetime cap, even if the parent cannot clean up.
+  setTimeout(()=>process.exit(2),12000).unref();
   server.on('error',()=>process.exit(1));
   server.listen(0,'127.0.0.1',()=>process.send({port:server.address().port}));
 `;
@@ -37,6 +40,9 @@ function bind(port){
     server.listen(port,'127.0.0.1',()=>server.close(err=>err?reject(err):resolve()));
   });
 }
+async function cleanup(groups){
+  try{await groups.cleanupAll();}catch(err){console.error(inspect(err,{depth:null}));throw err;}
+}
 function validate(msg){
   assert.ok(msg&&Number.isInteger(msg.port)&&msg.port>0&&msg.port<=65535&&msg.port!==8789,'EPHEMERAL_PORT_REQUIRED');
   return msg.port;
@@ -49,10 +55,10 @@ test('real descendant survives leader exit, cleanup releases its loopback port',
     const port=validate(await waitBounded(ready(item),5000));
     assert.deepEqual(await waitBounded(item.completion,5000),{code:0,signal:null});
     await assert.rejects(bind(port),err=>err.code==='EADDRINUSE');
-    await groups.cleanupAll();
+    await cleanup(groups);
     assert.equal(item.gone,true);
     await bind(port);
-  }finally{await groups.cleanupAll();}
+  }finally{await cleanup(groups);}
 });
 test('deadline expiry is not success and cleanup releases occupied fixture port',{timeout:20000},async()=>{
   const groups=createOwnedGroups();
@@ -61,9 +67,9 @@ test('deadline expiry is not success and cleanup releases occupied fixture port'
     const port=validate(await waitBounded(ready(item),5000));
     assert.equal(await waitBounded(item.completion,100),null);
     await assert.rejects(bind(port),err=>err.code==='EADDRINUSE');
-    await groups.cleanupAll();
+    await cleanup(groups);
     assert.equal(item.done,true);
     assert.equal(item.gone,true);
     await bind(port);
-  }finally{await groups.cleanupAll();}
+  }finally{await cleanup(groups);}
 });

@@ -13,7 +13,8 @@ export async function waitBounded(completion, ms) {
 }
 
 export function createOwnedGroups({spawnProcess = spawn, kill = process.kill.bind(process),
-  now = () => performance.now(), pause = sleep, graceMs = 2000, pollMs = 25} = {}) {
+  now = () => performance.now(), pause = sleep, graceMs = 2000, pollMs = 25,
+  platform = process.platform} = {}) {
   const groups = [];
   let closed = false;
   function start(program, args, options) {
@@ -33,6 +34,10 @@ export function createOwnedGroups({spawnProcess = spawn, kill = process.kill.bin
     if (!Number.isSafeInteger(item.pgid) || item.pgid <= 1) throw Error('INVALID_OWNED_GROUP');
     try { kill(-item.pgid, sig); return true; }
     catch (err) {
+      // Darwin may report EPERM for a temporarily zombie-only group. This is
+      // NOT evidence of termination or permission to ignore a surviving group.
+      // Keep polling/escalating within the existing budget until ESRCH is observed.
+      if (platform === 'darwin' && err.code === 'EPERM') { item.lastPermissionError = true; return true; }
       if (err.code !== 'ESRCH') throw err;
       item.gone = true; // Never target a group again after observing its disappearance.
       return false;
@@ -56,7 +61,7 @@ export function createOwnedGroups({spawnProcess = spawn, kill = process.kill.bin
       try { signal(item, 'SIGKILL'); } catch (err) { errors.push(err); }
       try { gone = await waitGone(item); } catch (err) { errors.push(err); }
     }
-    if (!gone) errors.push(Error('OWNED_GROUP_NOT_GONE'));
+    if (!gone) errors.push(Error(item.lastPermissionError ? 'OWNED_GROUP_NOT_GONE_EPERM' : 'OWNED_GROUP_NOT_GONE'));
     if (!item.done && !await waitBounded(item.completion, graceMs)) errors.push(Error('DIRECT_CHILD_NOT_REAPED'));
     if (errors.length) throw new AggregateError(errors, 'OWNED_GROUP_CLEANUP_FAILED');
   }
