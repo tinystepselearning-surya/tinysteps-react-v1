@@ -23,7 +23,7 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
  for(const rows of [leads,inquiries,billingCharges,enrollments])assert(Array.isArray(rows),'Explicit source arrays required');
  const asOf=day(updatedAt),months=Array.from({length:12},(_,i)=>({monthKey:year+'-'+String(i+1).padStart(2,'0'),metrics:zero()}));
  const byMonth=new Map(months.map(r=>[r.monthKey,r.metrics]));
- const issues={undatedEnquiries:0,undatedCharges:0,invalidChargeAmounts:0,undatedAdmissions:0,undatedCourseEnds:0,unresolvedEnrollmentIdentity:0,unresolvedEnrollmentStatus:0,ambiguousStudentExits:0};
+ const issues={undatedEnquiries:0,datedInquiryMirrorResolutions:0,conflictingInquiryDates:0,correctionBasedAdmissions:0,undatedCharges:0,invalidChargeAmounts:0,undatedAdmissions:0,undatedCourseEnds:0,unresolvedEnrollmentIdentity:0,unresolvedEnrollmentStatus:0,ambiguousStudentExits:0};
  const add=(m,k,n=1)=>{if(!byMonth.has(m)||m>asOf.slice(0,7))return;const row=byMonth.get(m);row[k]+=n;assert(Number.isSafeInteger(row[k]),'Unsafe total');};
  const exact=(rows,scope)=>{const seen=new Set();return rows.map(r=>{assert(r&&str(r.id)&&r.data&&typeof r.data==='object','Invalid '+scope+' row');assert(!seen.has(r.id),'Repeated source row in '+scope);seen.add(r.id);return r;});};
  // Inquiry events are authoritative where present. Count each recorded source submission once
@@ -32,16 +32,30 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
  for(const row of exact(inquiries,'inquiries')){
   const id=str(row.data.sourceLeadId)||str(row.id);
   const d=date(row.data.receivedAt,row.data.requestedAt,row.data.originalCreatedAt,row.data.createdAt);
-  if(eventIds.has(id)){assert(eventIds.get(id)===d,'Conflicting copies of one source inquiry');continue;}
-  eventIds.set(id,d);
-  if(d){if(d<=asOf)add(d.slice(0,7),'leadEnquiries');}else issues.undatedEnquiries++;
+  const dates=eventIds.get(id)||new Set();
+  dates.add(d);
+  eventIds.set(id,dates);
  }
  for(const {id,data} of exact(leads,'leads')){
-  if(eventIds.has(id))continue;
-  // Canonical lead may have been retained from a different event: avoid counting its
-  // fallback twice when the supplied event history already contains the same source ID.
   const d=date(data.receivedAt,data.requestedAt,data.createdAt,data.firstInquiryAt);
-  if(d){if(d<=asOf)add(d.slice(0,7),'leadEnquiries');}else issues.undatedEnquiries++;
+  // Inquiry history wins when it contains a date. Use the matching lead as a
+  // fallback only when all copies are undated, never count the mirrored lead twice.
+  if(eventIds.has(id)){
+   const dates=eventIds.get(id);
+   if([...dates].every(v=>v===null)&&d)dates.add(d);
+   continue;
+  }
+  eventIds.set(id,new Set([d]));
+ }
+ for(const dates of eventIds.values()){
+  const known=[...dates].filter(Boolean).sort();
+  if(!known.length){issues.undatedEnquiries++;continue;}
+  if(dates.has(null))issues.datedInquiryMirrorResolutions++;
+  // Available-record reporting: one recorded submission, earliest known day.
+  // Track real date conflicts instead of failing the entire dashboard.
+  if(known.length>1)issues.conflictingInquiryDates++;
+  const d=known[0];
+  if(d<=asOf)add(d.slice(0,7),'leadEnquiries');
  }
  // Match canonical billing's exclusion of archived and void/cancelled/reversed charge records.
  // This is billed charges, not payment/refund accounting. Never read payment records here.
@@ -81,7 +95,11 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
  }
  for(const rows of children.values()){
   const dated=rows.filter(r=>r.start).sort((a,b)=>a.start.localeCompare(b.start));
-  if(dated.length&&rows.every(r=>r.start))add(dated[0].start.slice(0,7),'newAdmissions');
+  if(dated.length&&rows.every(r=>r.start)){
+   const first=dated[0].start;
+   if(dated.filter(r=>r.start===first).every(r=>r.correction))issues.correctionBasedAdmissions++;
+   add(first.slice(0,7),'newAdmissions');
+  }
   // Infer exit only from a dated end where no other course is retained on that day.
   // Same-day transitions are not student exits. Missing dates prevent unsafe inference.
   if(rows.some(r=>!r.start||(r.isTerminal&&(!r.end||r.end<r.start)))){issues.ambiguousStudentExits++;continue;}
