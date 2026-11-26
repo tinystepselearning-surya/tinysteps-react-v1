@@ -12,6 +12,10 @@ const operations=Object.freeze({
   'fixture.onlineAttendance': 'existing',
   'fixture.partnerRead': 'existing',
   'fixture.partnerManage': 'existing',
+  'fixture.onlineTeachingView': 'existing',
+  'fixture.campusTeachingView': 'new',
+  'fixture.guardianView': 'existing',
+  'fixture.financeView': 'existing',
   'fixture.physicalAttendance': 'new',
   'fixture.campusCreate': 'new',
 } as const);
