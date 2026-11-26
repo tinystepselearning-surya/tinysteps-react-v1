@@ -6,7 +6,7 @@ const SAFE=new Set(['leadEnquiries','newOpportunities','repeatEnquiries','billed
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const monthPath=k=>ROOT+'/businessAnalyticsMonths/'+k;
 const yearPath=k=>ROOT+'/businessAnalyticsYears/'+k;
-const ledgerPath=id=>ROOT+'/businessAnalyticsContributors/'+createHash('sha256').update(id).digest('hex');
+export const ledgerPath=id=>ROOT+'/businessAnalyticsContributors/'+createHash('sha256').update(id).digest('hex');
 const controlPath=ROOT+'/businessAnalyticsControl/active';
 // Explicit dependency injection: store.runTransaction(fn), tx.get(path), tx.set(path,plainObject).
 // No Firebase initialization, export, scheduler or credentials. A future authorized adapter
@@ -46,11 +46,13 @@ export async function publishCertifiedFlowChange(store,incoming,{generation,upda
       const index=row.months.findIndex(m=>m.monthKey===key);
       assert(index>=0,'Missing yearly month mirror');
       const mirror=row.months[index], baseline=months.get(key);
-      assert([...SAFE].every(metric=>(mirror.metrics?.[metric]??null)===(baseline.metrics?.[metric]??null)),'Year/month projection drift');
+      assert(mirror.metrics && baseline.metrics && [...new Set([...Object.keys(mirror.metrics),...Object.keys(baseline.metrics)])].every(metric=>(mirror.metrics[metric]??null)===(baseline.metrics[metric]??null)),'Year/month projection drift');
+      assert(typeof row.updatedAt==='string' && Number.isFinite(Date.parse(row.updatedAt)),'Invalid yearly baseline timestamp');
       const stamp=Date.parse(updatedAt)>=Date.parse(row.updatedAt)?updatedAt:row.updatedAt;
       annual.set(year,{...row,updatedAt:stamp,months:row.months.map((m,i)=>i===index?{...m,metrics:monthly.metrics}:m)});
     }
     for(const [key,row] of changes) {
+      assert(typeof row.updatedAt==='string' && Number.isFinite(Date.parse(row.updatedAt)),'Invalid monthly baseline timestamp');
       const stamp=Date.parse(updatedAt)>=Date.parse(row.updatedAt)?updatedAt:row.updatedAt;
       tx.set(monthPath(key),{...row,updatedAt:stamp});
     }
