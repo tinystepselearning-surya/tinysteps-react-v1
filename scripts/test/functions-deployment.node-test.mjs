@@ -734,3 +734,46 @@ test('full unit testing and coverage remain local-only commands', () => {
   assert.equal(pkg.scripts['test:full:coverage'], 'vitest run --coverage');
 });
 
+
+test('explicit ESM extensions resolve one physical file only once, including transitive imports', () => {
+  const beforeSources = new Map([
+    ['functions/src/index.ts', "export { existing } from './existing';"],
+    ['functions/src/existing.ts', 'export const existing = {};'],
+  ]);
+  const afterSources = new Map([...beforeSources,
+    ['functions/src/scheduled/monthlyBusinessTrends.ts', 'const analytics = require("../../src/businessAnalytics/scheduled-refresh.mjs");'],
+    ['functions/src/businessAnalytics/scheduled-refresh.mjs', "import { refresh } from './refresh.mjs';"],
+    ['functions/src/businessAnalytics/refresh.mjs', 'export const refresh = {};'],
+  ]);
+  afterSources.set('functions/src/index.ts', beforeSources.get('functions/src/index.ts') + "\nexport { captureMonthlyBusinessTrendsDaily, refreshMonthlyBusinessTrendsDaily } from './scheduled/monthlyBusinessTrends';");
+  const graph = buildDependencyGraph(afterSources);
+  assert.equal(graph.unresolved.size, 0);
+  assert.deepEqual(graph.imports.get('functions/src/scheduled/monthlyBusinessTrends.ts'), ['functions/src/businessAnalytics/scheduled-refresh.mjs']);
+  const impact = resolveFunctionsImpact({
+    changedFiles: ['functions/src/index.ts', 'functions/src/scheduled/monthlyBusinessTrends.ts', 'functions/src/businessAnalytics/scheduled-refresh.mjs', 'functions/src/businessAnalytics/refresh.mjs'],
+    beforeSources, afterSources,
+  });
+  assert.equal(impact.functionsDeploymentRequired, true);
+  assert.equal(impact.fullDeployment, false);
+  assert.deepEqual(impact.impactedFunctions, ['captureMonthlyBusinessTrendsDaily', 'refreshMonthlyBusinessTrendsDaily']);
+  assert.deepEqual(impact.retiredFunctions, []);
+  assert.equal(impact.hostingChanged, false);
+  assert.equal(impact.firestoreRulesChanged, false);
+  assert.equal(impact.firestoreIndexesChanged, false);
+});
+
+test('explicit extension resolution still rejects truly ambiguous or missing local files', () => {
+  const base = new Map([
+    ['functions/src/index.ts', "export { keep } from './keep';"],
+    ['functions/src/keep.ts', "const value = require('./helper.mjs');"],
+    ['functions/src/helper.mjs', 'export const value = 1;'],
+  ]);
+  const ambiguous = new Map([...base, ['functions/src/helper.ts', 'export const value = 2;']]);
+  const missing = new Map(base);
+  missing.delete('functions/src/helper.mjs');
+  for (const [afterSources, matches] of [[ambiguous, 2], [missing, 0]]) {
+    assert.throws(() => resolveFunctionsImpact({
+      changedFiles: ['functions/src/keep.ts'], beforeSources: base, afterSources,
+    }), new RegExp('Ambiguous dependency graph.*\\(' + matches + ' matches\\)'));
+  }
+});

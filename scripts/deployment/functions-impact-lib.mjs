@@ -57,7 +57,9 @@ function resolveLocalImport(importer, specifier, sourceFiles) {
   }
   for (const extension of SOURCE_EXTENSIONS) candidates.push(`${base}${extension}`);
   for (const extension of SOURCE_EXTENSIONS) candidates.push(`${base}/index${extension}`);
-  const matches = candidates.filter(candidate => sourceFiles.has(candidate));
+  // Explicit extensions also appear in the fallback extension list. Count unique
+  // paths, not candidate occurrences; genuinely distinct matches remain fatal.
+  const matches = [...new Set(candidates)].filter(candidate => sourceFiles.has(candidate));
   if (matches.length !== 1) {
     throw new Error(`Unable to resolve local import ${specifier} from ${importer} (${matches.length} matches)`);
   }
