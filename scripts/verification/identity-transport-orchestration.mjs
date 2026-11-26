@@ -8,7 +8,10 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
   const lane=createSyntheticRequestLane(plan,clock),active=new Set();
   const actors=plan.actors.map(a=>Object.freeze({...a}));
   if(canonical!==undefined&&(!canonical||typeof canonical.sampler!=='function'||typeof canonical.buildAuthIdentityId!=='function'||typeof canonical.nowMs!=='function'||!Number.isSafeInteger(canonical.maxAgeMs)||canonical.maxAgeMs<=0))throw Error('CANONICAL_TEST_CONFIG');
-  let canonicalCompleted=0;
+  // Freeze the test configuration for this invocation; no external mutation
+  // may change the freshness threshold or selected sampler mid-cohort.
+  if(canonical)canonical=Object.freeze({...canonical});
+  let canonicalCompleted=0,previousWall=-1;
   let blocker=null,dispatched=0,cancelRequested=0,cancelled=0,returned=0,drainExpired=0;
   function stop(code){
     if(blocker)return;
@@ -62,13 +65,19 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
   }
   async function sample(i){
     const a=actors[i],pending=[],seen=new Set();
-    let age=null,closed=false,localReturned=0,previousWall=-1;
+    let age=null,closed=false,localReturned=0;
     function wall(){
       const n=canonical.nowMs();
       if(!Number.isSafeInteger(n)||n<previousWall||n<0)throw Error('FRESHNESS_CLOCK');
       previousWall=n;
       if(age!==null&&(n<age||n-age>canonical.maxAgeMs))throw Error('PROJECTION_FRESHNESS');
       return n;
+    }
+    function exact(o,keys){
+      return o!==null&&typeof o==='object'&&[Object.prototype,null].includes(Object.getPrototypeOf(o))&&
+        Reflect.ownKeys(o).length===keys.length&&keys.every(k=>{
+          const d=Object.getOwnPropertyDescriptor(o,k);return d?.enumerable&&Object.hasOwn(d,'value');
+        });
     }
     function requireSameList(actual,expected){
       return Array.isArray(actual)&&actual.length===expected.length&&actual.every((v,j)=>v===expected[j]);
@@ -98,7 +107,10 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
             throw Error('PROJECTION_SCOPE');
           const ts=data.updatedAt;
           if(!ts)throw Error('PROJECTION_FRESHNESS');
-          age=Number(ts.seconds)*1000+ts.nanos/1e6;wall();
+          age=Number(ts.seconds)*1000+ts.nanos/1e6;
+          const snapshot=Number(summary.readTime.seconds)*1000+summary.readTime.nanos/1e6;
+          const n=wall();
+          if(age>snapshot||snapshot>n||n-snapshot>canonical.maxAgeMs)throw Error('SNAPSHOT_FRESHNESS');
           data=Object.freeze({...data,updatedAt:Object.freeze({toMillis:()=>age})});
         }
         if(col==='authIdentities'&&(!data||data.personId!==a.personId||data.providerSubject!==a.uid))throw Error('SOURCE_SCOPE');
@@ -117,7 +129,13 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
         nowMs:wall(),maxAgeMs:canonical.maxAgeMs});
       wall();
       const x=report?.results?.[0];
-      if(blocker||report?.results?.length!==1||report.evidenceKind!=='operator_sample_not_browser_authorization'||
+      if(blocker||!exact(report,['schema','results','evidenceKind','consistency','identityExceptionParity','authenticatedCanaries','measuredProductionBilledReads','milestoneComplete'])||
+        report.schema!=='tinysteps-m3-bounded-principal-audit-v1'||
+        report.consistency!=='non_atomic_point_in_time_sample_recheck_drift_before_remediation'||
+        report.identityExceptionParity!=='NOT_VERIFIED'||report.authenticatedCanaries!=='NOT_VERIFIED'||
+        !Array.isArray(report.results)||report.results.length!==1||
+        !exact(x,['actor','role','status','issues','projectionAge','sdkGetAttempts','sdkGetCompleted','documentsReturned'])||
+        report.evidenceKind!=='operator_sample_not_browser_authorization'||
         report.milestoneComplete!==false||report.measuredProductionBilledReads!==null||
         x?.actor!==1||x.role!==a.role||x.status!=='SAMPLED_FIELDS_MATCH'||!Array.isArray(x.issues)||x.issues.length||
         x.projectionAge!=='within_review_threshold'||age===null||seen.size!==7||x.sdkGetAttempts!==7||
