@@ -1,0 +1,48 @@
+# B02-R1C independent acceptance and B02-R2 readiness handoff
+
+**Status:** offline engineering PASS (505/505); independent review OPEN; isolated integration HOLD; R2 live execution HOLD. Owner directed progressive replacement and continued implementation. This handoff is not an approval or an executable live runner. Controlling programme Revision 55; Revision 56 acceptance is not yet recorded.
+
+## 1. Review the frozen candidate
+
+Tested commit: 92fc9d630383da6b591540932225d64f6894bf59. Owner-operated Node 22.22.1, architecture 313/313, strict local fixture/watchdog 132/132, locked SDK loopback 60/60; no failures, cancellations, skips or todo. [Detailed evidence and eight script blob pins](B02_R1C_TRANSPORT_PRIVACY_FEASIBILITY.md), section 17. All eight re-fetched blob hashes matched at evidence commit f0bb1fafc35384cae1134cc21c78927b779d9a42. Compared with tested head: evidence commit changed only design documentation. Review the executable candidate, not an unpinned branch. Independent reviewer should reproduce the exact owner command in the recorded environment, or explicitly document reliance on the owner run and why that is sufficient for the limited review. Do not label owner or author evidence independent. No submitted GitHub reviews at handoff.
+
+| Reviewer check | Evidence / disposition to record |
+|---|---|
+| Boundary | Compare with Revision 55 isolated base 3a1c429558e35f1db054224a5a13dc36f48795e0; offline verification and design only; no app, Rules, IAM, dependencies, registry, workflow or deployment changes |
+| Requests | Inspect exact five point and two personId queries, field masks, derived IDs, 51 sentinel, one actor at a time, max two concurrent queries, 7 attempts/107 reserved slots per actor; 10 actors/70/1070 cohort caps |
+| Cancellation | Reproduce loopback single attempts, partial failure, sibling cancellation, deadlines, bounded drain, unknown outcomes and sticky stop; local cancellation does not certify backend cessation |
+| Identity | Original compiled canonical sampler/loader/builder/parser retained; all six roles, source drift, revocation fixtures, snapshot and report validation; no browser parity claim |
+| Privacy | Verify decoded-field rejection, count/code-only result, no real credentials or IDs; raw protobuf unknown tags, process memory retention and no OS egress isolation remain limitations |
+| Trust boundary | Injectable sampler, clock and open function are trusted test seams, not production controls; arbitrary hung sampler/process-wide limit, signed approval, actual backend protocol and effective IAM must be handled before live work |
+| Release | Approve/reject exact offline scope only. No production activation, R2 waiver, main merge or retirement inferred |
+
+Record independent reviewer identity, reviewed head, scope, evidence, PASS/FAIL/HOLD per check, unresolved items, acceptance decision and date. Do not claim a named reviewer or approval until actually obtained. No actual private manifest values in repository. If any executable pin changes or review finds a blocker, return to targeted engineering and rerun affected/full regression as appropriate. If approved, recheck PR base and head, review final diff, merge #950 only into docs/tsos-v2-p01-source-baseline, verify post-merge tree equals reviewed executable pins and main is unchanged, then record Revision 56 scoped acceptance. No automatic merge.
+
+## 2. Reconciliation with current main
+
+Read-only GitHub refs at handoff: main and ci/functions-production both 95b44babd7f3132b212b781eabeec000fced14c8; ci/hosting-production 549bb9669465901223674785b0879de39477ed68; ci/firestore-rules-production b181dbca2e835869bf52b3ba0632b957234eae1d; ci/firestore-indexes-production 7f93c81a9eea909f06d76c1a2d6ba1c3df5b6e9f. Same as R51 recorded refs; Git refs are not live cloud artifact or IAM proof. At prior comparison architecture head was 166 commits ahead and 98 behind main, 87 introduced files limited to docs/scripts; this does not certify merge compatibility. Main push triggers .github/workflows/deploy.yml, which uses production markers and can force recovery deployment if markers are invalid/missing. Do not retarget architecture PR to main.
+
+## 3. Owner-approved progressive replacement policy
+
+Apply existing master section 4 migration protocol module by module, not a wholesale architecture merge. For each production release create a focused integration branch from then-current main; carry only accepted affected changes; reconcile newer main changes and deployed marker differences. Review actual deployment-impact plan, required CI and staging evidence before main integration. No automatic production activation merely because code merges. Use disabled-by-default additive expansion and reversible routing when applicable. Preserve one authoritative writer per fact; any temporary compatibility mirror is derived and bounded, with lag, reconciliation and exit criteria. Backfill only necessary facts with explicit approved scope, deterministic IDs, budgets, dry-run, checkpoint/catch-up, conflict quarantine and idempotent resume. Preserve existing data and business semantics; no blanket migration of already-correct history. Cut over bounded readers/writers after measured parity, security and rollback readiness. Observe at least the controlling programme window including relevant workflow cycles; for finance include applicable billing/payout/month-close cycle or approved alternative. Permanently retire obsolete functions, fields, data paths or collections only after dependency closure, retained history and restore verification, legal/retention checks and separate deletion approval. Git revert alone does not reverse data writes. Preserve premium direct 1:1, existing operations and Tier 1 current authorization/transactions versus Tier 2 T-1 nonurgent reporting. No new production action is approved by this policy.
+
+## 4. B02-R2 readiness checklist (not implementation authorization)
+
+Use [existing R1 preparation](B02_R1_EVIDENCE_AND_APPROVAL_PREPARATION.md) and [controlling Wave 1 M3 canary packet](../wave-1/IDENTITY_R5_M3_PRODUCTION_CANARY_APPROVAL_PACKET.md), not a new competing ledger. Proposed narrower initial cohort: at most 10 controlled existing actors; separate browser lane max 20 exact point attempts, sampler max 70 operations/1070 reserved document slots; no retries or listeners. No production actor details in Git. These caps do not guarantee billed reads.
+
+| Gate | Current disposition | Required closure |
+|---|---|---|
+| R1C independent scoped review | OPEN | Exact pin review and disposition in section 1 |
+| R1C isolated merge | HOLD | Review acceptance, tree/pin confirmation, master update |
+| Backend compatibility | NOT VERIFIED | Separate isolated Firestore emulator/test environment evidence for readTime support, empty/progress frames, timestamp types and revocation; document emulator limits; no production endpoint |
+| Live operator adapter | NOT BUILT | Independently reviewed signed approval enforcement, fixed endpoint, effective least privilege, process and egress isolation, deadline/drain, redaction and billing accounting; synthetic factory is not usable as live operator |
+| Private approval | NOT APPROVED | Named owner/security reviewer/operator, project/database and deployed policy, exact actors and targets, approved max age, windows/caps, metrics/retention/stop owner; signed scope and expiry |
+| Browser authorization | NOT VERIFIED | Separate legitimate actor sessions; exact existing positive and negative targets, expected permission-denied only, no app bootstrap or mutation probes |
+| P01/P02/P03/M3 dependencies | HOLD | Controlling approvals and residual dispositions, no implicit waiver |
+| Production release / retirement | HOLD | Separate release and migration acceptance under section 3 |
+
+Before any live activity, privately populate the existing M3 packet and obtain distinct approvals for the browser and sampler lanes. Do not reuse an unrelated analytics reader approval. Existing excluded snapshot and payment callables remain excluded. If actual backend or IAM controls cannot meet requirements, stop; do not relax scope or substitute service-account reads for browser authorization. Do not request credentials or actor identifiers in chat. No new Terminal command needed for owner at this checkpoint. Independent reviewer assignment is outstanding. A separate offline backend compatibility prototype can be scoped after review without authorizing live R2.
+
+## 5. Scope of this handoff
+
+Read-only GitHub review and documentation updates on isolated PR only. No fresh tests claimed, no cloud access, changes to main, application code, database, deployment workflow, dependency, IAM, Rules or production configuration. The 505-test checkpoint remains valid for the unchanged executable tree, not new documentation or live execution. Author-led technical review is not independent security certification.
