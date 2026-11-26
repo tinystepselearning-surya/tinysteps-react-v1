@@ -93,6 +93,27 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
     });
   });
 
+  it('loads exactly two aggregate documents for Monthly Trends and no more on subtab changes', async () => {
+    render(<AnalyticsDashboard />);
+    await waitFor(() => expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1));
+    getDocLoggedMock.mockImplementation(async (label: string) => ({
+      exists: () => true,
+      data: () => ({
+        schemaVersion: 1, metricDefinitionVersion: 1, verificationStatus: 'verified',
+        updatedAt: '2026-11-26T09:00:00Z',
+        ...(label.includes('year:') ? { year: label.split(':').pop(), months: [] } : { activeStudents: 160, activeEnrollments: 180 }),
+      }),
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
+    await waitFor(() => expect(getDocLoggedMock).toHaveBeenCalledTimes(2));
+    fireEvent.click(screen.getByRole('button', { name: 'Payments' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enrollments' }));
+    await waitFor(() => expect(screen.getByText('160')).toBeTruthy());
+    expect(getDocLoggedMock).toHaveBeenCalledTimes(2);
+    expect(getDocsLoggedMock).not.toHaveBeenCalled();
+    expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1);
+  });
+
   it('keeps Overview off every raw monthly collection', async () => {
     render(<AnalyticsDashboard />);
 
