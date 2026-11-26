@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 43 (B01-B.2 accepted and integrated; business rule framework next)  
+**Version:** 2.0 programme baseline, revision 44 (B01-B.3 isolated business rule prototype authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.3 scoped Business Rule Framework design and authorization. B01-A, B01-B.1 and B01-B.2 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.3 isolated business rule evaluator and synthetic verification. B01-A through B01-B.2 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -580,6 +580,10 @@ Owner-operated Mac verification at exact candidate 0349e9fde3502ffc298d91a7cfa1a
 
 Next: B01-B.3 scoped Business Rule Framework design and authorization. Define pure versioned/effective-dated synthetic rule evaluation, explicit date basis and boundaries, deterministic precedence/conflict handling, decision provenance and safe rejection of unknown/malformed policy inputs. Preserve existing attendance, billing, teacher earnings, admission and enrolment policy authorities and historical outcomes; no actual policy activation or runtime wiring. B01-B.4 and B01-B.5 separately scoped. No repeat B01-B.2 terminal verification unless relevant code/metadata changes.
 
+### Revision 44 — B01-B.3 scoped Business Rule Framework prototype
+
+Owner directs commencement of next implementation after B01-B.2 acceptance. Authorize isolated synthetic-only effective-dated rule selector/evaluator and fixtures under scoped AI-led engineering acceptance. Existing authorities and historical outcomes unchanged. Explicit contract version, rule-set revision, one named date basis per contract (synthetic serviceDate or decisionDate), caller-supplied validated calendar date, inclusive start/exclusive end, null open end. No implicit clock/timezone/date conversion. Rules use explicit allowlisted scalar input predicates (exact equality only), typed scalar outcomes, explicit integer priority, unique rule IDs/versions; no arbitrary expressions, callbacks or executable configuration. Select highest matching priority; ties fail closed, even if outcomes agree. Reject duplicate identities, malformed inputs/definitions, overlapping versions of the same rule ID and unknown keys even if inactive. No fallback unless an explicit matching rule exists; no match is a failure. Return immutable decision/provenance with rule ID/version, rule-set revision, contract version, date basis/date and priority. Rule-set revisions are caller-pinned snapshots, not inferred historical truth or tamper-proof audit evidence. Scope-specific application deferred until reviewed binding to configuration lineage; no actual tenant security or policy authoring/activation. Existing sessionRevenue, status, serviceDate, attendanceFinancialCycles, demo earnings and enrollment logic remain authoritative. No finance calculation/posting, migration, runtime wiring, registry changes, dependency/CI or cloud activity. Verify exact head and cumulative pinned Node tests, source scope and compatibility before isolated integration. All wider phase/security/finance/production gates retained; B01-B.4 onward separately scoped.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -664,3 +668,5 @@ Next: B01-B.3 scoped Business Rule Framework design and authorization. Define pu
 - Revision 42: owner authorizes isolated configuration inheritance prototype; no runtime adoption or broader gate waiver.
 
 - Revision 43: B01-B.2 158/158 pinned Node regression, scoped AI-led acceptance PASS, PR #944 integrated into isolated baseline; tested tree unchanged. B01-B.3 scope next; broader gates retained.
+
+- Revision 44: owner authorizes isolated effective-dated business rule prototype; no runtime policy adoption or wider gate waiver.
