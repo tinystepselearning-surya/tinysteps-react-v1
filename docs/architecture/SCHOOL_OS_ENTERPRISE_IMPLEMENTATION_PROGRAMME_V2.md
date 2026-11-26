@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 23 (proposed evidence consolidation)  
+**Version:** 2.0 programme baseline, revision 24 (proposed acceptance decision)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -422,6 +422,21 @@ Retain the pinned source and isolated verification evidence. The owner-provided 
 
 No new Terminal run, production access or changes are requested by this revision. Infrastructure risk remediation is a proposed separately approved workstream, not an authorization to modify backup, storage or access settings. Existing offline tests and evidence are retained; no fresh tests are claimed for this documentation-only update.
 
+### Revision 24 — acceptance recommendation and scoped design decision
+
+Main was rechecked against the audited SHA and is unchanged. Draft #933 remains stacked on open #932; the Wave 1 migration ledger still identifies the held M3 role/freshness gate. No need to restart source discovery. The metadata packet now corrects candidate request parameters and reconciles historical versus current status; no live validation of the corrected templates is claimed.
+
+| Decision category | Recommended disposition (not signed acceptance) | Required owner/reviewer evidence |
+|---|---|---|
+| Reuse now | Existing source catalogue, root classifications, historical ledger and isolated regression/fixture evidence; retain exact baseline and scope limitations | Engineering reviews pinned evidence and documents any affected exceptions; rerun only on material drift |
+| Required for full P01 acceptance under current rules | Independent review of metadata/recovery/security, bounded production integrity scope and results, significant dependency exceptions, production reliability baseline and migration reconciliation | Named owners and independent reviewers sign existing P01.1–P01.9 criteria; unresolved coverage remains HOLD |
+| Candidate deferral to affected brick only | Exhaustive unrelated index groups, historical/dormant path existence probes, provider inventory outside the first implementation slice, and nonessential broad performance measurements | Explicit exception with dependency, owner, risk, deadline and required closure before affected implementation or release; no assumption that a missing resource is unused |
+| Separate production gates | M3 live role/freshness canary, identity/Rules cutover, production recovery drill, real data migration, tenant onboarding and destructive retirement | Existing dedicated approvals, tests and release gates; no deferral that permits unsafe production activation |
+
+**Recommended governance decision for leadership and independent reviewer:** consider a narrowly scoped ADR allowing P02 blueprint drafting and synthetic contract design on already verified source while residual P01 live verification continues. This would be an explicit prospective amendment to the current P01-to-P02 dependency, not retrospective P01 acceptance. Limit any approved exception to documentation and synthetic design evidence, no production reads or writes, deployments, runtime wiring, migrations, real credentials, or P03 implementation. Draft contracts must mark live assumptions unverified, preserve v1 boundaries and require revalidation at affected implementation gates. Until the amendment is reviewed and approved, P02 stays on HOLD under the original programme. If declined, finish the existing P01 acceptance criteria before P02. No approval inferred from general programme continuation.
+
+**Next actionable decision:** executive owner selects either the original full P01-before-P02 sequence or the proposed design-only amendment for independent review. Engineering records the independent review and actual decision in a versioned ADR before changing a dependency. Existing approval packets remain the only route to production evidence. Do not schedule a further Terminal execution solely to advance documentation. No new phase completion claim.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -466,3 +481,5 @@ No new Terminal run, production access or changes are requested by this revision
 - Revision 22 (26 Nov 2026): Owner-operated restricted metadata verification returned partial infrastructure evidence and stopped before completing its approved scope. A follow-up stopped at the expiry guard without issuing metadata requests. Production-specific configurations, access details and security findings are deliberately excluded from this public repository. Remaining verification, permission cleanup and independent acceptance require private review. No application-data verification, deployment, migration or Rules change authorized. P01 remains IN PROGRESS; P02, application-data and M3 gates unchanged. Prior offline evidence retained.
 
 - Revision 23 (26 Nov 2026): consolidated subsequent partial operator-reported metadata execution, clarified direct-policy cleanup versus effective revocation, and added P01 acceptance dispositions and proposed private reliability/recovery workstream. P01 remains IN PROGRESS; P01.2/live P01.3, P02, M3, release and retirement holds unchanged. No new cloud access, production application changes or acceptance signatures claimed.
+
+- Revision 24 (26 Nov 2026): rechecked unchanged main and stacked PR lineage; reviewed existing acceptance, bounded data and M3 packets and current ledger; corrected candidate metadata request templates; separated mandatory P01 acceptance evidence from proposed scoped exceptions and prepared a design-only governance decision for independent review. No approval, live verification, P02 activation, release or production changes claimed. All current gates retained.
