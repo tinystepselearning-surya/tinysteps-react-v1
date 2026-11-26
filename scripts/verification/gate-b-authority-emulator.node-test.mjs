@@ -88,8 +88,8 @@ test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},
  const one=service(left),two=service(right);
  const outcome=async (promise,expected)=>assert.equal((await promise).status,expected);
  const noWrite=async (fn,reads)=>{
-  const old=[ledger.reads,ledger.attemptedWrites];await fn();
-  assert.equal(ledger.reads-old[0],reads);assert.equal(ledger.attemptedWrites,old[1]);
+  const old=[ledger.reads,ledger.attemptedWrites,ledger.errors.length];await fn();
+  assert.equal(ledger.reads-old[0],reads);assert.equal(ledger.attemptedWrites,old[1]);assert.equal(ledger.errors.length,old[2],'DENIAL_MUST_NOT_MASK_PORT_FAILURE');
  };
  try{
   await left.seed(entries);
@@ -106,6 +106,7 @@ test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},
   await noWrite(()=>outcome(one.execute(contextA,{...A,name:'Changed'}),'conflict'),11);
   await noWrite(()=>outcome(two.recover(contextA,missing),'indeterminate'),12);
   await noWrite(()=>outcome(one.revoke(operator,{...rev,expectedGeneration:20}),'denied'),2);
+  assert.equal(ledger.errors.length,0,'PRE_RACE_PORT_FAILURE');
   t.diagnostic('GATE-B actual authority, tenant isolation, replay, conflict and absent recovery PASS');
   // No lock-holding barrier; independent clients contend on the same grant/fence read set.
   let ready=0,release;
