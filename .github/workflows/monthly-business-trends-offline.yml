@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/business-analytics-*.mjs'
       - 'scripts/test/business-analytics-*.node-test.mjs'
+      - 'scripts/test/business-analytics.firestore-emulator.mjs'
       - 'src/pages/admin/MonthlyBusinessTrends.tsx'
       - 'src/pages/admin/monthlyBusinessAnalytics.ts'
       - 'src/pages/admin/AnalyticsDashboardV3.tsx'
@@ -39,3 +40,26 @@ jobs:
       - run: npm ci
       - run: npx vitest run src/tests/pages/AnalyticsDashboardV3ReadPlan.spec.tsx
       - run: npm run typecheck
+
+  firestore-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCLOUD_PROJECT: demo-tinysteps-monthly-trends
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-monthly-trends
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Run isolated Firestore integration
+        run: |
+          npx --yes firebase-tools@15.30.0 emulators:exec --project demo-tinysteps-monthly-trends --only firestore 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 node --test scripts/test/business-analytics.firestore-emulator.mjs'
