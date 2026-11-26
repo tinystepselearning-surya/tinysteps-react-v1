@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 41 (B01-B.1 accepted and integrated; configuration engine next)  
+**Version:** 2.0 programme baseline, revision 42 (B01-B.2 isolated configuration prototype authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.2 scoped configuration engine design and authorization. B01-A and B01-B.1 accepted in isolated baseline; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.2 isolated configuration resolver and synthetic verification. B01-A and B01-B.1 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -568,6 +568,12 @@ Owner-operated Mac verification at exact candidate e4730d4198f1de8380444f2c5415f
 
 Next: B01-B.2 scoped configuration inheritance design and isolated prototype authorization. Define explicit precedence, scope lineage, typed values, unknown/missing/null distinction, immutable provenance and fail-closed conflicts using synthetic fixtures only; no live config, business policy change or runtime wiring. Subsequent increments remain separately scoped. No repeat B01-B.1 terminal verification unless relevant code or metadata changes.
 
+### Revision 42 — B01-B.2 scoped configuration prototype
+
+Owner explicitly directs the next implementation following B01-B.1 acceptance. Authorize isolated synthetic-only configuration resolver, fixtures and documentation under the scoped AI-led acceptance approach; no broader P03 activation or runtime adoption. M03 D10 config precedence includes platform/tenant/organisation/campus where explicitly allowed. Prototype extends the candidate lineage to programme as previously discussed; online programmes may attach directly to an organisation without an artificial campus. This is a proposed hierarchy, not a new tenant/organisation authority or registry enum adoption.
+
+Resolve only explicitly supplied exact ancestor lineage snapshots in order platform -> tenant -> organisation -> optional campus -> optional programme. Require explicit schema version, one revision per scope snapshot, typed allowlisted settings and per-key permitted scopes, reject foreign/malformed lineage, duplicates, unknown keys, invalid values even if overridden, and missing required settings. Explicit default only; distinguish absent, false, zero, empty, and explicit nullable null. Return immutable value/provenance snapshots; fail closed with no partial output on errors. No selecting latest revisions, fetching data, effective-dated rules, secrets, formulas, authorization, or policy execution. Existing pricing/public offer, attendance organizer and curriculum config remain authoritative and unchanged. CFG structured value and runtime scope contracts remain held. No runtime imports, Firebase, dependency, CI or registry modifications. Verify exact commit, cumulative pinned Node 22.22.1 suite, scope and compatibility before isolated integration; all independent schema/security/finance/migration and production gates retained. B01-B.3 onward separately scoped.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -648,3 +654,5 @@ Next: B01-B.2 scoped configuration inheritance design and isolated prototype aut
 - Revision 40: owner authorizes next isolated B01-B.1 tooling increment; five-step B01-B plan recorded. All broader gates retained.
 
 - Revision 41: B01-B.1 109/109 pinned Node regression, scoped AI-led acceptance PASS, PR #942 integrated into isolated baseline; tested tree unchanged. B01-B.2 scope next; broader gates retained.
+
+- Revision 42: owner authorizes isolated configuration inheritance prototype; no runtime adoption or broader gate waiver.
