@@ -38,3 +38,41 @@ test('real isolated Firestore transaction: seed, concurrent replay, period corre
   await assert.rejects(store.runTransaction(tx=>tx.get('payments/fixture-receipt')),/allowlisted/);
  }finally{await close();}
 });
+
+import {createBusinessRefreshStore} from '../business-analytics-refresh-store.mjs';
+import {refreshBusinessTrends} from '../business-analytics-refresh.mjs';
+
+test('real isolated Firestore refresh reads existing records once and publishes yearly/current aggregates',async()=>{
+ const {db,close}=createAnalyticsEmulatorStore();
+ try {
+  const batch=db.batch();
+  batch.set(db.doc('leads/refresh-lead'),{receivedAt:'2026-10-01',parentName:'must not be selected'});
+  batch.set(db.doc('leads/refresh-lead/inquiries/refresh-lead'),{sourceLeadId:'refresh-lead',receivedAt:'2026-10-01'});
+  batch.set(db.doc('leads/refresh-lead/inquiries/refresh-repeat'),{receivedAt:'2026-10-02'});
+  batch.set(db.doc('billingCharges/refresh-charge'),{monthKey:'2026-10',amount:640});
+  batch.set(db.doc('enrollments/refresh-enrollment'),{kidId:'refresh-child',status:'active',createdAt:'2026-10-03'});
+  await batch.commit();
+  const store=createBusinessRefreshStore(db);
+  const year=new Intl.DateTimeFormat('en-CA',{year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date());
+  // CI clock may precede the fixture dates in a future replay; fixtures are fixed for reproducibility.
+  const years=[...new Set(['2026',year])].sort().filter(y=>y<=year);
+  const opts={source:store,publisher:store,years,maxDocuments:30,pageSize:1};
+  const dry=await refreshBusinessTrends(opts);
+  assert.equal(dry.sourceDocuments,5);
+  assert.equal(dry.outcome,'dry-run');
+  assert.ok(!JSON.stringify(dry).includes('refresh-child'));
+  const projected=dry.documents.find(d=>d.path.endsWith('/2026'));
+  if(projected&&dry.readTime>='2026-10-01'){
+   assert.equal(projected.data.months[9].metrics.leadEnquiries,2);
+   assert.equal(projected.data.months[9].metrics.billedPaise,64000);
+  }
+  const applied=await refreshBusinessTrends({...opts,apply:true});
+  assert.equal(applied.outcome,'published');
+  const current=(await db.doc(root+'/businessAnalyticsSnapshots/current').get()).data();
+  assert.equal(current.activeStudents,1);
+  assert.equal(current.activeEnrollments,1);
+  assert.equal(await store.publish({documents:dry.documents,readTime:dry.readTime}),'stale-or-replayed');
+  await assert.rejects(refreshBusinessTrends({...opts,maxDocuments:2,apply:true}),/budget/i);
+  assert.equal((await db.doc(root+'/businessAnalyticsSnapshots/current').get()).data().updatedAt,current.updatedAt);
+ } finally {await close();}
+});
