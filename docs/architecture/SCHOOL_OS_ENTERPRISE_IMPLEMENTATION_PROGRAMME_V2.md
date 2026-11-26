@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 60 (Mac-first infrastructure evidence; R59 offline engineering acceptance unchanged; effective on isolated merge)  
+**Version:** 2.0 programme baseline, revision 61 (P01.2 offline index reconciliation utility accepted; R59 engineering baseline retained; effective on isolated merge)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted at R59 (570/570). R60 records owner-reported infrastructure readiness, not additional engineering or production acceptance; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted at R59 (570/570). R60 records owner-reported infrastructure readiness; R61 accepts the offline index reconciliation utility only, not P01.2 or live parity; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -680,9 +680,9 @@ Owner directs continued implementation after R58. New fixed synthetic child comp
 
 Owner directs reuse of the existing MacBook and keyless purpose-specific access, not a new hosted server by default. [Sanitized infrastructure and execution handoff](design/B02_MAC_EXECUTION_AND_INFRASTRUCTURE_HANDOFF.md) records reported restricted/admin connectivity, project-level permission results, local disk protection and owner-approved database protection change; private evidence and configuration remain outside Git. Separate administrative capability from operational authority; no administrative principal for routine analytics or identity sampling. Existing P01 metadata-only restrictions, exact private M3 scope, independent trust/host approval and release gates remain controlling. Proposed local host isolation and stable single-host replay governance require independent review and actual enforcement evidence; not implemented or certified. No further synthetic regression solely for documentation. R59 engineering evidence 570/570 unchanged; P01/P02/P03 and M3 holds remain. Next close residual infrastructure/security acceptance through the existing packets, no new IAM or production data work implied.
 
-### Pending P01.2 residual index reconciliation increment
+### Revision 61 — P01.2 residual index reconciliation utility acceptance
 
-Owner resumes implementation on the existing MacBook. Pinned source/main/index-marker blob equality confirmed. Four priority index groups contain 34 declarations and 32 exact unique definitions; two repeated definitions identified, with no inferred deployed duplication or cost effect. [Offline index evidence reconciliation](discovery/P01_PRIORITY_INDEX_EVIDENCE_RECONCILIATION.md) implements source-pinned aggregate comparison of separately approved local metadata evidence, not a cloud adapter. Focused Mac validation pending; R60/570 accepted baseline unchanged. No index edits or deployment, permissions, document reads, new live authorization, P01/P02/P03 gate changes or M3 exit. Remaining independent acceptance and exact private scope continue to govern. No generic full regression rerun for unchanged accepted sources.
+Owner resumes implementation on the existing MacBook. Pinned source/main/index-marker blob equality confirmed. Four priority index groups contain 34 declarations and 32 exact unique definitions; two repeated definitions identified, with no inferred deployed duplication or cost effect. [Offline index evidence reconciliation](discovery/P01_PRIORITY_INDEX_EVIDENCE_RECONCILIATION.md) implements source-pinned aggregate comparison of separately approved local metadata evidence, not a cloud adapter. Owner exact candidate cd9fe9e380aacee94cd0cd1e56b1cbcbe8a6b76d, pinned Node 22.22.1, clean checkout: source-only 34/32/2, selfCheck PASS; liveVerified false and NOT_ACCEPTED expected. Tool and source blob pins matched. Scoped offline acceptance only, effective on verified isolated merge of PR #955. Prior 570 engineering tests unchanged; no cumulative count increment. No index edits or deployment, permissions, document reads, new live authorization, P01/P02/P03 gate changes or M3 exit. Remaining independent acceptance and exact private scope continue to govern. No generic full regression rerun for unchanged accepted sources.
 
 ## 10. Change record
 
@@ -805,3 +805,5 @@ Owner resumes implementation on the existing MacBook. Pinned source/main/index-m
 - Revision 59 (effective on verified isolated merge): supervised signed synthetic canonical composition, 570/570 pinned same-head; no production execution, no main merge. Independent R2.2D trust/host acceptance and all live gates HOLD. Next independent review and concrete execution boundary decisions, not generic synthetic test expansion.
 
 - Revision 60 (effective on verified isolated merge): sanitized owner-reported infrastructure evidence and proposed Mac-first execution model. Documentation only; R59 570/570 engineering acceptance retained. Independent security and live gates HOLD.
+
+- Revision 61 (effective on verified isolated merge): offline index reconciliation utility, owner pinned focused validation PASS; no P01.2 acceptance or live index parity, no index edits/deployment, all existing independent and production gates HOLD.
