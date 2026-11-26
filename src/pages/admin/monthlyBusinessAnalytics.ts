@@ -8,18 +8,12 @@ export const BUSINESS_ANALYTICS_PATHS = {
 export const BUSINESS_METRICS = {
   leads: [
     ['leadEnquiries', 'Total enquiries'],
-    ['newOpportunities', 'New child opportunities'],
-    ['repeatEnquiries', 'Repeat enquiries'],
   ],
   payments: [
     ['billedPaise', 'Billed for classes'],
-    ['receivedPaise', 'Cash received'],
-    ['outstandingPaise', 'Outstanding for billing month'],
   ],
   enrollments: [
-    ['openingRetainedStudents', 'Opening students'],
     ['newAdmissions', 'New admissions'],
-    ['reactivations', 'Returned students'],
     ['newEnrollments', 'New enrollments'],
     ['courseCompletions', 'Course completions'],
     ['courseDiscontinuations', 'Course discontinuations'],
@@ -27,9 +21,6 @@ export const BUSINESS_METRICS = {
     ['discontinuedStudentExits', 'Student exits: discontinued'],
     ['otherStudentExits', 'Student exits: other'],
     ['studentExits', 'Total student exits'],
-    ['closingRetainedStudents', 'Closing students'],
-    ['closingActiveStudents', 'Closing active students'],
-    ['closingActiveEnrollments', 'Closing active enrollments'],
   ],
 } as const;
 export type BusinessTab = keyof typeof BUSINESS_METRICS;
