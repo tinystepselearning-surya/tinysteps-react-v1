@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 34 (all eight owner decisions confirmed; independent review pending)  
+**Version:** 2.0 programme baseline, revision 35 (B01-A isolated development authorized; merge held)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: P01.9 discovery consolidation and owner/independent acceptance review, with essential P01 evidence gaps retained as explicit holds. No additional production requests until separately scoped and approved; resume the held Wave 1 M3 gate in P04 only with the prescribed approvals.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-A isolated registry loader/validator and tests under the revision 35 owner amendment; independent review before merge or integration. P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -525,6 +525,10 @@ Owner reviewed and confirmed independent business records and relationships, pro
 
 Owner explicitly confirmed the remaining three decisions: continue the existing Firestore database with modular collections, maintain the centralized master record and item dictionary, and proceed with the isolated B01-A engineering increment. The spoken reference B01E is interpreted as B01-A, the immediately preceding scope, not a new increment. Combined with revision 33, all eight owner decisions are confirmed. See [B00 acceptance packet](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md). Do not seek repeated owner approval of these decisions. The independent review requirement remains open (PR #933 had no submitted reviews at the checkpoint); the proposed formal sequencing amendment is not adopted. B01-A code and all production, live access, security, schema adoption, migration, release and retirement gates remain held under the existing programme. No code or production changes.
 
+### Revision 35 — scoped owner-approved B01-A sequencing amendment
+
+Owner explicitly authorizes isolated B01-A development and testing before independent engineering review, with independent review mandatory before merge or integration. This prospective amendment supersedes the pre-code review requirement only for B01-A. [Acceptance packet](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md) records exact scope. No formal P01 exit, full P02/P03 adoption, production access, Firebase writes, schema activation, runtime imports, deployment, CI workflow change, migration, Rules/index changes, cutover or retirement. Separate development branch from approved docs checkpoint; review actual code and tests before merging. All other phase dependencies and business/security gates remain unchanged.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -591,3 +595,5 @@ Owner explicitly confirmed the remaining three decisions: continue the existing 
 - Revision 33: recorded five confirmed owner checklist decisions including business-rule clarification, first-class 1:1 priority and three outstanding explicit confirmations. No schema, code, production or gate change.
 
 - Revision 34: recorded all eight owner decisions and B01-A scope approval; independent review and sequencing amendment remain open. No implementation or production change.
+
+- Revision 35: owner approved isolated B01-A development/test sequencing; independent review remains required before merge/integration. No other gates changed.
