@@ -1,33 +1,33 @@
+import {reviewRow,isReviewId,isReviewInteger,REVIEW_MIN_TIME,REVIEW_MAX_TIME} from './offline-review-validation.ts';
 // B02-R3.4 standalone review simulation, never a live authorization decision.
 // All evidence and the independent fence are synthetic fixtures supplied by a test harness.
 type Row=Record<string,unknown>;
 type Scope=Readonly<{tenantId:string;organisationId:string;campusId:string|null}>;
-type Rule=Readonly<{role:string;action:string;scope:'organisation'|'campus';kind:string;relationship:string;purpose:string;fields:readonly string[]}>;
-const rules:readonly Rule[]=Object.freeze([
-  {role:'onlineInstructor',action:'attendance.markOnlineSession',scope:'organisation',kind:'onlineParticipant',relationship:'assignedOnlineSession',purpose:'attendance',fields:['attendanceDecision']},
-  {role:'onlineInstructor',action:'learner.readTeachingView',scope:'organisation',kind:'learnerTeachingView',relationship:'activeTeachingAssignment',purpose:'teaching',fields:['learnerDisplayName','lessonProgressSummary']},
-  {role:'campusInstructor',action:'learner.readTeachingView',scope:'campus',kind:'learnerTeachingView',relationship:'activeTeachingAssignment',purpose:'teaching',fields:['learnerDisplayName','lessonProgressSummary']},
-  {role:'schoolAttendanceOperator',action:'attendance.markSchoolDaily',scope:'campus',kind:'schoolRegisterParticipant',relationship:'assignedSchoolRegister',purpose:'attendance',fields:['attendanceDecision']},
-  {role:'guardianViewer',action:'learner.readGuardianView',scope:'organisation',kind:'learnerGuardianView',relationship:'verifiedGuardianPurposeAndRestrictions',purpose:'guardianProgress',fields:['learnerDisplayName','publishedProgressSummary']},
-  {role:'financeViewer',action:'finance.readApprovedView',scope:'organisation',kind:'financeSummary',relationship:'approvedFinanceScope',purpose:'financeReporting',fields:['billedSummary','paymentSummary']},
-  {role:'partnerSchoolViewer',action:'partner.readSchool',scope:'organisation',kind:'partnerSchoolSummary',relationship:'verifiedPartnerSchoolReader',purpose:'partnerReporting',fields:['schoolSummary']},
-  {role:'partnerSchoolOperator',action:'partner.readSchool',scope:'organisation',kind:'partnerSchoolSummary',relationship:'verifiedPartnerSchoolReader',purpose:'partnerReporting',fields:['schoolSummary']}
-].map(r=>Object.freeze({...r,fields:Object.freeze(r.fields)})) as Rule[]);
+// The versioned role/action/scope catalogue is the only source of candidate role matches.
+import { inspectCandidateCapability } from './capability-catalogue-review-prototype.ts';
+type ActionPolicy=Readonly<{kind:string;purpose:string;fields:readonly string[]}>;
+function actionPolicy(kind:string,purpose:string,fields:string[]):ActionPolicy{
+  return Object.freeze({kind,purpose,fields:Object.freeze(fields)});
+}
+// Synthetic resource and field policy; no role grants here. Missing action metadata denies.
+const actionPolicies=Object.freeze({
+  'attendance.markOnlineSession':actionPolicy('onlineParticipant','attendance',['attendanceDecision']),
+  'learner.readTeachingView':actionPolicy('learnerTeachingView','teaching',['learnerDisplayName','lessonProgressSummary']),
+  'attendance.markSchoolDaily':actionPolicy('schoolRegisterParticipant','attendance',['attendanceDecision']),
+  'learner.readGuardianView':actionPolicy('learnerGuardianView','guardianProgress',['learnerDisplayName','publishedProgressSummary']),
+  'finance.readApprovedView':actionPolicy('financeSummary','financeReporting',['billedSummary','paymentSummary']),
+  'partner.readSchool':actionPolicy('partnerSchoolSummary','partnerReporting',['schoolSummary'])
+});
 type Denial='MALFORMED'|'STALE_OR_REVOKED'|'INACTIVE'|'OWNER_MISMATCH'|'SUBJECT_MISMATCH'|'NOT_EFFECTIVE'|'NO_POLICY'|'RELATIONSHIP_MISMATCH'|'FIELD_OR_PURPOSE';
 type Outcome=Readonly<{simulation:'synthetic-only';productionAuthorization:false;result:'would-allow'}>|Readonly<{simulation:'synthetic-only';productionAuthorization:false;result:'would-deny';reason:Denial}>;
 class Denied extends Error{readonly reason:Denial;constructor(reason:Denial){super(reason);this.reason=reason;}}
 function need(x:unknown,reason:Denial):asserts x{if(!x)throw new Denied(reason);}
 function row(v:unknown,fields:readonly string[]):Row{
-  need(v!==null&&typeof v==='object'&&!Array.isArray(v),'MALFORMED');
-  const proto=Object.getPrototypeOf(v);need(proto===Object.prototype||proto===null,'MALFORMED');
-  const keys=Reflect.ownKeys(v);need(keys.length===fields.length,'MALFORMED');
-  const out:Row=Object.create(null);
-  for(const k of keys){need(typeof k==='string'&&fields.includes(k),'MALFORMED');const d=Object.getOwnPropertyDescriptor(v,k);need(d&&d.enumerable&&Object.hasOwn(d,'value'),'MALFORMED');out[k]=d.value;}
-  return out;
+  const x=reviewRow(v,fields);need(x,'MALFORMED');return x;
 }
-function id(v:unknown):string{need(typeof v==='string'&&v.trim()===v&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'MALFORMED');return v;}
-function time(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>=-62135596800000&&v<=253402300799999,'MALFORMED');return v;}
-function revision(v:unknown):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>0,'MALFORMED');return v;}
+function id(v:unknown):string{need(isReviewId(v),'MALFORMED');return v;}
+function time(v:unknown):number{need(isReviewInteger(v,REVIEW_MIN_TIME,REVIEW_MAX_TIME),'MALFORMED');return v;}
+function revision(v:unknown):number{need(isReviewInteger(v,1),'MALFORMED');return v;}
 function scope(v:unknown):Scope{
   const s=row(v,['tenantId','organisationId','campusId']);
   return {tenantId:id(s.tenantId),organisationId:id(s.organisationId),campusId:s.campusId===null?null:id(s.campusId)};
@@ -79,15 +79,16 @@ export function simulateContextualDecision(request:unknown,evidence:unknown,inde
     need(id(g.personId)===person,'SUBJECT_MISMATCH');need(sameScope(scope(g.scope),requestedScope),'OWNER_MISMATCH');
     need(g.policyVersion===1,'NO_POLICY');
     const scopeType=requestedScope.campusId===null?'organisation':'campus';
-    const rule=rules.find(x=>x.role===g.roleKey&&x.action===q.action&&x.scope===scopeType);
-    need(rule,'NO_POLICY');
+    const match=inspectCandidateCapability({policyVersion:g.policyVersion,roleKey:g.roleKey,capability:q.action,scope:scopeType});
+    need(match.kind==='candidate-policy-match'&&Object.hasOwn(actionPolicies,q.action),'NO_POLICY');
+    const rule=actionPolicies[q.action as keyof typeof actionPolicies];
     const resource=row(e.resource,['resourceId','scope','kind',...common]);fresh(resource,rev);active(resource);
     need(id(resource.resourceId)===resourceId&&sameScope(scope(resource.scope),requestedScope),'OWNER_MISMATCH');
     need(resource.kind===rule.kind,'RELATIONSHIP_MISMATCH');
     const rel=row(e.relationship,['personId','resourceId','scope','kind','purpose','action',...windowFields]);fresh(rel,rev);current(rel,at);
     need(id(rel.personId)===person,'SUBJECT_MISMATCH');
     need(id(rel.resourceId)===resourceId&&sameScope(scope(rel.scope),requestedScope),'OWNER_MISMATCH');
-    need(rel.kind===rule.relationship&&rel.action===q.action,'RELATIONSHIP_MISMATCH');
+    need(rel.kind===match.rule.relationship&&rel.action===q.action,'RELATIONSHIP_MISMATCH');
     need(q.purpose===rule.purpose&&rel.purpose===rule.purpose&&fields.every(x=>rule.fields.includes(x)),'FIELD_OR_PURPOSE');
     return Object.freeze({simulation:'synthetic-only',productionAuthorization:false,result:'would-allow'});
   }catch(e){return Object.freeze({simulation:'synthetic-only',productionAuthorization:false,result:'would-deny',reason:e instanceof Denied?e.reason:'MALFORMED'});}

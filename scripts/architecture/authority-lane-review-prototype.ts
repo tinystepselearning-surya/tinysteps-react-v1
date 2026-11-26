@@ -1,3 +1,4 @@
+import {reviewRow,isReviewInteger} from './offline-review-validation.ts';
 // Synthetic compatibility-lane routing review. No production router, authority or grant.
 type Lane='v1'|'v2';
 type Phase='legacy'|'shadow'|'successor'|'disabled';
@@ -12,25 +13,22 @@ const operations=Object.freeze({
   'fixture.onlineAttendance': 'existing',
   'fixture.partnerRead': 'existing',
   'fixture.partnerManage': 'existing',
+  'fixture.onlineTeachingView': 'existing',
+  'fixture.campusTeachingView': 'new',
+  'fixture.guardianView': 'existing',
+  'fixture.financeView': 'existing',
   'fixture.physicalAttendance': 'new',
   'fixture.campusCreate': 'new',
+  'fixture.institutionCreate': 'new',
+  'fixture.organisationRoster': 'new',
+  'fixture.campusRoster': 'new',
+  'fixture.financePost': 'existing',
+  'fixture.scopedSupport': 'new',
 } as const);
 function stop(reason:Stop['reason']):Stop{return Object.freeze({scope:'synthetic-routing-only',productionAuthorization:false,kind:'stop',reason});}
 function route(lane:Lane,shadowObservationOnly=false):Route{return Object.freeze({scope:'synthetic-routing-only',productionAuthorization:false,kind:'route',lane,shadowObservationOnly});}
-function row(v:unknown,fields:readonly string[]):Row|null{
-  if(v===null||typeof v!=='object'||Array.isArray(v))return null;
-  const p=Object.getPrototypeOf(v);if(p!==null&&p!==Object.prototype)return null;
-  const keys=Reflect.ownKeys(v);if(keys.length!==fields.length)return null;
-  const out:Row=Object.create(null);
-  for(const k of keys){
-    if(typeof k!=='string'||!fields.includes(k))return null;
-    const d=Object.getOwnPropertyDescriptor(v,k);
-    if(!d||!d.enumerable||!Object.hasOwn(d,'value'))return null;
-    out[k]=d.value;
-  }
-  return out;
-}
-function epoch(x:unknown):x is number{return typeof x==='number'&&Number.isSafeInteger(x)&&x>0;}
+function row(v:unknown,fields:readonly string[]):Row|null{return reviewRow(v,fields);}
+function epoch(x:unknown):x is number{return isReviewInteger(x,1);}
 function lane(x:unknown):x is Lane{return x==='v1'||x==='v2';}
 function phase(x:unknown):x is Phase{return x==='legacy'||x==='shadow'||x==='successor'||x==='disabled';}
 // All arguments are test-harness data. A real route policy must be loaded by the
