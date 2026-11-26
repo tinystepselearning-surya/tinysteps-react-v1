@@ -12,11 +12,13 @@ async function main(){
  const {values:v}=parseArgs({options:{
   project:{type:'string'},years:{type:'string'},'max-documents':{type:'string'},
   'page-size':{type:'string',default:'250'},'max-pages':{type:'string',default:'400'},
+  'inventory-only':{type:'boolean',default:false},
   apply:{type:'boolean',default:false},'approve-production-read':{type:'boolean',default:false},
   'confirm-production-aggregate-write':{type:'string'},
  },strict:true,allowPositionals:false});
  assert([PROD,DEMO].includes(v.project),'Explicit supported project required');
- assert(v.years&&v['max-documents'],'Explicit years and document budget required');
+ assert(!(v['inventory-only']&&v.apply),'Inventory mode is read-only');
+ if(!v['inventory-only'])assert(v.years&&v['max-documents'],'Explicit years and document budget required');
  if(v.project===PROD){
   assert(!process.env.FIRESTORE_EMULATOR_HOST,'Production command cannot run against an emulator');
   assert(v['approve-production-read']===true,'Separate approved production read scope required');
@@ -28,6 +30,10 @@ async function main(){
  const db=getFirestore(app);
  try{
   const store=createBusinessRefreshStore(db);
+  if(v['inventory-only']){
+   console.log(JSON.stringify({project:v.project,outcome:'inventory-only',...(await store.inventory())},null,2));
+   return;
+  }
   const result=await refreshBusinessTrends({source:store,publisher:store,years:v.years.split(',').map(x=>x.trim()),maxDocuments:Number(v['max-documents']),pageSize:Number(v['page-size']),maxPages:Number(v['max-pages']),apply:v.apply});
   console.log(JSON.stringify({project:v.project,...result},null,2));
  }finally{await db.terminate();await deleteApp(app);}
