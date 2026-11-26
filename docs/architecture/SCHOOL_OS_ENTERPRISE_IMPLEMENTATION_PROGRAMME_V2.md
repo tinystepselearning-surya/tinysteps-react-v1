@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 25 (owner-directed target design proposal)  
+**Version:** 2.0 programme baseline, revision 26 (proposed master record and item dictionary)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -443,6 +443,12 @@ The owner directs design of the new module and data contracts first, reuse or ex
 
 Next review: obtain independent review of the design and proposed P01/P02 sequencing ADR; finalize record/item and storage bindings for the first affected slice only under the controlling gates. Build missing capabilities in isolated environments after applicable implementation authorization. All live access, migrations, production data capture, deployment, Rules/cutover and retirement gates remain unchanged. No retrospective P01 acceptance or formal P02/P03 activation is claimed.
 
+### Revision 26 — master record and item dictionary design
+
+Owner-directed dictionary design is documented in [registry design](registry/TSOS_V2_MASTER_RECORD_ITEM_DICTIONARY_DESIGN.md) and the [machine-readable design seed](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json). The proposal contains 29 record codes, 13 detailed record seeds, 76 qualified item definitions and 18 value sets; 43 source-backed identity fields were matched to the pinned TypeScript interfaces for presence, optionality and explicit nullability. Shared identity audit fields are described separately; 16 record entries are catalogue-only. Draft identifiers, fields, storage paths and authority mappings are not allocated or adopted. The new registry is Git metadata, not a Firestore EAV store or runtime dependency. No P03 implementation, schema validator, CI integration, production access or data capture was activated. Identifier uniqueness/reference checks passed at generation; independent semantic/security review and production coverage remain pending.
+
+Next design review: confirm code namespace, shared field identifiers and ownership; complete academic catalogue, enrollment/delivery and tenant/context contracts before executable schema adoption. P01 acceptance, independent sequencing ADR, P02/P03 formal gates, M3 and production holds remain unchanged.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -491,3 +497,5 @@ Next review: obtain independent review of the design and proposed P01/P02 sequen
 - Revision 24 (26 Nov 2026): rechecked unchanged main and stacked PR lineage; reviewed existing acceptance, bounded data and M3 packets and current ledger; corrected candidate metadata request templates; separated mandatory P01 acceptance evidence from proposed scoped exceptions and prepared a design-only governance decision for independent review. No approval, live verification, P02 activation, release or production changes claimed. All current gates retained.
 
 - Revision 25 (26 Nov 2026): recorded owner-directed design-first, additive extension and selective same-database migration strategy; added linked 18-domain target design draft and first enrollment/delivery mapping, with explicit unknown/history, compatibility, budget and recovery requirements. Independent review and sequencing ADR remain pending; no runtime, production data, deployment or phase gate changes.
+
+- Revision 26 (26 Nov 2026): owner-directed master record/item dictionary design draft and machine-readable seed added; 29 proposed records, 13 detailed, 76 items, 18 value sets, 43 source-backed field matches. Design checks only; no production access, runtime changes, identifier adoption, CI run or phase gate changes.
