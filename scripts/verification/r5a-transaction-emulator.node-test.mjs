@@ -67,7 +67,7 @@ function decode(doc,expected){
 }
 function write(name,fields,currentDocument){
   assert.ok(names.has(name));
-  return {update:{name,fields:Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,encode(v)]))},currentDocument};
+  return {update:{name,fields:Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,encode(v)]))},currentDocument,...(currentDocument.updateTime?{updateMask:{fieldPaths:Object.keys(fields)}}:{})};
 }
 function timestamp(doc){
   const t=doc.updateTime;assert.ok(t&&typeof t==='object'&&Object.hasOwn(t,'seconds'));return t;
@@ -103,7 +103,7 @@ test('R5-A three fixed local cohorts: atomic receipt, replay, changed request, r
     assert.ok(calls<43&&writeEntries+writes<=19,'LOCAL_BUDGET_EXCEEDED');calls++;writeEntries+=writes;
   }
   async function commit(writes,transaction,kind){
-    assert.ok(writes.length>0&&writes.length<=2&&writes.every(w=>w.update&&names.has(w.update.name)&&w.currentDocument&&!w.delete));
+    assert.ok(writes.length>0&&writes.length<=2&&writes.every(w=>w.update&&names.has(w.update.name)&&w.currentDocument&&!w.delete&&(w.currentDocument.exists===false||w.currentDocument.updateTime&&w.updateMask)));
     if(kind==='seed'){assert.ok(++seeds<=3&&writes.every(w=>w.currentDocument.exists===false));}
     else if(kind==='revoke'){assert.ok(++revocations<=1&&writes.length===1&&writes[0].currentDocument.updateTime);}
     else {assert.ok(++terminals<=6&&transaction&&writes.length===2);}
