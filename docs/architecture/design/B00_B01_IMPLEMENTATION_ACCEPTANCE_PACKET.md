@@ -1,6 +1,6 @@
-# B00 — first implementation acceptance packet (revision 33)
+# B00 — first implementation acceptance packet (revision 34)
 
-**Status:** Owner review feedback recorded; partial owner decisions below. Independent review and explicit B01-A authorization remain open. No production access or implementation approval inferred. 26 November 2026 IST.
+**Status:** All eight architecture owner decisions confirmed, including the isolated B01-A scope. Independent review and formal sequencing amendment remain open. No production access or effective phase authorization. 26 November 2026 IST.
 
 ## Decision requested
 
@@ -41,21 +41,21 @@ Owner reviewed the architecture overview and emphasized that premium one-to-one 
 
 | Checklist decision | Owner feedback |
 |---|---|
-| Same Firestore database with modular collections | Previously supported direction; not explicitly selected in latest owner checklist response; confirm formal approval |
-| Centralized master record/item dictionary | Previously supported direction; not explicitly selected in latest owner checklist response; confirm formal approval |
+| Same Firestore database with modular collections | Confirmed in revision 34 |
+| Centralized master record/item dictionary | Confirmed in revision 34 |
 | Independent business records and relationships | Confirmed |
 | Progressive development and lift-and-shift | Confirmed |
 | Preservation of business rules | Confirmed with clarification: preserve current operations, intentionally design improved V2 rules for review |
 | Multi-organisation and future multi-tenant architecture | Confirmed |
 | Security, performance and reliability standards | Confirmed |
-| B01-A isolated tooling and tests | Earlier general direction to proceed; not explicitly selected in latest owner checklist response; confirm scoped authorization |
+| B01-A isolated tooling and tests | Owner approved in revision 34; effective implementation remains conditional on independent review and formal sequencing amendment |
 
-Do not interpret the five confirmed decisions as approval of the three unconfirmed items or independent engineering sign-off. The existing phase sequence and production gates remain in force.
+The owner's follow-up confirms the three remaining decisions. The spoken reference B01E is interpreted as B01-A, the isolated registry tooling increment immediately under discussion; no separate B01-E scope is authorized. All eight owner decisions are now confirmed; this is not independent engineering sign-off or adoption of the sequencing amendment. The existing phase sequence and production gates remain in force.
 
 ## Approval record (open)
 
-- Leadership accountable owner: designation and explicit decision pending.
-- Independent engineering reviewer: designation, scope review, decision and signature pending.
+- Leadership owner decision: all eight architecture choices and isolated B01-A scope approved in conversation on 26 November 2026 IST; named formal approval record and sequencing adoption remain pending under the controlling programme.
+- Independent engineering reviewer: designation, scope review, decision and signature pending. PR #933 review list checked at this checkpoint: zero submitted reviews. Do not request the owner to reconfirm the eight decisions.
 - Exact approved branch/commit, files, expiry/review point: pending; verify fresh head before code.
 - Accepted exceptions: none adopted yet.
 - P01/P02/P03 gate amendment: proposed only.
