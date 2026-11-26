@@ -52,11 +52,11 @@ function fields(doc,col){
   }
   return Object.freeze(out);
 }
-export function createResponseCollector(ticket){
+export function createResponseCollector(ticket,{retain=false}={}){
   const col=ticket.collection,b=ticket.request.body,isQuery=ticket.request.method==='runQuery';
   const point=isQuery?null:b.documents[0],prefix=isQuery?b.parent+'/'+col+'/':null;
   const expectedPerson=isQuery?b.structuredQuery.where.fieldFilter.value.stringValue:null;
-  const names=new Set();let readTime=null,frames=0,rows=0,finished=false,missing=false;
+  const names=new Set(),decoded=[];let readTime=null,frames=0,rows=0,finished=false,missing=false;
   function accept(frame){
     if(finished||++frames>(isQuery?52:1)||!plain(frame))fail();
     // GAX proto-loader defaults: empty transaction, null message fields,
@@ -76,7 +76,7 @@ export function createResponseCollector(ticket){
           names.has(d.name)||f.personId!==expectedPerson||
           f[col==='roleAssignments'?'roleAssignmentId':'organisationMembershipId']!==d.name.slice(prefix.length)||
           ++rows>50)fail();
-        names.add(d.name);
+        names.add(d.name);if(retain)decoded.push(f);
       }else if(rows!==0&&frame.done!==true)fail();
       if(frame.done===true)finished=true;
     }else{
@@ -92,7 +92,7 @@ export function createResponseCollector(ticket){
         if((col==='authAccessReadModels'&&f.firebaseUid!==id)||
           (col==='authIdentities'&&f.authIdentityId!==id)||
           (col==='people'&&f.personId!==id))fail();
-        rows=1;
+        rows=1;if(retain)decoded.push(f);
       }else fail();
       finished=true;
     }
@@ -101,7 +101,7 @@ export function createResponseCollector(ticket){
     if(!readTime||!frames||(!isQuery&&rows!==1&&!missing))fail();
     finished=true;
     // Counts/timestamp only, never export document contents.
-    return Object.freeze({readTime,rows,missing});
+    return Object.freeze({readTime,rows,missing,...(retain?{decoded:Object.freeze([...decoded])}:{})});
   }
   return Object.freeze({accept,finish});
 }
