@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B02-R1C scoped offline transport feasibility and privacy enforcement review; B02-R2 remains held. B01, B02-R1A and B02-R1B isolated engineering accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: B02-R1C independent scoped acceptance; 505/505 offline engineering tests verified on the pinned candidate. Isolated integration and B02-R2 remain held; B01, B02-R1A and B02-R1B accepted; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -310,6 +310,8 @@ P09-A is a vertical slice, not a second application or a bypass of security. Imm
 8. **Freeze and retire:** verify zero required legacy consumers, approved retention, restore rehearsal, explicit owner approval. Prefer forward repair; code rollback does not undo historical writes.
 
 At any failed gate, stop expansion and disable the new path if safe; do not delete new or old data as an automatic rollback. Quarantine unresolved operations, restore the prior *compatible* routing/authority where possible, drain/reconcile in-flight jobs, preserve financial/evidence history, and escalate. Backup restore to isolated destination for validation before production recovery. A rollback after canonical writes may require a forward-compatible repair or synchronized legacy mirror, not simply git revert. Record actual recovery impact.
+
+**Owner-confirmed progressive replacement (pending integration of this addendum):** Apply this protocol per module. Keep main/production intact while developing in isolation; for each release start a focused integration branch from current main, reconcile source/deployed markers, test affected dependencies, inspect deployment impact, verify staging and obtain explicit release acceptance. No wholesale merge of the architecture branch into main. Replace obsolete legacy functions, data paths and fields permanently only after cutover, reconciliation, dependency closure, retention/recovery and specific retirement approval. Keep temporary compatibility bounded and single-authority; avoid unnecessary historical migrations. See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). No production authorization or phase gate waiver.
 
 ## 5. Release protection and measurable gates
 
@@ -764,3 +766,6 @@ Next recommended B02-R1C: separately scope offline transport feasibility and pri
 - Revision 54: owner authorizes isolated compiled canonical integration tests and transport design review, no live activation or wider gate waiver.
 
 - Revision 55: B02-R1B 406/406 pinned regression and actual compiled canonical integration accepted; PR #949 integrated; existing dependency warnings recorded for separate review. B02-R1C scope next; live and independent security gates retained.
+
+
+- Pending Revision 56 integration addendum: owner confirms progressive replacement; B02-R1C 505/505 same-head offline engineering evidence and independent acceptance/R2 handoff prepared in PR #950. Revision 55 remains the accepted baseline until scoped review and isolated merge; no independent approval, production access or B02-R2 activation claimed.
