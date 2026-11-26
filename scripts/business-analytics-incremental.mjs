@@ -9,11 +9,12 @@ function normalize(record) {
   assert(record && typeof record.contributorId === 'string' && record.contributorId.length > 0 && record.contributorId.length <= 256, 'Invalid contributor');
   assert(int(record.revision) && record.revision >= 0, 'Invalid source revision');
   assert(Array.isArray(record.facts) && record.facts.length <= MAX_FACTS, 'Unbounded contributor');
-  const map = new Map();
+  const map = new Map(), keys = new Set();
   for (const f of record.facts) {
     assert(validMonth(f.monthKey) && FLOW.has(f.metric) && int(f.value), 'Invalid flow fact');
     const key = f.monthKey + ':' + f.metric;
-    assert(!map.has(key), 'Duplicate fact key');
+    assert(!keys.has(key), 'Duplicate fact key');
+    keys.add(key);
     if (f.value !== 0) map.set(key, f.value);
   }
   return { contributorId: record.contributorId, revision: record.revision,
@@ -82,7 +83,7 @@ export function childMovementContribution({id,revision,monthKey,retainedBefore,r
   assert(typeof id==='string' && id && validMonth(monthKey) && typeof retainedBefore==='boolean' && typeof retainedAfter==='boolean' && typeof everAdmittedBefore==='boolean','Invalid normalized lifecycle operation');
   assert(!retainedBefore || everAdmittedBefore,'Inconsistent admission history');
   assert(courseCounts && ['newEnrollments','courseCompletions','courseDiscontinuations'].every(k=>int(courseCounts[k]) && courseCounts[k]>=0),'Invalid course counts');
-  const facts=Object.entries(courseCounts).map(([metric,value])=>({monthKey,metric,value}));
+  const facts=['newEnrollments','courseCompletions','courseDiscontinuations'].map(metric=>({monthKey,metric,value:courseCounts[metric]}));
   if (!retainedBefore && retainedAfter) facts.push({monthKey,metric:everAdmittedBefore?'reactivations':'newAdmissions',value:1});
   if (retainedBefore && !retainedAfter) {
     assert(['completed','discontinued','other'].includes(exitReason),'Missing final exit reason');
