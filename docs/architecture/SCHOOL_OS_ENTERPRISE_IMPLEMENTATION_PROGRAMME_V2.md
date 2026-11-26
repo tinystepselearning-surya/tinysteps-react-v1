@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 28 (M01 institutional, academic and enrollment design draft)  
+**Version:** 2.0 programme baseline, revision 29 (M02 classroom delivery, attendance and learning design draft)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -459,9 +459,9 @@ Owner agrees to design the replacement architecture alongside current operations
 | D02 | Tenant, organisation, campus, membership and contextual roles | M01 integrated draft; review pending |
 | D03 | Academic catalogue, programme, course, curriculum, skills and academic year | M01 integrated draft; review pending |
 | D04 | Enrollment, delivery offering, group placement, teaching assignment | M01 integrated draft; review pending |
-| D05 | Scheduling, plans, sessions, participants and staff | Planned |
-| D06 | Attendance, official decision, evidence and corrections | Planned |
-| D07 | Learning, assessment, observations, mastery and progress | Planned |
+| D05 | Scheduling, plans, sessions, participants and staff | M02 integrated draft; review pending |
+| D06 | Attendance, official decision, evidence and corrections | M02 integrated draft; review pending |
+| D07 | Learning, assessment, observations, mastery and progress | M02 integrated draft; review pending |
 | D08 | Commerce, agreements, billing, charges, payments and earnings | Planned |
 | D09 | School operations, admissions, workforce, safeguarding and communication; include CRM and support ownership | Planned |
 | D10 | Metadata, configuration, audit, integration, projections, analytics, credentials/reporting and shared experience | Planned |
@@ -479,13 +479,21 @@ Owner directs batching of substantial milestones with holistic checks at each ch
 | Milestone | Scope | Status |
 |---|---|---|
 | M01 | D02–D04, reconcile with D01 | Integrated design draft, structural checks passed, independent review pending |
-| M02 | D05–D07 scheduling, sessions, attendance, learning/assessment | Next consolidated design milestone |
-| M03 | D08–D10 commerce/finance, school operations, platform foundations | Planned |
+| M02 | D05–D07 scheduling, sessions, attendance, learning/assessment | Integrated design draft, structural checks passed, independent review pending |
+| M03 | D08–D10 commerce/finance, school operations, platform foundations | Next consolidated design milestone |
 | M04 | Cross-package consistency, unresolved fields/keys/policies, full dependency and migration design, independent approval | Planned; precedes affected implementation |
 
 Important source checks: eight current main blobs match original pinned equivalents (academic/enrollment types, school authorization/academic command, two rolling schedule files, indexes, Wave 1 ledger). Current Course/Topic interface is in models.ts, not a standalone Course.ts. School.ts and schoolCurriculum.ts reviewed. Target lifecycle does not adopt incomplete five-value Enrollment interface as exhaustive; live caller semantics include trial/paused/terminal outcomes and progression/correction. Existing schoolAdmin remains read-only. Proposed contextual grant alternative does not allocate a competing authority. Catalogue visibility and tenant-owned delivery checked explicitly. Existing school-local year/grade/section keys remain contextual, not globally unique. Registry structure, identifier uniqueness, owner and reference/enum integrity checked, and tenant field presence checked for affected root delivery records. No full main rebaseline, independent semantic review, executable validator, runtime tests, CI or live production verification.
 
 P01 acceptance and formal P02/P03/P04 and all affected implementation, security, migration, production and M3 gates unchanged. No collection creation, runtime wiring, code or production changes. M02 proceeds as design proposal only.
+
+### Revision 29 — consolidated M02 classroom delivery and learning design
+
+[M02 — Classroom delivery, attendance and learning (D05–D07)](design/M02_CLASSROOM_ATTENDANCE_LEARNING_ARCHITECTURE.md) connects timetable, virtual occurrence, on-demand actual session, participants/staff, official attendance, corrections, provider evidence, historical financial terms, learning activities, assessment and projections. The [registry v0.4 draft](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) expands to 77 record candidates, 61 detailed seeds, 454 unique items and 37 value sets; all 207 prior items and all 43 source-backed identity definitions are unchanged. Twenty-four record families added, five previously undetailed record types seeded, existing schedule plan extended; 16 catalogue-only entries remain. Structural reference, ID, owner and scope checks passed; all new record codes appear in M02 design. New field definitions remain proposals, not verified production schema.
+
+Critical source preservation: both retired automatic session generation guards are true; day-window sync returns early under the automatic retirement guard despite stale comments about next-day generation. Preserve Student Management timetable authority and authorized on-demand attendance/ad hoc creation. Existing IST date/time and cross-enrollment learner/date/start claims remain authoritative; viewer local time and DST are display context, not billing/attendance key. New online attendance input stays present/absent; no unmarked-to-absent conversion, preserve historical status semantics, AVS evidence remains separate. Preserve current sessionRevenue financial snapshots, attendanceFinanceCycle and paid/settled/unsafe correction review; no financial posting from virtual slots, evidence or school daily register. Learning evidence and projections separate; no fabricated individual assessments from aggregate school evidence. Recording access and external provider integration require D10 review; no router/OneDrive live verification.
+
+Nine scoped current/pinned source blob comparisons passed; additional scheduling cutover, materializer, lifecycle, reconciliation, day-window sync and teacher calendar source inspected on main. No full repository rebaseline or deployed parity claim. Exact recurrence, lifecycle, structured evidence/results, historical mappings and scope contracts need review in M04; D08 Finance/Commerce and D10 integration prerequisites retained. Next consolidated milestone M03 (D08–D10), then M04 holistic closure. No production access, code, runtime tests, CI, schema creation, migrations, deployments or authority switches. P01 acceptance, formal phase approvals and all M3/security/production/retirement holds unchanged.
 
 ## 10. Change record
 
@@ -541,3 +549,5 @@ P01 acceptance and formal P02/P03/P04 and all affected implementation, security,
 - Revision 27 (26 Nov 2026): owner-directed parallel target design sequence D01–D10; linked initial D01 design and v0.2 dictionary extension (40 records, 14 detailed, 82 items, 19 value sets). Scoped main-drift review retained seven unchanged source artifacts; no global rebaseline. D02 next design; P01/P02/P03/P04 and M3/production gates unchanged, no code or production changes.
 
 - Revision 28 (26 Nov 2026): grouped D02–D04 into M01 and recorded larger milestone plan; registry v0.3 now 53 records, 32 detailed, 207 items and 28 value sets. Eight source blob comparisons and structural checks passed, source lifecycle/access limitations documented. Independent review, full design closure and all implementation/production gates retained. No production or runtime changes.
+
+- Revision 29 (26 Nov 2026): consolidated M02 D05–D07, registry v0.4 (77 records, 61 detailed, 454 items, 37 value sets); 207 prior items unchanged; scoped source and structural checks passed. Explicit automatic-generation retirement, IST keys, official/evidence/finance separation, learning history and provider-access constraints. Independent review, M03/M04 closure and all implementation/production gates retained. No runtime or production changes.
