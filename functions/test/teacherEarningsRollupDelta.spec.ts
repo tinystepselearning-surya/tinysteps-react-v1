@@ -1,3 +1,4 @@
+import { computeTeacherMonthlyRollupPayload } from '../src/helpers/teacherEarningsAuthoritativeRollup';
 import { describe, expect, it } from 'vitest';
 import {
   canSkipTeacherEarningsRollupRecompute,
@@ -457,5 +458,92 @@ describe('teacher earnings rollup noop gate', () => {
         after: { ...legacySession, note: 'new' },
       }),
     ).toBe(false);
+  });
+});
+
+
+describe('teacher earnings excluded standalone event read gate', () => {
+  const excludedBase = {
+    teacherId: 'teacher-1',
+    monthKey: '2026-11',
+    amount: 125,
+    status: 'void',
+    source: 'manual_adjustment',
+  };
+
+  it('skips void standalone creates/deletes with a canonical month', () => {
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'void-adjustment-1', before: null, after: excludedBase,
+    })).toBe(true);
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'void-adjustment-1', before: excludedBase, after: null,
+    })).toBe(true);
+  });
+
+  it('skips archived standalone creates but not active monetary creates', () => {
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'archived-adjustment', before: null,
+      after: { ...excludedBase, status: 'unpaid', archived: true },
+    })).toBe(true);
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'active-adjustment', before: null,
+      after: { ...excludedBase, status: 'unpaid' },
+    })).toBe(false);
+  });
+
+  it('never skips session-linked void rows because canonical deduplication can change', () => {
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'session-1', before: null,
+      after: { ...excludedBase, source: 'session_present_completed', sessionId: 'session-1' },
+    })).toBe(false);
+  });
+
+  it('does not skip legacy excluded rows with no canonical month key', () => {
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'void-adjustment-1', before: null,
+      after: { teacherId: 'teacher-1', amount: 125, status: 'void',
+        source: 'manual_adjustment', earnedAt: '2026-11-12T08:00:00+05:30' },
+    })).toBe(false);
+  });
+});
+
+
+describe('finance rollup authoritative parity for excluded standalone events', () => {
+  const monthKey = '2026-11';
+  const active = { id: 'active-demo', data: {
+    teacherId: 'teacher-1', monthKey, amount: 240, status: 'unpaid', source: 'demo_completed',
+  } };
+  const payouts = [{ id: 'payout-1', data: {
+    amount: 100, status: 'paid', paidAt: '2026-11-12', date: '2026-11-12',
+  } }];
+  const baseline = computeTeacherMonthlyRollupPayload({
+    monthKey, earnings: [active], payouts,
+  });
+
+  it('void standalone create and delete leave *all* authoritative totals and payout history unchanged', () => {
+    const excluded = { teacherId: 'teacher-1', monthKey,
+      amount: 990, status: 'void', source: 'manual_adjustment' };
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'void-standalone', before: null, after: excluded,
+    })).toBe(true);
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'void-standalone', before: excluded, after: null,
+    })).toBe(true);
+    const actual = computeTeacherMonthlyRollupPayload({
+      monthKey, earnings: [active, { id: 'void-standalone', data: excluded }], payouts,
+    });
+    expect(actual).toEqual(baseline);
+  });
+
+  it('archived standalone create never changes total earnings, pending, session counts or payouts', () => {
+    const excluded = { teacherId: 'teacher-1', monthKey,
+      amount: 180, status: 'unpaid', archived: true, source: 'demo_completed' };
+    expect(canSkipTeacherEarningsRollupRecompute({
+      earningId: 'archived-standalone', before: null, after: excluded,
+    })).toBe(true);
+    const actual = computeTeacherMonthlyRollupPayload({
+      monthKey, earnings: [active, { id: 'archived-standalone', data: excluded }], payouts,
+    });
+    expect(actual).toEqual(baseline);
   });
 });

@@ -71,6 +71,44 @@ async function fetchLimited(
   return { docs: limitedSnap.docs, truncated };
 }
 
+export type MonthBoundedFinanceSessionCandidates = {
+  docs: FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>[];
+  truncated: boolean;
+};
+
+/** Share the three bounded Firestore scans across the two reconciliation checks. */
+export async function fetchMonthBoundedFinanceSessionCandidates(input: {
+  db: FirebaseFirestore.Firestore;
+  monthKey: string;
+  maxDocs: number;
+}): Promise<MonthBoundedFinanceSessionCandidates> {
+  const { db, monthKey } = input;
+  const maxDocs = Math.max(1, Math.floor(input.maxDocs));
+  const bounds = buildFinanceReconciliationMonthBounds(monthKey);
+  const [dateSnap, startAtSnap, explicitMonthSnap] = await Promise.all([
+    fetchLimited(
+      db
+        .collection('classSessions')
+        .where('date', '>=', bounds.firstDate)
+        .where('date', '<', bounds.nextMonthDate),
+      maxDocs,
+    ),
+    fetchLimited(
+      db
+        .collection('classSessions')
+        .where('startAt', '>=', admin.firestore.Timestamp.fromDate(bounds.startAtInclusive))
+        .where('startAt', '<', admin.firestore.Timestamp.fromDate(bounds.startAtExclusive)),
+      maxDocs,
+    ),
+    fetchLimited(db.collection('classSessions').where('monthKey', '==', monthKey), maxDocs),
+  ]);
+
+  return {
+    docs: [...dateSnap.docs, ...startAtSnap.docs, ...explicitMonthSnap.docs],
+    truncated: dateSnap.truncated || startAtSnap.truncated || explicitMonthSnap.truncated,
+  };
+}
+
 /**
  * B6 Brick 5A.
  *
@@ -92,6 +130,7 @@ export async function fetchCompletedSessionsForFinanceReconciliation(input: {
   db: FirebaseFirestore.Firestore;
   monthKey: string | null;
   maxDocs: number;
+  monthCandidates?: Promise<MonthBoundedFinanceSessionCandidates>;
 }): Promise<CompletedSessionFetchResult> {
   const { db, monthKey } = input;
   const maxDocs = Math.max(1, Math.floor(input.maxDocs));
@@ -107,30 +146,14 @@ export async function fetchCompletedSessionsForFinanceReconciliation(input: {
     };
   }
 
-  const bounds = buildFinanceReconciliationMonthBounds(monthKey);
-  const [dateSnap, startAtSnap, explicitMonthSnap] = await Promise.all([
-    fetchLimited(
-      db
-        .collection('classSessions')
-        .where('date', '>=', bounds.firstDate)
-        .where('date', '<', bounds.nextMonthDate),
-      maxDocs,
-    ),
-    fetchLimited(
-      db
-        .collection('classSessions')
-        .where('startAt', '>=', admin.firestore.Timestamp.fromDate(bounds.startAtInclusive))
-        .where('startAt', '<', admin.firestore.Timestamp.fromDate(bounds.startAtExclusive)),
-      maxDocs,
-    ),
-    fetchLimited(db.collection('classSessions').where('monthKey', '==', monthKey), maxDocs),
-  ]);
+  const candidates = await (input.monthCandidates ??
+    fetchMonthBoundedFinanceSessionCandidates({ db, monthKey, maxDocs }));
 
   const byId = new Map<
     string,
     FirebaseFirestore.QueryDocumentSnapshot<FirebaseFirestore.DocumentData>
   >();
-  for (const docSnap of [...dateSnap.docs, ...startAtSnap.docs, ...explicitMonthSnap.docs]) {
+  for (const docSnap of candidates.docs) {
     if (String(docSnap.data()?.status || '').trim().toLowerCase() !== 'completed') continue;
     byId.set(docSnap.id, docSnap);
   }
@@ -141,7 +164,7 @@ export async function fetchCompletedSessionsForFinanceReconciliation(input: {
   return {
     docs: unionTruncated ? docs.slice(0, maxDocs) : docs,
     truncated:
-      dateSnap.truncated || startAtSnap.truncated || explicitMonthSnap.truncated || unionTruncated,
+      candidates.truncated || unionTruncated,
     mode: 'month_bounded_canonical_union',
   };
 }

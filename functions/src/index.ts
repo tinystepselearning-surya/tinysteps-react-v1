@@ -219,6 +219,7 @@ export { cleanupGamesCatalogNow } from "./games/cleanupGamesCatalogNow";
 export { recordLevelResult } from "./games/recordLevelResult";
 export { createLessonAccessSession, resolveLessonAccessViewer } from "./createLessonAccessSession";
 export { getParentWorksheetResources } from "./getParentWorksheetResources";
+export { onParentWorksheetLibraryBundleSync } from "./parentWorksheetBundleTrigger";
 
 export {
   onWave1LegacyUserIdentityWrite,

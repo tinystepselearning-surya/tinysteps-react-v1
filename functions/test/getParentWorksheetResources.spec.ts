@@ -1,6 +1,6 @@
 import * as admin from 'firebase-admin';
 import { describe, expect, it } from 'vitest';
-import { loadParentWorksheetResources, parentWorksheetIsAllowed, sanitizeWorksheetUrl } from '../src/getParentWorksheetResources';
+import { parentWorksheetIsGenerallyBrowseable, loadParentWorksheetResources, parentWorksheetIsAllowed, sanitizeWorksheetUrl } from '../src/getParentWorksheetResources';
 
 const context = { parentId: 'parent-a', kidId: 'kid-a', courseIds: new Set(['course-a']), enrollmentIds: new Set(['enrollment-a']) };
 
@@ -42,17 +42,70 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)('getParentWorksheetResourc
     batch.set(db.collection('enrollments').doc(`enrollment-a-${suffix}`), { kidId: kidA, courseId: courseA, status: 'active' });
     batch.set(db.collection('parentWorksheetLibrary').doc(`allowed-${suffix}`), { title: 'Allowed', url: 'https://example.com/a.pdf', targetCourseIds: [courseA], teacherScript: 'never return' });
     batch.set(db.collection('parentWorksheetLibrary').doc(`denied-${suffix}`), { title: 'Denied', url: 'https://example.com/b.pdf', targetCourseIds: [courseB] });
+    // Force a cold bootstrap even if another isolated emulator test has
+    // already populated its catalogue.
+    batch.set(db.collection('worksheetBundles').doc('parentLibraryV1'), { schemaVersion: 1, ready: false, entriesJson: '' });
     await batch.commit();
 
-    const resources = await loadParentWorksheetResources(db, parentA, kidA);
-    expect(resources).toHaveLength(1);
-    expect(resources[0]).toMatchObject({ title: 'Allowed' });
-    expect(resources[0]).not.toHaveProperty('teacherScript');
-    expect(resources[0]).not.toHaveProperty('targetCourseIds');
-    expect(resources[0]).not.toHaveProperty('targetKidIds');
-    expect(resources[0]).not.toHaveProperty('targetEnrollmentIds');
-    expect(resources[0]).not.toHaveProperty('targetParentIds');
-    expect(resources[0]?.id).not.toContain(`allowed-${suffix}`);
+    const result = await loadParentWorksheetResources(db, parentA, kidA);
+    // General course resources are browseable even outside enrolment;
+    // child-targeted and other family's private worksheets remain denied.
+    const ourResources = result.resources.filter((row) =>
+      row.url === 'https://example.com/a.pdf' || row.url === 'https://example.com/b.pdf');
+    expect(ourResources.map((row) => row.title).sort()).toEqual(['Allowed', 'Denied']);
+    expect(ourResources[0]).not.toHaveProperty('teacherScript');
+    expect(ourResources[0]).not.toHaveProperty('targetCourseIds');
+    expect(ourResources[0]).not.toHaveProperty('targetKidIds');
+    expect(ourResources[0]).not.toHaveProperty('targetEnrollmentIds');
+    expect(ourResources[0]).not.toHaveProperty('targetParentIds');
+    expect(ourResources[0]?.id).not.toContain(`allowed-${suffix}`);
+    expect(result.enrolledCourseIds).toHaveLength(1);
     await expect(loadParentWorksheetResources(db, parentB, kidA)).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+});
+
+
+describe('parent worksheet course browsing access policy', () => {
+  it('permits general resources across courses but never child, parent or enrolment overrides', () => {
+    expect(parentWorksheetIsGenerallyBrowseable({
+      active: true, targetCourseIds: ['other-course'],
+    })).toBe(true);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetParentIds: ['all_parents'],
+    })).toBe(true);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetKidIds: ['other-child'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetChildIds: ['other-child'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetEnrollmentIds: ['other-enrollment'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetParentIds: ['another-family'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], targetStageTags: ['stage-advanced'],
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], active: false,
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetCourseIds: ['other-course'], isArchived: true,
+    })).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable({
+      targetParentIds: ['all_parents'],
+    })).toBe(false);
+  });
+
+  it('does not expose child-specific worksheets for parents in other courses', () => {
+    const otherFamily = {
+      targetCourseIds: ['other-course'],
+      targetKidIds: ['other-child'],
+      targetEnrollmentIds: ['other-enrollment'],
+    };
+    expect(parentWorksheetIsAllowed(otherFamily, context)).toBe(false);
+    expect(parentWorksheetIsGenerallyBrowseable(otherFamily)).toBe(false);
   });
 });
