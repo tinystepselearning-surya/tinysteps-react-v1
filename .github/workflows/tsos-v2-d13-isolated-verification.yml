@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          candidate="$(git rev-parse refs/remotes/origin/docs/tsos-v2-p01-source-baseline)"
+          candidate="a5a6555c7cd956d12875c16d1953ae62e81f4148"
           main="$(git rev-parse refs/remotes/origin/main)"
           functions="$(git rev-parse refs/remotes/origin/ci/functions-production)"
           hosting="$(git rev-parse refs/remotes/origin/ci/hosting-production)"
@@ -33,13 +33,13 @@ jobs:
           for result in functions_deployment_required=false functions_full_deployment=false functions_targets= functions_retired_targets= hosting_changed=false firestore_rules_changed=false firestore_indexes_changed=false; do
             grep -Fx "$result" "$GITHUB_OUTPUT"
           done
-  rules-emulators:
+  collector-and-functions-emulator:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 0d2116137143b4a0f4db1f9e8426757c3cb018d4
+          ref: a5a6555c7cd956d12875c16d1953ae62e81f4148
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -49,10 +49,21 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - name: Run Firestore and Storage Rules against a demo project
+      - run: npm ci --prefix functions --ignore-scripts --include=dev --no-audit --no-fund
+      - name: Test collector and previously skipped Functions cases in demo Firestore
         shell: bash
         run: |
           set -euo pipefail
           unset FIREBASE_TOKEN GOOGLE_APPLICATION_CREDENTIALS
-          node -e 'const src=require("./firebase.json");require("node:fs").writeFileSync("firebase.d13.local.json",JSON.stringify({firestore:src.firestore,storage:src.storage,emulators:{firestore:{host:"127.0.0.1",port:8085},storage:{host:"127.0.0.1",port:9199},ui:{enabled:false},singleProjectMode:false}}))'
-          npx --yes firebase-tools@15.37.0 emulators:exec --config firebase.d13.local.json --project demo-tinysteps-m3-storage-parity --only firestore,storage 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 ./node_modules/.bin/vitest run --maxWorkers=2 src/tests/firestore src/tests/storage'
+          node -e 'const src=require("./firebase.json");require("node:fs").writeFileSync("firebase.d13.local.json",JSON.stringify({firestore:src.firestore,emulators:{firestore:{host:"127.0.0.1",port:8787},ui:{enabled:false},singleProjectMode:false}}))'
+          cat > d13-emulator-checks.sh <<'SCRIPT'
+          set -euo pipefail
+          export FIRESTORE_EMULATOR_HOST=127.0.0.1:8787
+          GCLOUD_PROJECT=demo-tsos-bounded-collector GOOGLE_CLOUD_PROJECT=demo-tsos-bounded-collector node --test scripts/test/bounded-reconciliation-collector.emulator.node-test.mjs
+          export GCLOUD_PROJECT=demo-tinysteps-admissions-retry GOOGLE_CLOUD_PROJECT=demo-tinysteps-admissions-retry
+          npm --prefix functions test -- --maxWorkers=1 test/websiteLeadDeduplication.emulator.spec.ts test/leadFunnel.emulator.spec.ts
+          npm --prefix functions test -- --maxWorkers=1 test/leadDemoAutoWorkflow.emulator.spec.ts -t 'emulator integrity'
+          npm --prefix functions test -- --maxWorkers=1 test/getParentWorksheetResources.spec.ts -t 'Firestore integration'
+          M3_FINANCE_EMULATOR_ONLY=1 GCLOUD_PROJECT=demo-tinysteps-finance-consistency GOOGLE_CLOUD_PROJECT=demo-tinysteps-finance-consistency npm --prefix functions test -- --maxWorkers=1 test/milestone3FirestoreFinanceEmulator.spec.ts test/milestone3FirestoreFinanceCompatibility.spec.ts
+          SCRIPT
+          npx --yes firebase-tools@15.37.0 emulators:exec --config firebase.d13.local.json --project demo-tinysteps-admissions-retry --only firestore 'bash d13-emulator-checks.sh'
