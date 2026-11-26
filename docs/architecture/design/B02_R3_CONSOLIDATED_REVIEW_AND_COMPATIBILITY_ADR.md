@@ -1,0 +1,46 @@
+# B02-R3 consolidated review workspace and compatibility ADR proposal
+
+**Disposition: review-only assembly, NOT accepted integration.** Owner requests implementation after 125/125 focused Mac tests. No independent reviews recorded on PRs #957–960 at checkpoint. R62 (970fd0ac1ad8167c73ced75fa22f80e78b1de8b8) remains accepted. Assemble exact eight tested executable blobs and five existing design/evidence documents, without dependent imports, changes to executable behavior, or accepted master tracker edits. This is one review tree, not a waiver of R3.1 independent acceptance, P01/P02/P03, M3, live access, runtime or security gates. Prior individual PRs remain open, do not merge them alongside this review assembly. The same 125 tests were executed on four separate revisions, not this tree; no new pass claim.
+
+## Exact review evidence
+| PR | Tested commit | Documentation-only head | Passed |
+|---|---|---|---:|
+| 957 | 3bb347ce68aa2f13017e5732c95c7c6ac27c9b3e | 74b529b342e36184b99895d281ad8bf1de2e8e6e | 31 |
+| 958 | a405cd761697342b737b8831b067046cad49dda2 | 6f709a20f7d4a60333bdbb534ac03556bd6a5a0c | 26 |
+| 959 | 7024f18a5b335e62575478aa09e2e28ff6d7ac9b | 850d56c220808f3e08ced91b9e0020ef391d5e86 | 26 |
+| 960 | fd90befe9a5fe9dd23ffd81b70fceae227bf358f | d0ef13d8b92989adfab03bfe85ed688912fa103e | 42 |
+
+- docs/architecture/design/B02_R3_1_INSTITUTIONAL_CONTRACT_IMPLEMENTATION.md — e6aeb1e5a17b31b2ed3d73989be22ebe51526086
+- docs/architecture/design/B02_R3_INSTITUTIONAL_CONTEXT_CONTRACT_DESIGN.md — 6fec1d625a479878215a55d83f84598bdc8bd9d6
+- scripts/architecture/institutional-context-contracts.node-test.mjs — d547314e6dec58918caab60c9ceb00ad2c0667b1
+- scripts/architecture/institutional-context-contracts.ts — 1c13e2b1cfa74fe010eb3f7081e9e87d1414336b
+- docs/architecture/design/B02_R3_2_MEMBERSHIP_OWNERSHIP_CONTRACT.md — bf4ab52ee8477534afe505a65bc9f264c633bf8b
+- scripts/architecture/membership-contract-review-prototype.node-test.mjs — a29324e693676f05148e6fbbd2ff675f3769d380
+- scripts/architecture/membership-contract-review-prototype.ts — f98d9b2f68961388e4242cae7258b956465713cc
+- docs/architecture/design/B02_R3_3_CAPABILITY_CATALOGUE_REVIEW_PROTOTYPE.md — 37ceac50bae74de4a0dce80105fe79b1d6d38dac
+- scripts/architecture/capability-catalogue-review-prototype.node-test.mjs — b934bf33707726683a977f1e31cfb8944f19bb94
+- scripts/architecture/capability-catalogue-review-prototype.ts — f030bd77b2aa5ea76f6ba1bc0fb05f856dda452a
+- docs/architecture/design/B02_R3_4_CONTEXTUAL_DECISION_REVIEW_SIMULATION.md — c2976dd4ddb8d7382b5bb4521de18abc3f714cf3
+- scripts/architecture/contextual-decision-review-simulation.node-test.mjs — 462f52dff27dc9f81db2be983056f24cd638edef
+- scripts/architecture/contextual-decision-review-simulation.ts — af11878f4280ce836abcef5f9ef3705bc4700647
+
+## Verified compatibility blockers and consumer inventory
+Default-branch code search at main 95b44babd7f3132b212b781eabeec000fced14c8 returned 51 roleAssignments and 26 organisationMemberships file matches, 5 buildOrganisationMembershipId matches and 5 loadCanonicalAuthAccessInput matches, overlapping docs/tests/scripts and production code. Indexed search is not a full-tree dependency proof. Actual R62 inspected sources:
+- authAccessReadModel.ts 461dbab181c6d77b21fc75f5871ce6244dc840ab, lines 462–570: role parser rejects unknown roles and scope types outside global/organisation/household; membership parser returns only id/org/person/role/status (ignores dates, does not validate role enum). Lines 640–703: both queries filter personId only, default 50 + one overflow sentinel, parse every row. New rows can invalidate refresh or exhaust cap; adding version/interval fields alone does not isolate. Lines 320–365: schoolAdmin scope intersection active roles/memberships ignores effective dates. This is source behavior, not an observed live incident.
+- readAdapter.ts d3d8583f50e136a697867097dc2108a9ba7710e6 lines 430–440 and 654–692 uses existing deterministic point IDs and collection reads; retain exact old keys.
+- legacyPlanner.ts 1cc53cd8d5768bc4fe0fed036a74154d120c669e lines 214–215,393–407 generates canonical role/membership plans.
+- canonicalPrimaryWriter.ts 30070d813ed9e44b56e59ccf01cc1aada3339825 lines 347–356 creates/addresses existing parent role; canonicalPrimaryAuthUserUpdate.ts b2c71c78cd3e30261fd9e3adec6574015e459173 lines 236–458 and 601–701 uses existing assignment paths/collision checks; archive b197c9dab0494cdf18ad654fcc15fe8728b00750 lines 147–270,355–441 changes existing assignments. All identity paths relative to functions/src/schoolOS/identity. Further inventory candidates: create, authPersonCompatibility, teacher profile, maintenance/backfill, sampler, migration/retirement tooling, Rules, SDK and client consumers; full classification and parity still required.
+- Existing v1 school reader/manager guard must stay unchanged. Same membership or role label cannot imply successor permission.
+
+## Proposed compatibility decision (not adopted)
+Prefer distinct versioned storage lane for disjoint new capability facts until comprehensive same-collection reader partition is proven. Same Firestore database; one logical authority per action and fact. Keep V1 roleAssignments and organisationMemberships untouched. Do not dual-write equivalent grants as independent authorities; no new collection name or registry allocation yet. New eligible actions route explicitly to the successor authority only after the action-specific switch is approved. No fallback to V1 if a V2 decision denies. Existing V1 paths continue to use V1 authority until their explicit cutover; new role labels and new effective-dated MEM never enter old collections. Migration mapping, single-writer switch, revocation propagation and rollback preserving new facts are required before any overlapping action moves. Alternative of in-place version filter requires every reader/writer/backfill/cap and old missing-version field behavior to be verified first; reject as immediate path. Independent review and owner approval required for physical schema choice.
+
+## Integration implementation acceptance checklist
+1. Independently accept scoped R3.1 and standalone candidates, or explicitly review development-only sequencing amendment; no certification from test count alone. Retain independent specialist approval for actual authorization and tenant isolation. Owner has already approved five business decisions; do not request them again.
+2. After approved scope: extract one strict ordinary-data validator, exact TEN/ORG/CAM/TMB/MEM joins, versioned role grant contract and one capability catalogue. Remove duplicated policy matrix from simulation. Retain legacy source pins. Reconcile R3.1 absent campus versus simulation null, and R3.2 null end/provenance versus R3.4 finite windows. Fail closed for unknown historical evidence; do not infer ownership.
+3. Define actual relationship semantics and field/purpose allowlists for all 15 combinations. Eight currently simulated, seven held: institution and campus creation, two roster scopes, finance post, partner management, support. Do not pretend a synthetic relationship-kind label proves custody, consent, teaching assignment or ledger state. Creation needs an exact owning target context and command-specific evidence instead of a preexisting resource. Finance commands require authoritative ledger and transaction fence, support requires case and time bound.
+4. Separate trusted evidence provider and untrusted request; current generation/freshness with independent fence, action-specific revocation and transaction recheck. Same-tick synthetic input is not real distributed consistency. New code initially offline fixtures only, no real data. Full compatibility, negative scope, replay and source drift tests. Correct conceptual campus point count 10 including TMB and MEM; optimize after measuring, no T-1 auth, no compulsory group/campus on premium 1:1.
+5. Before isolated integration: exact combined-tree validation and independent review. Then separately scope runtime adapter, emulator and production canary only after applicable gates. No main merge or release.
+
+## Combined review workspace verification
+All eight executable files remain byte-identical to the individually tested blobs; one clean checkout can later run strict TypeScript against four modules and Node test against four files. This is review logistics, not dependent resolver implementation. No need for another Mac session merely to read this packet. Existing 570 accepted tests and 125 standalone candidate tests remain separately reported. No baseline revision change, production data, IAM, registry, deployment, or runtime modifications.
