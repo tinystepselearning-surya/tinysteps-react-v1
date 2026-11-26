@@ -77,7 +77,8 @@ function doc(col,id){
 }
 async function run(scenario){
   const server=new grpc.Server(),calls=[],cancelled=new Set(),wireErrors=[];
-  let client,waiting=null,failedQuery=null;
+  let client,waiting=null,failedQuery=null,abortTimer;
+  const controller=new AbortController();
   const failCall=call=>call.emit('error',Object.assign(Error('synthetic unavailable'),{code:grpc.status.UNAVAILABLE}));
   function handler(method,call){
     const r=call.request;
@@ -99,6 +100,14 @@ async function run(scenario){
       }
     }catch{wireErrors.push(col);failCall(call);return;}
     if(!query){
+      if(col==='authAccessReadModels'){
+        if(scenario==='abort_active'){abortTimer=setTimeout(()=>controller.abort(),25);return;}
+        if(scenario==='deadline_active')return;
+        if(scenario==='disconnect'){setImmediate(()=>server.forceShutdown());return;}
+        if(scenario==='empty_point_stream'){call.end();return;}
+        if(scenario==='oversized'){const d=doc(col,idFor(col));d.fields.authority=str('x'.repeat(70000));
+          call.write({found:d,readTime:time});call.end();return;}
+      }
       if(scenario==='missing_projection'&&col==='authAccessReadModels'||
          scenario==='missing_legacy'&&col==='schoolUsers'){
         call.write({missing:parent+'/'+col+'/'+idFor(col),readTime:time});call.end();return;
@@ -143,8 +152,9 @@ async function run(scenario){
       sslCreds:grpc.credentials.createInsecure(),gaxServerStreamingRetries:false,
       'grpc.enable_retries':0,'grpc.max_receive_message_length':65536});
     const start=performance.now(),clock=()=>Math.floor(performance.now()-start)+100;
-    const plan={scope:'synthetic-only',actors:[actor],startMs:100,endMs:300100,maxAttempts:7,maxSlots:107};
-    const result=await exerciseSyntheticTransport(plan,{clock,open:ticket=>client[ticket.request.method](ticket.request.body,
+    const plan={scope:'synthetic-only',actors:[actor],startMs:100,endMs:scenario==='deadline_active'?600:300100,maxAttempts:7,maxSlots:107};
+    if(scenario==='abort_before_dispatch')controller.abort();
+    const result=await exerciseSyntheticTransport(plan,{clock:scenario==='expired_before_dispatch'?()=>plan.endMs:clock,signal:controller.signal,open:ticket=>client[ticket.request.method](ticket.request.body,
       {timeout:ticket.timeoutMs,retry:null,retryRequestOptions:{retries:0,noResponseRetries:0,shouldRetryFn:()=>false}})});
     await sleep(150);
     assert.deepEqual(wireErrors,[]);
@@ -160,14 +170,29 @@ async function run(scenario){
       assert.ok(!calls.includes('users')&&!calls.includes('schoolUsers'));
       if(['extra_field','missing_projection'].includes(scenario))assert.equal(calls.length,1);
       if(['foreign_point','wrong_type','snapshot_mismatch'].includes(scenario))assert.equal(calls.length,3);
+      if(['abort_before_dispatch','expired_before_dispatch'].includes(scenario)){
+        assert.equal(result.dispatched,0);assert.equal(calls.length,0);assert.equal(result.counts.reservedSlots,0);
+      }
+      if(['abort_active','deadline_active','disconnect','empty_point_stream','oversized'].includes(scenario)){
+        assert.equal(result.dispatched,1);assert.equal(calls.length,1);assert.equal(result.counts.reservedSlots,1);
+      }
+      if(scenario==='abort_active'){
+        assert.equal(result.code,'OPERATOR_ABORT');assert.ok(cancelled.has('authAccessReadModels'));
+        assert.equal(result.cancelled,1);assert.equal(result.drainExpired,0);
+      }
+      if(scenario==='deadline_active'){
+        assert.ok(cancelled.has('authAccessReadModels'));assert.equal(result.counts.unknown,1);
+        assert.equal(result.drainExpired,0);
+      }
       if(scenario==='sibling_failure'){
         assert.equal(calls.length,5);assert.ok(cancelled.has('organisationMemberships'));
         assert.equal(result.cancelled,1);assert.equal(result.counts.reservedSlots,105);
         assert.equal(result.counts.unknown,2);
       }
     }
-  }finally{server.forceShutdown();if(client)await client.close();}
+  }finally{clearTimeout(abortTimer);server.forceShutdown();if(client)await client.close();}
 }
 for(const scenario of ['success','empty_query','missing_legacy','missing_projection','extra_field','foreign_point',
-  'wrong_type','snapshot_mismatch','foreign_query','overflow','duplicate','partial_error','sibling_failure'])
+  'wrong_type','snapshot_mismatch','foreign_query','overflow','duplicate','partial_error','sibling_failure',
+  'abort_before_dispatch','expired_before_dispatch','abort_active','deadline_active','disconnect','empty_point_stream','oversized'])
   test('controller loopback '+scenario,{timeout:15000},()=>run(scenario));
