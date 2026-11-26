@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 47 (B01-B.4 accepted and integrated; architecture checks next)  
+**Version:** 2.0 programme baseline, revision 48 (B01-B.5 isolated architecture checks authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.5 scoped automated architecture checks design and authorization. B01-A through B01-B.4 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.5 offline architecture verification and cumulative test orchestration. B01-A through B01-B.4 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -614,6 +614,10 @@ Owner-operated Mac verification at exact candidate e18b97d7cf48ce0fd3bf77cafa587
 
 Next: B01-B.5 scoped offline architecture fitness checks and cumulative test orchestration. Define explicit allowlisted file/dependency scope, deterministic diagnostics, registry and foundation verification, no runtime imports or cloud access, and incorporate section 2.5 freshness/read-cost contract into future release-check planning without pretending to certify live costs. Proposed CI wiring separately reviewed; no automatic workflow change or main deployment. No repeat B01-B.4 terminal verification unless relevant executable or registry inputs change.
 
+### Revision 48 — B01-B.5 scoped offline architecture fitness checks
+
+Owner directs next implementation after B01-B.4 acceptance. Authorize an isolated offline verifier and synthetic release-planning checks, not CI activation. Pin accepted B01-A through B01-B.4 executable files by Git blob digest; exact directory inventory, no unexpected files or links, verify bytes before executing tests. Pin actual draft registry manifest/shards and prior snapshot input through existing tests, preserve 129/971/38 counts and design holds. Use built-in Node modules only; no package installation, app/runtime imports, network or Firebase. B01-B.5 own code remains reviewed candidate rather than self-certifying. Dependency boundary evidence is exact content pinning of accepted modules, not a general JavaScript parser or repository-wide proof. Run cumulative exact named Node tests with pinned Node 22.22.1, fail closed on missing/unexpected files, mismatched digest or failed suite. Provide deterministic diagnostics and explicit limits. Section 2.5 release-planning checker validates synthetic declared freshness per dataset/query/action, authority, authorization, cutoff, budget, projection reuse, invalidation, dependencies, error display, reconciliation, rollback and evidence status; reject reporting-based operational authorization, raw reporting fallback and fabricated zeros. No live cost/freshness certification. No workflow changes, main release, production data or registry adoption. Verify exact candidate, cumulative pinned suite, scope and compatibility before isolated integration. Subsequent B02/P01/P02/P03 and broader release/security/finance gates remain controlled; completion of B01 prototypes is not programme or production approval.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -708,3 +712,5 @@ Next: B01-B.5 scoped offline architecture fitness checks and cumulative test orc
 - Owner policy addendum (26 November 2026): section 2.5 makes the two-tier freshness/read-cost contract explicit for P02/P03, P06–08, P10/P11 and subsequent module releases; linked execution PR #943. No change to active brick, gate status or production authorization.
 
 - Revision 47: B01-B.4 267/267 pinned Node regression, scoped AI-led acceptance PASS, PR #946 integrated into isolated baseline; only owner freshness/read-cost addendum differs from tested tree. B01-B.5 scope next; broader gates retained.
+
+- Revision 48: owner authorizes isolated offline architecture checks and synthetic freshness planning validation; no CI activation or broader gate waiver.
