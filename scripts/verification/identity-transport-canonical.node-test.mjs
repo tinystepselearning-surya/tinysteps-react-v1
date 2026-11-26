@@ -198,7 +198,7 @@ async function run(selected,mutate=()=>{},options={}){
     client=new FirestoreClient({servicePath:'127.0.0.1',port,fallback:false,projectId:'tsos-synthetic-transport',auth,
       universeDomain:'googleapis.com',sslCreds:grpc.credentials.createInsecure(),gaxServerStreamingRetries:false,
       'grpc.enable_retries':0,'grpc.max_receive_message_length':65536});
-    const start=performance.now(),clock=()=>Math.floor(performance.now()-start)+100;
+    const start=performance.now(),clock=options.clock??(()=>Math.floor(performance.now()-start)+100);
     const result=await exerciseSyntheticTransport({scope:'synthetic-only',actors,startMs:100,endMs:300100,
       maxAttempts:actors.length*7,maxSlots:actors.length*107},{clock,
       signal:abortController.signal,
@@ -276,6 +276,15 @@ test('canonical audit rejects late freshness expiry',{timeout:15000},async()=>{
   let wall=now;
   const {result,calls}=await run(['parent','teacher'],()=>{},{nowMs:()=>wall,wrap:original=>async args=>{
     const report=await original(args);wall=now+1001;return report;
+  }});
+  assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
+  assert.equal(result.returned,0);assert.equal(calls.length,7);
+});
+
+test('canonical audit rejects expired completion window',{timeout:15000},async()=>{
+  let tick=100;
+  const {result,calls}=await run(['parent','teacher'],()=>{},{clock:()=>tick,wrap:original=>async args=>{
+    const report=await original(args);tick=300100;return report;
   }});
   assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
   assert.equal(result.returned,0);assert.equal(calls.length,7);
