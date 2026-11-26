@@ -38,3 +38,14 @@ test('already published date skips inventory and source collection',async()=>{
  const r=await runBusinessRefreshJob({env,now:new Date('2026-11-26T10:00:00Z'),openStore:async()=>({store:{publishedThrough:async()=>'2026-11-25',inventory:async()=>{scans++;}},close:async()=>{}}),refresh:async()=>{scans++;},log:()=>{}});
  assert.equal(r.outcome,'already-published');assert.equal(scans,0);
 });
+
+test('marks only a real closed month-end capture as an observed monthly enrollment close',async()=>{
+ const cutoff=dailyBusinessCutoff(new Date('2026-11-30T18:45:00Z'));
+ const source={readSnapshot:fn=>fn({page:async(kind)=>({rows:kind==='enrollments'?[{path:'enrollments/fixture',data:{kidId:'fixture',status:'active',createdAt:'2026-11-01'}}]:[],readTime:cutoff.sourceReadTime})})};
+ const r=await refreshBusinessTrends({source,years:['2026'],maxDocuments:10,cutoff});
+ const november=r.documents[0].data.months[10];
+ assert.equal(november.metrics.activeEnrollmentsAtClose,1);
+ assert.equal(november.activeEnrollmentBasis,'observed_month_end');
+ assert.equal(november.activeEnrollmentObservedAt,cutoff.sourceReadTime);
+ assert.equal(r.documents[1].data.activeEnrollments,1);
+});
