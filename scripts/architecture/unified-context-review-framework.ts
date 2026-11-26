@@ -4,6 +4,7 @@ import {inspectInstitutionalFixture} from './institutional-context-contracts.ts'
 import {parseTenantMembership,parseOrganisationMembership,candidateTenantMembershipKey,candidateOrganisationMembershipKey} from './membership-contract-review-prototype.ts';
 import {simulateContextualDecision} from './contextual-decision-review-simulation.ts';
 import {simulateAuthorityRoute} from './authority-lane-review-prototype.ts';
+import {reviewExtendedCapability} from './extended-capability-review.ts';
 
 type Row=Record<string,unknown>;
 type Reason='INVALID'|'ROUTE_STOP'|'INSTITUTION'|'MEMBERSHIP'|'ACTOR'|'STALE'|'CONTEXT';
@@ -102,4 +103,14 @@ export function reviewUnifiedContext(request:unknown,evidence:unknown,routePolic
     },{at,revision:rev});
     return decision.result==='would-allow'?positive('synthetic-v2-match'):negative('CONTEXT');
   }catch(e){return negative(e instanceof Reject?e.reason:'INVALID');}
+}
+
+// One offline entry point; exact per-envelope parsers reject mixed/unknown shapes.
+// The original contextual-only entry remains for regression compatibility.
+export function reviewUnifiedOperation(request:unknown,evidence:unknown,routePolicy:unknown,fence:unknown):Result|ReturnType<typeof reviewExtendedCapability>{
+  try{
+    const q=row(request,['action'],['scope','resourceId','purpose','fields','targetId','operationId','expectedTargetRevision','payload']);
+    if(Object.hasOwn(q,'payload'))return reviewExtendedCapability(q,evidence,routePolicy,fence);
+    return reviewUnifiedContext(q,evidence,routePolicy,fence);
+  }catch{return negative('INVALID');}
 }
