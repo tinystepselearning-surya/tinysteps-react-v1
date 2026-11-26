@@ -13,6 +13,7 @@ export const BUSINESS_METRICS = {
     ['billedPaise', 'Billed for classes'],
   ],
   enrollments: [
+    ['activeEnrollmentsAtClose', 'Active enrollments (month end / latest)'],
     ['newAdmissions', 'New admissions'],
     ['newEnrollments', 'New enrollments'],
     ['courseCompletions', 'Course completions'],
@@ -25,8 +26,9 @@ export const BUSINESS_METRICS = {
 } as const;
 export type BusinessTab = keyof typeof BUSINESS_METRICS;
 export type BusinessMetric = (typeof BUSINESS_METRICS)[BusinessTab][number][0];
-export type MonthRow = { monthKey: string; metrics: Partial<Record<BusinessMetric, number | null>> };
-export type YearProjection = { year: string; updatedAt: string; throughDate: string | null; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; conflictingInquiryDates: number; correctionBasedAdmissions: number; };
+export type ActiveEnrollmentBasis = 'reconstructed' | 'observed_snapshot' | 'observed_month_end';
+export type MonthRow = { monthKey: string; metrics: Partial<Record<BusinessMetric, number | null>>; activeEnrollmentBasis?: ActiveEnrollmentBasis; activeEnrollmentObservedAt?: string };
+export type YearProjection = { year: string; updatedAt: string; throughDate: string | null; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; conflictingInquiryDates: number; correctionBasedAdmissions: number; historicalActiveEnrollmentExclusions: number; };
 export type CurrentProjection = { updatedAt: string; throughDate: string | null; availableRecords: boolean; unresolvedRecords: number; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -50,11 +52,16 @@ export function parseBusinessYear(input: unknown, year: string): YearProjection 
     seen.add(row.monthKey);
     const parsed: MonthRow['metrics'] = {};
     for (const key of metricKeys) parsed[key] = count(metrics[key]);
-    months.push({ monthKey: row.monthKey, metrics: parsed });
+    const basis = row.activeEnrollmentBasis;
+    const observedAt = timestamp(row.activeEnrollmentObservedAt) ? row.activeEnrollmentObservedAt : undefined;
+    months.push({ monthKey: row.monthKey, metrics: parsed,
+      ...(basis === 'reconstructed' || basis === 'observed_snapshot' || basis === 'observed_month_end' ? { activeEnrollmentBasis: basis } : {}),
+      ...(observedAt ? { activeEnrollmentObservedAt: observedAt } : {}),
+    });
   }
   const issues = record(r.issues);
   const undatedRecords = ['undatedEnquiries','undatedCharges','invalidChargeAmounts','undatedAdmissions','undatedCourseEnds','ambiguousStudentExits','unresolvedEnrollmentIdentity','unresolvedEnrollmentStatus'].reduce((sum, key) => sum + (count(issues?.[key]) ?? 0), 0);
-  return { year, updatedAt: r.updatedAt as string, throughDate: throughDate(r), months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords, conflictingInquiryDates: count(issues?.conflictingInquiryDates) ?? 0, correctionBasedAdmissions: count(issues?.correctionBasedAdmissions) ?? 0 };
+  return { year, updatedAt: r.updatedAt as string, throughDate: throughDate(r), months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords, conflictingInquiryDates: count(issues?.conflictingInquiryDates) ?? 0, correctionBasedAdmissions: count(issues?.correctionBasedAdmissions) ?? 0, historicalActiveEnrollmentExclusions: count(issues?.historicalActiveEnrollmentExclusions) ?? 0 };
 }
 export function parseBusinessCurrent(input: unknown): CurrentProjection | null {
   const r = record(input);
@@ -110,4 +117,20 @@ export function businessTrendSummary(annual: YearProjection, metric: BusinessMet
     average: completeKnown.length ? Math.round(completeKnown.reduce((sum, r) => sum + r.value, 0) / completeKnown.length) : null,
     averageMonths: completeKnown.length,
   };
+}
+
+/** Stock is a point-in-time measure. Do not sum across months. Legacy initial
+ * snapshots can supply only their matching current-month roster, never history. */
+export function monthlyActiveEnrollmentRows(annual: YearProjection, current: CurrentProjection | null) {
+  const boundary = businessSnapshotDay(annual).slice(0, 7);
+  return Array.from({ length: 12 }, (_, i) => {
+    const monthKey = annual.year + '-' + String(i + 1).padStart(2, '0');
+    const row = annual.months.find(r => r.monthKey === monthKey);
+    const value = monthKey <= boundary && row?.activeEnrollmentBasis ? row.metrics.activeEnrollmentsAtClose ?? null : null;
+    if (value !== null) return { monthKey, value, basis: row?.activeEnrollmentBasis, observedAt: row?.activeEnrollmentObservedAt };
+    if (monthKey === boundary && current && current.updatedAt === annual.updatedAt && current.throughDate === annual.throughDate && current.activeEnrollments != null) {
+      return { monthKey, value: current.activeEnrollments, basis: 'observed_snapshot' as const, observedAt: current.updatedAt };
+    }
+    return { monthKey, value: null, basis: undefined, observedAt: undefined };
+  });
 }

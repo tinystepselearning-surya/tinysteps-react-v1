@@ -40,7 +40,7 @@ vi.mock('../../pages/admin/LeadSourceAnalysis', () => ({
 
 import AnalyticsDashboard from '../../pages/admin/AnalyticsDashboard';
 import { analyticsMonthKeyFromDate } from '../../pages/admin/analyticsV2Metrics';
-import { businessTrendSummary, parseBusinessYear } from '../../pages/admin/monthlyBusinessAnalytics';
+import { businessTrendSummary, parseBusinessYear, parseBusinessCurrent, monthlyActiveEnrollmentRows } from '../../pages/admin/monthlyBusinessAnalytics';
 
 const snapshot = (rows: Array<Record<string, unknown>> = []) => ({
   docs: rows.map((row, index) => ({ id: String(row.id || `doc-${index}`), data: () => row })),
@@ -307,4 +307,20 @@ describe('Monthly business trend display calculations', () => {
     expect(result.peak).toBeNull();
     expect(result.change).toBeNull();
   });
+});
+
+it('keeps historical enrollment stock distinct from current snapshot and never invents previous balances',()=>{
+ const envelope={schemaVersion:1,metricDefinitionVersion:1,verificationStatus:'verified',updatedAt:'2026-11-26T13:11:47Z'};
+ const annual=parseBusinessYear({...envelope,year:'2026',months:[
+  {monthKey:'2026-09',metrics:{activeEnrollmentsAtClose:40},activeEnrollmentBasis:'reconstructed'},
+  {monthKey:'2026-10',metrics:{activeEnrollmentsAtClose:50},activeEnrollmentBasis:'observed_month_end',activeEnrollmentObservedAt:'2026-10-31T18:29:59.999Z'},
+ ]},'2026')!;
+ const current=parseBusinessCurrent({...envelope,activeEnrollments:60})!;
+ const rows=monthlyActiveEnrollmentRows(annual,current);
+ expect(rows[7].value).toBeNull();
+ expect(rows[8]).toMatchObject({value:40,basis:'reconstructed'});
+ expect(rows[9]).toMatchObject({value:50,basis:'observed_month_end'});
+ expect(rows[10]).toMatchObject({value:60,basis:'observed_snapshot'});
+ expect(rows[11].value).toBeNull();
+ expect(monthlyActiveEnrollmentRows(annual,{...current,updatedAt:'2026-11-27T10:00:00Z'})[10].value).toBeNull();
 });

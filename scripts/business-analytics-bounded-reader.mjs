@@ -4,7 +4,7 @@ const FIELDS={
  leads:['receivedAt','requestedAt','createdAt','firstInquiryAt'],
  inquiries:['sourceLeadId','receivedAt','requestedAt','originalCreatedAt','createdAt'],
  billingCharges:['monthKey','serviceDate','date','classDate','amount','status','archived','isArchived','isVoided'],
- enrollments:['kidId','studentId','kidIds','status','archived','isArchived','archivedAt','enrollmentDate','createdAt','activatedAt','enrollmentStartDate','classesStartDateYmd','classesStartDate','startDate','completedAt','endedAt','discontinuedAt','expiredAt','cancelledAt','canceledAt','correctedToEnrollmentId','supersededByEnrollmentId','transitionType'],
+ enrollments:['kidId','studentId','kidIds','status','archived','isArchived','archivedAt','enrollmentDate','createdAt','activatedAt','enrollmentStartDate','classesStartDateYmd','classesStartDate','startDate','completedAt','endedAt','discontinuedAt','expiredAt','cancelledAt','canceledAt','correctedToEnrollmentId','supersededByEnrollmentId','transitionType','pausedAt','scheduleMaterialization.lifecycleChangedAt'],
 };
 export const SOURCE_FIELDS=Object.freeze(Object.fromEntries(Object.entries(FIELDS).map(([k,v])=>[k,Object.freeze(v)])));
 const assert=(ok,message)=>{if(!ok)throw new Error(message);};
