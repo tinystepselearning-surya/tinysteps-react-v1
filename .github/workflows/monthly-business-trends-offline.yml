@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test scripts/test/business-analytics-projection.node-test.mjs scripts/test/business-analytics-incremental.node-test.mjs scripts/test/business-analytics-source-adapters.node-test.mjs scripts/test/business-analytics-available-records.node-test.mjs scripts/test/business-analytics-refresh.node-test.mjs scripts/test/business-analytics-job.node-test.mjs
+      - run: node --test scripts/test/business-analytics-projection.node-test.mjs scripts/test/business-analytics-incremental.node-test.mjs scripts/test/business-analytics-source-adapters.node-test.mjs scripts/test/business-analytics-available-records.node-test.mjs scripts/test/business-analytics-refresh.node-test.mjs scripts/test/business-analytics-job.node-test.mjs scripts/test/business-analytics-daily-cutoff.node-test.mjs
   ui-regression:
     runs-on: ubuntu-latest
     timeout-minutes: 20
