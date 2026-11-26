@@ -6,6 +6,7 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
   if(typeof open!=='function')throw Error('TEST_TRANSPORT_REQUIRED');
   if(signal!==undefined&&!(signal instanceof AbortSignal))throw Error('SIGNAL_INVALID');
   const lane=createSyntheticRequestLane(plan,clock),active=new Set();
+  const window=Object.freeze({start:plan.startMs,end:plan.endMs});
   const actors=plan.actors.map(a=>Object.freeze({...a}));
   if(canonical!==undefined&&(!canonical||typeof canonical.sampler!=='function'||typeof canonical.buildAuthIdentityId!=='function'||typeof canonical.nowMs!=='function'||!Number.isSafeInteger(canonical.maxAgeMs)||canonical.maxAgeMs<=0))throw Error('CANONICAL_TEST_CONFIG');
   // Freeze the test configuration for this invocation; no external mutation
@@ -125,9 +126,13 @@ export async function exerciseSyntheticTransport(plan,{clock,open,signal,canonic
       where(key,op,val){return Object.freeze({limit(n){return Object.freeze({get:()=>track(col,'query',key,op,val,n)});}});}
     });}});
     try{
+      const started=clock();
+      if(!Number.isSafeInteger(started)||started<window.start||started>=window.end)throw Error('SAMPLE_WINDOW');
       const report=await canonical.sampler({db,actors:[{uid:a.uid,role:a.role,organisationId:a.organisationId,legacySchoolId:a.legacySchoolId}],
         nowMs:wall(),maxAgeMs:canonical.maxAgeMs});
       wall();
+      const ended=clock();
+      if(!Number.isSafeInteger(ended)||ended<started||ended>=window.end||ended-started>=30000)throw Error('SAMPLE_WINDOW');
       const x=report?.results?.[0];
       if(blocker||!exact(report,['schema','results','evidenceKind','consistency','identityExceptionParity','authenticatedCanaries','measuredProductionBilledReads','milestoneComplete'])||
         report.schema!=='tinysteps-m3-bounded-principal-audit-v1'||
