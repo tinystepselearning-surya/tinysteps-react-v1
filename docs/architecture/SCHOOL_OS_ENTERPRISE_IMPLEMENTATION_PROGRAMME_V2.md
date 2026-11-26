@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 32 (B00 acceptance packet prepared; B01-A held)  
+**Version:** 2.0 programme baseline, revision 33 (owner review feedback; one-to-one priority; B01-A held)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -517,6 +517,10 @@ At the M04 review snapshot main was 82 commits ahead of historical pin; eight di
 
 Owner endorses the recommended B00-to-B01 direction. [B00 acceptance packet and B01-A scope](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md) proposes a prospective sequencing amendment solely for isolated registry tooling, subject to independent review and explicit named owner approval. It distinguishes required-now evidence from proposed live-evidence deferrals (not adopted), defines the first read-only manifest/shard validator and negative-fixture acceptance criteria, and excludes runtime wiring, Firebase access, CI integration, schema adoption, deployment and migration. Current package requires Node 22.22.1; main push deployment workflow remains unchanged. Original P01-to-P02-to-P03 dependency and all production gates stand until reviewed amendment or original acceptance. B00 packet prepared, approval OPEN; B01-A not started. No new Terminal or production activity required to review this packet.
 
+### Revision 33 — owner review: premium one-to-one delivery and advanced business rules
+
+Owner reviewed and confirmed independent business records and relationships, progressive lift-and-shift, multi-organisation/future multi-tenant architecture, security/performance/reliability, and preservation of current business behavior with deliberate design of improved V2 rules. Premium one-to-one delivery is the core existing business and must be a first-class direct path, without synthetic groups or mandatory group placement. Prioritize 1:1 compatibility and acceptance in B03–B05; small-group and physical-school delivery remain supported. M01 and M02 already distinguish these modes; [revised acceptance packet](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md) records explicit owner priority and mode-specific invariants. Existing rules remain compatibility baseline; new V2 rules require documented current-to-proposed comparison, effective dates, impact on existing/new learners, historical financial safeguards, owner approval and tests. No silent policy change. Three checklist items (same Firestore, master dictionary, isolated B01-A scope) were not explicitly selected in latest feedback; confirm formal approval without assuming rejection. B00 independent review and explicit sequencing amendment remain pending; no gate waiver, implementation, production access or migration.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -579,3 +583,5 @@ Owner endorses the recommended B00-to-B01 direction. [B00 acceptance packet and 
 - Revision 31 (26 Nov 2026): M04 integrated review, v0.6 registry split into five owner-domain shards, 129/129 record seeds, 971 items, 38 value sets, all 879 prior item definitions unchanged. Added record-key/scope matrix and B00–B08 build roadmap. Structural design checks passed; independent acceptance and executable-contract closure OPEN. No production access, runtime code, CI execution, release or gate changes.
 
 - Revision 32 (26 Nov 2026): owner endorsed B00/B01 direction; prepared scoped B00 acceptance and proposed B01-A isolated tooling contract. Independent signature and explicit phase sequencing approval remain open; no code or cloud changes.
+
+- Revision 33: recorded five confirmed owner checklist decisions including business-rule clarification, first-class 1:1 priority and three outstanding explicit confirmations. No schema, code, production or gate change.
