@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 44 (B01-B.3 isolated business rule prototype authorized)  
+**Version:** 2.0 programme baseline, revision 45 (B01-B.3 accepted and integrated; schema evolution next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.3 isolated business rule evaluator and synthetic verification. B01-A through B01-B.2 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.4 scoped Schema Evolution Engine design and authorization. B01-A through B01-B.3 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -584,6 +584,12 @@ Next: B01-B.3 scoped Business Rule Framework design and authorization. Define pu
 
 Owner directs commencement of next implementation after B01-B.2 acceptance. Authorize isolated synthetic-only effective-dated rule selector/evaluator and fixtures under scoped AI-led engineering acceptance. Existing authorities and historical outcomes unchanged. Explicit contract version, rule-set revision, one named date basis per contract (synthetic serviceDate or decisionDate), caller-supplied validated calendar date, inclusive start/exclusive end, null open end. No implicit clock/timezone/date conversion. Rules use explicit allowlisted scalar input predicates (exact equality only), typed scalar outcomes, explicit integer priority, unique rule IDs/versions; no arbitrary expressions, callbacks or executable configuration. Select highest matching priority; ties fail closed, even if outcomes agree. Reject duplicate identities, malformed inputs/definitions, overlapping versions of the same rule ID and unknown keys even if inactive. No fallback unless an explicit matching rule exists; no match is a failure. Return immutable decision/provenance with rule ID/version, rule-set revision, contract version, date basis/date and priority. Rule-set revisions are caller-pinned snapshots, not inferred historical truth or tamper-proof audit evidence. Scope-specific application deferred until reviewed binding to configuration lineage; no actual tenant security or policy authoring/activation. Existing sessionRevenue, status, serviceDate, attendanceFinancialCycles, demo earnings and enrollment logic remain authoritative. No finance calculation/posting, migration, runtime wiring, registry changes, dependency/CI or cloud activity. Verify exact head and cumulative pinned Node tests, source scope and compatibility before isolated integration. All wider phase/security/finance/production gates retained; B01-B.4 onward separately scoped.
 
+### Revision 45 — B01-B.3 accepted and integrated into isolated baseline
+
+Owner-operated Mac verification at exact candidate d83ba448af368e9a4214d406d4a7e76d723bceb4, Node v22.22.1, combined registry, typed-schema, configuration and business-rule Node suite: 213/213 passed, zero failed/cancelled/skipped/todo, 1137.085792 ms. Includes 66 registry, 43 typed schema, 49 configuration and 55 business-rule cases. Supplied Terminal evidence, not CI. Re-fetched exact committed evaluator and reran 55 cases and eight additional boundary probes; scope confirmed four added offline files only. AI-led technical acceptance PASS under revision 44 for synthetic scalar rule evaluator only, not independent certification or runtime/historical financial policy approval. [PR #945](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/945) merged solely into `docs/tsos-v2-p01-source-baseline` at 091dee38975030cd8b87601baee902efc86f751d; zero file differences between tested and merged trees. Main unchanged during integration; no deployment, cloud operation, registry changes, dependency or CI modification. Existing business and historical financial authorities remain unchanged. Authentic complete rule-set snapshots, retention, source date binding, scope selection, effective-time conversion, actual financial calculations and policy activation remain outside scope. Preserve all broader P01/P02/P03/P04/M3, schema, security, finance, migration and production gates.
+
+Next: B01-B.4 scoped Schema Evolution Engine design and authorization. Define explicit version compatibility, stable synthetic field identity, additive optional fields, rejection of destructive/narrowing changes, reviewed transformations and lineage using synthetic fixtures only; no actual migration, registry identifier adoption or data writes. B01-B.5 separately scoped. No repeat B01-B.3 terminal verification unless relevant code/metadata changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -670,3 +676,5 @@ Owner directs commencement of next implementation after B01-B.2 acceptance. Auth
 - Revision 43: B01-B.2 158/158 pinned Node regression, scoped AI-led acceptance PASS, PR #944 integrated into isolated baseline; tested tree unchanged. B01-B.3 scope next; broader gates retained.
 
 - Revision 44: owner authorizes isolated effective-dated business rule prototype; no runtime policy adoption or wider gate waiver.
+
+- Revision 45: B01-B.3 213/213 pinned Node regression, scoped AI-led acceptance PASS, PR #945 integrated into isolated baseline; tested tree unchanged. B01-B.4 scope next; broader gates retained.
