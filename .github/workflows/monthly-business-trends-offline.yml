@@ -1,0 +1,65 @@
+name: Monthly Business Trends offline verification
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/business-analytics-*.mjs'
+      - 'scripts/test/business-analytics-*.node-test.mjs'
+      - 'scripts/test/business-analytics.firestore-emulator.mjs'
+      - 'src/pages/admin/MonthlyBusinessTrends.tsx'
+      - 'src/pages/admin/monthlyBusinessAnalytics.ts'
+      - 'src/pages/admin/AnalyticsDashboardV3.tsx'
+      - 'src/pages/admin/analyticsReadPlan.ts'
+      - 'src/tests/pages/AnalyticsDashboardV3ReadPlan.spec.tsx'
+      - '.github/workflows/monthly-business-trends-offline.yml'
+permissions:
+  contents: read
+jobs:
+  offline-logic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test scripts/test/business-analytics-projection.node-test.mjs scripts/test/business-analytics-incremental.node-test.mjs scripts/test/business-analytics-source-adapters.node-test.mjs scripts/test/business-analytics-available-records.node-test.mjs scripts/test/business-analytics-refresh.node-test.mjs scripts/test/business-analytics-job.node-test.mjs scripts/test/business-analytics-daily-cutoff.node-test.mjs
+  ui-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx vitest run src/tests/pages/AnalyticsDashboardV3ReadPlan.spec.tsx
+      - run: npm run typecheck
+
+  firestore-emulator:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GCLOUD_PROJECT: demo-tinysteps-monthly-trends
+      GOOGLE_CLOUD_PROJECT: demo-tinysteps-monthly-trends
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci
+      - name: Run isolated Firestore integration
+        run: |
+          npx --yes firebase-tools@15.30.0 emulators:exec --project demo-tinysteps-monthly-trends --only firestore 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 node --test scripts/test/business-analytics.firestore-emulator.mjs'

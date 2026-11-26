@@ -15,6 +15,7 @@ import { Button } from '@components/ui/button';
 import { Input } from '@components/ui/input';
 import DemoSessionsManagement from './DemoSessionsManagement';
 import LeadSourceAnalysis from './LeadSourceAnalysis';
+import MonthlyBusinessTrends from './MonthlyBusinessTrends';
 import { normalizeCanonicalMonthFinanceTotals } from './parentPaymentsReporting';
 import {
   ANALYTICS_TIME_ZONE,
@@ -41,6 +42,7 @@ const ANALYTICS_VIEWS: Array<{ id: AnalyticsView; label: string }> = [
   { id: 'finance', label: 'Finance' },
   { id: 'delivery', label: 'Delivery' },
   { id: 'teachers', label: 'Teachers' },
+  { id: 'monthlyTrends', label: 'Monthly Trends' },
 ];
 
 const ACTIVE_LIKE_ENROLLMENT_STATUSES = new Set([
@@ -412,7 +414,7 @@ export default function AnalyticsDashboardV3(): JSX.Element {
               Management reporting with heavy operational datasets loaded only when their detail view is opened.
             </p>
           </div>
-          <div className="flex flex-wrap items-end gap-3">
+          {activeView !== 'monthlyTrends' && <div className="flex flex-wrap items-end gap-3">
             <div>
               <label htmlFor="analytics-month" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Reporting month
@@ -431,14 +433,14 @@ export default function AnalyticsDashboardV3(): JSX.Element {
                 {loading ? 'Refreshing…' : 'Refresh'}
               </Button>
             ) : null}
-          </div>
+          </div>}
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
+        {activeView !== 'monthlyTrends' && <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-slate-100 pt-3 text-xs text-slate-500">
           <span>Period: {analyticsStartKey || '—'} to {analyticsEndKey || '—'}</span>
           <span>Timezone: {ANALYTICS_TIME_ZONE}</span>
           <span>Last detail refresh: {lastRefreshLabel}</span>
           <span>{plan.rawDatasets.length} raw dataset{plan.rawDatasets.length === 1 ? '' : 's'} required for this view</span>
-        </div>
+        </div>}
       </header>
 
       <nav aria-label="Analytics sections" className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
@@ -467,6 +469,8 @@ export default function AnalyticsDashboardV3(): JSX.Element {
           Analytics detail: {error}
         </div>
       ) : null}
+
+      <MonthlyBusinessTrends active={activeView === 'monthlyTrends'} />
 
       {activeView === 'overview' ? (
         <div className="space-y-4">

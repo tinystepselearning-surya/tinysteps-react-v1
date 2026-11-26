@@ -4,7 +4,8 @@ export type AnalyticsView =
   | 'acquisition'
   | 'finance'
   | 'delivery'
-  | 'teachers';
+  | 'teachers'
+  | 'monthlyTrends';
 
 export type AnalyticsDataset =
   | 'financeTotals'
@@ -24,6 +25,7 @@ export type AnalyticsReadPlan = {
 const PLAN: Record<AnalyticsView, AnalyticsReadPlan> = {
   // Overview intentionally uses only the canonical finance aggregate. Heavy monthly
   // operational collections are loaded only after an admin explicitly opens a detail view.
+  monthlyTrends: { datasets: [], rawDatasets: [] },
   overview: {
     datasets: ['financeTotals'],
     rawDatasets: [],
