@@ -98,10 +98,13 @@ const specifications={
 };
 const scenarios=['success','unavailable','partial_unavailable','cancel_waiting','cancel_partial','deadline'];
 const timeout=1200;
-const backoffSettings={initialRetryDelayMillis:100,retryDelayMultiplier:1,maxRetryDelayMillis:100,
-  initialRpcTimeoutMillis:timeout,rpcTimeoutMultiplier:1,maxRpcTimeoutMillis:timeout,
-  totalTimeoutMillis:timeout,maxRetries:0};
-const callOptions=()=>({timeout,retry:{retryCodes:[],backoffSettings:{...backoffSettings},shouldRetryFn:()=>false}});
+// Candidate 906fc548 failed all four explicit cancellation scenarios with
+// GAX's newer retry-stream path. Probe its existing alternate streaming path;
+// disable both response and no-response retries, plus gRPC retries.
+info(gax.req,'retry-request','7.0.2');
+const callOptions=()=>({timeout,retry:null,retryRequestOptions:{
+  retries:0,noResponseRetries:0,shouldRetryFn:()=>false
+}});
 async function probe(method,scenario){
   const spec=specifications[method];
   const server=new grpc.Server();
@@ -135,7 +138,7 @@ async function probe(method,scenario){
     const auth=new GoogleAuth({authClient,projectId:'tsos-synthetic-transport',universeDomain:'googleapis.com'});
     client=new FirestoreClient({servicePath:'127.0.0.1',port,fallback:false,
       projectId:'tsos-synthetic-transport',auth,universeDomain:'googleapis.com',
-      sslCreds:grpc.credentials.createInsecure(),gaxServerStreamingRetries:true,
+      sslCreds:grpc.credentials.createInsecure(),gaxServerStreamingRetries:false,
       'grpc.enable_retries':0,'grpc.max_receive_message_length':65536});
     const started=performance.now();
     stream=client[method](spec.request(),callOptions());
