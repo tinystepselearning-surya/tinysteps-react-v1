@@ -1,6 +1,6 @@
 # TSOS V2 — Master record and item dictionary design
 
-**Status:** Proposed design for owner and independent review, revision 26. Design artifacts only; no production schema, allocated identifiers, P03 activation or runtime dependency.
+**Status:** Proposed design for owner and independent review, initial revision 26; storage layout updated at revision 31 (M04). Design artifacts only; no production schema, allocated identifiers, P03 activation or runtime dependency.
 **Source pin:** 701c7ec832dbe9c531964496fa09cd4a4948ddd2. Companion [machine-readable registry draft](TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json), [target design](../TSOS_V2_TARGET_DATA_AND_MODULE_DESIGN_DRAFT.md), [V2 programme](../SCHOOL_OS_ENTERPRISE_IMPLEMENTATION_PROGRAMME_V2.md), [v1 architecture](../TINY_STEPS_SCHOOL_OS_MASTER_BLUEPRINT_V1.md), [source catalogue](../discovery/P01_SOURCE_RECORD_CATALOGUE_2026-11-26.md).
 
 ## 1. Purpose and authority
@@ -32,7 +32,7 @@ Registry source of truth is reviewed Git metadata, versioned with contracts. Ini
 
 Lifecycle: proposed -> reviewed -> adopted -> deprecated -> retired. Only adopted entries may become executable dependencies, after affected implementation and release gates. Deprecated means supported for compatibility; retired does not imply deletion of historical data. Record migration status separately from registry lifecycle.
 
-## 4. First registry seed
+## 4. First registry seed (historical revision 26)
 
 The JSON companion provides 29 logical record candidates, 13 with detailed seed items and 16 catalogue-only. There are 76 record-specific item definitions (43 source-backed identity fields, 33 target proposals or candidate mappings) and 18 value-set definitions. Shared inherited identity audit fields are separately described, not included in 76. These are not all fields across the platform.
 
@@ -74,3 +74,11 @@ Before adoption: confirm semantic owner and record grain/key, reconcile same-fac
 5. Design screen/report and configuration bindings only against approved contracts. Track catalogue completeness by record family and actual source coverage, not just number of IDs.
 
 No collection creation, code changes, runtime deployment, data migration or live data capture authorized. P01 acceptance and independent sequencing review remain pending; formal P02/P03 and all production gates retained. This is owner-directed design material for review, not a gate waiver.
+
+## 8. Revision 31 — sharded registry v0.6 design layout
+
+The [registry companion](TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) is now a central manifest (formatVersion 2), not a monolithic record array. It references five owner-domain grouped record shards under domains/; all 129 records have field seeds, with 971 record-specific items and 38 value sets. The earlier figures in section 4 are historical. Revision 30 v0.5 remains accessible at the immutable commit listed in the manifest; do not maintain it as another source of truth.
+
+Every shard is versioned, has an explicit owner-domain group and is recorded by blob SHA, count and member record codes in the manifest. Load all shards for reference/identifier validation across groups. Update the manifest and affected shard together in a reviewed change. Manifest+shards are the only editable dictionary. No generated data or runtime use; B01/P03 may implement a loader/validator only after existing approvals. Shared audit and nested member identifiers remain proposed; profileMigrationAuditV1 is distinct from the core identity timestamp contract.
+
+M04 verified preservation of all 879 previous item definitions, added 92 historical planner fields for ten profile families, checked uniqueness/references/enum types and read back shard counts. Copied legacy-value-unvalidated is an explicit evidence hold, not an accepted executable field type. Source-interface and historical-planner evidence do not certify live schema. See [M04 integrated review and build plan](../design/M04_INTEGRATED_ARCHITECTURE_VALIDATION_AND_BUILD_PLAN.md) and [record key, storage and scope matrix](../design/M04_RECORD_KEY_STORAGE_SCOPE_MATRIX.md). Exact types, keys, access, transition and migration contracts remain gated; no production changes or phase approval.
