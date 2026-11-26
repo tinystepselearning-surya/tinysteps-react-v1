@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 24 (proposed acceptance decision)  
+**Version:** 2.0 programme baseline, revision 25 (owner-directed target design proposal)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -435,7 +435,13 @@ Main was rechecked against the audited SHA and is unchanged. Draft #933 remains 
 
 **Recommended governance decision for leadership and independent reviewer:** consider a narrowly scoped ADR allowing P02 blueprint drafting and synthetic contract design on already verified source while residual P01 live verification continues. This would be an explicit prospective amendment to the current P01-to-P02 dependency, not retrospective P01 acceptance. Limit any approved exception to documentation and synthetic design evidence, no production reads or writes, deployments, runtime wiring, migrations, real credentials, or P03 implementation. Draft contracts must mark live assumptions unverified, preserve v1 boundaries and require revalidation at affected implementation gates. Until the amendment is reviewed and approved, P02 stays on HOLD under the original programme. If declined, finish the existing P01 acceptance criteria before P02. No approval inferred from general programme continuation.
 
-**Next actionable decision:** executive owner selects either the original full P01-before-P02 sequence or the proposed design-only amendment for independent review. Engineering records the independent review and actual decision in a versioned ADR before changing a dependency. Existing approval packets remain the only route to production evidence. Do not schedule a further Terminal execution solely to advance documentation. No new phase completion claim.
+**Next actionable decision (revision 24 historical proposal; see revision 25 below):** executive owner selects either the original full P01-before-P02 sequence or the proposed design-only amendment for independent review. Engineering records the independent review and actual decision in a versioned ADR before changing a dependency. Existing approval packets remain the only route to production evidence. Do not schedule a further Terminal execution solely to advance documentation. No new phase completion claim.
+
+### Revision 25 — owner-directed design-first, extend-now, migrate-later strategy
+
+The owner directs design of the new module and data contracts first, reuse or extension of sound structures, introduction of genuinely missing facts and capabilities, then selective migration of historical data into designated canonical collections/subcollections in the existing Firestore database by default. Record this direction as a design preference, not a signed production or sequencing exception. The [target data and module design draft](TSOS_V2_TARGET_DATA_AND_MODULE_DESIGN_DRAFT.md) maps all 18 frozen v1 domains, preserves existing identity contracts, provides the first worked academic/enrollment slice and specifies the per-family migration playbook. Candidate paths and fields are not allocated or certified live. Missing historical facts remain unknown; prospective capture occurs only through approved releases. Avoid a blanket v2 copy, competing authorities, unnecessary physical databases and unbounded reads.
+
+Next review: obtain independent review of the design and proposed P01/P02 sequencing ADR; finalize record/item and storage bindings for the first affected slice only under the controlling gates. Build missing capabilities in isolated environments after applicable implementation authorization. All live access, migrations, production data capture, deployment, Rules/cutover and retirement gates remain unchanged. No retrospective P01 acceptance or formal P02/P03 activation is claimed.
 
 ## 10. Change record
 
@@ -483,3 +489,5 @@ Main was rechecked against the audited SHA and is unchanged. Draft #933 remains 
 - Revision 23 (26 Nov 2026): consolidated subsequent partial operator-reported metadata execution, clarified direct-policy cleanup versus effective revocation, and added P01 acceptance dispositions and proposed private reliability/recovery workstream. P01 remains IN PROGRESS; P01.2/live P01.3, P02, M3, release and retirement holds unchanged. No new cloud access, production application changes or acceptance signatures claimed.
 
 - Revision 24 (26 Nov 2026): rechecked unchanged main and stacked PR lineage; reviewed existing acceptance, bounded data and M3 packets and current ledger; corrected candidate metadata request templates; separated mandatory P01 acceptance evidence from proposed scoped exceptions and prepared a design-only governance decision for independent review. No approval, live verification, P02 activation, release or production changes claimed. All current gates retained.
+
+- Revision 25 (26 Nov 2026): recorded owner-directed design-first, additive extension and selective same-database migration strategy; added linked 18-domain target design draft and first enrollment/delivery mapping, with explicit unknown/history, compatibility, budget and recovery requirements. Independent review and sequencing ADR remain pending; no runtime, production data, deployment or phase gate changes.
