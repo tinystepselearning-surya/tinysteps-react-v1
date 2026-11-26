@@ -26,7 +26,7 @@ export const BUSINESS_METRICS = {
 export type BusinessTab = keyof typeof BUSINESS_METRICS;
 export type BusinessMetric = (typeof BUSINESS_METRICS)[BusinessTab][number][0];
 export type MonthRow = { monthKey: string; metrics: Partial<Record<BusinessMetric, number | null>> };
-export type YearProjection = { year: string; updatedAt: string; throughDate: string | null; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; };
+export type YearProjection = { year: string; updatedAt: string; throughDate: string | null; months: MonthRow[]; availableRecords: boolean; undatedRecords: number; conflictingInquiryDates: number; correctionBasedAdmissions: number; };
 export type CurrentProjection = { updatedAt: string; throughDate: string | null; availableRecords: boolean; unresolvedRecords: number; activeStudents: number | null; activeEnrollments: number | null; pausedStudents: number | null; retainedStudents: number | null };
 const record = (value: unknown): Record<string, unknown> | null =>
   value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
@@ -54,7 +54,7 @@ export function parseBusinessYear(input: unknown, year: string): YearProjection 
   }
   const issues = record(r.issues);
   const undatedRecords = ['undatedEnquiries','undatedCharges','invalidChargeAmounts','undatedAdmissions','undatedCourseEnds','ambiguousStudentExits','unresolvedEnrollmentIdentity','unresolvedEnrollmentStatus'].reduce((sum, key) => sum + (count(issues?.[key]) ?? 0), 0);
-  return { year, updatedAt: r.updatedAt as string, throughDate: throughDate(r), months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords };
+  return { year, updatedAt: r.updatedAt as string, throughDate: throughDate(r), months: months.sort((a, b) => a.monthKey.localeCompare(b.monthKey)), availableRecords: r.coverageMode === 'available_records', undatedRecords, conflictingInquiryDates: count(issues?.conflictingInquiryDates) ?? 0, correctionBasedAdmissions: count(issues?.correctionBasedAdmissions) ?? 0 };
 }
 export function parseBusinessCurrent(input: unknown): CurrentProjection | null {
   const r = record(input);
