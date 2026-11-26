@@ -27,7 +27,7 @@ for(const key of Object.keys(process.env)){
   throw Error('unexpected environment key: '+key);
 }
 
-const functionsDir=fileURLToPath(new URL('../../functions/',import.meta.url));
+const functionsDir=resolve(fileURLToPath(new URL('../../functions/',import.meta.url)));
 const req=createRequire(join(functionsDir,'package.json'));
 const lock=readFileSync(join(functionsDir,'package-lock.json'));
 assert.equal(createHash('sha1').update('blob '+lock.length+'\0').update(lock).digest('hex'),
@@ -69,7 +69,10 @@ const pins=Object.freeze({
   "functions/src/schoolOS/identity/idStrategy.ts": "02037d2dd897cd06f5dc67e32d20b70824ea1527",
   "functions/tsconfig.json": "2ba14d7818a2cc95f3f0fa8b50340f77b2817f08",
   "scripts/milestone3-bounded-principal-audit.mjs": "683b79a6221eb9b420e7f7692a5982c7bef75ef5",
-  "scripts/verification/identity-verification-safety-core.mjs": "1d47dae1c4f84cc6be7eae493243c17c5cba2d77"
+  "scripts/verification/identity-verification-safety-core.mjs": "1d47dae1c4f84cc6be7eae493243c17c5cba2d77",
+  "scripts/verification/identity-transport-orchestration.mjs": "ea320f2c2a44131c245f5f4792474ba98a9adbaa",
+  "scripts/verification/identity-transport-request-lane.mjs": "20b82594bf0a9bc5f290dd3d945060f311bc9477",
+  "scripts/verification/identity-transport-response.mjs": "0ed3e942dfcc50a0a1c72f4f6be93eaef7975613"
 });
 const digest=bytes=>createHash("sha1").update("blob "+bytes.length+"\0").update(bytes).digest("hex");
 
