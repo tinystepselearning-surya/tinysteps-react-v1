@@ -11,7 +11,7 @@ const assert=(ok,message)=>{if(!ok)throw new Error(message);};
 const positive=(v,max)=>Number.isSafeInteger(v)&&v>0&&v<=max;
 // store.readSnapshot(fn) passes a reader with page(kind,{after,limit,fields}).
 // Each page reports a stable readTime ISO timestamp and full source document paths.
-export async function collectBusinessSources(store,{maxDocuments,pageSize=250,maxPages=400}={}){
+export async function collectBusinessSources(store,{maxDocuments,pageSize=250,maxPages=400,sourceReadTime}={}){
  assert(positive(maxDocuments,100000)&&positive(pageSize,500)&&positive(maxPages,1000),'Explicit bounded source budget required');
  return store.readSnapshot(async reader=>{
   const rows={leads:[],inquiries:[],billingCharges:[],enrollments:[]};
@@ -28,6 +28,7 @@ export async function collectBusinessSources(store,{maxDocuments,pageSize=250,ma
     const page=await reader.page(kind,{after,limit,fields:SOURCE_FIELDS[kind]});
     pages++;
     assert(page&&Array.isArray(page.rows)&&page.rows.length<=limit&&typeof page.readTime==='string'&&Number.isFinite(Date.parse(page.readTime)),'Invalid source page');
+    if(sourceReadTime!==undefined)assert(page.readTime===sourceReadTime,'Requested cutoff snapshot unavailable');
     if(readTime===null)readTime=page.readTime;
     assert(page.readTime===readTime,'Source snapshot changed during collection');
     documents+=page.rows.length;
@@ -52,5 +53,5 @@ export async function collectBusinessSources(store,{maxDocuments,pageSize=250,ma
    }
   }
   return {rows,readTime,counts,documents,pages,unrelatedInquiryRows};
- });
+ },{sourceReadTime});
 }
