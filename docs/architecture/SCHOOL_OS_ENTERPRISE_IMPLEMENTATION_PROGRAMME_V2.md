@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 36 (B01-A candidate implemented; independent review and Node tests pending)  
+**Version:** 2.0 programme baseline, revision 37 (B01-A pinned-Node tests passed; independent acceptance held)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-A pinned-Node full-checkout tests and independent review of isolated candidate PR #940 before merge/integration. P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: independent engineering review of B01-A isolated candidate PR #940 before merge/integration. Pinned Node test requirement satisfied; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -533,6 +533,10 @@ Owner explicitly authorizes isolated B01-A development and testing before indepe
 
 [Draft PR #940](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/940), branch dev/tsos-v2-b01-a-registry, head 827d0c61537bee8d18c71bfbba2414b65bc7ffa9, contains five offline engineering/test modules and one [verification report](https://github.com/tinystepselearning-surya/tinysteps-react-v1/blob/827d0c61537bee8d18c71bfbba2414b65bc7ffa9/docs/architecture/design/B01_A_IMPLEMENTATION_AND_VERIFICATION.md). Compared with authorized revision 35 baseline, six added files only; no runtime application, registry definitions, dependency, Functions, Rules, CI workflow or cloud changes. The exact committed pure core passed 42/42 scenarios on actual GitHub metadata in the available V8 environment. 129 records, 971 items, 38 value sets, all 879 prior items preserved; seven independent byte-level Git blob checks matched. Draft validation does not imply executable schema readiness; 45 unvalidated legacy and 24 structured fields remain holds. The pinned Node 22.22.1 full-checkout suite (42 core plus seven filesystem/CLI cases) has not been executed; local Node 22.16.0 and no checkout/DNS to GitHub prevented it. No CI claim. Independent review and pinned-Node test evidence required before merge/integration, with eventual deployment impact rechecked. B01-A candidate implemented; exit held, no B01-B or other implementation/production authority.
 
+### Revision 37 — B01-A pinned-Node verification passed
+
+Owner supplied Mac Terminal transcript dated 26 November 2026 IST: full clone of isolated branch and detached checkout at exact PR #940 head 827d0c61537bee8d18c71bfbba2414b65bc7ffa9, Node v22.22.1, command `node --test scripts/architecture/registry-validator.node-test.mjs`. All 49 tests passed (42 core plus seven filesystem/CLI), zero failures, cancelled, skipped or todo, duration 832.72075 ms. This satisfies the pinned-Node test requirement on owner-supplied evidence, not independently operated execution or GitHub Actions CI. The earlier candidate report remains a historical pre-Mac checkpoint; [PR #940](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/940) updated to reflect the test result without modifying tested candidate head. Six-file isolated scope reconfirmed. Independent engineering review and eventual deployment-impact/marker verification remain mandatory before integration as applicable; no merge, B01-B authorization, application changes, cloud access, schema adoption, migration, Rules change or release. No repeat Terminal test required unless tested code or relevant metadata changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -603,3 +607,5 @@ Owner explicitly authorizes isolated B01-A development and testing before indepe
 - Revision 35: owner approved isolated B01-A development/test sequencing; independent review remains required before merge/integration. No other gates changed.
 
 - Revision 36: isolated B01-A candidate in draft PR #940; 42/42 core cases and 7/7 metadata hashes verified, full pinned-Node tests and independent review pending. No merge or production changes.
+
+- Revision 37: owner-operated Mac pinned Node v22.22.1, exact B01-A candidate, 49/49 tests passed; independent review remains open. No code or production changes.
