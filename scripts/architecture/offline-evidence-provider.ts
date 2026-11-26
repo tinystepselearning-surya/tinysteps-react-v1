@@ -12,7 +12,7 @@ const effects=Object.freeze({
   'partner.manageAssignedSchool':'mutation-intent-only','platform.supportScoped':'read-preview'
 } as const satisfies Record<string,Effect>);
 function canonical(v:unknown):string{
-  if(v===null||typeof v!=='object')return JSON.stringify(v);
+  if(v===null||typeof v!=='object'){const json=JSON.stringify(v);if(json===undefined)throw Error('invalid primitive');return json;}
   if(Array.isArray(v))return '['+v.map(canonical).join(',')+']';
   const row=v as Record<string,unknown>;
   return '{'+Object.keys(row).sort().map(k=>JSON.stringify(k)+':'+canonical(row[k])).join(',')+'}';
