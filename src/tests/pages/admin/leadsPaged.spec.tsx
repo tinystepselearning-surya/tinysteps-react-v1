@@ -481,8 +481,9 @@ describe('usePagedLeads bounded Firestore reads', () => {
         docChanges: () => [{ type: 'modified' as const, doc: linked }],
       });
     });
-    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2));
-    // Reuse the existing bounded notification watcher; don't subscribe to the full collection.
+    await waitFor(() => expect(screen.getByTestId('ids')).toHaveTextContent('recent'));
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(1);
+    // Reuse the bounded notification watcher; merge the updated demo link into memory.
     expect(firestoreMocks.onSnapshot.mock.calls.every((call) =>
       (call[0] as { args: unknown[] }).args.some((arg) =>
         (arg as { kind?: string; value?: number }).kind === 'limit' &&
@@ -530,7 +531,8 @@ describe('usePagedLeads bounded Firestore reads', () => {
         docChanges: () => [{ type: 'added' as const, doc: returned }],
       });
     });
-    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8));
+    await waitFor(() => expect(screen.getByTestId('ids')).toHaveTextContent('canonical'));
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
     // A second identical snapshot cannot falsely create an additional enquiry.
     await act(async () => {
       subscriptions[1].next({
@@ -538,13 +540,71 @@ describe('usePagedLeads bounded Firestore reads', () => {
         docChanges: () => [{ type: 'modified' as const, doc: returned }],
       });
     });
-    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(8);
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
+    expect(screen.getByTestId('ids')).toHaveTextContent('canonical');
     expect(firestoreMocks.onSnapshot.mock.calls.every((call) =>
       (call[0] as { args: unknown[] }).args.some((arg) =>
         (arg as { kind?: string; value?: number }).kind === 'limit' &&
         (arg as { value?: number }).value === 5,
       ),
     )).toBe(true);
+  });
+
+  it('adds a new website enquiry to a complete Today range without querying all four date lanes again', async () => {
+    const now = Date.now();
+    const lead = makeDoc('new-today', 'new', now, 'website', now);
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
+    render(<Harness bucket="all" pageSize="all" dateFromMs={now - 3_600_000}
+      dateToMs={now + 3_600_000} />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    await act(async () => {
+      subscriptions[0].next(makeSnapshot([])); // server baseline
+      subscriptions[0].next({
+        ...makeSnapshot([lead]),
+        docChanges: () => [{ type: 'added' as const, doc: lead }],
+      });
+    });
+    expect(screen.getByTestId('ids')).toHaveTextContent('new-today');
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
+  });
+
+  it('does not insert an out-of-range lead when the newest-five watcher detects a new website enquiry', async () => {
+    const now = Date.now();
+    const oldRangeStart = now - 14 * 24 * 60 * 60 * 1000;
+    const lead = makeDoc('new-today', 'new', now, 'website', now);
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([]));
+    render(<Harness bucket="all" pageSize="all" dateFromMs={oldRangeStart}
+      dateToMs={oldRangeStart + 86_400_000 - 1} />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    // The global latest-five notification remains; the returning-date watcher
+    // cannot match an enquiry more than two minutes outside this old range.
+    expect(subscriptions).toHaveLength(1);
+    await act(async () => {
+      subscriptions[0].next(makeSnapshot([]));
+      subscriptions[0].next({
+        ...makeSnapshot([lead]),
+        docChanges: () => [{ type: 'added' as const, doc: lead }],
+      });
+    });
+    expect(screen.getByTestId('ids')).toHaveTextContent('');
+    expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(4);
+  });
+
+  it('retains the server-query refresh for a paginated view', async () => {
+    const now = Date.now();
+    const before = makeDoc('recent', 'new', now, 'website');
+    const linked = { ...before, data: () => ({ ...before.data(), demoSessionId: 'demo-recent' }) };
+    firestoreMocks.getDocs.mockResolvedValue(makeSnapshot([before]));
+    render(<Harness bucket="all" pageSize={10} />);
+    await waitFor(() => expect(screen.getByTestId('loading')).toHaveTextContent('false'));
+    await act(async () => {
+      subscriptions[0].next(makeSnapshot([before]));
+      subscriptions[0].next({
+        ...makeSnapshot([linked]),
+        docChanges: () => [{ type: 'modified' as const, doc: linked }],
+      });
+    });
+    await waitFor(() => expect(firestoreMocks.getDocs).toHaveBeenCalledTimes(2));
   });
 
   it('keeps only a five-document realtime watch for new website lead notifications', () => {

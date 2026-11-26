@@ -8,6 +8,15 @@ import { describe, expect, it } from 'vitest';
  */
 
 describe('Leads admin read/write guardrails', () => {
+  it('has only one operational Leads workspace and no legacy tab route', async () => {
+    const workspace = await import('./LeadsInquiriesWorkspaceV2?raw').then((module) => module.default as string);
+    const dashboard = await import('./AdminDashboard?raw').then((module) => module.default as string);
+    expect(workspace).not.toContain('LeadsInquiriesWorkspaceLegacy');
+    expect(workspace).not.toContain('Legacy / bulk tools');
+    expect(dashboard).not.toContain("leadView");
+    expect(dashboard).toContain('<LeadsInquiriesWorkspace />');
+  });
+
   it('keeps the teacher directory lazy and one-shot', async () => {
     const source = await import('./LeadsInquiriesWorkspaceV2?raw').then((module) => module.default as string);
     expect(source).toContain("getDocs(query(collection(db, 'users'), where('role', '==', 'teacher')))" );
