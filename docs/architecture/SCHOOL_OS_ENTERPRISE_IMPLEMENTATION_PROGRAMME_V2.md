@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 33 (owner review feedback; one-to-one priority; B01-A held)  
+**Version:** 2.0 programme baseline, revision 34 (all eight owner decisions confirmed; independent review pending)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -521,6 +521,10 @@ Owner endorses the recommended B00-to-B01 direction. [B00 acceptance packet and 
 
 Owner reviewed and confirmed independent business records and relationships, progressive lift-and-shift, multi-organisation/future multi-tenant architecture, security/performance/reliability, and preservation of current business behavior with deliberate design of improved V2 rules. Premium one-to-one delivery is the core existing business and must be a first-class direct path, without synthetic groups or mandatory group placement. Prioritize 1:1 compatibility and acceptance in B03–B05; small-group and physical-school delivery remain supported. M01 and M02 already distinguish these modes; [revised acceptance packet](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md) records explicit owner priority and mode-specific invariants. Existing rules remain compatibility baseline; new V2 rules require documented current-to-proposed comparison, effective dates, impact on existing/new learners, historical financial safeguards, owner approval and tests. No silent policy change. Three checklist items (same Firestore, master dictionary, isolated B01-A scope) were not explicitly selected in latest feedback; confirm formal approval without assuming rejection. B00 independent review and explicit sequencing amendment remain pending; no gate waiver, implementation, production access or migration.
 
+### Revision 34 — owner architecture decisions completed
+
+Owner explicitly confirmed the remaining three decisions: continue the existing Firestore database with modular collections, maintain the centralized master record and item dictionary, and proceed with the isolated B01-A engineering increment. The spoken reference B01E is interpreted as B01-A, the immediately preceding scope, not a new increment. Combined with revision 33, all eight owner decisions are confirmed. See [B00 acceptance packet](design/B00_B01_IMPLEMENTATION_ACCEPTANCE_PACKET.md). Do not seek repeated owner approval of these decisions. The independent review requirement remains open (PR #933 had no submitted reviews at the checkpoint); the proposed formal sequencing amendment is not adopted. B01-A code and all production, live access, security, schema adoption, migration, release and retirement gates remain held under the existing programme. No code or production changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -585,3 +589,5 @@ Owner reviewed and confirmed independent business records and relationships, pro
 - Revision 32 (26 Nov 2026): owner endorsed B00/B01 direction; prepared scoped B00 acceptance and proposed B01-A isolated tooling contract. Independent signature and explicit phase sequencing approval remain open; no code or cloud changes.
 
 - Revision 33: recorded five confirmed owner checklist decisions including business-rule clarification, first-class 1:1 priority and three outstanding explicit confirmations. No schema, code, production or gate change.
+
+- Revision 34: recorded all eight owner decisions and B01-A scope approval; independent review and sequencing amendment remain open. No implementation or production change.
