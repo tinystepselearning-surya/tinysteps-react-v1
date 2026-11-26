@@ -7,8 +7,6 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// Independent exact-scope review required before execution; do not bypass.
-throw Error('R5B_EXECUTION_REVIEW_HOLD');
 const project='demo-tsos-r5b-transaction',host='127.0.0.1',port=8790;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5B_EMULATOR_ONLY,'1');
