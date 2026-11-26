@@ -7,7 +7,7 @@ import { getDocLogged } from '../../lib/firestoreReadLogging';
 import { analyticsMonthKeyFromDate } from './analyticsV2Metrics';
 import {
   BUSINESS_ANALYTICS_PATHS, BUSINESS_ANALYTICS_TTL_MS, BUSINESS_METRICS,
-  formatBusinessMetric, parseBusinessCurrent, parseBusinessYear, businessSnapshotDay, businessTrendSummary,
+  formatBusinessMetric, parseBusinessCurrent, parseBusinessYear, businessSnapshotDay, businessTrendSummary, monthlyActiveEnrollmentRows,
   type BusinessMetric, type BusinessTab, type CurrentProjection, type YearProjection,
 } from './monthlyBusinessAnalytics';
 
@@ -106,6 +106,43 @@ function TrendChart({ tab, annual, selected, onSelect }: { tab: BusinessTab; ann
   </div>;
 }
 
+function EnrollmentStockChart({ annual, current, selected }: { annual: YearProjection; current: CurrentProjection | null; selected: string | null }) {
+  const rows = monthlyActiveEnrollmentRows(annual, current);
+  const data = rows.map((r, i) => ({ ...r, month: monthName(r.monthKey).slice(0, 3),
+    estimate: r.basis === 'reconstructed' ? r.value : null,
+    observed: r.basis && r.basis !== 'reconstructed' ? r.value : null,
+    bridge: r.basis && r.basis !== 'reconstructed' ? r.value : rows[i + 1]?.basis && rows[i + 1]?.basis !== 'reconstructed' ? r.value : null,
+  }));
+  const latest = data.find(r => r.monthKey === selected) ?? [...data].reverse().find(r => r.value !== null);
+  const reconstructed = data.some(r => r.basis === 'reconstructed' && r.value !== null);
+  return <article className="min-w-0 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5" aria-label="Active enrollments by month">
+    <div className="flex flex-wrap items-start justify-between gap-3">
+      <div className="flex items-start gap-3"><span className="rounded-xl bg-cyan-100 p-2.5 text-cyan-800"><Activity size={20} aria-hidden="true" /></span>
+        <div><h4 className="font-semibold text-slate-900">Active enrollment base</h4><p className="mt-1 text-xs text-slate-500">Active courses at month end; latest month as of the saved snapshot.</p></div>
+      </div>
+      {latest && <div className="text-right"><p className="text-2xl font-bold tabular-nums text-cyan-800">{count(latest.value)}</p><p className="text-xs text-slate-500">{monthName(latest.monthKey)} · {latest.value == null ? 'not available' : latest.basis === 'reconstructed' ? 'reconstructed' : latest.basis === 'observed_month_end' ? 'observed close' : 'saved snapshot'}</p></div>}
+    </div>
+    {data.some(r => r.value !== null) ? <>
+      <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-600"><span>● Observed snapshot</span><span>– – Reconstructed month end</span></div>
+      <div className="mt-3 h-[230px] min-w-0 sm:h-[265px]">
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} initialDimension={{width:620,height:230}}>
+          <ComposedChart data={data} margin={{top:12,right:12,left:0,bottom:4}} accessibilityLayer>
+            <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="4 5" />
+            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fontSize:11,fill:'#64748b'}} tickMargin={10} />
+            <YAxis axisLine={false} tickLine={false} allowDecimals={false} domain={[0,'auto']} width={40} tick={{fontSize:11,fill:'#64748b'}} />
+            <Tooltip content={({active,payload})=>{const row=payload?.[0]?.payload as typeof data[number] | undefined;return active&&row?<div className="rounded-xl border bg-white p-3 text-xs shadow-lg"><p className="font-semibold">{monthName(row.monthKey)} {annual.year}</p><p className="mt-1 text-cyan-800">Active enrollments: <strong>{count(row.value)}</strong></p><p className="mt-1 text-slate-500">{row.basis==='reconstructed'?'Reconstructed from recorded spans':row.basis==='observed_month_end'?'Observed month-end count':'Saved snapshot count'}{row.observedAt?' · '+showTime(row.observedAt)+' IST':''}</p></div>:null;}} />
+            <Line type="linear" dataKey="estimate" stroke="#0e7490" strokeDasharray="5 4" strokeWidth={2.5} dot={{r:3,fill:'#fff',stroke:'#0e7490',strokeWidth:2}} connectNulls={false} isAnimationActive={false} />
+            <Line type="linear" dataKey="bridge" stroke="#0e7490" strokeDasharray="5 4" strokeWidth={2} dot={false} connectNulls={false} isAnimationActive={false} />
+            <Line type="linear" dataKey="observed" stroke="#0e7490" strokeWidth={3} dot={{r:4,fill:'#0e7490',stroke:'#fff',strokeWidth:1.5}} connectNulls={false} isAnimationActive={false} />
+          </ComposedChart>
+        </ResponsiveContainer>
+      </div>
+      {!reconstructed && data.filter(r=>r.value!==null).length===1 && <p className="mt-2 text-xs text-slate-500">Historical month-end figures will appear once the extended aggregate report is published.</p>}
+    </> : <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No saved enrollment stock figures for this year yet.</p>}
+    <p className="mt-3 text-xs leading-relaxed text-slate-500">Earlier reconstructed counts assume continuity between recorded lifecycle dates; historical pauses or reactivations may be missing. {annual.historicalActiveEnrollmentExclusions > 0 ? annual.historicalActiveEnrollmentExclusions+' ambiguous enrollment records excluded from reconstruction. ' : ''}One child may have multiple active courses.</p>
+  </article>;
+}
+
 export default function MonthlyBusinessTrends({ active }: { active: boolean }): JSX.Element | null {
   const thisYear = analyticsMonthKeyFromDate(new Date()).slice(0, 4);
   const [year, setYear] = useState(thisYear);
@@ -161,6 +198,7 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
   const validAnnual = annual?.year === year ? annual : null;
   const months = Array.from({ length: 12 }, (_, i) => year + '-' + String(i + 1).padStart(2, '0'));
   const columns = BUSINESS_METRICS[tab];
+  const enrollmentStock = validAnnual ? monthlyActiveEnrollmentRows(validAnnual,current) : [];
   const rows = months.map(monthKey => ({ monthKey, metrics: validAnnual && monthKey <= businessSnapshotDay(validAnnual).slice(0, 7) ? validAnnual.months.find(m => m.monthKey === monthKey)?.metrics : undefined }));
   const key: BusinessMetric = tab === 'leads' ? 'leadEnquiries' : tab === 'payments' ? 'billedPaise' : 'newAdmissions';
   const summary = validAnnual ? businessTrendSummary(validAnnual, key) : null;
@@ -245,14 +283,15 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
               </div>
             </aside>
           </div>
+          {tab === 'enrollments' && <EnrollmentStockChart annual={validAnnual} current={current} selected={selectedMonth} />}
           <div className="min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white">
             <button type="button" aria-expanded={expanded} aria-controls="business-monthly-breakdown" onClick={() => setExpanded(v => !v)} className="flex w-full items-center justify-between gap-3 px-4 py-4 text-left hover:bg-slate-50 sm:px-5">
-              <span><span className="block text-sm font-semibold text-slate-900">Monthly breakdown</span><span className="mt-1 block text-xs text-slate-500">Exact values and all saved metrics</span></span><ChevronDown size={18} className={expanded ? 'rotate-180' : ''} aria-hidden="true" />
+              <span><span className="block text-sm font-semibold text-slate-900">Monthly breakdown</span><span className="mt-1 block text-xs text-slate-500">All saved metrics, including labelled estimates</span></span><ChevronDown size={18} className={expanded ? 'rotate-180' : ''} aria-hidden="true" />
             </button>
             {expanded && <div id="business-monthly-breakdown" className="overflow-x-auto border-t border-slate-200">
               <table className="w-full text-left text-sm tabular-nums"><caption className="sr-only">Exact monthly {tab} values for {year}</caption>
                 <thead className="bg-slate-50 text-xs text-slate-600"><tr><th scope="col" className="sticky left-0 bg-slate-50 px-4 py-3">Month</th>{columns.map(([metric,label]) => <th key={metric} scope="col" className="whitespace-nowrap px-4 py-3 text-right">{label}</th>)}</tr></thead>
-                <tbody>{rows.map(({monthKey,metrics}) => <tr key={monthKey} className="border-t border-slate-100 hover:bg-slate-50"><th scope="row" className="sticky left-0 whitespace-nowrap bg-white px-4 py-3 font-medium text-slate-800">{monthName(monthKey)}{summary.rows.find(r => r.monthKey === monthKey)?.partial ? ' · partial' : ''}</th>{columns.map(([metric]) => <td key={metric} className="whitespace-nowrap px-4 py-3 text-right">{formatBusinessMetric(metric, metrics?.[metric])}</td>)}</tr>)}</tbody>
+                <tbody>{rows.map(({monthKey,metrics}) => <tr key={monthKey} className="border-t border-slate-100 hover:bg-slate-50"><th scope="row" className="sticky left-0 whitespace-nowrap bg-white px-4 py-3 font-medium text-slate-800">{monthName(monthKey)}{summary.rows.find(r => r.monthKey === monthKey)?.partial ? ' · partial' : ''}</th>{columns.map(([metric]) => <td key={metric} className="whitespace-nowrap px-4 py-3 text-right">{metric === 'activeEnrollmentsAtClose' ? (() => { const stock = enrollmentStock.find(r => r.monthKey === monthKey); return stock?.value == null ? 'Not available' : count(stock.value) + (stock.basis === 'reconstructed' ? ' (est.)' : stock.basis === 'observed_snapshot' ? ' (snapshot)' : ''); })() : formatBusinessMetric(metric, metrics?.[metric])}</td>)}</tr>)}</tbody>
               </table>
             </div>}
           </div>
