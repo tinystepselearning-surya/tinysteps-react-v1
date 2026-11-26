@@ -1,0 +1,67 @@
+// All IDs, contracts and values are synthetic; no registry or actual record is modified.
+export function schemaEvolutionCases(project){
+  const field=(fieldId,name,type,required=true,nullable=false,extra={})=>({fieldId:"synthetic-"+fieldId,definition:"Meaning of "+name,contract:{name,type,required,nullable,...extra}});
+  const before={scope:"synthetic-only",recordId:"synthetic-record",owner:"synthetic-owner",definition:"Synthetic record meaning",version:1,fields:[field("name","name","string"),field("count","count","integer"),field("active","active","boolean"),field("note","note","string",false,true),field("tags","tags","string-array",false),field("mode","mode","enum",true,false,{values:["individual","group"]}),field("link","link","reference",false,true,{target:"CRS"})]};
+  const clone=x=>JSON.parse(JSON.stringify(x));
+  const after={...clone(before),version:2,fields:[...clone(before.fields),field("extra","extra","string",false,true)]};
+  const plan={scope:"synthetic-only",recordId:before.recordId,fromVersion:1,toVersion:2,steps:after.fields.map(f=>({fieldId:f.fieldId,operation:f.fieldId==="synthetic-extra"?"omit":"copy"}))};
+  const source={scope:"synthetic-only",recordId:before.recordId,version:1,values:{name:"",count:0,active:false,note:null,tags:["sample"],mode:"individual"}};
+  const out=[];
+  function check(name,fn){try{if(!fn())throw Error("assertion failed");out.push({name,pass:true});}catch(e){out.push({name,pass:false,error:String(e.message)});}}
+  function bad(name,mutate,code){check(name,()=>{const a=clone(before),b=clone(after),p=clone(plan),s=clone(source);mutate(a,b,p,s);const x=project(a,b,p,s);return !x.valid&&!x.executableReady&&x.projection===null&&x.lineage===null&&x.errors.includes(code);});}
+  check("optional addition succeeds",()=>{const x=project(before,after,plan,source);return x.valid&&!x.executableReady&&x.projection.version===2&&!Object.hasOwn(x.projection.values,"extra");});
+  check("lossless falsy and null values",()=>{const x=project(before,after,plan,source).projection.values;return x.name===""&&x.count===0&&x.active===false&&x.note===null;});
+  check("missing optional retained as missing",()=>!Object.hasOwn(project(before,after,plan,source).projection.values,"link"));
+  check("syntactic reference preserved",()=>project(before,after,plan,{...source,values:{...source.values,link:"synthetic-link"}}).projection.values.link==="synthetic-link");
+  check("immutable independent array and result",()=>{const s=clone(source);const x=project(before,after,plan,s);s.values.tags[0]="changed";return Object.isFrozen(x)&&Object.isFrozen(x.projection)&&Object.isFrozen(x.projection.values)&&Object.isFrozen(x.projection.values.tags)&&x.projection.values.tags[0]==="sample"&&Object.isFrozen(x.lineage.fields)&&Object.isFrozen(x.lineage.fields[0]);});
+  check("exact field lineage",()=>{const x=project(before,after,plan,source).lineage;return x.fromVersion===1&&x.toVersion===2&&x.recordId===before.recordId&&x.fields.find(f=>f.fieldId==="synthetic-extra").operation==="omit"&&x.fields.find(f=>f.fieldId==="synthetic-note").present===true&&x.fields.find(f=>f.fieldId==="synthetic-link").present===false;});
+  check("field and plan order independent",()=>JSON.stringify(project(before,after,plan,source))===JSON.stringify(project({...before,fields:[...before.fields].reverse()},{...after,fields:[...after.fields].reverse()},{...plan,steps:[...plan.steps].reverse()},source)));
+  check("input not mutated",()=>{const orig=JSON.stringify([before,after,plan,source]);project(before,after,plan,source);return orig===JSON.stringify([before,after,plan,source]);});
+  check("unchanged contracts with next version",()=>project(before,{...before,version:2},{...plan,steps:plan.steps.slice(0,-1)},source).valid);
+  check("multiple optional additions",()=>{const b=clone(after),p=clone(plan);b.fields.push(field("newflag","newflag","boolean",false));p.steps.push({fieldId:"synthetic-newflag",operation:"omit"});return project(before,b,p,source).valid;});
+  bad("record identifier changed",(_,b)=>{b.recordId="synthetic-other"},"RECORD_IDENTITY_CHANGED");
+  bad("owner changed",(_,b)=>{b.owner="synthetic-other"},"RECORD_IDENTITY_CHANGED");
+  bad("record meaning changed",(_,b)=>{b.definition="Different"},"RECORD_IDENTITY_CHANGED");
+  bad("version skipped",(_,b)=>{b.version=3},"VERSION_SEQUENCE");
+  bad("version repeated",(_,b)=>{b.version=1},"VERSION_SEQUENCE");
+  bad("field removal",(_,b)=>{b.fields.splice(0,1)},"FIELD_REMOVED");
+  bad("field id reassigned",(_,b)=>{b.fields[0].fieldId="synthetic-new-name"},"FIELD_ID_REASSIGNED");
+  bad("field meaning changed",(_,b)=>{b.fields[0].definition="Different"},"FIELD_MEANING_CHANGED");
+  bad("field renamed",(_,b)=>{b.fields[0].contract.name="renamed"},"FIELD_CONTRACT_CHANGED");
+  bad("field type changed",(_,b)=>{b.fields[1].contract.type="number"},"FIELD_CONTRACT_CHANGED");
+  bad("requiredness relaxed still review held",(_,b)=>{b.fields[0].contract.required=false},"FIELD_CONTRACT_CHANGED");
+  bad("requiredness tightened",(_,b)=>{b.fields[3].contract.required=true},"FIELD_CONTRACT_CHANGED");
+  bad("nullability narrowed",(_,b)=>{b.fields[3].contract.nullable=false},"FIELD_CONTRACT_CHANGED");
+  bad("nullability widened still review held",(_,b)=>{b.fields[0].contract.nullable=true},"FIELD_CONTRACT_CHANGED");
+  bad("enum narrowed",(_,b)=>{b.fields[5].contract.values.pop()},"FIELD_CONTRACT_CHANGED");
+  bad("enum widened still review held",(_,b)=>{b.fields[5].contract.values.push("new")},"FIELD_CONTRACT_CHANGED");
+  bad("reference target changed",(_,b)=>{b.fields[6].contract.target="TEN"},"FIELD_CONTRACT_CHANGED");
+  bad("new required field",(_,b)=>{b.fields[7].contract.required=true},"REQUIRED_FIELD_ADDED");
+  bad("duplicate field id",(_,b)=>{b.fields[7].fieldId=b.fields[0].fieldId},"DUPLICATE_FIELD_ID");
+  bad("duplicate field name",(_,b)=>{b.fields[7].contract.name=b.fields[0].contract.name},"FIELD_CONTRACT");
+  bad("real registry identifier not adopted",(_,b)=>{b.fields[7].fieldId="CRS-1009"},"FIELD_SHAPE");
+  bad("structured addition held",(_,b)=>{b.fields[7].contract.type="structured"},"FIELD_CONTRACT");
+  bad("legacy addition held",(_,b)=>{b.fields[7].contract.type="legacy-value-unvalidated"},"FIELD_CONTRACT");
+  bad("timestamp addition held",(_,b)=>{b.fields[7].contract.type="timestamp"},"FIELD_CONTRACT");
+  bad("unrecognized field metadata",(_,b)=>{b.fields[7].default="x"},"FIELD_SHAPE");
+  bad("unknown schema property",(_,b)=>{b.activate=true},"SCHEMA_SHAPE");
+  bad("production schema refused",(_,b)=>{b.scope="production"},"SCHEMA_SHAPE");
+  bad("plan version mismatch",(_,b,p)=>{p.fromVersion=2},"PLAN_SHAPE");
+  bad("plan wrong record",(_,b,p)=>{p.recordId="synthetic-other"},"PLAN_SHAPE");
+  bad("missing plan entry",(_,b,p)=>{p.steps.pop()},"INCOMPLETE_PLAN");
+  bad("duplicate plan entry",(_,b,p)=>{p.steps.push(clone(p.steps[0]))},"DUPLICATE_PLAN_ENTRY");
+  bad("unknown plan entry",(_,b,p)=>{p.steps.push({fieldId:"synthetic-unknown",operation:"copy"})},"PLAN_ENTRY");
+  bad("no dropping existing field",(_,b,p)=>{p.steps[0].operation="omit"},"PLAN_OPERATION");
+  bad("no default for added field",(_,b,p)=>{p.steps[7].operation="default"},"PLAN_OPERATION");
+  bad("no executable transform",(_,b,p)=>{p.steps[0].execute="code"},"PLAN_ENTRY");
+  bad("source version mismatch",(_,b,p,s)=>{s.version=2},"SOURCE_SHAPE");
+  bad("source record mismatch",(_,b,p,s)=>{s.recordId="synthetic-other"},"SOURCE_SHAPE");
+  bad("source unknown field",(_,b,p,s)=>{s.values.extra="x"},"SOURCE_INVALID");
+  bad("source required missing",(_,b,p,s)=>{delete s.values.name},"SOURCE_INVALID");
+  bad("source type invalid",(_,b,p,s)=>{s.values.count="0"},"SOURCE_INVALID");
+  bad("source explicit undefined",(_,b,p,s)=>{s.values.note=undefined},"SOURCE_INVALID");
+  bad("production source refused",(_,b,p,s)=>{s.scope="production"},"SOURCE_SHAPE");
+  check("accessor refused without invocation",()=>{const s=clone(source);Object.defineProperty(s.values,"name",{enumerable:true,get(){throw Error("invoked");}});return project(before,after,plan,s).errors.includes("SOURCE_SHAPE");});
+  check("errors omit private input values",()=>{const s=clone(source);s.values.count="synthetic-private-value";const x=project(before,after,plan,s);return !JSON.stringify(x).includes("synthetic-private-value")&&Object.isFrozen(x.errors);});
+  return out;
+}
