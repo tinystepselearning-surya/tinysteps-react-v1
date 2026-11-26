@@ -80,7 +80,7 @@ const contextA=Object.freeze({}),contextB=Object.freeze({}),stale=Object.freeze(
 const auth=async c=>c===contextA?{uid:'uid-a',expectedGeneration:null,expectedEpoch:null}:c===contextB?{uid:'uid-b',expectedGeneration:null,expectedEpoch:null}:c===stale?{uid:'uid-a',expectedGeneration:20,expectedEpoch:1}:null;
 const provisioner=async c=>c===operator?{actorId:'fixtureProvisioner',tenantId:'tenant-a',organisationId:'org-a',personId:'person-a'}:null;
 test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},async t=>{
- const budget={calls:170,reads:140,begins:14,terminals:14,attemptedWrites:28,successfulWrites:28,seeds:1};
+ const budget={calls:145,reads:118,begins:13,terminals:13,attemptedWrites:28,successfulWrites:28,seeds:1};
  const ledger={calls:0,reads:0,begins:0,terminals:0,attemptedWrites:0,successfulWrites:0,seeds:0,commits:[],errors:[]};
  const seenTransactions=new Set(),clients=[client(),client()];
  const [left,right]=clients.map(client=>createEmulatorPort({client,allowedPaths,budget,ledger,seenTransactions}));
@@ -108,7 +108,13 @@ test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},
   await noWrite(()=>outcome(one.revoke(operator,{...rev,expectedGeneration:20}),'denied'),2);
   t.diagnostic('GATE-B actual authority, tenant isolation, replay, conflict and absent recovery PASS');
   // No lock-holding barrier; independent clients contend on the same grant/fence read set.
-  const [command,revocation]=await Promise.all([one.execute(contextA,racing),two.revoke(operator,rev)]);
+  let ready=0,release;
+  const opened=new Promise(r=>{release=r});
+  const barrier=async()=>{if(++ready===2)release();let timer;try{await Promise.race([opened,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('BEGIN_BARRIER_TIMEOUT')),4000)})])}finally{clearTimeout(timer)}};
+  // Both transactions are open before either reads; no waits after acquiring locks.
+  const racer=port=>service({runOnce:fn=>port.runOnce(fn,barrier)});
+  const [command,revocation]=await Promise.all([racer(left).execute(contextA,racing),racer(right).revoke(operator,rev)]);
+  assert.equal(ready,2);
   assert.equal(revocation.status,'revoked');
   const revoked=ledger.commits.find(x=>x.kind==='update');
   assert.ok(revoked);
@@ -117,6 +123,7 @@ test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},
   else{assert.ok(['denied','indeterminate'].includes(command.status));assert.equal(raced,undefined)}
   // Only observed ABORTED contention is allowed, never an unexplained transport/integrity failure.
   assert.ok(ledger.errors.every(e=>e.code===grpc.status.ABORTED),'UNEXPECTED_PORT_FAILURE');
+  if(command.status==='indeterminate')assert.ok(ledger.errors.some(e=>e.code===grpc.status.ABORTED),'UNEXPLAINED_INDETERMINATE');
   await noWrite(()=>outcome(one.recover(contextA,A),'denied'),8);
   await noWrite(()=>outcome(one.execute(contextA,missing),'denied'),8);
   await noWrite(()=>outcome(two.revoke(operator,{...rev,expectedGrantRevision:8,expectedGeneration:22}),'denied'),1);
@@ -136,7 +143,7 @@ test('Gate B actual Firestore adapter, fixed two-tenant scope',{timeout:150000},
    for(const doc of [target,receipt]){assert.equal(doc.schemaVersion,1);assert.equal(doc.createdBy,actor);assert.equal(doc.updatedBy,actor);assert.ok(doc.createdAt instanceof Timestamp&&doc.updatedAt instanceof Timestamp);assert.ok(doc.createdAt.isEqual(doc.updatedAt))}
   }
   await verify(A,a,'person-a',true);await verify(B,b,'person-b',true);await verify(missing,m,'person-a',false);await verify(racing,r,'person-a',!!raced);
-  assert.equal(ledger.begins,14);assert.equal(ledger.terminals,14);assert.equal(ledger.seeds,1);
+  assert.equal(ledger.begins,13);assert.equal(ledger.terminals,13);assert.equal(ledger.seeds,1);
   assert.equal(ledger.successfulWrites,raced?28:26);assert.equal(ledger.calls,ledger.reads+ledger.begins+ledger.terminals+ledger.seeds);
   t.diagnostic('GATE-B checked revocation and race PASS; order='+(raced?'command-before-revoke':'revocation-won-or-command-aborted'));
   t.diagnostic('GATE-B_LOCAL_PASS '+JSON.stringify({calls:ledger.calls,reads:ledger.reads,begins:ledger.begins,terminals:ledger.terminals,attemptedWrites:ledger.attemptedWrites,successfulWrites:ledger.successfulWrites,deleteCalls:0,productionOperations:0}));

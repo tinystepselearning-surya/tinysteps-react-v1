@@ -94,7 +94,7 @@ export function createEmulatorPort({client,allowedPaths,budget,ledger,seenTransa
   inc('successfulWrites',writes.length);return ns;
  }
  async function rollback(tx){inc('terminals');rpc();await client.rollback({database,transaction:tx},opts())}
- async function runOnce(fn){
+ async function runOnce(fn,beforeReads){
   inc('begins');rpc();
   const [r]=await client.beginTransaction({database,options:{readWrite:{}}},opts());
   assert.ok(r.transaction?.length>0);const tx=r.transaction,id=Buffer.from(tx).toString('hex');
@@ -115,6 +115,7 @@ export function createEmulatorPort({client,allowedPaths,budget,ledger,seenTransa
    stagedPaths.add(path);writes.push({kind,path,wire:write(name(path),data,prior.updateTime)});
   };
   try{
+   if(beforeReads)await beforeReads(); // private fixture barrier, before any transaction reads
    const value=await fn(Object.freeze({get:async path=>{
     assert.ok(active&&writes.length===0&&!reads.has(path)&&reads.size<12);
     const row=await read(path,tx);reads.set(path,row);return row.data;
@@ -134,7 +135,7 @@ export function createEmulatorPort({client,allowedPaths,budget,ledger,seenTransa
    active=false;
    // Never replay or roll back a dispatched commit with unknown outcome.
    if(!terminal){try{await rollback(tx)}catch(rollbackError){ledger.errors.push({phase:'rollback',code:rollbackError?.code??null});throw rollbackError}}
-   ledger.errors.push({phase:terminal?'terminal':'callback',code:e?.code??null});
+   if(terminal||e?.constructor?.name!=='Rejected'||e.message!=='DENIED')ledger.errors.push({phase:terminal?'terminal':'callback',code:e?.code??null});
    throw e;
   }
  }
