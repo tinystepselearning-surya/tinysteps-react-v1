@@ -168,7 +168,6 @@ Kinds: C canonical identity source; O existing operational record/configuration 
 | users/{uid} | L | identity compatibility and operational legacy | role/status, identity aliases and relationships vary by record; field-specific authority pending | R | 768 | D3/D7; rules; identity bridge |
 | virtualClassReminderFlags/{flagId} | U | Unresolved | No field contract traced; do not infer schema | R | 1818 | firestore.rules literal path only |
 | whatsappInboundUnmatched/{docId} | U | Unresolved | No field contract traced; do not infer schema | R | 1759 | firestore.rules literal path only |
-
 | internalBillingProjections/{parentId}/billingMonths/{monthKey} | P | internal billing projection | parent/month grain; transactional companion to parent monthly read model; exact fields pending | R | No exact match in inventory | parentMonthlyBillingProjectionV2.ts:382–395; D1 |
 
 ## Recursive Rules scopes — not individual records
