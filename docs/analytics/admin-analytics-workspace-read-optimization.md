@@ -44,6 +44,24 @@ Default to persisted reporting projections, not realtime operational collection 
 
 Classify each dataset or feature, not just the page. A live action and a historical KPI may coexist on one screen but must use separate paths and explicit freshness labels. Correctness-sensitive transactions, authorization, attendance and payment invariants remain authoritative. Historical finance balances and other corrected periods must be recomputed through verified dirty-month/change detection where applicable; T-1 does not mean permanently immutable history.
 
+### Two-tier platform data architecture (owner clarification)
+
+The controlling architecture is two major activities: (A) the authoritative operational/transactional tier, kept current only where the business workflow requires it, and (B) the T-1 reporting/insights tier, populated by scheduled projections or equivalent certified incremental read models. Inspired by the operational-versus-reporting separation in Epic, not an attempt to reproduce its proprietary implementation. On-demand reads and cached reference data are access patterns within these two tiers, not additional business data tiers. Do not move transactional authority to reporting snapshots.
+
+Expand the optimisation programme beyond Admin Analytics after its current release phases. Audit actual routes, source queries, existing materializations, user-facing expectations, and freshness requirements for each module before migration.
+
+| Module | Operational tier: preserve current accuracy | Reporting tier: candidate T-1 |
+| --- | --- | --- |
+| Parent insights | Immediate learning feedback or newly submitted work when the workflow requires it; current access and entitlement checks | Progress trends, attendance history summaries, skill analytics, games/learning insights and cumulative reports where business expectations permit |
+| Parent payments (parent/admin) | Current payable amount before collection, wallet/credit, payment initiation/confirmation, transaction status, receipts, adjustments and authoritative validation | Historical monthly billing/collection summaries, ageing and management breakdowns, nonurgent trends and reporting tables |
+| Teacher payments (teacher/admin) | Current payable/pending state when initiating approval or settlement, payout confirmation, disputes and adjustments; authoritative duplicate-payment prevention | Monthly earnings summaries, historical payouts, teacher economics, reporting totals and nonurgent breakdowns |
+| Leads/admissions | Newly received enquiries, assignments, follow-ups and demo actions | Conversion trends, cohorts, acquisition and monthly reports |
+| Classes/learning operations | Current calendar, attendance, class actions, necessary immediate progress feedback | Historical delivery/attendance metrics and progress analysis |
+
+Mixed screens must label T-1 totals separately and must never use them as an amount to collect/pay or as authorization for a transaction. Prefer a compact current authoritative read model or targeted entity read for the operational exception, not a full ledger scan. Refresh current transaction confirmation independently; do not force a nightly snapshot rebuild. Preserve receipts and completed transaction evidence as soon as available. Historical and parent-facing snapshots require tenant/parent/teacher-scoped authorization; founder-only management reports are not a substitute. Use already-existing parent monthly billing, teacher earnings and learning insight read models if verified equivalent; don't create redundant nightly full scans or remove useful incremental updates merely to enforce a schedule.
+
+Cross-platform rollout: inventory all live listeners and read paths, rank by measured billable reads and business freshness need, map to existing projections and scheduler dependencies, set per-module T-1 or justified exception, then migrate one bounded domain at a time with parity and security tests. Include Parent Insights, Parent Payments and Teacher Payments in the follow-on queue. No schedule assignments for these additional domains until the scheduler inventory, current projection reuse and business acceptance are verified. No changes to actual ledgers, existing business logic or parent/teacher access based solely on this policy. Record each realtime exception and its business justification in the module's design/read plan.
+ 
 ### Proposed staggered overnight processing calendar (Asia/Kolkata)
 
 Preserve existing deployed Monthly Trends jobs and their first-run verification. The following is a planning allocation, not deployed schedules. Finalize against actual project-wide Cloud Scheduler inventory, measured job durations, quotas, dependencies and marginal read costs before implementation. Leave approximately 15–20 minutes of minimum breathing room between heavy jobs, with longer gaps for dependent jobs; do not start all jobs at 01:00.
