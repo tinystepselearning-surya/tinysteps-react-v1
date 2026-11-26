@@ -73,3 +73,25 @@ test('uses earliest recorded admission including corrected history and reports t
  assert.equal(r.issues.correctionBasedAdmissions,1);
  assert.equal(r.current.activeStudents,2);
 });
+
+test('reconstructs course stock at month close; uses observed current roster and leaves unknown periods null',()=>{
+ const r=buildAvailableBusinessTrends({...base,enrollments:[
+  row('a1',{kidId:'a',status:'completed',createdAt:'2026-08-01',completedAt:'2026-09-30'}),
+  row('a2',{kidId:'a',status:'active',createdAt:'2026-09-30'}),
+  row('a3',{kidId:'a',status:'active',createdAt:'2026-10-10'}),
+  row('b1',{kidId:'b',status:'paused',createdAt:'2026-09-05',scheduleMaterialization:{lifecycleChangedAt:'2026-10-20'}}),
+  row('c1',{kidId:'c',status:'discontinued',createdAt:'2026-09-01'}),
+  row('d1',{kidId:'d',status:'discontinued',createdAt:'2026-08-15',endedAt:'2026-10-02',correctedToEnrollmentId:'d2'}),
+  row('d2',{kidId:'d',status:'active',createdAt:'2026-09-20',transitionType:'correction'}),
+ ]});
+ assert.equal(m(r,7).activeEnrollmentsAtClose,null);
+ assert.equal(m(r,8).activeEnrollmentsAtClose,2);
+ assert.equal(m(r,9).activeEnrollmentsAtClose,3);
+ assert.equal(m(r,10).activeEnrollmentsAtClose,3);
+ assert.equal(m(r,11).activeEnrollmentsAtClose,3);
+ assert.equal(m(r,12).activeEnrollmentsAtClose,null);
+ assert.equal(r.annual.months[8].activeEnrollmentBasis,'reconstructed');
+ assert.equal(r.annual.months[10].activeEnrollmentBasis,'observed_snapshot');
+ assert.equal(r.current.activeEnrollments,3);
+ assert.equal(r.issues.historicalActiveEnrollmentExclusions,1);
+});

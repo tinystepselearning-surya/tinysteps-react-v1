@@ -12,7 +12,14 @@ export async function refreshBusinessTrends({source,publisher,years,maxDocuments
  if(cutoff)assert(cutoff.throughDate===istDateKey(result.readTime)&&cutoff.sourceReadTime===result.readTime,'Daily snapshot cutoff mismatch');
  assert(years.every(y=>y<=currentYear),'Future reporting years are not supported');
  const reports=years.map(year=>buildAvailableBusinessTrends({year,updatedAt:result.readTime,...result.rows}));
- const decorate=data=>cutoff?{...data,throughDate:cutoff.throughDate,refreshMode:'daily_closed_day'}:data;
+ const decorate=data=>{
+  if(!cutoff)return data;
+  const day=cutoff.throughDate,month=day.slice(0,7);
+  const lastDay=new Date(Date.UTC(Number(day.slice(0,4)),Number(day.slice(5,7)),0)).getUTCDate();
+  const months=data.months?.map(row=>row.monthKey===month&&Number(day.slice(8,10))===lastDay&&row.activeEnrollmentBasis==='observed_snapshot'
+   ? {...row,activeEnrollmentBasis:'observed_month_end'}:row);
+  return {...data,...(months?{months}:{}),throughDate:day,refreshMode:'daily_closed_day'};
+ };
  const documents=reports.map(r=>({path:ROOT+'/businessAnalyticsYears/'+r.annual.year,data:decorate(r.annual)}));
  documents.push({path:ROOT+'/businessAnalyticsSnapshots/current',data:decorate(reports[0].current)});
  // Only aggregate results leave this boundary. Never return source IDs or data.

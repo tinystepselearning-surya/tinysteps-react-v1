@@ -4,6 +4,22 @@ import {FieldPath,Timestamp} from 'firebase-admin/firestore';
 const ROOT='adminStats/businessAnalyticsV1';
 const allowed=new Set(['leads','inquiries','billingCharges','enrollments']);
 const assert=(ok,message)=>{if(!ok)throw Error(message);};
+// Preserve previously captured exact month-end stock, never replace it with a
+// retrospective estimate. Only trust verified, same-contract month-end rows.
+export function preserveObservedEnrollmentClosings(next,previous){
+ if(!Array.isArray(next?.months)||!Array.isArray(previous?.months)||previous.year!==next.year||previous.schemaVersion!==1||previous.metricDefinitionVersion!==1||previous.verificationStatus!=='verified'||previous.coverageMode!=='available_records')return next;
+ const known=new Map(previous.months.filter(row=>{
+  const m=row.monthKey,v=row.metrics?.activeEnrollmentsAtClose;
+  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)||row.activeEnrollmentBasis!=='observed_month_end'||!Number.isSafeInteger(v)||v<0)return false;
+  const cutoff=new Date(Date.UTC(Number(m.slice(0,4)),Number(m.slice(5,7)),1)-19800000-1).toISOString();
+  return row.activeEnrollmentObservedAt===cutoff;
+ }).map(row=>[row.monthKey,row]));
+ return {...next,months:next.months.map(row=>{
+  const old=known.get(row.monthKey);
+  if(!old||row.activeEnrollmentBasis==='observed_month_end'||row.activeEnrollmentBasis==='observed_snapshot')return row;
+  return {...row,metrics:{...row.metrics,activeEnrollmentsAtClose:old.metrics.activeEnrollmentsAtClose},activeEnrollmentBasis:'observed_month_end',activeEnrollmentObservedAt:old.activeEnrollmentObservedAt};
+ })};
+}
 export function createBusinessRefreshStore(db){
  assert(db&&typeof db.runTransaction==='function','Firestore instance required');
  return {
@@ -46,7 +62,11 @@ export function createBusinessRefreshStore(db){
     const last=existing.data()?.sourceReadTime;
     if(throughDate&&existing.data()?.throughDate>=throughDate)return 'stale-or-replayed';
     if(last&&Date.parse(last)>=Date.parse(readTime))return 'stale-or-replayed';
-    for(const d of documents)tx.set(db.doc(d.path),d.data);
+    // At most one extra aggregate read per reporting year; no new operational reads.
+    const annuals=documents.filter(d=>d.path.includes('/businessAnalyticsYears/'));
+    const prior=await Promise.all(annuals.map(d=>tx.get(db.doc(d.path))));
+    const saved=new Map(annuals.map((d,i)=>[d.path,prior[i].data()]));
+    for(const d of documents)tx.set(db.doc(d.path),saved.has(d.path)?preserveObservedEnrollmentClosings(d.data,saved.get(d.path)):d.data);
     tx.set(control,{sourceReadTime:readTime,...(throughDate?{throughDate}:{}),coverageMode:'available_records',years:documents.filter(d=>!d.path.endsWith('/current')).map(d=>d.path.split('/').at(-1))},{merge:true});
     return 'published';
    });

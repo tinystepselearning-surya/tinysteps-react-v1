@@ -23,7 +23,7 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
  for(const rows of [leads,inquiries,billingCharges,enrollments])assert(Array.isArray(rows),'Explicit source arrays required');
  const asOf=day(updatedAt),months=Array.from({length:12},(_,i)=>({monthKey:year+'-'+String(i+1).padStart(2,'0'),metrics:zero()}));
  const byMonth=new Map(months.map(r=>[r.monthKey,r.metrics]));
- const issues={undatedEnquiries:0,datedInquiryMirrorResolutions:0,conflictingInquiryDates:0,correctionBasedAdmissions:0,undatedCharges:0,invalidChargeAmounts:0,undatedAdmissions:0,undatedCourseEnds:0,unresolvedEnrollmentIdentity:0,unresolvedEnrollmentStatus:0,ambiguousStudentExits:0};
+ const issues={undatedEnquiries:0,datedInquiryMirrorResolutions:0,conflictingInquiryDates:0,correctionBasedAdmissions:0,undatedCharges:0,invalidChargeAmounts:0,undatedAdmissions:0,undatedCourseEnds:0,unresolvedEnrollmentIdentity:0,unresolvedEnrollmentStatus:0,ambiguousStudentExits:0,historicalActiveEnrollmentExclusions:0};
  const add=(m,k,n=1)=>{if(!byMonth.has(m)||m>asOf.slice(0,7))return;const row=byMonth.get(m);row[k]+=n;assert(Number.isSafeInteger(row[k]),'Unsafe total');};
  const exact=(rows,scope)=>{const seen=new Set();return rows.map(r=>{assert(r&&str(r.id)&&r.data&&typeof r.data==='object','Invalid '+scope+' row');assert(!seen.has(r.id),'Repeated source row in '+scope);seen.add(r.id);return r;});};
  // Inquiry events are authoritative where present. Count each recorded source submission once
@@ -91,7 +91,7 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   if(start&&!correction)add(start.slice(0,7),'newEnrollments');
   if(end&&end<=asOf&&!correction&&s==='completed')add(end.slice(0,7),'courseCompletions');
   if(end&&end<=asOf&&!correction&&s==='discontinued')add(end.slice(0,7),'courseDiscontinuations');
-  const rows=children.get(child)||[];rows.push({id,start,end,s,isTerminal,correction});children.set(child,rows);
+  const rows=children.get(child)||[];rows.push({id,start,end,s,isTerminal,correction,isActive,isPaused,pauseDate:isPaused?date(data.scheduleMaterialization?.lifecycleChangedAt,data.pausedAt):null,replacedBy:str(data.correctedToEnrollmentId)||str(data.supersededByEnrollmentId)});children.set(child,rows);
  }
  for(const rows of children.values()){
   const dated=rows.filter(r=>r.start).sort((a,b)=>a.start.localeCompare(b.start));
@@ -112,6 +112,42 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
    const reason=ended.some(r=>r.s==='discontinued')?'discontinued':ended.every(r=>r.s==='completed')?'completed':'other';
    add(end.slice(0,7),'studentExits');add(end.slice(0,7),reason+'StudentExits');
   }
+ }
+ // Monthly stock is not the sum of admissions minus student exits. Count course
+ // intervals, not children. Historical pauses/reactivations may be missing; label
+ // these reconstructed values, and omit unresolved spans rather than guess an end.
+ const spans=[];
+ for(const rows of children.values()){
+  const byId=new Map(rows.map(r=>[r.id,r]));
+  for(const r of rows){
+   if(!r.start||(r.isTerminal&&(!r.end||r.end<r.start))||(r.isPaused&&(!r.pauseDate||r.pauseDate<r.start||r.pauseDate>asOf))){
+    issues.historicalActiveEnrollmentExclusions++;continue;
+   }
+   let end=r.isTerminal?r.end:r.isPaused?r.pauseDate:null;
+   if(r.replacedBy){
+    const successor=byId.get(r.replacedBy);
+    if(!successor?.start||successor.start<r.start||!r.isTerminal){issues.historicalActiveEnrollmentExclusions++;continue;}
+    if(successor.start<end)end=successor.start;
+   }
+   spans.push({start:r.start,end});
+  }
+ }
+ issues.historicalActiveEnrollmentExclusions+=issues.unresolvedEnrollmentIdentity+issues.unresolvedEnrollmentStatus;
+ const firstKnown=spans.reduce((earliest,r)=>!earliest||r.start<earliest?r.start:earliest,null);
+ for(const row of months){
+  const m=row.monthKey;
+  row.metrics.activeEnrollmentsAtClose=null;
+  if(m>asOf.slice(0,7))continue;
+  if(m===asOf.slice(0,7)){
+   row.metrics.activeEnrollmentsAtClose=activeEnrollments;
+   row.activeEnrollmentBasis='observed_snapshot';
+   row.activeEnrollmentObservedAt=updatedAt;
+   continue;
+  }
+  const close=m+'-'+String(new Date(Date.UTC(Number(m.slice(0,4)),Number(m.slice(5,7)),0)).getUTCDate()).padStart(2,'0');
+  if(!firstKnown||firstKnown>close)continue;
+  row.metrics.activeEnrollmentsAtClose=spans.filter(r=>r.start<=close&&(!r.end||r.end>close)).length;
+  row.activeEnrollmentBasis='reconstructed';
  }
  for(const row of months)if(row.monthKey>asOf.slice(0,7))for(const k of Object.keys(row.metrics))row.metrics[k]=null;
  const base={schemaVersion:1,metricDefinitionVersion:1,updatedAt,verificationStatus:'verified',coverageMode:'available_records',issues};
