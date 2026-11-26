@@ -68,3 +68,30 @@ node scripts/business-analytics-refresh-cli.mjs --project tinysteps-react-v1 --y
 This is an example budget and reporting range, not a known actual count or earliest operating year. Run only with separate owner-approved scope and project-specific authorized ADC. Default is dry-run (aggregate output only); do not add --apply and --confirm-production-aggregate-write tinysteps-react-v1 until separate aggregate-write approval and reviewed dry-run. Demo project requires loopback. No source writes or deployment. On budget/transaction failure, retain prior projection and redesign or expand approved scope, never silently publish partial results. Query minimum charges, index entries, retry operations and query lookahead are not included in returned source document counts. Review the actual query cost and collection sizes before scheduling; repeated full snapshots are not suitable at high cadence without evidence. Consider bounded scheduled refresh with measured cadence, then incremental/partitioned refresh if cost warrants; no automatic scheduler is activated by this change.
 
 New refresh unit cases and real isolated Firestore end-to-end refresh fixture added. Latest CI results pending. Remaining: verify current candidate native and emulator, approve and run bounded production dry-run, inspect aggregate output and existing totals, approve publication and rollout, choose refresh cadence based on actual read cost, and verify dashboard read budget. No production reads/writes, merges or deployment in this round.
+
+## Private refresh activation and cost preflight
+Previous refresh candidate b485f3e passed all three dedicated jobs (native Node, UI/typecheck, isolated Firestore emulator) in run 45809137290.
+
+Added count-only inventory for leads, inquiries (collection group), billingCharges and enrollments. It returns counts, not document contents or identifiers. It is advisory, not a consistent snapshot; counts can change and the subsequent collector still enforces its hard cap. Count aggregations have index-entry billing and minimum query charges, not four guaranteed billed reads. An inventory query may include unrelated inquiries, conservatively counting them against budget. The actual production indexes, counts and read cost have not been checked.
+
+**Next production operation (requires specific approval and an authorized read-only Firestore principal):**
+```sh
+node scripts/business-analytics-refresh-cli.mjs --project tinysteps-react-v1 --inventory-only --approve-production-read
+```
+The command uses Application Default Credentials. Do not reuse a broad deploy identity merely for convenience. Flags record operator intent, not a substitute for IAM authorization. Do not run with production credentials on public GitHub Actions or publish outputs in public PR comments. No document writes are permitted in inventory mode. Use resulting counts to approve a realistic document budget for the separate dry-run; never assume 10,000 documents will suffice.
+
+Added private periodic entrypoint `node scripts/business-analytics-job.mjs`. It defaults to disabled (no connection), requires exact project, explicit mode, read approval, first reporting year and document budget, and independent write approval in apply mode. It automatically includes the current IST year. It performs count preflight and aborts before a full scan if the estimated count exceeds budget. Output includes only operational summary, not lead/student details or billed totals. Hard collection limits still apply; query failures preserve previously published documents.
+
+Proposed runtime: private operator machine or a managed job with a dedicated least-privilege identity. Schedule only after approved historical dry-run and refresh-cost evidence. Daily is a candidate, not an activated cadence. Do not schedule this in the public repository's Actions environment or use the existing deploy secret. No runtime, account, scheduler, production source access or deployment has been created in this round.
+
+Configuration for approved runtime (all values examples except project):
+- MONTHLY_TRENDS_ENABLED=true (unset/false disables)
+- MONTHLY_TRENDS_PROJECT=tinysteps-react-v1
+- MONTHLY_TRENDS_MODE=dry-run or apply
+- MONTHLY_TRENDS_READ_APPROVED=tinysteps-react-v1
+- MONTHLY_TRENDS_WRITE_APPROVED=tinysteps-react-v1 (apply only)
+- MONTHLY_TRENDS_FIRST_YEAR=<approved earliest year>
+- MONTHLY_TRENDS_MAX_DOCUMENTS=<approved limit, maximum 100000>
+- MONTHLY_TRENDS_PAGE_SIZE=250 and MONTHLY_TRENDS_MAX_PAGES=400 (tune together with budget)
+
+New activation guards, count-only inventory and cost-limit checks are covered by added native and emulator tests; latest candidate CI pending. Remaining external gates: production inventory and dry-run, aggregate-write review, scheduler/runtime setup and rollout; admissions-only CI scope gate still unchanged.
