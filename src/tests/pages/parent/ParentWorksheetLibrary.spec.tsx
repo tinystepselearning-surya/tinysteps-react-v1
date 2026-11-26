@@ -39,7 +39,8 @@ describe('ParentWorksheetLibrary', () => {
     });
     render(<ParentWorksheetLibrary items={[item]} loading={false} onRefresh={vi.fn()} />);
 
-    expect(screen.getAllByText('Phonics Foundations')).toHaveLength(1);
+    // The course also appears in the new selection dropdown.
+    expect(screen.getAllByText('Phonics Foundations')).toHaveLength(2);
     expect(screen.getByText('Lesson 2')).toHaveClass('text-amber-800');
     expect(screen.getByText('Letter A')).toHaveClass('text-orange-700');
     expect(screen.getByText('A').closest('[aria-hidden="true"]')).toBeInTheDocument();
@@ -55,5 +56,57 @@ describe('ParentWorksheetLibrary', () => {
     expect(screen.getByText('No worksheets have been shared for this course yet.')).toBeInTheDocument();
     const responsiveHeader = container.querySelector('.sm\\:flex-row');
     expect(responsiveHeader).toHaveClass('flex-col');
+  });
+});
+
+
+describe('ParentWorksheetLibrary course filter', () => {
+  const courseItem = (id: string, courseId: string, courseTitle: string) =>
+    toParentWorksheetItem(id, {
+      title: id,
+      url: 'https://example.com/' + id + '.pdf',
+      lessonId: id,
+      lessonTitle: id === 'phonics-sheet' ? 'Phonics Lesson' : 'Grammar Lesson',
+      courseId,
+      courseTitle,
+    });
+
+  it('defaults to the enrolled course and switches courses without network callbacks', () => {
+    const onRefresh = vi.fn();
+    const items = [
+      courseItem('phonics-sheet', 'phonics', 'Phonics'),
+      courseItem('grammar-sheet', 'grammar', 'Grammar'),
+    ];
+    render(
+      <ParentWorksheetLibrary
+        items={items}
+        enrolledCourseIds={['phonics']}
+        loading={false}
+        onRefresh={onRefresh}
+      />,
+    );
+    expect(screen.getAllByText('Phonics Lesson').length).toBeGreaterThan(0);
+    expect(screen.queryAllByText('Grammar Lesson')).toHaveLength(0);
+    const select = screen.getByRole('combobox', { name: 'Choose course' });
+    expect(select).toHaveValue('__enrolled__');
+    fireEvent.change(select, { target: { value: 'grammar' } });
+    expect(screen.queryAllByText('Phonics Lesson')).toHaveLength(0);
+    expect(screen.getAllByText('Grammar Lesson').length).toBeGreaterThan(0);
+    fireEvent.change(select, { target: { value: '__enrolled__' } });
+    expect(screen.getAllByText('Phonics Lesson').length).toBeGreaterThan(0);
+    expect(onRefresh).not.toHaveBeenCalled();
+  });
+
+  it('preserves parent-only legacy resources in the default filter', () => {
+    const legacy = courseItem('personal-sheet', 'old-course', 'Legacy Course');
+    render(
+      <ParentWorksheetLibrary items={[legacy]}
+        enrolledCourseIds={['phonics']}
+        parentOnlyWorksheetIds={['personal-sheet']}
+        loading={false}
+        onRefresh={vi.fn()}
+      />,
+    );
+    expect(screen.getAllByText('Grammar Lesson').length).toBeGreaterThan(0);
   });
 });
