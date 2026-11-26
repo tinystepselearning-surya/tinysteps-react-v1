@@ -18,6 +18,11 @@ const operations=Object.freeze({
   'fixture.financeView': 'existing',
   'fixture.physicalAttendance': 'new',
   'fixture.campusCreate': 'new',
+  'fixture.institutionCreate': 'new',
+  'fixture.organisationRoster': 'new',
+  'fixture.campusRoster': 'new',
+  'fixture.financePost': 'existing',
+  'fixture.scopedSupport': 'new',
 } as const);
 function stop(reason:Stop['reason']):Stop{return Object.freeze({scope:'synthetic-routing-only',productionAuthorization:false,kind:'stop',reason});}
 function route(lane:Lane,shadowObservationOnly=false):Route{return Object.freeze({scope:'synthetic-routing-only',productionAuthorization:false,kind:'route',lane,shadowObservationOnly});}
