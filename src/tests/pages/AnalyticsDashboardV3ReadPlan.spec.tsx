@@ -106,12 +106,30 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
     }));
     fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
     await waitFor(() => expect(getDocLoggedMock).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText(/Initial snapshot as of/)).toBeTruthy();
+    expect(screen.getByText(/daily closed-day refresh is not yet reflected/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Payments' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enrollments' }));
     await waitFor(() => expect(screen.getByText('160')).toBeTruthy());
     expect(getDocLoggedMock).toHaveBeenCalledTimes(2);
     expect(getDocsLoggedMock).not.toHaveBeenCalled();
     expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('labels a daily closed-day snapshot rather than an initial daytime snapshot', async () => {
+    render(<AnalyticsDashboard />);
+    await waitFor(() => expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1));
+    getDocLoggedMock.mockImplementation(async (label: string) => ({
+      exists: () => true,
+      data: () => ({
+        schemaVersion: 1, metricDefinitionVersion: 1, verificationStatus: 'verified',
+        updatedAt: '2026-11-26T18:29:59.999Z', refreshMode: 'daily_closed_day', throughDate: '2026-11-26',
+        ...(label.includes('year:') ? { year: label.split(':').pop(), months: [] } : { activeStudents: 160, activeEnrollments: 180 }),
+      }),
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
+    expect(await screen.findByText(/today's activity is excluded/)).toBeTruthy();
+    expect(screen.queryByText(/Initial snapshot as of/)).toBeNull();
   });
 
   it('keeps Overview off every raw monthly collection', async () => {
