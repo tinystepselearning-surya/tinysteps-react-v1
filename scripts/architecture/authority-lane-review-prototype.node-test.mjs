@@ -1,0 +1,34 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {simulateAuthorityRoute as route,simulateTerminalAuthorityOutcome as terminal} from './authority-lane-review-prototype.ts';
+function fixture(operation='fixture.onlineAttendance',phase='legacy'){
+  const active=phase==='successor'?'v2':phase==='disabled'?null:'v1';
+  return {q:{operation},p:{operation,epoch:4,phase,decisionLane:active,writerLane:active,handoff:phase==='successor'?'synthetic-complete':'none'},f:{operation,epoch:4}};
+}
+const run=x=>route(x.q,x.p,x.f);
+const stop=(x,reason)=>assert.deepEqual(run(x),{scope:'synthetic-routing-only',productionAuthorization:false,kind:'stop',reason});
+const yes=(x,lane,shadowObservationOnly=false)=>assert.deepEqual(run(x),{scope:'synthetic-routing-only',productionAuthorization:false,kind:'route',lane,shadowObservationOnly});
+const observe=(x,lane,outcome)=>({operation:x.q.operation,epoch:x.f.epoch,lane,outcome});
+const outcome=(x,o,result)=>assert.deepEqual(terminal(x.q,x.p,x.f,o),{scope:'synthetic-routing-only',productionAuthorization:false,result,alternateLaneAttempt:false});
+test('existing online and partner actions stay in legacy lane',()=>{for(const op of ['fixture.onlineAttendance','fixture.partnerRead','fixture.partnerManage'])yes(fixture(op),'v1');});
+test('shadow is observation only; v1 remains sole authority',()=>yes(fixture('fixture.onlineAttendance','shadow'),'v1',true));
+test('new operation cannot use legacy or shadow lane',()=>{for(const phase of ['legacy','shadow'])stop(fixture('fixture.physicalAttendance',phase),'NO_AUTHORITY');});
+test('new action remains disabled before synthetic activation',()=>stop(fixture('fixture.campusCreate','disabled'),'DISABLED'));
+test('new operation can model successor lane only after synthetic handoff',()=>yes(fixture('fixture.physicalAttendance','successor'),'v2'));
+test('existing operation can model successor lane only after synthetic handoff',()=>yes(fixture('fixture.onlineAttendance','successor'),'v2'));
+test('missing handoff rejected',()=>{const x=fixture('fixture.partnerRead','successor');x.p.handoff='none';stop(x,'CONFLICT');});
+test('legacy phase cannot name v2',()=>{const x=fixture();x.p.decisionLane=x.p.writerLane='v2';stop(x,'CONFLICT');});
+test('successor phase cannot fall back to v1',()=>{const x=fixture('fixture.onlineAttendance','successor');x.p.decisionLane=x.p.writerLane='v1';stop(x,'CONFLICT');});
+test('dual writer or split authority denied',()=>{const x=fixture();x.p.writerLane='v2';stop(x,'CONFLICT');const y=fixture();y.p.writerLane=['v1','v2'];stop(y,'NO_AUTHORITY');});
+test('disabled phase cannot retain active lane',()=>{const x=fixture('fixture.onlineAttendance','disabled');x.p.writerLane='v1';stop(x,'CONFLICT');});
+test('wrong action policy or fence denied',()=>{const x=fixture();x.p.operation='fixture.partnerRead';stop(x,'STALE');const y=fixture();y.f.operation='fixture.partnerRead';stop(y,'STALE');});
+test('stale or future epoch denied',()=>{for(const epoch of [3,5]){const x=fixture();x.p.epoch=epoch;stop(x,'STALE');}});
+test('unknown operations and wildcard denied',()=>{for(const operation of ['*','constructor','fixture.other'])stop(fixture(operation),'UNKNOWN_ACTION');});
+test('request cannot select lane or inject authority',()=>{for(const key of ['lane','phase','handoff','allow','epoch']){const x=fixture();x.q[key]='v2';stop(x,'INVALID');}});
+test('invalid version, phase or evidence object denied',()=>{const x=fixture();x.p.epoch=0;stop(x,'INVALID');const y=fixture();y.p.phase='rollback';stop(y,'INVALID');assert.equal(route(null,null,null).reason,'INVALID');});
+test('accessor not invoked',()=>{const x=fixture();let invoked=false;Object.defineProperty(x.q,'operation',{enumerable:true,get(){invoked=true;return x.p.operation;}});stop(x,'INVALID');assert.equal(invoked,false);});
+test('shadow observation cannot override the legacy decision',()=>{const x=fixture('fixture.onlineAttendance','shadow');outcome(x,observe(x,'v2','synthetic-allow'),'would-deny');outcome(x,observe(x,'v1','synthetic-allow'),'would-allow');});
+test('successor deny or unavailable is terminal without legacy retry',()=>{const x=fixture('fixture.onlineAttendance','successor');for(const s of ['synthetic-deny','unavailable','unknown'])outcome(x,observe(x,'v2',s),'would-deny');outcome(x,observe(x,'v1','synthetic-allow'),'would-deny');});
+test('stale observation cannot permit a newly fenced request',()=>{const x=fixture('fixture.onlineAttendance','successor');const o=observe(x,'v2','synthetic-allow');outcome(x,o,'would-allow');x.p.epoch=x.f.epoch=5;outcome(x,o,'would-deny');});
+test('operation mismatch, malformed outcome, and extra fields deny',()=>{const x=fixture();const o=observe(x,'v1','synthetic-allow');outcome(x,{...o,operation:'fixture.partnerRead'},'would-deny');outcome(x,{...o,outcome:true},'would-deny');outcome(x,{...o,fallback:'v2'},'would-deny');});
+test('disabled and unknown actions never return positive outcome',()=>{for(const x of [fixture('fixture.physicalAttendance','disabled'),fixture('fixture.unknown')])outcome(x,observe(x,'v2','synthetic-allow'),'would-deny');});
