@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 26 (proposed master record and item dictionary)  
+**Version:** 2.0 programme baseline, revision 27 (parallel target design; D01 draft)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -449,6 +449,29 @@ Owner-directed dictionary design is documented in [registry design](registry/TSO
 
 Next design review: confirm code namespace, shared field identifiers and ownership; complete academic catalogue, enrollment/delivery and tenant/context contracts before executable schema adoption. P01 acceptance, independent sequencing ADR, P02/P03 formal gates, M3 and production holds remain unchanged.
 
+### Revision 27 — parallel target architecture design packages
+
+Owner agrees to design the replacement architecture alongside current operations: complete target entities, relationships, record registry, storage bindings, service and workflow contracts, security/performance and migration mapping first. Retain same Firestore database by default; reuse already sound canonical structures and existing efficient code. Build missing structures/services and prospective capture in isolated development after authorization, test independently, backfill and reconcile by bounded slices, switch consumers progressively, transfer one authoritative writer per fact, retire legacy only with explicit evidence and authority. No big-bang switch or blanket rewrite. This owner-directed design sequence is not a waiver of existing P01/P02/P03 or production gates.
+
+| Package | Target scope | Design status |
+|---|---|---|
+| D01 | Identity, contact, roles, learner, guardian, household and existing profile boundaries | Initial draft produced; independent review and exact profile contracts pending |
+| D02 | Tenant, organisation, campus, membership and contextual roles | Next design package |
+| D03 | Academic catalogue, programme, course, curriculum, skills and academic year | Planned |
+| D04 | Enrollment, delivery offering, group placement, teaching assignment | Seed from revision 25/26; detailed design pending |
+| D05 | Scheduling, plans, sessions, participants and staff | Planned |
+| D06 | Attendance, official decision, evidence and corrections | Planned |
+| D07 | Learning, assessment, observations, mastery and progress | Planned |
+| D08 | Commerce, agreements, billing, charges, payments and earnings | Planned |
+| D09 | School operations, admissions, workforce, safeguarding and communication; include CRM and support ownership | Planned |
+| D10 | Metadata, configuration, audit, integration, projections, analytics, credentials/reporting and shared experience | Planned |
+
+Packages are design views spanning the frozen 18 domains, not new competing domain authorities. Every package specifies record grain/key, relationship cardinality, proposed collection/subcollection and item mappings, command/query contracts, state and validation rules, access/data lifecycle, query/index and measured-read requirements, old-to-new mapping and test/recovery gates. Consolidate and review the whole design before implementation of affected slices. Cross-package dependencies (e.g. D02 contextual authorization, D03/D04 offering semantics) must be reconciled in reviewed contracts.
+
+[D01 Identity Architecture](design/D01_IDENTITY_ARCHITECTURE.md) preserves the existing core and permanent role/profile, contact, lifecycle, private and evidence stores. Proposed household membership is distinct from guardian/payer/access; path and field bindings remain unadopted. [Registry draft v0.2](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) extends the revision 26 seed to 40 record candidates, 14 detailed seeds, 82 items and 19 value sets; 26 catalogue-only records require detailed fields. Prior 43 source-backed identity fields retained. No production path creation, data capture or migration.
+
+Main has advanced 79 commits relative to the earlier source pin; direct blob equality verified seven D01-relevant artifacts (identity contracts/writer, Firestore and Storage Rules, Wave 1 ledger, profile migration contract, school authorization). No global rebaseline or live deployment claim. Further affected source dependencies must be re-pinned before implementation. Next design package is D02; independent review and existing phase and release gates remain mandatory. No new runtime/CI tests claimed.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -499,3 +522,5 @@ Next design review: confirm code namespace, shared field identifiers and ownersh
 - Revision 25 (26 Nov 2026): recorded owner-directed design-first, additive extension and selective same-database migration strategy; added linked 18-domain target design draft and first enrollment/delivery mapping, with explicit unknown/history, compatibility, budget and recovery requirements. Independent review and sequencing ADR remain pending; no runtime, production data, deployment or phase gate changes.
 
 - Revision 26 (26 Nov 2026): owner-directed master record/item dictionary design draft and machine-readable seed added; 29 proposed records, 13 detailed, 76 items, 18 value sets, 43 source-backed field matches. Design checks only; no production access, runtime changes, identifier adoption, CI run or phase gate changes.
+
+- Revision 27 (26 Nov 2026): owner-directed parallel target design sequence D01–D10; linked initial D01 design and v0.2 dictionary extension (40 records, 14 detailed, 82 items, 19 value sets). Scoped main-drift review retained seven unchanged source artifacts; no global rebaseline. D02 next design; P01/P02/P03/P04 and M3/production gates unchanged, no code or production changes.
