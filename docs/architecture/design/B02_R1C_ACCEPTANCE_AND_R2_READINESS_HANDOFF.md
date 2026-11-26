@@ -1,6 +1,6 @@
 # B02-R1C independent acceptance and B02-R2 readiness handoff
 
-**Status:** offline engineering PASS (505/505); independent review OPEN; isolated integration HOLD; R2 live execution HOLD. Owner directed progressive replacement and continued implementation. This handoff is not an approval or an executable live runner. Controlling programme Revision 55; Revision 56 acceptance is not yet recorded.
+**Status:** offline engineering PASS (505/505); owner-authorized AI-led scoped integration acceptance PASS; independent security/privacy review OPEN; R2 live execution HOLD. Revision 56 takes effect only after successful isolated integration. This handoff is not an executable live runner or production approval.
 
 ## 1. Review the frozen candidate
 
@@ -16,7 +16,7 @@ Tested commit: 92fc9d630383da6b591540932225d64f6894bf59. Owner-operated Node 22.
 | Trust boundary | Injectable sampler, clock and open function are trusted test seams, not production controls; arbitrary hung sampler/process-wide limit, signed approval, actual backend protocol and effective IAM must be handled before live work |
 | Release | Approve/reject exact offline scope only. No production activation, R2 waiver, main merge or retirement inferred |
 
-Record independent reviewer identity, reviewed head, scope, evidence, PASS/FAIL/HOLD per check, unresolved items, acceptance decision and date. Do not claim a named reviewer or approval until actually obtained. No actual private manifest values in repository. If any executable pin changes or review finds a blocker, return to targeted engineering and rerun affected/full regression as appropriate. If approved, recheck PR base and head, review final diff, merge #950 only into docs/tsos-v2-p01-source-baseline, verify post-merge tree equals reviewed executable pins and main is unchanged, then record Revision 56 scoped acceptance. No automatic merge.
+Record independent reviewer identity, reviewed head, scope, evidence, PASS/FAIL/HOLD per check, unresolved items, acceptance decision and date. Do not claim a named reviewer or approval until actually obtained. No actual private manifest values in repository. If any executable pin changes or review finds a blocker, return to targeted engineering and rerun affected/full regression as appropriate. Following the owner-authorized scoped alternative recorded below, recheck PR base and head, review final diff, merge #950 only into docs/tsos-v2-p01-source-baseline, verify post-merge tree equals reviewed executable pins and main is unchanged, then record Revision 56 scoped acceptance. No automatic merge.
 
 ## 2. Reconciliation with current main
 
@@ -32,8 +32,8 @@ Use [existing R1 preparation](B02_R1_EVIDENCE_AND_APPROVAL_PREPARATION.md) and [
 
 | Gate | Current disposition | Required closure |
 |---|---|---|
-| R1C independent scoped review | OPEN | Exact pin review and disposition in section 1 |
-| R1C isolated merge | HOLD | Review acceptance, tree/pin confirmation, master update |
+| R1C independent security/privacy review | OPEN | Independent disposition required before live operator or R2; not satisfied by isolated integration |
+| R1C isolated merge | AUTHORIZED / pending execution | Scoped AI-led acceptance, exact tree/pin confirmation, master update |
 | Backend compatibility | NOT VERIFIED | Separate isolated Firestore emulator/test environment evidence for readTime support, empty/progress frames, timestamp types and revocation; document emulator limits; no production endpoint |
 | Live operator adapter | NOT BUILT | Independently reviewed signed approval enforcement, fixed endpoint, effective least privilege, process and egress isolation, deadline/drain, redaction and billing accounting; synthetic factory is not usable as live operator |
 | Private approval | NOT APPROVED | Named owner/security reviewer/operator, project/database and deployed policy, exact actors and targets, approved max age, windows/caps, metrics/retention/stop owner; signed scope and expiry |
@@ -46,3 +46,8 @@ Before any live activity, privately populate the existing M3 packet and obtain d
 ## 5. Scope of this handoff
 
 Read-only GitHub review and documentation updates on isolated PR only. No fresh tests claimed, no cloud access, changes to main, application code, database, deployment workflow, dependency, IAM, Rules or production configuration. The 505-test checkpoint remains valid for the unchanged executable tree, not new documentation or live execution. Author-led technical review is not independent security certification.
+
+## 6. Owner-authorized scoped acceptance decision (26 November 2026)
+The owner explicitly directs AI-led review against documentation and business rules and further progress, after being told that the proposed authorization is limited to isolated integration and does not substitute for independent production security acceptance. Record this prospective narrow sequencing decision: permit merging the tested synthetic verification artifacts into the non-production architecture baseline under author-led acceptance, retaining independent security/privacy acceptance before R2/live work and all broader gates. No independent signature inferred; no change to existing Wave 1 authority or runtime policies.
+
+Re-fetched exact candidate 23756ab482fd5a56da211ff973c4eb6befb843f2: eight tested script blob pins match; comparison with tested 92fc9d630383da6b591540932225d64f6894bf59 contains three documentation changes only. Comparison with R55 base contains eight new verification scripts and three design/master documents only. Source review: synthetic project and manifest restrictions, fixed masks and bounded reservations, canonical source and legacy parity, scoped rejection and redaction; tested 505/505 owner evidence, not independently executed CI. Source and evidence establish limited offline acceptance only. Current authorization remains Tier 1; nonurgent historical insights T-1; direct premium 1:1 preserved; no production logic, data, identity authority, rate, attendance, billing, schema or migration changes. Progressive replacement section 3 retained. Main at 95b44babd7f3132b212b781eabeec000fced14c8 before integration. Independent review, actual backend protocol/consistency, process isolation, effective IAM, private operator approval, browser canaries and R2 all remain held. Scope verdict PASS for isolated integration only. Use expected-head merge and verify merged tree before claiming completion.
