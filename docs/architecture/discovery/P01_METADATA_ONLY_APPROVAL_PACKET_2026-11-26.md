@@ -1,6 +1,6 @@
 # P01.2 — restricted infrastructure metadata verification approval packet
 
-**PREPARED — NOT APPROVED — NOT EXECUTED.** Date 26 Nov 2026 IST. Pinned source main 701c7ec832dbe9c531964496fa09cd4a4948ddd2. Source .firebaserc default project tinysteps-react-v1 is a candidate, not confirmation of the active production context. The owner/security operator must verify and approve the exact environment and resource IDs privately before any request. This packet covers metadata only, distinct from M3 actor or database sampling approval. Existing stricter requirements prevail.
+**CURRENT STATUS: PARTIAL OPERATOR-REPORTED EXECUTION; remaining scope and independent acceptance on HOLD.** Historical prepared-only sections below do not override the revision 24 disposition. Date 26 Nov 2026 IST. Pinned source main 701c7ec832dbe9c531964496fa09cd4a4948ddd2. Source .firebaserc default project tinysteps-react-v1 is a candidate, not confirmation of the active production context. The owner/security operator must verify and approve the exact environment and resource IDs privately before any request. This packet covers metadata only, distinct from M3 actor or database sampling approval. Existing stricter requirements prevail.
 
 ## Proposed scope and minimum evidence
 
@@ -94,10 +94,10 @@ mget services "https://serviceusage.googleapis.com/v1/projects/$P01_PROJECT_NUMB
 # Optional enumeration, if separately selected.
 mget databases "$F/databases" 'databases(name,locationId,type),unreachable'
 mget database "$D" 'name,uid,locationId,type,databaseEdition,deleteProtectionState,versionRetentionPeriod,earliestVersionTime,pointInTimeRecoveryEnablement'
-mget indexes "$D/collectionGroups/$P01_COLLECTION_GROUP/indexes" 'indexes(name,queryScope,fields,state),nextPageToken' --data-urlencode 'pageSize=50'
+mget indexes "$D/collectionGroups/$P01_COLLECTION_GROUP/indexes" 'indexes(name,queryScope,fields,state),nextPageToken'
 mget field_overrides "$D/collectionGroups/$P01_COLLECTION_GROUP/fields" \
   'fields(name,indexConfig(usesAncestorConfig,indexes)),nextPageToken' \
-  --data-urlencode 'filter=indexConfig.usesAncestorConfig:false' --data-urlencode 'pageSize=50'
+  --data-urlencode 'filter=indexConfig.usesAncestorConfig:false'
 mget schedules "$D/backupSchedules" 'backupSchedules(name,retention,dailyRecurrence,weeklyRecurrence)'
 P01_DATABASE_UID=$(jq -er '.uid | select(type == "string" and length > 0)' "$P01_PRIVATE/database.json")
 mget backups "$F/locations/$P01_FIRESTORE_LOCATION/backups" 'backups(database,snapshotTime,expireTime,state),unreachable' \
@@ -145,3 +145,9 @@ API contract cross-check (public documentation, no live API invocation): the Fir
 Deferred, not approved: other 19 source composite-index groups, any additional field/TTL inventory, enabled-service and database enumeration, Rules source digest, Functions and Scheduler metadata and deployed digests, independent effective IAM evidence, provider metadata and later recovery exercises. Security review of effective operator permissions is mandatory before batch 1 and not replaced by a project policy snapshot. Plan subsequent bounded batches after review of the first result. Even a successful first batch is partial P01.2 evidence, not acceptance or permission to read application data.
 
 Private approval still required: executive owner approval reference; named existing metadata-only operator; independent security reviewer; exact project number, database ID/location, Rules release names, bucket/site and four group names/override group; effective IAM and quota scope; absolute start/expiry, cap and evidence retention. Confirm exclusions and optional Hosting disposition. Do not put identities, tokens or private manifests in Git or chat. No usable authenticated Cloud/Firebase metadata connector is available in this review environment. A designated operator must execute in their approved environment; Codex is optional, not required. Until then P01.2 remains HOLD, P01.5 application data and M3 remain separately held, and P02 is not authorized.
+
+## Revision 24 — correction and remaining scope (not executable approval)
+
+Supersedes the historical prepared-only status for the previously attempted subset. The owner-provided private execution evidence is partial; this document grants no authority to resume. Correct the illustrative Firestore composite-index and field-list requests by omitting explicit nonzero page size; the previously observed request error supports this candidate correction for the index request, not proof of live success for either endpoint. Retain nextPageToken in both masks. The backup-list template already uses REST filter databaseUid; retain it and validate identity/UID linkage and unreachable indicators. See [index list](https://docs.cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.indexes/list), [field list](https://docs.cloud.google.com/firestore/docs/reference/rest/v1/projects.databases.collectionGroups.fields/list) and [backup list](https://docs.cloud.google.com/firestore/docs/reference/rest/v1/projects.locations.backups/list). Do not use unreviewed pagination, retries or permission expansion.
+
+Remaining verification should first use privately reviewed existing evidence. Prioritize recoverability and security/deployment parity for the affected future change, then exact affected index groups and outstanding metadata only as required by approved acceptance scope. The owner and independent security reviewer must determine exact residual targets, credentials, retention, effective IAM, window and caps before a further run. No automatic approval, no new script execution, no completed inventory claim and no private infrastructure findings in Git. The historical illustrative commands are not a production-ready script.
