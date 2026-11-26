@@ -103,6 +103,8 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
       {annual?.throughDate && <p className="rounded-lg bg-slate-50 p-2 text-sm">Data through <strong>{showDay(annual.throughDate)}</strong> (IST). Updated once daily; today's activity is excluded.</p>}
       {tab === 'enrollments' && current?.throughDate && <p className="text-xs text-slate-600">Student totals as of {showDay(current.throughDate)}.</p>}
       {annual?.availableRecords && <p className="text-xs text-slate-600">Historical totals use available recorded dates. {annual.undatedRecords > 0 ? 'Some source records have missing dates or unresolved details and cannot be assigned reliably.' : 'No unresolved details were flagged in the supplied records.'}</p>}
+      {tab === 'leads' && !!annual?.conflictingInquiryDates && <p className="text-xs text-slate-600">Some copies of a recorded submission disagree on the date; the earliest available inquiry date is used.</p>}
+      {tab === 'enrollments' && !!annual?.correctionBasedAdmissions && <p className="text-xs text-slate-600">Some admission dates are based on corrected historical enrollment records.</p>}
       {tab === 'enrollments' && current?.availableRecords && current.unresolvedRecords > 0 && <p className="text-xs text-slate-600">Current totals exclude records with unresolved identity or status.</p>}
       {tab === 'enrollments' && <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {([['Active students', current?.activeStudents], ['Active enrollments', current?.activeEnrollments], ['Paused students', current?.pausedStudents], ['Retained students', current?.retainedStudents]] as const).map(([label, value]) =>
