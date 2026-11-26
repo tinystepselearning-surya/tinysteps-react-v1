@@ -318,3 +318,6 @@ export {
   registerNotificationToken,
   sendTestPushNotification,
 } from './notifications/classReminders';
+
+// Closed-day business analytics: capture once after midnight; publish at 01:00 IST.
+export { captureMonthlyBusinessTrendsDaily, refreshMonthlyBusinessTrendsDaily } from './scheduled/monthlyBusinessTrends';
