@@ -1,0 +1,58 @@
+name: TSOS V2 isolated D13 verification
+on:
+  push:
+    branches: [docs/tsos-v2-d13-isolated-verification]
+permissions:
+  contents: read
+jobs:
+  marker-resolver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: Verify exact Git history and resolver output
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="$(git rev-parse refs/remotes/origin/docs/tsos-v2-p01-source-baseline)"
+          main="$(git rev-parse refs/remotes/origin/main)"
+          functions="$(git rev-parse refs/remotes/origin/ci/functions-production)"
+          hosting="$(git rev-parse refs/remotes/origin/ci/hosting-production)"
+          rules="$(git rev-parse refs/remotes/origin/ci/firestore-rules-production)"
+          indexes="$(git rev-parse refs/remotes/origin/ci/firestore-indexes-production)"
+          git checkout --detach "$candidate"
+          echo "Candidate: $candidate" | tee -a "$GITHUB_STEP_SUMMARY"
+          export GITHUB_OUTPUT="$RUNNER_TEMP/tsos-impact"
+          node scripts/resolve-deployment-impact.mjs --before "$main" --functions-before "$functions" --hosting-before "$hosting" --firestore-rules-before "$rules" --firestore-indexes-before "$indexes" --sha "$candidate"
+          for result in functions_deployment_required=false functions_full_deployment=false functions_targets= functions_retired_targets= hosting_changed=false firestore_rules_changed=false firestore_indexes_changed=false; do
+            grep -Fx "$result" "$GITHUB_OUTPUT"
+          done
+  rules-emulators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: 0d2116137143b4a0f4db1f9e8426757c3cb018d4
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run Firestore and Storage Rules against a demo project
+        shell: bash
+        run: |
+          set -euo pipefail
+          unset FIREBASE_TOKEN GOOGLE_APPLICATION_CREDENTIALS
+          node -e 'const src=require("./firebase.json");require("node:fs").writeFileSync("firebase.d13.local.json",JSON.stringify({firestore:src.firestore,storage:src.storage,emulators:{firestore:{host:"127.0.0.1",port:8085},storage:{host:"127.0.0.1",port:9199},ui:{enabled:false},singleProjectMode:false}}))'
+          npx --yes firebase-tools@15.37.0 emulators:exec --config firebase.d13.local.json --project demo-tinysteps-m3-storage-parity --only firestore,storage 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8085 FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199 ./node_modules/.bin/vitest run --maxWorkers=2 src/tests/firestore src/tests/storage'
