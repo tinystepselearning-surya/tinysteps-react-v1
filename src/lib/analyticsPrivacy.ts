@@ -191,8 +191,31 @@ const CAMPAIGN_QUERY_KEYS = ['utm_source', 'utm_medium', 'utm_campaign'] as cons
 const CONTACT_VALUE = /(?:@|%40|(?:mailto|tel|javascript):|(?:\d[\s().+-]*){8,})/i;
 const UNSAFE_URL_KEYS = new Set(['pagelocation', 'pagereferrer', 'linkurl', 'url', 'href', 'referrer', 'formdestination']);
 
-function campaignLabel(value: string): boolean {
-  return /^[a-z0-9_-]{1,64}$/i.test(value) && !CONTACT_VALUE.test(value);
+// Untrusted inbound UTM values can look like ordinary names or opaque identifiers.
+// Keep reviewed channel vocabulary; campaign detail remains in first-party attribution
+// until an explicit, owner-reviewed campaign registry is available.
+const APPROVED_SOURCES = new Set(['google', 'bing', 'yahoo', 'duckduckgo', 'facebook', 'instagram', 'youtube', 'linkedin', 'whatsapp', 'chatgpt', 'perplexity', 'gemini', 'copilot', 'referral', 'direct', 'school-fair', 'newsletter', 'email', 'organic']);
+const APPROVED_MEDIA = new Set(['organic', 'cpc', 'ppc', 'paid', 'paid_search', 'paid_social', 'social', 'referral', 'email', 'display', 'affiliate', 'direct', 'none', 'sms', 'qr']);
+const APPROVED_CAMPAIGNS = new Set<string>(); // Populate only with reviewed, non-personal campaign labels.
+
+function campaignLabel(key: string, value: string): string | undefined {
+  if (!/^[a-z0-9_-]{1,64}$/i.test(value) || CONTACT_VALUE.test(value)) return undefined;
+  const normalized = value.toLowerCase();
+  const allowed = key.endsWith('source') ? APPROVED_SOURCES : key.endsWith('medium') ? APPROVED_MEDIA : APPROVED_CAMPAIGNS;
+  return allowed.has(normalized) ? normalized : undefined;
+}
+
+const SOURCE_CONTEXT_KEYS = new Set(['source', 'source_context', 'location', 'context', 'cta_location', 'cta_position', 'placement']);
+const APPROVED_CONTEXTS = new Set(['unknown', 'public_assessment_form', 'advisor_contact_form', 'trial_form', 'program_lead_form', 'book_demo_page', 'conversion_tracker', 'route_tracker', 'commercial_c5', 'commercial_c7', 'program_page', 'pricing_page', 'public_free_game', 'post_game_cta', 'hero_cta', 'floating_button', 'floating_assistant', 'floating_assistant_dock', 'event_timing_rum', 'header', 'footer', 'form', 'body', 'main', 'page', 'hero', 'sidebar', 'diagnostic', 'bottom_cta', 'inline', 'modal', 'group_phonics_page', 'group_grammar_page', 'group_speaking_page', 'contact', 'homepage', 'home', 'phonics', 'grammar', 'speaking', 'reading', 'general', 'resources', 'blog', 'pricing', 'course', 'courses', 'assessment', 'whatsapp', 'phone', 'email', 'navigation', 'desktop', 'mobile']);
+function safeSourceContext(value: string): string {
+  if (APPROVED_CONTEXTS.has(value)) return value;
+  // The assessment form can receive blog attribution constructed from the query.
+  // Preserve its known article, but never forward free-form family/position text.
+  if (value.startsWith('blog|')) {
+    const [, slug] = value.split('|');
+    return KNOWN_DYNAMIC_PATHS.has('/blog/' + slug) ? 'blog|' + slug : 'blog';
+  }
+  return 'other';
 }
 
 function publicPath(value: string): string | undefined {
@@ -210,7 +233,8 @@ export function analyticsPageContext(href: string, referrer: string) {
   const page = new URL(publicPath(url.pathname) || '/', url.origin);
   for (const key of CAMPAIGN_QUERY_KEYS) {
     const value = url.searchParams.get(key);
-    if (value && campaignLabel(value)) page.searchParams.set(key, value);
+    const approved = value && campaignLabel(key, value);
+    if (approved) page.searchParams.set(key, approved);
   }
 
   let safeReferrer = '';
@@ -261,10 +285,17 @@ export function safeAnalyticsParameters(
     }
 
     if (CAMPAIGN_KEYS.has(normalized)) {
-      if (typeof value === 'string' && campaignLabel(value)) safe[key] = value;
+      if (typeof value === 'string') {
+        const approved = campaignLabel(normalized, value);
+        if (approved) safe[key] = approved;
+      }
       continue;
     }
 
+    if (SOURCE_CONTEXT_KEYS.has(key)) {
+      if (typeof value === 'string') safe[key] = safeSourceContext(value);
+      continue;
+    }
     if (typeof value === 'string' && !CONTACT_VALUE.test(value) && !/\?|https?:\/\/|%3f/i.test(value)) {
       safe[key] = value;
     } else if (typeof value === 'boolean' || (typeof value === 'number' && Number.isFinite(value))) {
