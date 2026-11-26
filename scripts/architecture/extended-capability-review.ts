@@ -1,3 +1,4 @@
+import {reviewRow,isReviewId,isReviewInteger,REVIEW_MIN_TIME,REVIEW_MAX_TIME} from './offline-review-validation.ts';
 // Synthetic command/case review extension. No mutation, SDK, or live authorization.
 import {createHash} from 'node:crypto';
 import {parseTenantContract,parseOrganisationContract,parseCampusContract,inspectInstitutionalFixture} from './institutional-context-contracts.ts';
@@ -10,16 +11,11 @@ type Reason='INVALID'|'SCOPE'|'STALE'|'ROUTE'|'ACTOR'|'MEMBERSHIP'|'POLICY'|'TAR
 class Rejected extends Error{readonly reason:Reason;constructor(reason:Reason){super(reason);this.reason=reason;}}
 function need(v:unknown,reason:Reason):asserts v{if(!v)throw new Rejected(reason);}
 function row(v:unknown,keys:readonly string[],optional:readonly string[]=[]):Row{
-  need(v!==null&&typeof v==='object'&&!Array.isArray(v),'INVALID');
-  const p=Object.getPrototypeOf(v);need(p===Object.prototype||p===null,'INVALID');
-  const own=Reflect.ownKeys(v);need(own.length<=keys.length+optional.length,'INVALID');
-  const out:Row=Object.create(null);
-  for(const k of own){need(typeof k==='string'&&(keys.includes(k)||optional.includes(k)),'INVALID');const d=Object.getOwnPropertyDescriptor(v,k);need(d&&d.enumerable&&Object.hasOwn(d,'value'),'INVALID');out[k]=d.value;}
-  for(const k of keys)need(Object.hasOwn(out,k),'INVALID');return out;
+  const x=reviewRow(v,keys,optional);need(x,'INVALID');return x;
 }
-function id(v:unknown):string{need(typeof v==='string'&&v.trim()===v&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'INVALID');return v;}
-function int(v:unknown,min:number,max=Number.MAX_SAFE_INTEGER):number{need(typeof v==='number'&&Number.isSafeInteger(v)&&v>=min&&v<=max,'INVALID');return v;}
-function time(v:unknown):number{return int(v,-62135596800000,253402300799999);}
+function id(v:unknown):string{need(isReviewId(v),'INVALID');return v;}
+function int(v:unknown,min:number,max=Number.MAX_SAFE_INTEGER):number{need(isReviewInteger(v,min,max),'INVALID');return v;}
+function time(v:unknown):number{return int(v,REVIEW_MIN_TIME,REVIEW_MAX_TIME);}
 function scope(v:unknown):Scope{
   const s=row(v,['kind','tenantId'],['organisationId','campusId']);
   const tenantId=id(s.tenantId);
