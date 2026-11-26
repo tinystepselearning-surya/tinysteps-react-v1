@@ -149,8 +149,9 @@ function document(col,id,row){
 }
 async function run(selected,mutate=()=>{},options={}){
   const fixtures=selected.map(fixture);mutate(fixtures);
-  const actors=fixtures.map(f=>f.a),calls=[],wireErrors=[];
-  const server=new grpc.Server();let client;
+  const actors=fixtures.map(f=>f.a),calls=[],wireErrors=[],cancelled=[];
+  const server=new grpc.Server();let client,waitingQuery,failedQuery;
+  const abortController=new AbortController();
   function handler(method,call){
     const r=call.request,query=method==='runQuery';
     const col=query?r.structuredQuery?.from?.[0]?.collectionId:r.documents?.[0]?.split('/').at(-2);
@@ -160,12 +161,20 @@ async function run(selected,mutate=()=>{},options={}){
         r.documents[0]===parent+'/'+col+'/'+pointId(f.a,col));
       assert.ok(f);const idx=fixtures.indexOf(f);
       assert.ok(!calls.some(c=>c.idx===idx&&c.col===col));
-      calls.push({idx,col});
+      calls.push({idx,col});call.on('cancelled',()=>cancelled.push({idx,col}));
       if(col==='authAccessReadModels')assert.equal(r.readTime,undefined);else assert.deepEqual(r.readTime,time);
       if(query){
         assert.equal(r.parent,parent);assert.deepEqual(r.structuredQuery,{
           select:{fields:FIELD_MASKS[col].map(fieldPath=>({fieldPath}))},from:[{collectionId:col}],
           where:{fieldFilter:{field:{fieldPath:'personId'},op:'EQUAL',value:{stringValue:f.a.personId}}},limit:{value:51}});
+        if(options.queryFault&&idx===0){
+          if(col==='roleAssignments')failedQuery=call;else waitingQuery=call;
+          if(waitingQuery&&failedQuery)setImmediate(()=>{
+            if(options.queryFault==='abort')abortController.abort();
+            else failedQuery.emit('error',Object.assign(Error('synthetic unavailable'),{code:grpc.status.UNAVAILABLE}));
+          });
+          return;
+        }
         const rows=f.rows[col];
         if(!rows.length)call.write({readTime:time});
         for(const row of rows)call.write({document:document(col,row[col==='roleAssignments'?'roleAssignmentId':'organisationMembershipId'],row),readTime:time});
@@ -192,13 +201,15 @@ async function run(selected,mutate=()=>{},options={}){
     const start=performance.now(),clock=()=>Math.floor(performance.now()-start)+100;
     const result=await exerciseSyntheticTransport({scope:'synthetic-only',actors,startMs:100,endMs:300100,
       maxAttempts:actors.length*7,maxSlots:actors.length*107},{clock,
-      canonical:{sampler:auditApprovedPrincipals,buildAuthIdentityId:ids.buildAuthIdentityId,nowMs:()=>now,maxAgeMs:1000},
+      signal:abortController.signal,
+      canonical:{sampler:options.wrap?options.wrap(auditApprovedPrincipals):auditApprovedPrincipals,
+        buildAuthIdentityId:ids.buildAuthIdentityId,nowMs:options.nowMs??(()=>now),maxAgeMs:1000},
       open:t=>client[t.request.method](t.request.body,{timeout:t.timeoutMs,retry:null,retryRequestOptions:{retries:0,noResponseRetries:0,shouldRetryFn:()=>false}})});
     await sleep(100);
     assert.deepEqual(wireErrors,[]);assert.equal(result.counts.inFlight,0);
     assert.equal(calls.length,result.dispatched);
     assert.ok(!JSON.stringify(result).includes('synthetic-uid'));
-    return {result,calls};
+    return {result,calls,cancelled};
   }finally{server.forceShutdown();if(client)await client.close();}
 }
 for(const role of roles)test('canonical transport '+role,{timeout:15000},async()=>{
@@ -230,4 +241,42 @@ test('canonical transport stops second revoked actor',{timeout:15000},async()=>{
   const {result,calls}=await run(['parent','teacher','founder'],f=>f[1].rows.authIdentities.status='disabled');
   assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,1);assert.equal(result.returned,0);
   assert.equal(calls.length,14);assert.ok(calls.every(c=>c.idx<2));
+});
+
+for(const [name,mutate,opts] of [
+  ['future snapshot',()=>{},{nowMs:()=>now-1}],
+  ['projection newer than snapshot',f=>f[0].rows.authAccessReadModels.updatedAt={...time,nanos:124000000},{nowMs:()=>now+10}],
+  ['old snapshot',()=>{},{nowMs:()=>now+1001}]
+])test('canonical audit rejects '+name,{timeout:15000},async()=>{
+  const {result,calls}=await run(['parent','teacher'],mutate,opts);
+  assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
+  assert.equal(result.returned,0);assert.equal(calls.length,1);
+});
+for(const [name,change] of [
+  ['extra report field',r=>({...r,privateValue:'synthetic-private-value'})],
+  ['false canary claim',r=>({...r,authenticatedCanaries:'VERIFIED'})],
+  ['incorrect completed count',r=>({...r,results:r.results.map(x=>({...x,sdkGetCompleted:6}))})],
+  ['unexpected per-actor field',r=>({...r,results:r.results.map(x=>({...x,privateValue:'synthetic-private-value'}))})]
+])test('canonical audit rejects '+name,{timeout:15000},async()=>{
+  const {result,calls}=await run(['parent','teacher'],()=>{},{wrap:original=>async args=>change(await original(args))});
+  assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
+  assert.equal(result.code,'CANONICAL_REVIEW_REQUIRED');assert.equal(result.returned,0);
+  assert.equal(calls.length,7);assert.ok(!JSON.stringify(result).includes('synthetic-private-value'));
+});
+for(const fault of ['error','abort'])test('canonical audit drains parallel query '+fault,{timeout:15000},async()=>{
+  const {result,calls,cancelled}=await run(['parent','teacher'],()=>{},{queryFault:fault});
+  assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
+  assert.equal(result.returned,0);assert.equal(calls.length,5);
+  assert.equal(result.counts.reservedSlots,105);assert.equal(result.counts.unknown,2);
+  assert.equal(result.counts.inFlight,0);assert.equal(result.drainExpired,0);
+  assert.ok(cancelled.some(c=>c.col==='organisationMemberships'));
+  assert.equal(result.cancelled,fault==='abort'?2:1);
+});
+test('canonical audit rejects late freshness expiry',{timeout:15000},async()=>{
+  let wall=now;
+  const {result,calls}=await run(['parent','teacher'],()=>{},{nowMs:()=>wall,wrap:original=>async args=>{
+    const report=await original(args);wall=now+1001;return report;
+  }});
+  assert.equal(result.status,'STOPPED');assert.equal(result.canonicalCompleted,0);
+  assert.equal(result.returned,0);assert.equal(calls.length,7);
 });
