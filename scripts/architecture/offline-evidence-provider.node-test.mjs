@@ -57,7 +57,7 @@ function fixture(i=0){
 
 function seed(x=fixture(4)){return {request:x.request,evidence:x.evidence,route:x.route,fence:x.fence};}
 function model(x=fixture(4)){const p=create(seed(x));assert.ok(p);return p;}
-function evaluate(p,x){return p.consumer.evaluate(x.request,x.fence.personId,x.fence.at);}
+function evaluate(p,x){return p.consumer.evaluate(x.request,x.fence.personId);}
 function match(p,x,effect){assert.deepEqual(evaluate(p,x),{kind:'synthetic-match',effect,productionAuthorization:false,mutationPermitted:false,dataReturned:false});}
 function next(x,{revision=x.fence.revision+1,at=x.fence.at,epoch=x.fence.epoch}={}){
  const y=structuredClone(x);y.fence.revision=revision;y.fence.at=at;y.fence.epoch=epoch;y.route.epoch=epoch;y.evidence.observedAt=at;
@@ -65,15 +65,15 @@ function next(x,{revision=x.fence.revision+1,at=x.fence.at,epoch=x.fence.epoch}=
  for(const v of Object.values(y.evidence.institutional))v.revision=revision;
  y.evidence.approval.fingerprint=fingerprint(y.request,y.fence);return y;
 }
-test('operator and consumer separate; command match never permits mutation',()=>{const x=fixture(4),p=model(x);match(p,x,'mutation-intent-only');assert.deepEqual(Object.keys(p.consumer),['evaluate']);assert.deepEqual(Object.keys(p.operator),['publish','withdraw']);});
+test('operator and consumer separate; command match never permits mutation',()=>{const x=fixture(4),p=model(x);match(p,x,'mutation-intent-only');assert.deepEqual(Object.keys(p.consumer),['evaluate']);assert.deepEqual(Object.keys(p.operator),['publish','observeFence','withdraw']);});
 test('support case is read-preview only and returns no data',()=>{const x=fixture(6),p=model(x);match(p,x,'read-preview');});
 test('exact request binding rejects changed payload, operation, and target',()=>{const x=fixture(4),p=model(x);for(const k of ['operationId','targetId']){const y=structuredClone(x);y.request[k]='fixture-other';assert.equal(evaluate(p,y).reason,'MISMATCH');}x.request.payload.amountMinor++;assert.equal(evaluate(p,x).reason,'MISMATCH');});
-test('consumer cannot supply actor alias or stale/future tick',()=>{const x=fixture(4),p=model(x);assert.equal(p.consumer.evaluate(x.request,'fixture-other',1500).reason,'MISMATCH');for(const at of [1499,1501])assert.equal(p.consumer.evaluate(x.request,x.fence.personId,at).reason,'STALE');});
+test('consumer cannot supply actor alias or override operator clock',()=>{const x=fixture(4),p=model(x);assert.equal(p.consumer.evaluate(x.request,'fixture-other').reason,'MISMATCH');assert.equal(p.consumer.evaluate.length,2);assert.equal(p.operator.observeFence({...x.fence,at:1501}),false);for(const at of [1499,1500,1501])assert.equal(p.consumer.evaluate(x.request,x.fence.personId,at).reason,'UNAVAILABLE');});
 test('private immutable snapshot detached from supplied evidence',()=>{const x=fixture(4),p=model(x);x.evidence.grant.status='inactive';match(p,x,'mutation-intent-only');});
-test('strictly increasing generation and current tick update accepted',()=>{const x=fixture(4),p=model(x),y=next(x,{at:1501});assert.equal(p.operator.publish(seed(y)),true);assert.equal(evaluate(p,x).reason,'STALE');match(p,y,'mutation-intent-only');});
-test('same or lower revision and backwards time rejected',()=>{const x=fixture(4),p=model(x);assert.equal(p.operator.publish(seed(x)),false);assert.equal(p.operator.publish(seed(next(x,{revision:2}))),false);assert.equal(p.operator.publish(seed(next(x,{at:1499}))),false);});
-test('route epoch rollback rejected; increased epoch accepted',()=>{const x=fixture(4),p=model(x);assert.equal(p.operator.publish(seed(next(x,{epoch:3}))),false);const y=next(x,{epoch:5});assert.equal(p.operator.publish(seed(y)),true);match(p,y,'mutation-intent-only');});
-test('publication with revoked grant or stale nested source rejected',()=>{const x=fixture(4),p=model(x),y=next(x);y.evidence.grant.status='inactive';assert.equal(p.operator.publish(seed(y)),false);const z=next(x);z.evidence.tenantMembership.revision--;assert.equal(p.operator.publish(seed(z)),false);});
+test('strictly increasing generation and current tick update accepted',()=>{const x=fixture(4),p=model(x),y=next(x,{at:1501});assert.equal(p.operator.publish(seed(y)),true);match(p,y,'mutation-intent-only');assert.equal(p.operator.observeFence(y.fence),true);});
+test('same or lower revision and backwards time rejected',()=>{const x=fixture(4),p=model(x);assert.equal(p.operator.publish(seed(x)),false);assert.equal(p.operator.publish(seed(next(x,{revision:2}))),false);assert.equal(p.operator.publish(seed(next(x,{at:1499}))),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');});
+test('route epoch rollback closes; increased epoch accepted on a separate valid instance',()=>{const x=fixture(4),p=model(x);assert.equal(p.operator.publish(seed(next(x,{epoch:3}))),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');const q=model(x),y=next(x,{epoch:5});assert.equal(q.operator.publish(seed(y)),true);match(q,y,'mutation-intent-only');});
+test('publication with revoked grant or stale nested source closes the previous positive',()=>{const x=fixture(4),p=model(x),y=next(x);y.evidence.grant.status='inactive';assert.equal(p.operator.publish(seed(y)),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');const q=model(x),z=next(x);z.evidence.tenantMembership.revision--;assert.equal(q.operator.publish(seed(z)),false);assert.equal(evaluate(q,x).reason,'UNAVAILABLE');});
 test('operator cannot switch target or operation within provider instance',()=>{const x=fixture(4),p=model(x),y=next(x);y.request.operationId='fixture-other';y.evidence.approval.fingerprint=fingerprint(y.request,y.fence);assert.equal(p.operator.publish(seed(y)),false);assert.equal(p.operator.publish(seed(next(fixture(6)))),false);});
 test('withdraw requires higher revision and prevents all future matches and refresh',()=>{const x=fixture(4),p=model(x);assert.equal(p.operator.withdraw(3),false);assert.equal(p.operator.withdraw(4),true);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');assert.equal(p.operator.publish(seed(next(x,{revision:5}))),false);});
 test('legacy routing cannot seed successor provider',()=>{const x=fixture(4);Object.assign(x.route,{phase:'legacy',decisionLane:'v1',writerLane:'v1',handoff:'none'});assert.equal(create(seed(x)),null);});
@@ -81,3 +81,44 @@ test('canonical exact request supports property reordering',()=>{const x=fixture
 test('malformed proxy or getter evidence rejected without invocation',()=>{let invoked=false;const x=fixture(4);Object.defineProperty(x.evidence,'principal',{enumerable:true,get(){invoked=true;return {};}});assert.equal(create(seed(x)),null);assert.equal(invoked,false);const prox=new Proxy({},{getPrototypeOf(){invoked=true;return null;}});assert.equal(reviewRow(prox,[]),null);assert.equal(create(prox),null);assert.equal(invoked,false);});
 test('bounded copy accepts dense arrays but rejects sparse arrays and aliases',()=>{const v=copyReviewFixture({fields:['a','b']});assert.ok(Object.isFrozen(v.fields));assert.throws(()=>copyReviewFixture({fields:Array(2)}));const a={id:'a'};assert.throws(()=>copyReviewFixture({x:a,y:a}));});
 test('bad seed operation type rejected safely',()=>{const x=fixture(4);x.fence.operation=7;assert.equal(create(seed(x)),null);});
+
+test('revoked principal, membership and approval each invalidate previous match',()=>{
+  for(const revoke of [y=>{y.evidence.principal.authStatus='inactive';},y=>{y.evidence.tenantMembership.record.status='inactive';},y=>{y.evidence.approval.status='inactive';}]){
+    const x=fixture(4),p=model(x),y=next(x);match(p,x,'mutation-intent-only');revoke(y);
+    assert.equal(p.operator.publish(seed(y)),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+  }
+});
+test('authoritative malformed evidence closes without invoking getter',()=>{
+  const x=fixture(4),p=model(x),y=next(x);let invoked=false;
+  Object.defineProperty(y.evidence,'principal',{enumerable:true,get(){invoked=true;return {};}});
+  assert.equal(p.operator.publish(seed(y)),false);assert.equal(invoked,false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+});
+test('exact duplicate and delayed publication cannot roll back or close current match',()=>{
+  const x=fixture(4),p=model(x),y=next(x);assert.equal(p.operator.publish(seed(y)),true);
+  assert.equal(p.operator.publish(seed(y)),false);assert.equal(p.operator.publish(seed(x)),false);match(p,y,'mutation-intent-only');
+});
+test('same revision conflicting publication closes',()=>{
+  const x=fixture(4),p=model(x),y=structuredClone(x);y.evidence.grant.status='inactive';
+  assert.equal(p.operator.publish(seed(y)),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+});
+test('unrelated valid binding cannot revoke current provider',()=>{
+  const x=fixture(4),p=model(x),y=next(fixture(6));assert.equal(p.operator.publish(seed(y)),false);
+  assert.equal(p.operator.observeFence(y.fence),false);match(p,x,'mutation-intent-only');
+});
+test('operator current fence must match every freshness coordinate',()=>{
+  for(const patch of [{at:1501},{at:1499},{revision:4},{revision:2},{epoch:5},{epoch:3}]){
+    const x=fixture(4),p=model(x);assert.equal(p.operator.observeFence(x.fence),true);
+    assert.equal(p.operator.observeFence({...x.fence,...patch}),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+  }
+});
+test('unknown or malformed operator observation fails closed',()=>{
+  for(const f of [null,{}, {personId:'fixture-person-a',at:'1500'}]){
+    const x=fixture(4),p=model(x);assert.equal(p.operator.observeFence(f),false);assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+  }
+});
+test('invalidated instance cannot reopen via later positive publication or matching observation',()=>{
+  const x=fixture(4),p=model(x),y=next(x);y.evidence.grant.status='inactive';
+  assert.equal(p.operator.publish(seed(y)),false);
+  const z=next(x,{revision:5});assert.equal(p.operator.publish(seed(z)),false);assert.equal(p.operator.observeFence(z.fence),false);
+  assert.equal(evaluate(p,x).reason,'UNAVAILABLE');
+});
