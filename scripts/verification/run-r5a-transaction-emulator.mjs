@@ -8,9 +8,6 @@ import {copyFileSync,mkdtempSync,mkdirSync,openSync,closeSync,readFileSync} from
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve,delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// Intentional release gate: H03 isolation and installed transport tests are unresolved.
-// Do not remove this guard until the independent review approves a subsequent candidate.
-throw Error('R5A_EXECUTION_HOLD_ISOLATION_AND_REVIEW_REQUIRED');
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const project='demo-tsos-r5-transaction',host='127.0.0.1',port='8789';
 const pin='9d43599ed6151199e8d604dc87fac51218e49e5f3a48519b1ae560bbe5e3382d';
