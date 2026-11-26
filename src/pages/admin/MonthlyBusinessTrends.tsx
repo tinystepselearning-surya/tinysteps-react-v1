@@ -84,7 +84,7 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Monthly business trends">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-lg font-semibold">Monthly business trends</h3>
-          <p className="text-sm text-slate-600">Calendar months (IST). Verified aggregate documents only; no operational queries.</p></div>
+          <p className="text-sm text-slate-600">Calendar months (IST). Enquiries received, class charges billed and enrollment movement.</p></div>
         <div className="flex items-center gap-2">
           <label htmlFor="business-trends-year">Year</label>
           <select id="business-trends-year" className="rounded border p-2" value={year} onChange={(e) => setYear(e.target.value)}>
@@ -99,6 +99,8 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
       {loading && <p role="status">Loading aggregate documents…</p>}
       {error && <p role="alert" className="text-amber-800">An aggregate could not be fetched. Refresh to retry; no raw-data fallback is used.</p>}
       {!loading && !annual && <p role="status" className="text-amber-800">Verified historical analytics are not available for this year.</p>}
+      {annual?.availableRecords && <p className="text-xs text-slate-600">Historical totals use available recorded dates. {annual.undatedRecords > 0 ? 'Some source records have missing dates or unresolved details and cannot be assigned reliably.' : 'No unresolved details were flagged in the supplied records.'}</p>}
+      {tab === 'enrollments' && current?.availableRecords && current.unresolvedRecords > 0 && <p className="text-xs text-slate-600">Current totals exclude records with unresolved identity or status.</p>}
       {tab === 'enrollments' && <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
         {([['Active students', current?.activeStudents], ['Active enrollments', current?.activeEnrollments], ['Paused students', current?.pausedStudents], ['Retained students', current?.retainedStudents]] as const).map(([label, value]) =>
           <div key={label} className="rounded-lg border p-3"><p className="text-xs text-slate-600">{label}</p><p className="text-xl font-semibold">{count(value)}</p></div>)}
