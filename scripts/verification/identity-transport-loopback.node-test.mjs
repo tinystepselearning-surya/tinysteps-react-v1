@@ -10,6 +10,21 @@ import {createHash} from 'node:crypto';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {FIELD_MASKS} from './identity-verification-safety-core.mjs';
 
+// Validate the sanitized process before loading third-party SDK modules.
+// Node's isolated test worker adds NODE_TEST_CONTEXT. macOS may inject
+// __CF_USER_TEXT_ENCODING even after env -i. Remove only the latter;
+// preserve the runner marker and reject all other unexpected variables.
+assert.equal(process.env.TSOS_OFFLINE_LOOPBACK,'1','use documented isolated command');
+const allowedEnv=new Set(['PATH','HOME','TMPDIR','TSOS_OFFLINE_LOOPBACK','TZ']);
+for(const key of Object.keys(process.env)){
+  if(allowedEnv.has(key))continue;
+  if(key==='NODE_TEST_CONTEXT'&&process.env[key]==='child-v8')continue;
+  if(key==='__CF_USER_TEXT_ENCODING'&&process.platform==='darwin'){
+    delete process.env[key];continue;
+  }
+  throw Error('unexpected environment key: '+key);
+}
+
 const functionsDir=fileURLToPath(new URL('../../functions/',import.meta.url));
 const req=createRequire(join(functionsDir,'package.json'));
 const lock=readFileSync(join(functionsDir,'package-lock.json'));
@@ -35,14 +50,6 @@ const grpc=gax.req('@grpc/grpc-js');
 const loader=gax.req('@grpc/proto-loader');
 const {GoogleAuth,OAuth2Client}=gax.req('google-auth-library');
 const {v1:{FirestoreClient}}=req('@google-cloud/firestore');
-// Require sanitized execution to avoid ambient cloud credentials, proxies,
-// mTLS, emulator/endpoint overrides or tracing. Explicit auth + insecure
-// loopback channel are local test settings, never production defaults.
-assert.equal(process.env.TSOS_OFFLINE_LOOPBACK,'1','use documented isolated command');
-for(const key of Object.keys(process.env)){
-  assert.ok(['PATH','HOME','TMPDIR','TSOS_OFFLINE_LOOPBACK','TZ'].includes(key),
-    'unexpected environment key: '+key);
-}
 const protoRoot=join(fsdk.dir,'build','protos');
 const def=loader.loadSync(join(protoRoot,'google/firestore/v1/firestore.proto'),{
   includeDirs:[protoRoot],keepCase:false,longs:String,enums:String,defaults:false,oneofs:false
