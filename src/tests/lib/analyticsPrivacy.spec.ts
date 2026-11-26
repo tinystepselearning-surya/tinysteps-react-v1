@@ -67,4 +67,52 @@ describe('web analytics privacy', () => {
       ...expected, page_path: '/pricing',
     }));
   });
+
+  it('rejects unknown keys and Google tag control fields at the outbound boundary', async () => {
+    const { trackEvent } = await import('../../lib/analytics');
+    trackEvent('generate_lead', {
+      form_name: 'public_assessment_form', lead_type: 'parent_assessment_request',
+      value: 1, unexpected_field: 'Synthetic Private Name',
+      send_to: 'G-UNAPPROVED', user_id: 'synthetic-user',
+      page_location: 'https://invalid.test/private', page_referrer: 'https://invalid.test/private',
+      item_id: 'unrelated-field', event_callback: 'unexpected',
+    });
+    const [, , params] = gtag.mock.lastCall!;
+    expect(params).toMatchObject({ form_name: 'public_assessment_form', value: 1 });
+    for (const key of ['unexpected_field', 'send_to', 'user_id', 'item_id', 'event_callback']) {
+      expect(params).not.toHaveProperty(key);
+    }
+    expect(JSON.stringify(params)).not.toMatch(/Synthetic Private Name|G-UNAPPROVED|invalid\.test/);
+  });
+
+  it('does not disclose unregistered dynamic route segments or arbitrary article slugs', async () => {
+    const { analyticsPageContext, safeAnalyticsParameters } = await import('../../lib/analyticsPrivacy');
+    const context = analyticsPageContext(
+      'https://tinystepslearning.com/blog/synthetic-private-name?token=synthetic',
+      'https://tinystepslearning.com/courses/synthetic-private-id',
+    );
+    expect(context).toEqual({
+      page_location: 'https://tinystepslearning.com/blog',
+      page_referrer: 'https://tinystepslearning.com/courses',
+    });
+    expect(safeAnalyticsParameters({
+      page_path: '/resources/grammar/synthetic-private-name',
+      article_slug: 'synthetic-private-name',
+      destination_path: '/courses/phonics-foundation',
+    }, 'blog_article_view')).toEqual({
+      page_path: '/resources/grammar',
+      destination_path: '/courses/phonics-foundation',
+    });
+  });
+
+  it('categorizes raw DOM labels without disclosing their text', async () => {
+    const { safeAnalyticsParameters } = await import('../../lib/analyticsPrivacy');
+    expect(safeAnalyticsParameters({
+      cta_label: 'Book an assessment for Synthetic Private Name',
+      link_label: 'Synthetic Private Name',
+      page_title: 'Synthetic Private Name',
+      error_message: 'Synthetic Private Name',
+      interaction_target: 'Synthetic Private Name',
+    }, 'funnel_cta_click')).toEqual({ cta_label: 'assessment', link_label: 'other' });
+  });
 });
