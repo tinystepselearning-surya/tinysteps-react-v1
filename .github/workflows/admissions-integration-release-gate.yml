@@ -4,6 +4,12 @@ on:
   pull_request:
     paths:
       - 'src/pages/admin/**'
+      # Monthly Business Trends has its own mandatory validation workflow.
+      # Mixed changes still trigger this gate via any other matching admissions/admin path.
+      - '!src/pages/admin/AnalyticsDashboardV3.tsx'
+      - '!src/pages/admin/MonthlyBusinessTrends.tsx'
+      - '!src/pages/admin/analyticsReadPlan.ts'
+      - '!src/pages/admin/monthlyBusinessAnalytics.ts'
       - 'src/services/leadCommunicationsService.ts'
       - 'src/services/leadsAdminService.ts'
       - 'src/lib/callFunctions.ts'
