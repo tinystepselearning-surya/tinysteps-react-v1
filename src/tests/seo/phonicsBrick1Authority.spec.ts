@@ -76,11 +76,15 @@ describe('Phonics Brick 1 high-intent authority guardrails', () => {
     for (const href of [
       '/curriculum?tab=phonics',
       '/class-samples',
+      '/team',
+      '/faq',
       '/phonics-fees-india',
       '/best-online-phonics-classes-for-kids-in-india',
     ]) {
       expect(page, href).toContain(href);
     }
+    expect(page).toContain('Meet our educators and teaching standards');
+    expect(page).toContain('Read parent FAQs and policies');
   });
 
   it('exposes AEO FAQ answers and machine-readable GEO criteria from the same visible concepts', () => {
