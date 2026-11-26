@@ -2009,6 +2009,14 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
       toast({ title: 'Select an enrollment', variant: 'destructive' });
       return;
     }
+    if (isPastEnrollmentStatus(normalizeEnrollmentStatus(selectedEnrollment.status))) {
+      toast({
+        title: 'This enrollment has ended',
+        description: 'Keep this course history unchanged. Add a new course enrollment, then save its Teams link and timetable.',
+        variant: 'destructive',
+      });
+      return;
+    }
 
     const enrollStart = parseISODateOnly(enrollmentStartDate);
     const classStart = parseISODateOnly(classesStartDate);
@@ -3415,6 +3423,13 @@ export default function StudentList({ onEdit, onDelete, onAssignCourse }: Studen
                   <div className="text-xs text-gray-500 mt-1">
                     Tip: Assign course + teacher first if needed.
                   </div>
+                  {selectedScheduleIsTerminal ? (
+                    <div role="alert" className="mt-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                      This course enrollment is {selectedScheduleStatus}. Its history is protected and its timetable cannot be changed.
+                      To start a different course, close this dialog and use the student's Assign Course action to create a new enrollment.
+                      Select that active enrollment here to save its Teams link and weekly timetable.
+                    </div>
+                  ) : null}
                 </div>
 
                 <div>
