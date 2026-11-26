@@ -1,4 +1,4 @@
-# P01.1-D8 — consolidated source record catalogue, revision 5
+# P01.1-D8 — consolidated source record catalogue, revision 6
 
 **Status:** source catalogue seed, not a final metadata registry. Main 701c7ec832dbe9c531964496fa09cd4a4948ddd2; 26 November 2026 IST. Draft #933 on #932. No production access, runtime changes, schema changes, data reads, migration IDs or permanent record/item IDs assigned. Reuses D1–D7 and source Rules; new helper evidence below. Live cardinality, field presence, requiredness, retention and deployed authorization remain unverified for every row.
 
@@ -283,3 +283,7 @@ Existing academic audit collector explicitly reads seven additional collection p
 ## D13 closure delta
 
 Reclassified five historical paths with source lineage: Meta WhatsApp unmatched intake, weekly and monthly student reports, CSV import jobs and parent payment confirmations. 175 structural paths, 165 scoped, 10 unresolved (three Rules-only and seven academic probes). Read [D13 closure and acceptance evidence](P01_D13_CLOSURE_AND_BOUNDED_COLLECTOR_2026-11-26.md) for PhonePe, skill statistics, attendance and Firestore REST dependencies. No data retirement or access approval is implied.
+
+## P01 measured verification follow-up
+
+All ten remaining unresolved paths were reviewed. The historical Admin beta analytics reader provides historical context for `ai-error-logs`. Current operational owners and deployed usage for the two AI log paths and `config/payments` remain unverified. The seven planned academic root names are bounded here to source inventory references. They do not establish production resources. No catalogue denominator change. See [measured verification and acceptance](P01_MEASURED_VERIFICATION_AND_ACCEPTANCE_2026-11-26.md) for per-path disposition and responsible roles.

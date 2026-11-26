@@ -34,3 +34,85 @@ Owner/security reviewer: [not designated]; authorized metadata operator: [not de
 Return privacy-safe matrix of surface, expected source configuration, observed metadata, timestamp, resource/revision identifier safe to publish, evidence provenance, PASS/FAIL/INCONCLUSIVE/NOT ACCESSED, owner and gap. Compare source vs observed rather than assume historical M3 inventory is current. No application data coverage, role parity, backup restore success, latency/cost baseline or production readiness claim from metadata alone. Any configuration mismatch is a finding, not authorization to fix. Metadata-only verification cannot close P01.3–P01.9 or M3.
 
 Existing [M3 approval packet](../wave-1/IDENTITY_R5_M3_PRODUCTION_CANARY_APPROVAL_PACKET.md) remains PREPARED NOT APPROVED and separate; migration ledger at pinned main rechecked M3 verification_in_progress, finalExitGate not_attempted, productionMutationsAuthorized false. Any future approved bounded Firestore sample requires separate exact fixtures/fields/budgets, and any canary requires designated actors/legitimate sessions and existing M3 rules. P01.2 remains HOLD pending explicit approval and usable authorized operator environment; no access attempted. Rollback of this packet is docs-only; no live changes.
+
+## Revision 20 operator procedure
+
+**Approval and ownership.** The Infrastructure Owner supplies the exact project ID and project number, database IDs and locations, Rules release names, bucket, Hosting site, Function names/generations/locations, Scheduler job names and the request window in a private approval record. Security independently reviews effective permissions, inherited access, quota project and expiry. A pre-existing authorized identity is required. This procedure grants nothing. Treat inherited data or write privileges as a blocker for the metadata operator. Endpoint parameters below come from the signed scope. Run no live request until it is complete.
+
+| Approved surface | Minimum service permissions for calls below |
+|---|---|
+| Resource Manager | `resourcemanager.projects.get` for exact project |
+| Service Usage | `serviceusage.services.list` for approved enabled-service page. `serviceusage.services.use` on the approved quota project only if required. |
+| Firestore | `datastore.databases.getMetadata` for each database. `datastore.databases.list` only if database enumeration is separately selected. `datastore.schemas.list` for indexes. `datastore.backupSchedules.list` and `datastore.backups.list` for their corresponding calls. |
+| Firebase Rules | `firebaserules.releases.get`. Optional `firebaserules.rulesets.get` only if the release source digest is explicitly authorized. |
+| Functions and Scheduler | `cloudfunctions.functions.get`, `cloudscheduler.jobs.get`. Scheduler target bodies and headers stay excluded. Do not add `cloudscheduler.jobs.fullView`. |
+| Cloud Storage | `storage.buckets.get` on the approved bucket, without object IAM permissions. |
+| Firebase Hosting | `firebasehosting.sites.get` via an already authorized Hosting Viewer (`roles/firebasehosting.viewer`). Hosting does not support a custom role for this access. Review any extra role permissions before use and omit Hosting if the role is outside the approved scope. |
+| IAM verification | Security reviewer verifies effective scope before execution using existing IAM review access. A direct project policy check, if separately approved, requires `resourcemanager.projects.getIamPolicy`; it does not establish inherited permissions on its own. This is outside the command batch. |
+| External providers | Remain out of this executable scope until an owner approves a provider-specific least-privilege plan. |
+
+Sources: [Firestore Native IAM](https://docs.cloud.google.com/firestore/native/docs/security/iam), [Firebase IAM](https://firebase.google.com/docs/projects/iam/permissions/), [Google Cloud authentication](https://docs.cloud.google.com/docs/authentication/rest), [Service Usage list](https://docs.cloud.google.com/service-usage/docs/reference/rest/v1/services/list), [Functions get](https://docs.cloud.google.com/functions/docs/reference/rest/v2/projects.locations.functions/get), [Scheduler get](https://docs.cloud.google.com/scheduler/docs/reference/rest/v1beta1/projects.locations.jobs/get), [Storage get](https://docs.cloud.google.com/storage/docs/json_api/v1/buckets/get), [Hosting live channel get](https://firebase.google.com/docs/reference/hosting/rest/v1beta1/sites.channels/get).
+
+### Exact commands for an approved operator
+
+Stage the private variables below through the approved operator environment, without storing values in Git. Use a new Bash process in a private working directory with command tracing and history recording disabled. Use only the lines for approved surfaces. One call per exact resource and location. The count covers metadata API requests, separate from credential issuance. Check account locally with `gcloud auth list --filter=status:ACTIVE --format='value(account)'`, match privately to the named operator, and confirm the approved time window and evidence retention. The first HTTP result must match both project identifiers and show an active project. The first mismatch, permission or endpoint error stops the run. No implicit pagination or retries.
+
+```bash
+set +x
+set -euo pipefail
+umask 077
+: "${P01_ACCOUNT:?}" "${P01_PROJECT:?}" "${P01_PROJECT_NUMBER:?}"
+: "${P01_APPROVAL_REFERENCE:?}"
+P01_PRIVATE=$(mktemp -d)
+trap 'unset P01_TOKEN; rm -rf -- "$P01_PRIVATE"' EXIT
+P01_TOKEN=$(gcloud auth print-access-token --account="$P01_ACCOUNT" --quiet)
+P01_START=$SECONDS
+P01_CALLS=0
+mget() {
+  local label=$1 url=$2 fields=$3
+  shift 3
+  (( P01_CALLS < 40 && SECONDS - P01_START < 1185 ))
+  P01_CALLS=$((P01_CALLS + 1))
+  local quota=()
+  if [[ -n ${P01_QUOTA_PROJECT:-} ]]; then
+    quota=(-H "X-Goog-User-Project: $P01_QUOTA_PROJECT")
+  fi
+  printf 'header = "Authorization: Bearer %s"\n' "$P01_TOKEN" |
+    curl --disable --config - --silent --show-error --fail --proto '=https' \
+      --retry 0 --max-time 15 --get "${quota[@]}" --data-urlencode "fields=$fields" \
+      "$@" "$url" --output "$P01_PRIVATE/$label.json"
+}
+mget project "https://cloudresourcemanager.googleapis.com/v3/projects/$P01_PROJECT" 'name,projectId,state'
+jq -e --arg id "$P01_PROJECT" --arg name "projects/$P01_PROJECT_NUMBER" \
+  '.projectId == $id and .name == $name and .state == "ACTIVE"' "$P01_PRIVATE/project.json" >/dev/null
+
+# Enable only approved calls. Inputs below are the exact authorized resource names.
+F="https://firestore.googleapis.com/v1/projects/$P01_PROJECT"
+D="$F/databases/$P01_DATABASE" # URL-encode the ID in this variable, e.g. %28default%29.
+mget services "https://serviceusage.googleapis.com/v1/projects/$P01_PROJECT_NUMBER/services" \
+  'services(config(name),state),nextPageToken' --data-urlencode 'filter=state:ENABLED' --data-urlencode 'pageSize=50'
+# Optional enumeration, if separately selected.
+mget databases "$F/databases" 'databases(name,locationId,type),unreachable'
+mget database "$D" 'name,uid,locationId,type,databaseEdition,deleteProtectionState,versionRetentionPeriod,earliestVersionTime,pointInTimeRecoveryEnablement'
+mget indexes "$D/collectionGroups/$P01_COLLECTION_GROUP/indexes" 'indexes(name,queryScope,fields,state),nextPageToken' --data-urlencode 'pageSize=50'
+mget field_overrides "$D/collectionGroups/$P01_COLLECTION_GROUP/fields" \
+  'fields(name,indexConfig(usesAncestorConfig,indexes)),nextPageToken' \
+  --data-urlencode 'filter=indexConfig.usesAncestorConfig:false' --data-urlencode 'pageSize=50'
+mget schedules "$D/backupSchedules" 'backupSchedules(name,retention,dailyRecurrence,weeklyRecurrence)'
+P01_DATABASE_UID=$(jq -er '.uid | select(type == "string" and length > 0)' "$P01_PRIVATE/database.json")
+mget backups "$F/locations/$P01_FIRESTORE_LOCATION/backups" 'backups(database,snapshotTime,expireTime,state),unreachable' \
+  --data-urlencode "filter=databaseUid=$P01_DATABASE_UID"
+mget rules "https://firebaserules.googleapis.com/v1/projects/$P01_PROJECT/releases/$P01_RULES_RELEASE" 'name,rulesetName,updateTime'
+mget bucket "https://storage.googleapis.com/storage/v1/b/$P01_BUCKET" \
+  'name,location,storageClass,versioning,softDeletePolicy,retentionPolicy,iamConfiguration,lifecycle(rule(action(type),condition(age,numNewerVersions,isLive)))' --data-urlencode 'projection=noAcl'
+mget hosting "https://firebasehosting.googleapis.com/v1beta1/sites/$P01_SITE/channels/live" \
+  'name,updateTime,release(name,type,releaseTime,version(name,status))'
+mget function "https://cloudfunctions.googleapis.com/v2/projects/$P01_PROJECT/locations/$P01_FUNCTION_REGION/functions/$P01_FUNCTION" \
+  'name,environment,state,updateTime,buildConfig(runtime),serviceConfig(revision),eventTrigger(eventType,triggerRegion)'
+mget scheduler "https://cloudscheduler.googleapis.com/v1beta1/projects/$P01_PROJECT/locations/$P01_JOB_REGION/jobs/$P01_JOB" \
+  'name,schedule,timeZone,state'
+```
+
+For each additional approved resource supply a distinct label to avoid overwriting private evidence. For named Rules releases, preserve the separators in the exact approved release ID. If separately authorized to hash Rules source, read the exact `rulesetName` returned for the same project with `mget ruleset "https://firebaserules.googleapis.com/v1/$P01_RULESET_NAME" 'source(files(name,content))'`. Canonically sort files by name, serialize the file array with `jq -cS '.source.files | sort_by(.name)'`, and hash the resulting bytes with `shasum -a 256`. Retain only the digest and compare against the local source normalized the same way. Delete temporary source at exit. The command batch never fetches function environment variables, scheduler targets, objects or documents. The single-field line covers explicitly overridden indexes for the exact approved group. TTL configuration, if approved, uses a separate counted call with filter `ttlConfig:*` and a mask of `fields(name,ttlConfig),nextPageToken`. The Cloud Storage lifecycle mask omits path/object-specific conditions. Keep those dimensions unverified if they need broader scope.
+
+Review returned next-page indicators and database or backup `unreachable` entries in private output. Missing surfaces, denied requests, partial results and unverified deployment digests retain distinct statuses. Do not rerun an unsupported mask without review. Hosting and Functions metadata identifiers alone do not establish a Git commit. Document any unavailable required field as unverified. If the host requires quota billing, the security reviewer must authorize the quota project explicitly before any request. Remove temporary output on exit and retain only approved sanitized aggregates.
