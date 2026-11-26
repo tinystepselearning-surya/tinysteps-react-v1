@@ -1,10 +1,10 @@
-# B00 — first implementation acceptance packet (revision 34)
+# B00 — first implementation acceptance packet (revision 35)
 
-**Status:** All eight architecture owner decisions confirmed, including the isolated B01-A scope. Independent review and formal sequencing amendment remain open. No production access or effective phase authorization. 26 November 2026 IST.
+**Status:** All eight architecture owner decisions confirmed, including the isolated B01-A scope. Owner sequencing amendment approved for isolated B01-A development and testing only; independent review mandatory before merge/integration. No production access or other phase authorization. 26 November 2026 IST.
 
 ## Decision requested
 
-Approve a prospective, narrowly scoped sequencing amendment permitting **only an isolated P03 engineering-tooling increment (B01-A)** after independent review of this packet and named owner approval. Do not treat P01 as passed. Existing v1 and programme gates remain controlling unless this amendment is explicitly adopted. Alternatively retain original P01 -> P02 -> P03 sequence. General support for the roadmap is not the required signature.
+Approve a prospective, narrowly scoped sequencing amendment permitting **only an isolated P03 engineering-tooling increment (B01-A)** before independent review, under the explicit owner amendment below; independent review required before merge or integration. Do not treat P01 as passed. Existing v1 and programme gates remain controlling unless this amendment is explicitly adopted. Alternatively retain original P01 -> P02 -> P03 sequence. General support for the roadmap is not the required signature.
 
 Sources: [programme](../SCHOOL_OS_ENTERPRISE_IMPLEMENTATION_PROGRAMME_V2.md), [M04](M04_INTEGRATED_ARCHITECTURE_VALIDATION_AND_BUILD_PLAN.md), [registry v0.6](../registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json), [discovery acceptance](../discovery/P01_DISCOVERY_ACCEPTANCE_HANDOFF_2026-11-26.md), [measured verification](../discovery/P01_MEASURED_VERIFICATION_AND_ACCEPTANCE_2026-11-26.md). Existing approval packets for metadata, bounded data and M3 canaries remain separate.
 
@@ -13,7 +13,8 @@ Sources: [programme](../SCHOOL_OS_ENTERPRISE_IMPLEMENTATION_PROGRAMME_V2.md), [M
 | Evidence | B01-A | Required before |
 |---|---|---|
 | Exact registry baseline and affected repository/toolchain lineage | Required now | B01-A code |
-| Independent reviewer and named owner; explicit sequencing amendment | Required now | B01-A code |
+| Explicit owner sequencing amendment | Approved in revision 35 | B01-A code only |
+| Independent reviewer and written acceptance | Mandatory before merge/integration | B01-A exit |
 | Cloud metadata, deployment parity, IAM/Rules, backup/PITR | Proposed defer only for isolated tooling; not accepted | affected live operations or release under existing P01/P04 gates |
 | Actual record coverage, references, duplicates and historical type mappings | No live data in B01-A; unresolved fields marked hold | affected schema adoption and migration |
 | M3 role canaries, tenant authorization and revocation | No auth/runtime behavior in B01-A | affected access implementation and cutover; original M3 holds |
@@ -48,16 +49,16 @@ Owner reviewed the architecture overview and emphasized that premium one-to-one 
 | Preservation of business rules | Confirmed with clarification: preserve current operations, intentionally design improved V2 rules for review |
 | Multi-organisation and future multi-tenant architecture | Confirmed |
 | Security, performance and reliability standards | Confirmed |
-| B01-A isolated tooling and tests | Owner approved in revision 34; effective implementation remains conditional on independent review and formal sequencing amendment |
+| B01-A isolated tooling and tests | Owner approved in revision 34; isolated development and testing authorized by revision 35; independent review required before merge/integration |
 
-The owner's follow-up confirms the three remaining decisions. The spoken reference B01E is interpreted as B01-A, the isolated registry tooling increment immediately under discussion; no separate B01-E scope is authorized. All eight owner decisions are now confirmed; this is not independent engineering sign-off or adoption of the sequencing amendment. The existing phase sequence and production gates remain in force.
+The owner's follow-up confirms the three remaining decisions. The spoken reference B01E is interpreted as B01-A, the isolated registry tooling increment immediately under discussion; no separate B01-E scope is authorized. All eight owner decisions are now confirmed; this is not independent engineering sign-off. Revision 35 adopts the narrow development-only amendment; all other phase dependencies and production gates remain in force.
 
 ## Approval record (open)
 
-- Leadership owner decision: all eight architecture choices and isolated B01-A scope approved in conversation on 26 November 2026 IST; named formal approval record and sequencing adoption remain pending under the controlling programme.
-- Independent engineering reviewer: designation, scope review, decision and signature pending. PR #933 review list checked at this checkpoint: zero submitted reviews. Do not request the owner to reconfirm the eight decisions.
-- Exact approved branch/commit, files, expiry/review point: pending; verify fresh head before code.
-- Accepted exceptions: none adopted yet.
-- P01/P02/P03 gate amendment: proposed only.
+- Leadership owner decision: all eight architecture choices and isolated B01-A scope approved in conversation on 26 November 2026 IST; owner explicitly approved sequencing amendment in conversation on 26 November 2026 IST.
+- Independent engineering reviewer: designation, code/scope review and signature pending before merge or integration. Do not request the owner to reconfirm the eight decisions.
+- Authorized baseline: ecb8ca378226b51c22411aefa74e156d37ea4939 plus this governance-only checkpoint; isolated branch dev/tsos-v2-b01-a-registry. Scope: offline Node built-in metadata loader/validator, CLI, synthetic tests and documentation only. Review point: before merge/integration or further increments.
+- Accepted exception: sequence independent review after isolated implementation/testing of B01-A only, before merge/integration. No live-evidence acceptance.
+- P01/P02/P03 gate amendment: approved by owner only for the isolated B01-A increment; no broader phase exit.
 
-B00 is not closed until independent review and explicit approval or original acceptance sequence completes. If amendment approved, perform only B01-A, then return for review of implementation and test evidence. All other B groups remain gated. No application code or cloud state changed by this document.
+B00 owner authorization for isolated B01-A is complete; independent acceptance remains open. Perform only B01-A and return for independent review of actual code and test evidence. All other B groups remain gated. No application code or cloud state changed by this document.
