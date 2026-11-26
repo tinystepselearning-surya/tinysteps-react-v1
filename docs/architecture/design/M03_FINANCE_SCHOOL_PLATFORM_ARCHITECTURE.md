@@ -43,7 +43,7 @@ Logical commands: publishOffer, acceptAgreement, issueEntitlement (Commerce); ac
 | ADC AdmissionCase | admissionCases/{caseId} | Candidate journey/case, not a duplicate lead/conversion authority |
 | DEM DemoAttempt | demoSessions/{demoId} | Existing admission attempt, separate from academic session |
 | DPR DemoPrivateContact | demoSessionsPrivate/{demoId} | Restricted contact sidecar |
-| RECQ AdmissionRecommendation | admissionRecommendations/{recommendationId} | Versioned recommendation/evidence, not enrollment itself (registry code ARQ) |
+| ARQ AdmissionRecommendation | admissionRecommendations/{recommendationId} | Versioned recommendation/evidence, not enrollment itself |
 | SSC StudentSuccessCase | studentSuccessCases/{caseId} | Learner goal/concern follow-up |
 | GLD LearnerGoal | learnerGoals/{goalId} | Explicit learner goal and success criteria |
 | ITV Intervention | interventions/{interventionId} | Agreed intervention episode |
