@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 49 (B01 isolated foundation complete; B02 readiness review next)  
+**Version:** 2.0 programme baseline, revision 50 (B02 source readiness review complete; M3 evidence and context gates held)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B02 identity/context readiness review and scoped authorization assessment (read-only planning). All six isolated B01 components accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B02-R1 read-only evidence refresh and private M3 approval packet refinement; B02 implementation remains gated. All six isolated B01 components accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -624,6 +624,10 @@ Owner-operated Mac at exact candidate 2bfc3c468536cf193a05f45c01e65924703ef7e2, 
 
 Next: B01 closure and B02 readiness review (P04–P05 identity and context) against M04 and controlling gates. Review P01.9 residuals, P02/P03 dependencies, existing Wave 1/M3 evidence, identity ownership and tenant/organisation/campus/household boundaries, contextual authorization, two-tenant negative tests, privacy/security and migration/rollback/read-budget requirements. Apply section 2.5 freshness policy per dataset/action. Read-only source and evidence review/planning only until exact next scope and required independent/high-risk approvals established; no new identity writer, security rules, indexes, cloud access, migration, cutover or external tenant onboarding authorized. B01 isolated completion does not waive P01/P02/P03/P04/M3 or production gates. No repeat B01 terminal test unless relevant executable or registry inputs change.
 
+### Revision 50 — B02 readiness review
+
+[Readiness review](design/B02_IDENTITY_CONTEXT_READINESS_REVIEW.md) completed against pinned main 95b44babd7f3132b212b781eabeec000fced14c8: reuse eight existing identity contracts and scoped canonical writers/guards; tenant/campus/household semantics and live M3 evidence remain held. Thirteen selected code/ledger/rules blobs matched isolated baseline; existing CI run 45602427036 three jobs refetched success, not live proof. No new code/test/cloud execution. B02-R1 read-only source/marker and approval packet preparation recommended next; new runtime identity, tenant/security and migration changes require exact scoped authorization and independent review. Section 2.5 current authorization Tier 1 and delayed reporting Tier 2 preserved. No gate waiver.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -722,3 +726,5 @@ Next: B01 closure and B02 readiness review (P04–P05 identity and context) agai
 - Revision 48: owner authorizes isolated offline architecture checks and synthetic freshness planning validation; no CI activation or broader gate waiver.
 
 - Revision 49: B01-B.5 313/313 pinned unified regression, scoped AI-led acceptance PASS, PR #947 integrated; six isolated B01 components complete. B02 readiness review next; broader gates retained.
+
+- Revision 50: B02 source readiness review complete; implementation readiness partial/HOLD; B02-R1 evidence and approval preparation next.
