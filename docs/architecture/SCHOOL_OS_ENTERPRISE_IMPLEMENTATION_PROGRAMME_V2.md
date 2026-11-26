@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 37 (B01-A pinned-Node tests passed; independent acceptance held)  
+**Version:** 2.0 programme baseline, revision 38 (scoped AI-led acceptance; B01-A.1 hardening authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: independent engineering review of B01-A isolated candidate PR #940 before merge/integration. Pinned Node test requirement satisfied; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-A.1 hardening of isolated PR #940, fresh pinned-Node regression and scoped AI-led acceptance before integration. P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -537,6 +537,12 @@ Owner explicitly authorizes isolated B01-A development and testing before indepe
 
 Owner supplied Mac Terminal transcript dated 26 November 2026 IST: full clone of isolated branch and detached checkout at exact PR #940 head 827d0c61537bee8d18c71bfbba2414b65bc7ffa9, Node v22.22.1, command `node --test scripts/architecture/registry-validator.node-test.mjs`. All 49 tests passed (42 core plus seven filesystem/CLI), zero failures, cancelled, skipped or todo, duration 832.72075 ms. This satisfies the pinned-Node test requirement on owner-supplied evidence, not independently operated execution or GitHub Actions CI. The earlier candidate report remains a historical pre-Mac checkpoint; [PR #940](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/940) updated to reflect the test result without modifying tested candidate head. Six-file isolated scope reconfirmed. Independent engineering review and eventual deployment-impact/marker verification remain mandatory before integration as applicable; no merge, B01-B authorization, application changes, cloud access, schema adoption, migration, Rules change or release. No repeat Terminal test required unless tested code or relevant metadata changes.
 
+### Revision 38 — scoped AI-led engineering acceptance and progressive hardening
+
+Owner direction on 26 November 2026 authorizes AI-led technical acceptance of B01-A and progressive isolated implementation after the second-pass audit. This is an explicit prospective exception to the independent-review exit requirement in revision 35 and the B00/B01 packet for B01-A only; it is not an independent reviewer signature. Historical gates remain recorded. B01-A acceptance is conditional on demonstrated closure of the five audit findings, preservation of the original regression scenarios, exact pinned-Node full-checkout verification of the corrected head, source/scope and baseline checks, and written AI-led engineering disposition. Low-risk offline tooling may use this scoped path; medium-risk and high-risk work must follow their controlling phase-specific gates. Authentication, tenant isolation, finance, sensitive learner data, production migration and release retain independent specialist review and explicit owner approval where required. No general waiver of P01/P02/P03, M3 or production gates. No B01-B implementation authorized by this amendment alone.
+
+B01-A.1 scope: record metadata compatibility (explicit approved v0.5-to-v0.6 exceptions only), manifest governance, source provenance and storage mapping shapes, inherited namespace conflicts, and deterministic malformed-input diagnostics. Keep changes isolated to PR #940, no production, CI, registry definitions, runtime, dependency, schema activation or deployment changes. Existing 49-test result remains valid for its old head only; corrected head requires fresh verification. Integrate solely into the isolated discovery baseline after acceptance and scope checks, not main. Document actual evidence and outstanding holds; no automatic promotion.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -609,3 +615,5 @@ Owner supplied Mac Terminal transcript dated 26 November 2026 IST: full clone of
 - Revision 36: isolated B01-A candidate in draft PR #940; 42/42 core cases and 7/7 metadata hashes verified, full pinned-Node tests and independent review pending. No merge or production changes.
 
 - Revision 37: owner-operated Mac pinned Node v22.22.1, exact B01-A candidate, 49/49 tests passed; independent review remains open. No code or production changes.
+
+- Revision 38: owner authorizes scoped AI-led B01-A acceptance and isolated hardening; corrected-head regression and technical disposition pending. No production or broader phase gate waiver.
