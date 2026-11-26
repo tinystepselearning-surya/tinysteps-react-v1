@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { isPublicAnalyticsPath } from './publicAnalyticsPathPolicy.js';
 import { classifyMarketingPath } from './analyticsClassification';
+import { analyticsPageContext, safeAnalyticsParameters } from './analyticsPrivacy';
 
 let initialized = false;
 let interactionArmed = false;
@@ -139,7 +140,10 @@ export const initAnalytics = () => {
     window.dataLayer.push(arguments);
   };
   window.gtag('js', new Date());
-  window.gtag('config', measurementId, { send_page_view: false });
+  window.gtag('config', measurementId, {
+    send_page_view: false,
+    ...analyticsPageContext(window.location.href, document.referrer),
+  });
   armInteractionLoader(measurementId);
   initialized = true;
 };
@@ -151,14 +155,7 @@ const ensureInit = () => {
 };
 
 export const trackPageView = (path: string) => {
-  if (!shouldRunAnalytics()) return;
-  if (!ensureInit()) return;
-
-  const context = classifyMarketingPath(path);
-  window.gtag('event', 'page_view', {
-    page_path: path,
-    ...context,
-  });
+  trackEvent('page_view', { page_path: path });
 };
 
 export function trackEvent(name: string, params?: Record<string, any>) {
@@ -167,7 +164,10 @@ export function trackEvent(name: string, params?: Record<string, any>) {
     if (!ensureInit()) return;
     if (!window.gtag) return;
 
-    window.gtag('event', name, withMarketingContext(params));
+    window.gtag('event', name, {
+      ...safeAnalyticsParameters(withMarketingContext(params)),
+      ...analyticsPageContext(window.location.href, document.referrer),
+    });
   } catch (err) {
     console.error('[GA ERROR]', err);
   }

@@ -5,6 +5,9 @@ on:
     paths:
       - 'src/components/forms/PublicAssessmentForm.tsx'
       - 'src/lib/conversionTracking.ts'
+      - 'src/lib/analytics.ts'
+      - 'src/lib/analyticsPrivacy.ts'
+      - 'src/tests/lib/analyticsPrivacy.spec.ts'
       - 'src/tests/components/PublicAssessmentForm.spec.tsx'
       - 'scripts/audit-commercial-c5-conversion-flow.mjs'
       - 'scripts/test/arg1-demo-request-event-semantics.node-test.mjs'
@@ -31,7 +34,7 @@ jobs:
       - name: Install Playwright Chromium for SEO prerender
         run: npx playwright install --with-deps chromium
       - name: Form integration tests
-        run: npx vitest run src/tests/components/PublicAssessmentForm.spec.tsx
+        run: npx vitest run src/tests/components/PublicAssessmentForm.spec.tsx src/tests/lib/analyticsPrivacy.spec.ts
       - name: Demo request and booking event source contract
         run: node --test scripts/test/arg1-demo-request-event-semantics.node-test.mjs
       - name: TypeScript check

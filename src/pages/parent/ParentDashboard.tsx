@@ -15,7 +15,7 @@ import {
 } from "firebase/firestore";
 
 import { useAuthStore } from "../../store/useAuthStore";
-import { db, logCustomEvent } from "../../lib/firebaseConfig";
+import { db } from "../../lib/firebaseConfig";
 import { performAppLogout } from "../../lib/auth";
 import callFunction from "../../lib/callFunctions";
 
@@ -190,12 +190,6 @@ function emitParentLegacyFallbackTelemetry(
   const key = `${fallbackType}:${kidId || "unknown"}:${count}:${context.canonicalHit ? 1 : 0}`;
   if (parentLegacyFallbackTelemetrySeen.has(key)) return;
   parentLegacyFallbackTelemetrySeen.add(key);
-  logCustomEvent("parent_legacy_fallback_used", {
-    fallback_type: fallbackType,
-    kid_id: kidId || "unknown",
-    hit_count: count,
-    canonical_hit: context.canonicalHit ? 1 : 0,
-  });
   void callFunction(
     'recordLegacyFallbackUsage',
     {

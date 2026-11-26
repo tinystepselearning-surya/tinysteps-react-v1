@@ -15,7 +15,6 @@ vi.mock('firebase/firestore', () => ({
 
 vi.mock('../../lib/firebaseConfig', () => ({
   db: {},
-  logCustomEvent: vi.fn(),
 }));
 
 import { useSessionsForTeacher } from '../../hooks/useData';
