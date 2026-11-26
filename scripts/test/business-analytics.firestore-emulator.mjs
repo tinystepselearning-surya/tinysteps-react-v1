@@ -98,3 +98,20 @@ test('explicit historical read time retains prior roster despite subsequent muta
   assert.equal((await ref.get()).data().status,'discontinued');
  }finally{await close();}
 });
+
+import {preserveObservedEnrollmentClosings} from '../business-analytics-refresh-store.mjs';
+test('preserves only a verified exact month-end enrollment observation over later reconstructed estimates',()=>{
+ const row=(monthKey,value,basis,observedAt)=>({monthKey,metrics:{activeEnrollmentsAtClose:value,newAdmissions:12},activeEnrollmentBasis:basis,...(observedAt?{activeEnrollmentObservedAt:observedAt}:{})});
+ const previous={year:'2026',schemaVersion:1,metricDefinitionVersion:1,verificationStatus:'verified',coverageMode:'available_records',months:[
+  row('2026-09',40,'observed_month_end','2026-09-30T18:29:59.999Z'),
+  row('2026-10',50,'observed_snapshot','2026-10-29T18:29:59.999Z'),
+ ]};
+ const next={...previous,months:[row('2026-09',41,'reconstructed'),row('2026-10',51,'reconstructed')]};
+ const saved=preserveObservedEnrollmentClosings(next,previous);
+ assert.equal(saved.months[0].metrics.activeEnrollmentsAtClose,40);
+ assert.equal(saved.months[0].metrics.newAdmissions,12);
+ assert.equal(saved.months[0].activeEnrollmentBasis,'observed_month_end');
+ assert.equal(saved.months[1].metrics.activeEnrollmentsAtClose,51);
+ assert.equal(next.months[0].metrics.activeEnrollmentsAtClose,41);
+ assert.deepEqual(preserveObservedEnrollmentClosings(next,{...previous,verificationStatus:'unverified'}),next);
+});
