@@ -37,3 +37,39 @@ test('counts first admission and final dated exit, not course progression or ext
  assert.equal(r.issues.undatedCourseEnds,1);
  assert.equal(r.issues.ambiguousStudentExits,1);
 });
+
+test('dated mirror wins regardless of input order; distinct submissions still count',()=>{
+ const events=[
+  row('a1',{sourceLeadId:'a',receivedAt:'2026-08-12'}),
+  row('a2',{sourceLeadId:'a'}),
+  row('b1',{sourceLeadId:'b'}),
+  row('b2',{sourceLeadId:'b',receivedAt:'2026-09-01'}),
+  row('c1',{sourceLeadId:'c'}),
+  row('d1',{sourceLeadId:'d'}),
+  row('e1',{sourceLeadId:'e',receivedAt:'2026-10-31T18:30:00Z'}),
+  row('e2',{sourceLeadId:'e',receivedAt:'2026-10-30'}),
+  row('f1',{sourceLeadId:'f',receivedAt:'2026-08-12'}),
+ ];
+ const input={...base,leads:[row('c',{createdAt:'2026-10-02'}),row('a',{createdAt:'2026-09-01'})],inquiries:events};
+ const r=buildAvailableBusinessTrends(input);
+ assert.deepEqual(r,buildAvailableBusinessTrends({...input,inquiries:[...events].reverse()}));
+ assert.equal(m(r,8).leadEnquiries,2);
+ assert.equal(m(r,9).leadEnquiries,1);
+ assert.equal(m(r,10).leadEnquiries,2);
+ assert.equal(m(r,11).leadEnquiries,0);
+ assert.equal(r.issues.datedInquiryMirrorResolutions,3);
+ assert.equal(r.issues.conflictingInquiryDates,1);
+ assert.equal(r.issues.undatedEnquiries,1);
+});
+test('uses earliest recorded admission including corrected history and reports the caveat',()=>{
+ const r=buildAvailableBusinessTrends({...base,enrollments:[
+  row('a1',{kidId:'a',status:'completed',createdAt:'2026-08-01',completedAt:'2026-09-01',correctedToEnrollmentId:'a2'}),
+  row('a2',{kidId:'a',status:'active',createdAt:'2026-09-01'}),
+  row('b1',{kidId:'b',status:'active',createdAt:'2026-08-01'}),
+ ]});
+ assert.equal(m(r,8).newAdmissions,2);
+ assert.equal(m(r,8).newEnrollments,1);
+ assert.equal(m(r,9).newEnrollments,1);
+ assert.equal(r.issues.correctionBasedAdmissions,1);
+ assert.equal(r.current.activeStudents,2);
+});
