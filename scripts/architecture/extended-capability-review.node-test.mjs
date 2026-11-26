@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {reviewExtendedCapability as review,fixtureCommandFingerprint as fingerprint} from './extended-capability-review.ts';
+import {reviewUnifiedOperation} from './unified-context-review-framework.ts';
 import {candidateTenantMembershipKey,candidateOrganisationMembershipKey} from './membership-contract-review-prototype.ts';
 
 const cases=[
@@ -26,12 +27,12 @@ function fixture(i=0){
   {learnerId:'fixture-learner-a',placementId:targetId,change:'endPlacement'},
   {learnerId:'fixture-learner-a',placementId:targetId,change:'endPlacement'},
   {ledgerId:'fixture-ledger-a',chargeId:targetId,amountMinor:12345,currency:'INR'},
-  {schoolId:targetId,change:'requestReview'},
+  {schoolId:targetId,providerTenantId:'fixture-tenant-b',change:'requestReview'},
   {caseId:targetId,field:'caseStatus'}
  ];
  const domains=[
-  {parentId:tenantId,provisioningState:'reservedForRequest'},
-  {parentId:organisationId,provisioningState:'reservedForRequest'},
+  {parentId:tenantId,provisioningState:'reservedForRequest',reservedOperationId:'fixture-operation-a'},
+  {parentId:organisationId,provisioningState:'reservedForRequest',reservedOperationId:'fixture-operation-a'},
   {placementId:targetId,learnerId:'fixture-learner-a',placementStatus:'active',schoolKind:'owned'},
   {placementId:targetId,learnerId:'fixture-learner-a',placementStatus:'active',schoolKind:'owned'},
   {ledgerId:'fixture-ledger-a',chargeId:targetId,outstandingMinor:12345,currency:'INR',ledgerStatus:'open',chargeStatus:'unsettled'},
@@ -72,9 +73,13 @@ test('target revision conflict cannot be treated as permission',()=>{const x=fix
 test('roster requires exact active owned placement for that learner',()=>{for(const i of [2,3]){const x=fixture(i);x.evidence.domain.record.learnerId='fixture-other';no(x,'DOMAIN');const y=fixture(i);y.evidence.domain.record.schoolKind='partner';no(y,'DOMAIN');const z=fixture(i);z.evidence.domain.record.placementStatus='ended';no(z,'DOMAIN');}});
 test('finance requires exact current open ledger and unsettled charge',()=>{for(const [key,value] of [['outstandingMinor',12344],['currency','USD'],['ledgerStatus','closed'],['chargeStatus','settled'],['ledgerId','fixture-other']]){const x=fixture(4);x.evidence.domain.record[key]=value;no(x,'DOMAIN');}});
 test('finance amount must be positive safe minor units, currency exact',()=>{for(const amount of [0,-1,1.2,Infinity,Number.MAX_SAFE_INTEGER+1]){const x=fixture(4);x.request.payload.amountMinor=amount;no(x,'INVALID');}const x=fixture(4);x.request.payload.currency='USD';no(x,'INVALID');});
-test('partner exact customer/provider assignment and current interval',()=>{for(const [key,value] of [['customerTenantId','fixture-other'],['providerTenantId','fixture-tenant-a'],['assignedPersonId','fixture-other'],['partnershipStatus','ended'],['assignmentStatus','inactive'],['end',1500]]){const x=fixture(5);x.evidence.domain.record[key]=value;no(x,'DOMAIN');}});
+test('partner exact customer/provider assignment and current interval',()=>{for(const [key,value] of [['customerTenantId','fixture-other'],['providerTenantId','fixture-tenant-a'],['providerTenantId','fixture-tenant-c'],['assignedPersonId','fixture-other'],['partnershipStatus','ended'],['assignmentStatus','inactive'],['end',1500]]){const x=fixture(5);x.evidence.domain.record[key]=value;no(x,'DOMAIN');}});
 test('support restricted to exact open case, tenant, operator, time and one field',()=>{for(const [key,value] of [['tenantId','fixture-other'],['assignedPersonId','fixture-other'],['caseStatus','closed'],['end',1500],['allowedField','childData']]){const x=fixture(6);x.evidence.domain.record[key]=value;no(x,'DOMAIN');}const x=fixture(6);x.request.payload.field='childData';no(x,'INVALID');});
 test('no legacy fallback on failed successor; legacy marker is not a decision',()=>{const x=fixture(4);x.evidence=null;no(x,'INVALID');const y=fixture(4);Object.assign(y.route,{phase:'legacy',decisionLane:'v1',writerLane:'v1',handoff:'none'});yes(y,'legacy-retained');const z=fixture(0);Object.assign(z.route,{phase:'legacy',decisionLane:'v1',writerLane:'v1',handoff:'none'});no(z,'ROUTE');});
 test('no injected actor, outcome or extra payload fields; accessor not invoked',()=>{const x=fixture();x.request.actor='fixture-person-a';no(x,'INVALID');const y=fixture(4);y.evidence.allow=true;no(y,'INVALID');const z=fixture();let called=false;Object.defineProperty(z.request.payload,'name',{enumerable:true,get(){called=true;return 'Fixture';}});no(z,'INVALID');assert.equal(called,false);});
 test('canonical request fingerprint independent of property ordering, binds content',()=>{const x=fixture(4);const a=fingerprint(x.request,x.fence);assert.match(a,/^[a-f0-9]{64}$/);x.request.payload={currency:'INR',amountMinor:12345,chargeId:'fixture-target-a',ledgerId:'fixture-ledger-a'};assert.equal(fingerprint(x.request,x.fence),a);x.request.payload.amountMinor++;assert.notEqual(fingerprint(x.request,x.fence),a);});
 test('immutable result and no mutations or reusable authorization output',()=>{const x=fixture(4),copy=structuredClone(x),y=run(x);assert.deepEqual(x,copy);assert.ok(Object.isFrozen(y));assert.deepEqual(Object.keys(y).sort(),['alternateLaneAttempt','mutationPerformed','productionAuthorization','result','scope']);});
+
+test('reservation is bound to exact operation ID',()=>{const x=fixture();x.evidence.domain.record.reservedOperationId='fixture-other';no(x,'DOMAIN');});
+test('unified entry dispatches all seven command and case shapes',()=>{for(let i=0;i<cases.length;i++){const x=fixture(i);assert.deepEqual(reviewUnifiedOperation(x.request,x.evidence,x.route,x.fence),run(x));}});
+test('wrong envelope cannot bypass command-specific evidence',()=>{const x=fixture(4);delete x.request.payload;assert.equal(reviewUnifiedOperation(x.request,x.evidence,x.route,x.fence).result,'would-deny');});
