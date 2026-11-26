@@ -28,9 +28,16 @@ export async function runBusinessRefreshJob({env,now,openStore,refresh,log}){
  if(!config.enabled){log({outcome:'disabled'});return {outcome:'disabled'};}
  const opened=await openStore(config.project);
  try{
+  assert(typeof opened.store.inventory==='function','Source inventory required');
+  const inventory=await opened.store.inventory();
+  assert(Number.isSafeInteger(inventory.total)&&inventory.total>=0,'Invalid source inventory');
+  if(inventory.total>config.maxDocuments){
+   log({outcome:'budget-exceeded',estimatedSourceDocuments:inventory.total,maxDocuments:config.maxDocuments});
+   throw Error('Source inventory exceeds approved document budget');
+  }
   const result=await refresh({source:opened.store,publisher:opened.store,years:config.years,maxDocuments:config.maxDocuments,pageSize:config.pageSize,maxPages:config.maxPages,apply:config.apply});
   // Do not log annual/monthly totals, source document IDs, names, or raw records.
-  const summary={outcome:result.outcome,readTime:result.readTime,sourceDocuments:result.sourceDocuments,sourcePages:result.sourcePages,projectionWrites:result.projectionWrites,years:result.years};
+  const summary={outcome:result.outcome,readTime:result.readTime,sourceDocuments:result.sourceDocuments,sourcePages:result.sourcePages,projectionWrites:result.projectionWrites,inventoryAggregateQueries:inventory.aggregateQueries,years:result.years};
   log(summary);
   return summary;
  }finally{await opened.close();}
