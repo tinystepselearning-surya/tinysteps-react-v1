@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 48 (B01-B.5 isolated architecture checks authorized)  
+**Version:** 2.0 programme baseline, revision 49 (B01 isolated foundation complete; B02 readiness review next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.5 offline architecture verification and cumulative test orchestration. B01-A through B01-B.4 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B02 identity/context readiness review and scoped authorization assessment (read-only planning). All six isolated B01 components accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -618,6 +618,12 @@ Next: B01-B.5 scoped offline architecture fitness checks and cumulative test orc
 
 Owner directs next implementation after B01-B.4 acceptance. Authorize an isolated offline verifier and synthetic release-planning checks, not CI activation. Pin accepted B01-A through B01-B.4 executable files by Git blob digest; exact directory inventory, no unexpected files or links, verify bytes before executing tests. Pin actual draft registry manifest/shards and prior snapshot input through existing tests, preserve 129/971/38 counts and design holds. Use built-in Node modules only; no package installation, app/runtime imports, network or Firebase. B01-B.5 own code remains reviewed candidate rather than self-certifying. Dependency boundary evidence is exact content pinning of accepted modules, not a general JavaScript parser or repository-wide proof. Run cumulative exact named Node tests with pinned Node 22.22.1, fail closed on missing/unexpected files, mismatched digest or failed suite. Provide deterministic diagnostics and explicit limits. Section 2.5 release-planning checker validates synthetic declared freshness per dataset/query/action, authority, authorization, cutoff, budget, projection reuse, invalidation, dependencies, error display, reconciliation, rollback and evidence status; reject reporting-based operational authorization, raw reporting fallback and fabricated zeros. No live cost/freshness certification. No workflow changes, main release, production data or registry adoption. Verify exact candidate, cumulative pinned suite, scope and compatibility before isolated integration. Subsequent B02/P01/P02/P03 and broader release/security/finance gates remain controlled; completion of B01 prototypes is not programme or production approval.
 
+### Revision 49 — B01-B.5 accepted; isolated B01 engineering foundation complete
+
+Owner-operated Mac at exact candidate 2bfc3c468536cf193a05f45c01e65924703ef7e2, Node v22.22.1, unified verifier returned valid true, executableReady false, 24 accepted file pins, 313 tests / 313 pass / 0 fail, scope offline-foundation-only. Runner requires zero cancelled/skipped/todo, exact 29-file inventory and prior Git blob; supplied Terminal evidence, not CI. Re-fetched committed core, reran 40 pure cases and seven extra boundary probes; all passed. All 24 accepted blob pins matched actual Git tree. AI-led technical acceptance PASS under revision 48 for controlled-checkout offline verification. [PR #947](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/947) merged solely into `docs/tsos-v2-p01-source-baseline` at d0084cf37a95f6787bb2bf320d1c02181d103186; zero file differences between tested and merged trees. Six B01 components accepted at their respective isolated scopes: registry 66, typed schema 43, configuration 49, business rules 55, evolution 54, architecture fitness 46, total 313. Main unchanged during integration; no production deployment, cloud operation, registry adoption, runtime integration, dependency or workflow change. Proposed CI wiring remains separate; no independent certification, general repository dependency compliance, sandbox or live cost/freshness claim.
+
+Next: B01 closure and B02 readiness review (P04–P05 identity and context) against M04 and controlling gates. Review P01.9 residuals, P02/P03 dependencies, existing Wave 1/M3 evidence, identity ownership and tenant/organisation/campus/household boundaries, contextual authorization, two-tenant negative tests, privacy/security and migration/rollback/read-budget requirements. Apply section 2.5 freshness policy per dataset/action. Read-only source and evidence review/planning only until exact next scope and required independent/high-risk approvals established; no new identity writer, security rules, indexes, cloud access, migration, cutover or external tenant onboarding authorized. B01 isolated completion does not waive P01/P02/P03/P04/M3 or production gates. No repeat B01 terminal test unless relevant executable or registry inputs change.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -714,3 +720,5 @@ Owner directs next implementation after B01-B.4 acceptance. Authorize an isolate
 - Revision 47: B01-B.4 267/267 pinned Node regression, scoped AI-led acceptance PASS, PR #946 integrated into isolated baseline; only owner freshness/read-cost addendum differs from tested tree. B01-B.5 scope next; broader gates retained.
 
 - Revision 48: owner authorizes isolated offline architecture checks and synthetic freshness planning validation; no CI activation or broader gate waiver.
+
+- Revision 49: B01-B.5 313/313 pinned unified regression, scoped AI-led acceptance PASS, PR #947 integrated; six isolated B01 components complete. B02 readiness review next; broader gates retained.
