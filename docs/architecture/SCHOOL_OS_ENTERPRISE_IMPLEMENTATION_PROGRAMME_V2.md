@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 30 (M01–M02 review and M03 integrated enterprise design draft)  
+**Version:** 2.0 programme baseline, revision 31 (M04 integrated architecture review and gated build plan)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -455,7 +455,7 @@ Owner agrees to design the replacement architecture alongside current operations
 
 | Package | Target scope | Design status |
 |---|---|---|
-| D01 | Identity, contact, roles, learner, guardian, household and existing profile boundaries | Initial draft produced; independent review and exact profile contracts pending |
+| D01 | Identity, contact, roles, learner, guardian, household and existing profile boundaries | All ten remaining profile families seeded in M04; independent review and executable contracts pending |
 | D02 | Tenant, organisation, campus, membership and contextual roles | M01 integrated draft; review pending |
 | D03 | Academic catalogue, programme, course, curriculum, skills and academic year | M01 integrated draft; review pending |
 | D04 | Enrollment, delivery offering, group placement, teaching assignment | M01 integrated draft; review pending |
@@ -481,7 +481,7 @@ Owner directs batching of substantial milestones with holistic checks at each ch
 | M01 | D02–D04, reconcile with D01 | Integrated design draft, structural checks passed, independent review pending |
 | M02 | D05–D07 scheduling, sessions, attendance, learning/assessment | Integrated design draft, structural checks passed, independent review pending |
 | M03 | D08–D10 commerce/finance, school operations, platform foundations | Integrated design draft, structural checks passed, independent review pending |
-| M04 | Cross-package consistency, unresolved fields/keys/policies, full dependency and migration design, independent approval | Next; precedes affected implementation |
+| M04 | Cross-package consistency, unresolved fields/keys/policies, full dependency and migration design, independent approval | Integrated draft and structural review completed; independent acceptance and executable-contract closure OPEN |
 
 Important source checks: eight current main blobs match original pinned equivalents (academic/enrollment types, school authorization/academic command, two rolling schedule files, indexes, Wave 1 ledger). Current Course/Topic interface is in models.ts, not a standalone Course.ts. School.ts and schoolCurriculum.ts reviewed. Target lifecycle does not adopt incomplete five-value Enrollment interface as exhaustive; live caller semantics include trial/paused/terminal outcomes and progression/correction. Existing schoolAdmin remains read-only. Proposed contextual grant alternative does not allocate a competing authority. Catalogue visibility and tenant-owned delivery checked explicitly. Existing school-local year/grade/section keys remain contextual, not globally unique. Registry structure, identifier uniqueness, owner and reference/enum integrity checked, and tenant field presence checked for affected root delivery records. No full main rebaseline, independent semantic review, executable validator, runtime tests, CI or live production verification.
 
@@ -504,6 +504,14 @@ Nine scoped current/pinned source blob comparisons passed; additional scheduling
 [Registry v0.5](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json): 129 proposed records, 119 detailed seeds, 879 unique item IDs, 38 value sets. All 454 prior item IDs and 43 source-backed definitions preserved; deliberate REC learner-association adjustment and assessment ownership clarification documented; new scope and projection fields added. Ten D01 profile records remain catalogue-only. Source-backed fields remain limited to identity contracts; new M03 seeds are candidate target semantics, not verified source field definitions. Large registry approaches 1 MB; M04 should introduce a validated manifest/domain-sharded source-of-truth while preserving identifiers, not duplicate competing dictionaries.
 
 All ten design packages have initial coverage. M04 is next: integrated consistency, exact record grains/keys and relationship constraints, ten remaining field families, structured field shapes, lifecycle and policy matrices, scope/tenant proof, source/target mapping and phase-specific migration/test/rollback/read budgets; independent review and sequencing ADR required. Existing P01 acceptance, P02/P03/P04/M3, implementation, security, migration, production and retirement gates unchanged. No fresh runtime tests, CI, deployment, data writes or production access. Design review is not live certification.
+
+### Revision 31 — M04 integrated review and build readiness
+
+[M04 integrated architecture validation and build plan](design/M04_INTEGRATED_ARCHITECTURE_VALIDATION_AND_BUILD_PLAN.md) consolidates D01–D10 and all 18 frozen business domains, relationship/ownership and lifecycle boundaries, proposed structured-field shapes, migration/recovery, security and performance acceptance requirements, and staged build groups B00–B08 mapped to the controlling P01–P12 phases. [Record key, storage and scope matrix](design/M04_RECORD_KEY_STORAGE_SCOPE_MATRIX.md) indexes all 129 candidate record paths and keys, with explicit scope classes and held household boundary. No duplicate literal collection candidates; no claim of actual production path availability, unique data or approved field-level migration mapping.
+
+[Registry v0.6 design manifest](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) now references five domain-grouped shards. All 129 record families have seeds, 971 unique items, 38 value sets. All 879 prior definitions unchanged. The 92 added fields cover ten previously catalogue-only profile families, checked against the Wave 1 migration planner. 43 source-interface definitions preserved; copied historical values remain unvalidated (45); 24 structured fields need exact typed contracts; shared/nested IDs still pending. Source evidence is not live schema. The manifest and shards are the sole editable dictionary; immutable previous revision referenced, no runtime dependency. [Dictionary governance](registry/TSOS_V2_MASTER_RECORD_ITEM_DICTIONARY_DESIGN.md) updated accordingly.
+
+At the M04 review snapshot main was 82 commits ahead of historical pin; eight directly compared source blobs (identity contracts, profile planner, status helper, retired scheduler, Functions index, Firestore/Storage Rules, indexes) unchanged. No full rebaseline or deployed parity. M04 structural validation passed, independent acceptance and executable-contract closure remain OPEN. B00 next: named owner/reviewer decisions on residual P01 evidence, P02 ADRs and scope of first P03 registry increment. B01 proposed first isolated development milestone (manifest/typed schema and validation, synthetic fixtures, compatibility checks), but not yet authorized. No live database, runtime code, Rules, CI or production changes, deployment, migration or phase gate change. Preserve P01/P02/P03/P04/M3 and all affected release/retirement holds. No new Terminal work requested solely to complete design.
 
 ## 10. Change record
 
@@ -563,3 +571,5 @@ All ten design packages have initial coverage. M04 is next: integrated consisten
 - Revision 29 (26 Nov 2026): consolidated M02 D05–D07, registry v0.4 (77 records, 61 detailed, 454 items, 37 value sets); 207 prior items unchanged; scoped source and structural checks passed. Explicit automatic-generation retirement, IST keys, official/evidence/finance separation, learning history and provider-access constraints. Independent review, M03/M04 closure and all implementation/production gates retained. No runtime or production changes.
 
 - Revision 30 (26 Nov 2026): re-audited M01/M02, corrected cross-milestone design inconsistencies and added M03 integrated design and registry v0.5 (129 proposed records, 119 detailed, 879 items, 38 value sets). All previous IDs preserved; ten D01 profiles and M04 design closure remain. Source/structural checks only, independent review and all existing implementation/production gates retained.
+
+- Revision 31 (26 Nov 2026): M04 integrated review, v0.6 registry split into five owner-domain shards, 129/129 record seeds, 971 items, 38 value sets, all 879 prior item definitions unchanged. Added record-key/scope matrix and B00–B08 build roadmap. Structural design checks passed; independent acceptance and executable-contract closure OPEN. No production access, runtime code, CI execution, release or gate changes.
