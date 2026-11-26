@@ -42,7 +42,7 @@ function shape(value:unknown,required:readonly string[],optional:readonly string
 }
 // Proposed narrow prospective ID format; never normalize/rekey a legacy ID.
 function id(v:unknown):string{
-  check(typeof v==='string'&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'INVALID_ID');return v;
+  check(typeof v==='string'&&v.trim()===v&&/^[A-Za-z0-9][A-Za-z0-9_-]{0,127}$/.test(v),'INVALID_ID');return v;
 }
 function matchingId(v:unknown,documentId:unknown):string{
   const actual=id(v);check(actual===id(documentId),'KEY_MISMATCH');return actual;
@@ -61,7 +61,7 @@ function zone(v:unknown):string{
 }
 function country(v:unknown):string|null{
   if(v===null)return null;
-  check(typeof v==='string'&&/^[A-Z]{2}$/.test(v),'INVALID_COUNTRY_CODE');return v;
+  check(typeof v==='string'&&v.length===2&&/^[A-Z]{2}$/.test(v),'INVALID_COUNTRY_CODE');return v;
 }
 export function parseTenantContract(documentId:unknown,value:unknown):Result<TenantContract>{
   return safe(()=>{
