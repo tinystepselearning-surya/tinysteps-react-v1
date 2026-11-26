@@ -1,6 +1,6 @@
 {
   "formatVersion": 1,
-  "registryVersion": "0.1-draft",
+  "registryVersion": "0.2-draft",
   "status": "design-only; no code consumption or allocated identifiers",
   "sourcePin": "701c7ec832dbe9c531964496fa09cd4a4948ddd2",
   "idPolicy": "record code and qualified item ID are proposed reservations only; no reuse after adoption; not document IDs",
@@ -185,6 +185,15 @@
       "codes": [
         "enrollment",
         "learningGroup"
+      ]
+    },
+    {
+      "id": "householdMembershipStatus",
+      "version": 1,
+      "evidence": "proposed",
+      "codes": [
+        "active",
+        "ended"
       ]
     }
   ],
@@ -2486,6 +2495,332 @@
       "fieldSet": null,
       "detailStatus": "catalogue-only",
       "items": []
+    },
+    {
+      "code": "CNT",
+      "name": "PersonContact",
+      "ownerDomain": "identity",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "personContacts",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "PLC",
+      "name": "PersonLifecycle",
+      "ownerDomain": "identity",
+      "recordClass": "evidence-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "personLifecycle",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "LDT",
+      "name": "LearnerDetail",
+      "ownerDomain": "learner-enrollment",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "learnerDetails",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "EXTEND",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "FPR",
+      "name": "FacultyProfile",
+      "ownerDomain": "faculty-workforce",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "teachers",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "PPR",
+      "name": "ParentProfile",
+      "ownerDomain": "learner-enrollment",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "parents",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "LPP",
+      "name": "LearningPartnerProfile",
+      "ownerDomain": "faculty-workforce",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "learningPartners",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "APR",
+      "name": "AdminProfile",
+      "ownerDomain": "identity",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "admins",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "SPR",
+      "name": "StaffPrivateProfile",
+      "ownerDomain": "faculty-workforce",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "staffPrivateProfiles",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "LRM",
+      "name": "LearnerReadModel",
+      "ownerDomain": "learner-enrollment",
+      "recordClass": "projection-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "learnerReadModels",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "LPV",
+      "name": "LearnerProvenance",
+      "ownerDomain": "learner-enrollment",
+      "recordClass": "evidence-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "learnerProvenance",
+        "sourceEvidence": "historical-profile-migration-contract",
+        "liveVerified": false
+      },
+      "disposition": "REUSE",
+      "sourceReference": "docs/architecture/wave-1/IDENTITY_PROFILE_RETIREMENT_MIGRATION.md",
+      "fieldSet": null,
+      "detailStatus": "catalogue-only",
+      "items": []
+    },
+    {
+      "code": "HMB",
+      "name": "HouseholdMembership",
+      "ownerDomain": "learner-enrollment",
+      "recordClass": "canonical-operational-candidate",
+      "lifecycle": "proposed",
+      "storage": {
+        "collectionCandidate": "householdMemberships",
+        "sourceEvidence": "unresolved-candidate",
+        "liveVerified": false
+      },
+      "disposition": "DESIGN",
+      "sourceReference": "docs/architecture/design/D01_IDENTITY_ARCHITECTURE.md",
+      "fieldSet": null,
+      "detailStatus": "seed",
+      "items": [
+        {
+          "itemId": "HMB-1001",
+          "semanticName": "householdMembershipId",
+          "definition": "Stable identifier of a household membership",
+          "dataType": "id",
+          "cardinality": "1",
+          "nullable": false,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "householdMembershipId",
+          "valueSet": null,
+          "reference": null,
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "do-not-synthesize; unresolved migration held",
+          "lifecycle": "proposed"
+        },
+        {
+          "itemId": "HMB-1002",
+          "semanticName": "householdId",
+          "definition": "Household joined",
+          "dataType": "reference",
+          "cardinality": "1",
+          "nullable": false,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "householdId",
+          "valueSet": null,
+          "reference": "HOU",
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "do-not-synthesize; unresolved migration held",
+          "lifecycle": "proposed"
+        },
+        {
+          "itemId": "HMB-1003",
+          "semanticName": "personId",
+          "definition": "Person who is a household member",
+          "dataType": "reference",
+          "cardinality": "1",
+          "nullable": false,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "personId",
+          "valueSet": null,
+          "reference": "PER",
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "do-not-synthesize; unresolved migration held",
+          "lifecycle": "proposed"
+        },
+        {
+          "itemId": "HMB-1004",
+          "semanticName": "status",
+          "definition": "Lifecycle of membership",
+          "dataType": "enum",
+          "cardinality": "1",
+          "nullable": false,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "status",
+          "valueSet": "householdMembershipStatus",
+          "reference": null,
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "do-not-synthesize; unresolved migration held",
+          "lifecycle": "proposed"
+        },
+        {
+          "itemId": "HMB-1005",
+          "semanticName": "effectiveStartAt",
+          "definition": "Known beginning of household membership",
+          "dataType": "timestamp",
+          "cardinality": "0..1",
+          "nullable": true,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "effectiveStartAt",
+          "valueSet": null,
+          "reference": null,
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "omit or explicit unknown per approved field contract",
+          "lifecycle": "proposed"
+        },
+        {
+          "itemId": "HMB-1006",
+          "semanticName": "effectiveEndAt",
+          "definition": "Known end of household membership",
+          "dataType": "timestamp",
+          "cardinality": "0..1",
+          "nullable": true,
+          "requirednessBasis": "proposed-target-not-enforced",
+          "ownerDomain": "learner-enrollment",
+          "classification": "restricted-sensitive",
+          "evidence": "proposed",
+          "sourceField": null,
+          "sourceRecord": null,
+          "storageFieldCandidate": "effectiveEndAt",
+          "valueSet": null,
+          "reference": null,
+          "historyPolicy": "effective-period; audited closure",
+          "readPolicy": "context-authorized; exact policy pending",
+          "writeCommand": "pending-approved-domain-command",
+          "validationContract": "pending",
+          "unknownPolicy": "omit or explicit unknown per approved field contract",
+          "lifecycle": "proposed"
+        }
+      ]
     }
   ],
   "reviewNotes": [
@@ -2493,6 +2828,8 @@
     "Person and LearnerProfile countryCode coexist in source: semantic equivalence, ownership and compatibility unresolved; no new duplicate authority approved.",
     "Target type and lifecycle mapping for Enrollment remain draft; existing status strings are not a final canonical lifecycle or allowed transition graph.",
     "Target types, classifications, path candidates, commands and policies are design proposals; no runtime dependency.",
-    "Shared identity audit fields are inherited source fields; qualified item IDs for their reusable field group and nested members deferred pending namespace review."
+    "Shared identity audit fields are inherited source fields; qualified item IDs for their reusable field group and nested members deferred pending namespace review.",
+    "D01 extends the catalogue with ten permanent profile/evidence/projection concepts documented by the existing Wave 1 migration contract and a proposed HouseholdMembership record. Historical migration evidence is not current live coverage. New profile fields and field-set bindings remain unallocated; preserve the existing profile contract.",
+    "Household membership is not evidence of guardianship, billing responsibility, consent or application access. Household membership candidate path requires collision/dependency review; no automatic historical backfill."
   ]
 }
