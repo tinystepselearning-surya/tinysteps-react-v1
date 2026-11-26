@@ -165,7 +165,7 @@ export function trackEvent(name: string, params?: Record<string, any>) {
     if (!window.gtag) return;
 
     window.gtag('event', name, {
-      ...safeAnalyticsParameters(withMarketingContext(params)),
+      ...safeAnalyticsParameters(withMarketingContext(params), name),
       ...analyticsPageContext(window.location.href, document.referrer),
     });
   } catch (err) {
