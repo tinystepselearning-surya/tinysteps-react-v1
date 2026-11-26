@@ -55,7 +55,8 @@ export function createFinanceTransactionExperiment(seed:unknown):Experiment|null
     const f=reviewRow(s.fence,['personId','at','revision','operation','epoch']);
     const t=e&&reviewRow(e.target,['targetId','scope','kind','state','targetRevision','revision']);
     if(!e||!f||!t||f.operation!=='fixture.financePost'||t.kind!=='charge'||t.state!=='present'||!isReviewId(f.personId)||!isReviewInteger(f.at,REVIEW_MIN_TIME,REVIEW_MAX_TIME)||!isReviewInteger(f.revision,1)||!isReviewInteger(f.epoch,1)||!isReviewInteger(t.targetRevision,1,Number.MAX_SAFE_INTEGER-1))return null;
-    let state:State=Object.freeze({generation:1,at:f.at,targetRevision:t.targetRevision,closed:false,receipt:null});
+    const snapshot=Object.freeze({evidence:s.evidence,route:s.route,fence:s.fence,at:f.at});
+    let state:State=Object.freeze({generation:1,at:snapshot.at,targetRevision:t.targetRevision,closed:false,receipt:null});
     const pending=new Map<Ticket,Pending>();
     let issued=0;
     const inspect=()=>Object.freeze({fixtureCommitCount:(state.receipt?1:0) as 0|1,fixtureTargetRevision:state.targetRevision,closed:state.closed});
@@ -66,8 +67,8 @@ export function createFinanceTransactionExperiment(seed:unknown):Experiment|null
         if(issued>=32)return deny('BOUND');
         const copy=copyFixture(request),q=reviewRow(copy,['action','scope','targetId','operationId','expectedTargetRevision','payload']);
         if(!q||q.action!=='finance.post'||q.expectedTargetRevision!==state.targetRevision)return deny('INVALID');
-        const decision=reviewExtendedCapability(copy,s.evidence,s.route,s.fence);
-        const fingerprint=fixtureCommandFingerprint(copy,s.fence);
+        const decision=reviewExtendedCapability(copy,snapshot.evidence,snapshot.route,snapshot.fence);
+        const fingerprint=fixtureCommandFingerprint(copy,snapshot.fence);
         if(decision.result!=='synthetic-v2-match'||!fingerprint)return deny('DENIED');
         const ticket:Ticket=Object.freeze({kind:'synthetic-ticket'});
         pending.set(ticket,Object.freeze({request:copy,generation:state.generation,fingerprint}));issued++;
@@ -84,7 +85,7 @@ export function createFinanceTransactionExperiment(seed:unknown):Experiment|null
       // Synchronous re-evaluation from the private current fixture snapshot.
       // There is no await, callback, external write or supplied allow observation.
       const q=reviewRow(item.request,['action','scope','targetId','operationId','expectedTargetRevision','payload']);
-      if(!q||q.expectedTargetRevision!==state.targetRevision||state.at!==f.at||fixtureCommandFingerprint(item.request,s.fence)!==item.fingerprint||reviewExtendedCapability(item.request,s.evidence,s.route,s.fence).result!=='synthetic-v2-match')return deny('DENIED');
+      if(!q||q.expectedTargetRevision!==state.targetRevision||state.at!==snapshot.at||fixtureCommandFingerprint(item.request,snapshot.fence)!==item.fingerprint||reviewExtendedCapability(item.request,snapshot.evidence,snapshot.route,snapshot.fence).result!=='synthetic-v2-match')return deny('DENIED');
       const receipt:Receipt=Object.freeze({kind:'simulated-commit',productionAuthorization:false,productionMutation:false,fixtureCommitCount:1,fixtureTargetRevision:state.targetRevision+1});
       // One local state replacement models receipt + revision together. No actual
       // ledger posting or database atomicity, crash recovery or distributed CAS.
@@ -95,12 +96,12 @@ export function createFinanceTransactionExperiment(seed:unknown):Experiment|null
       if(state.closed||!['revoke','target-changed','route-changed','evidence-unavailable'].includes(event as string))return false;
       if(event==='target-changed'&&state.targetRevision===Number.MAX_SAFE_INTEGER)return false;
       state=Object.freeze({...state,generation:state.generation+1,closed:true,targetRevision:state.targetRevision+(event==='target-changed'?1:0)});
-      pending.clear();return true;
+      return true;
     }
     function advanceClock(at:unknown):boolean{
       if(state.closed||!isReviewInteger(at,REVIEW_MIN_TIME,REVIEW_MAX_TIME)||at<=state.at)return false;
       // Same-tick policy: any advance closes this fixed snapshot, even before expiry.
-      state=Object.freeze({...state,generation:state.generation+1,at,closed:true});pending.clear();return true;
+      state=Object.freeze({...state,generation:state.generation+1,at,closed:true});return true;
     }
     return Object.freeze({prepare,commit,invalidate,advanceClock,inspect});
   }catch{return null;}
