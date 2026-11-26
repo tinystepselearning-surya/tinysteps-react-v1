@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 52 (B02-R1A isolated verification safety prototype authorized)  
+**Version:** 2.0 programme baseline, revision 53 (B02-R1A accepted in isolated baseline; compiled integration review next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B02-R1A isolated fixture-only safety prototype and verification; B02-R2 remains held. All six isolated B01 components accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B02-R1B scoped offline compiled canonical integration and transport/privacy enforcement design review; B02-R2 remains held. B01 and B02-R1A isolated prototypes accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -636,6 +636,12 @@ Next: B01 closure and B02 readiness review (P04–P05 identity and context) agai
 
 Owner directs fixes of R51 findings. Authorize synthetic-only offline enforcement prototype in separate scripts/verification directory, not a live operator or security approval. Preserve existing M3 sampler, canonical identity loaders/guards and existing business behavior; no competing policy evaluator. Use the existing sampler contract one actor at a time behind a fixture-only database facade. Exact predeclared synthetic UID, auth identity ID, person ID, five point paths and two person-scoped query descriptors, fixed minimal field lists derived from actual parser/loader, synthetic fixture projection before exposure, limits and fail-closed read sequence. Validate entire manifest before dispatch, reject unexpected path/query/field/shape, overflow, expired window, stale/future/missing age, mismatch, incomplete sample and extra roles; stop on first blocking result (parallel already-dispatched queries distinguished). No retries, no network, no SDK, no production transport, no credentials. Injected clock for deterministic deadline checks only; not an enforced network timeout or atomic snapshot. Output code-only findings and counts; no identifiers or values. Tests use synthetic stand-in sampler and existing sampler source with injected test dependencies; real compiled canonical integration remains an explicit later acceptance prerequisite. Fixed masks are fixture-only, not server-field-mask proof. No B01 pin changes; existing 313-test suite retained. Current Tier 1 auth, T-1 reporting, 1:1 first and all R51 prerequisites unchanged. Require exact candidate verification and separate independent security/transport/approval review before B02-R2; no live activation, IAM, CI, Rules, application, registry, migration or deployment changes.
 
+### Revision 53 — B02-R1A accepted in isolated baseline; live verification held
+
+Initial candidate f005b302 failed the owner-operated Node file-level test despite 51 individual passes: three unhandled GUARD_STOP promise rejections. Rejected without merge. Corrected candidate 13ea61869ce6020b3e9ce0422e7833c91880cb29 defers reference validation to asynchronous get before fixture dispatch, preserves sticky first blocker and read caps, and adds three core scenarios plus strict subprocess regression. Owner-operated Mac Node v22.22.1 at exact corrected candidate: unified B01 313/313 (24 pins, executableReady false); B02-R1A strict suite 55/55, zero failed/cancelled/skipped/todo, 80.328625 ms, strict subprocess 30.899375 ms, no reported unhandled rejections. Combined 368/368. Supplied terminal evidence, not CI. Re-fetched committed source, 53/53 pure cases passed, B01 inventory and original sampler blob unchanged. Scoped offline engineering acceptance PASS under R52; not independent security acceptance. [PR #948](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/948) merged solely into `docs/tsos-v2-p01-source-baseline` at aaaae31c59ae92155f07e9b30276122a42d8f200; zero file differences between tested and merged trees. Four added offline files, no runtime, registry, Rules, IAM, cloud or CI changes; main unchanged during integration. Existing business policies, direct premium 1:1, current authorization Tier 1 and T-1 reporting preserved.
+
+Next recommended B02-R1B: separately scope offline compiled canonical loader/parser/ID integration with synthetic fixtures and review production adapter field masks, transport deadlines/retries, consistency/revocation and exact private approval requirements. No production adapter activation, live accounts, cloud access or mutations authorized. Fixture-only masks and injected clock are not server field-mask or transport timeout proof; no atomicity or live role parity, independent security review still required. R2 remains HOLD, P01/P02/P03/M3 and subsequent gates retained. No repeat R1A terminal tests unless relevant inputs change.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -740,3 +746,5 @@ Owner directs fixes of R51 findings. Authorize synthetic-only offline enforcemen
 - Revision 51: B02-R1 read-only preparation complete; M3 live gate remains held, operator safety review and private approvals next. Business requirements and all wider gates retained.
 
 - Revision 52: owner directs isolated verification safety fixes; no live operator or broader gate approval.
+
+- Revision 53: corrected B02-R1A 368/368 pinned regression; PR #948 integrated into isolated baseline; independent security and live verification gates retained. B02-R1B scope next.
