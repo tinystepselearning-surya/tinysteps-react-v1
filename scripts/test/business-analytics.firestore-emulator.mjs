@@ -80,3 +80,21 @@ test('real isolated Firestore refresh reads existing records once and publishes 
   assert.equal((await db.doc(root+'/businessAnalyticsSnapshots/current').get()).data().updatedAt,current.updatedAt);
  } finally {await close();}
 });
+
+test('explicit historical read time retains prior roster despite subsequent mutation',async()=>{
+ const {db,close}=createAnalyticsEmulatorStore();
+ try{
+  const ref=db.doc('enrollments/cutoff-fixture');
+  await ref.set({kidId:'cutoff-child',status:'active',createdAt:'2026-01-01'});
+  await new Promise(resolve=>setTimeout(resolve,25));
+  const anchor=await ref.get();
+  const sourceReadTime=anchor.readTime.toDate().toISOString();
+  await new Promise(resolve=>setTimeout(resolve,25));
+  await ref.update({status:'discontinued',endedAt:'2026-11-26'});
+  const store=createBusinessRefreshStore(db);
+  const frozen=await store.readSnapshot(reader=>reader.page('enrollments',{limit:100,after:null,fields:['status']}),{sourceReadTime});
+  assert.equal(frozen.readTime,sourceReadTime);
+  assert.equal(frozen.rows.find(r=>r.path===ref.path)?.data.status,'active');
+  assert.equal((await ref.get()).data().status,'discontinued');
+ }finally{await close();}
+});
