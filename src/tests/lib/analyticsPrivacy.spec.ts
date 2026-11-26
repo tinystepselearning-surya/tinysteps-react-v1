@@ -115,4 +115,30 @@ describe('web analytics privacy', () => {
       interaction_target: 'Synthetic Private Name',
     }, 'funnel_cta_click')).toEqual({ cta_label: 'assessment', link_label: 'other' });
   });
+
+  it('keeps approved attribution channels but rejects unreviewed campaign and query-derived source text', async () => {
+    const { analyticsPageContext, safeAnalyticsParameters } = await import('../../lib/analyticsPrivacy');
+    expect(analyticsPageContext(
+      'https://tinystepslearning.com/pricing?utm_source=google&utm_medium=cpc&utm_campaign=Synthetic-Private-Name',
+      '',
+    )).toEqual({
+      page_location: 'https://tinystepslearning.com/pricing?utm_source=google&utm_medium=cpc',
+      page_referrer: '',
+    });
+    expect(safeAnalyticsParameters({
+      lead_utm_source: 'Synthetic-Private-Name',
+      utm_medium: 'referral',
+      utm_campaign: 'Synthetic-Private-Name',
+      source: 'blog|synthetic-private-name|private-family|private-position',
+      source_context: 'Synthetic Private Name',
+      form_name: 'public_assessment_form',
+      value: 1,
+    }, 'generate_lead')).toEqual({
+      utm_medium: 'referral',
+      source: 'blog',
+      source_context: 'other',
+      form_name: 'public_assessment_form',
+      value: 1,
+    });
+  });
 });
