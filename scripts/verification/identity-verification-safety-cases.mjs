@@ -65,13 +65,13 @@ export async function safetyCases(source){
   await bad("foreign projection identity",x=>x.fixtures[0].authAccessReadModels.personId=x.plan.actors[1].personId,"RESPONSE_SCOPE",1);
   await bad("foreign auth subject",x=>x.fixtures[0].authIdentities.providerSubject=x.plan.actors[1].uid,"RESPONSE_SCOPE",2);
   await bad("foreign person response",x=>x.fixtures[0].people.personId=x.plan.actors[1].personId,"RESPONSE_SCOPE",3);
-  await bad("foreign query row",x=>x.fixtures[0].roleAssignments[0].personId=x.plan.actors[1].personId,"RESPONSE_SCOPE");
-  await bad("query sentinel overflow",x=>x.fixtures[0].roleAssignments=Array.from({length:51},()=>x.fixtures[0].roleAssignments[0]),"QUERY_OVERFLOW");
-  await bad("query excessive response",x=>x.fixtures[0].roleAssignments=Array.from({length:52},()=>x.fixtures[0].roleAssignments[0]),"RESPONSE_BOUND");
+  await bad("foreign query row",x=>x.fixtures[0].roleAssignments[0].personId=x.plan.actors[1].personId,"RESPONSE_SCOPE",4);
+  await bad("query sentinel overflow",x=>x.fixtures[0].roleAssignments=Array.from({length:51},()=>x.fixtures[0].roleAssignments[0]),"QUERY_OVERFLOW",4);
+  await bad("query excessive response",x=>x.fixtures[0].roleAssignments=Array.from({length:52},()=>x.fixtures[0].roleAssignments[0]),"RESPONSE_BOUND",4);
   await bad("sampler drift stops subsequent actor",x=>x.fixtures[0].people.status="suspended","SAMPLER_REVIEW_REQUIRED",7);
   await bad("legacy role mismatch stops",x=>x.fixtures[0].users.role="teacher","SAMPLER_REVIEW_REQUIRED",7);
   await check("second actor failure retains first count",async()=>{const x=await run(z=>z.fixtures[1].authAccessReadModels.updatedAt=0);return x.completedActors===1&&x.counts.attempts===8&&x.code==="PROJECTION_FRESHNESS";});
-  await check("unapproved collection denied before reads",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("privateProfiles"));return x.code==="COLLECTION_NOT_APPROVED"&&x.counts.attempts===0;});
+  await check("unapproved collection denied before reads",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("privateProfiles").doc("synthetic-uid-0").get());return x.code==="COLLECTION_NOT_APPROVED"&&x.counts.attempts===0;});
   await check("unapproved uid denied",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("users").doc("synthetic-other").get());return x.code==="PATH_NOT_APPROVED"&&x.counts.attempts===0;});
   await check("unapproved query predicate denied",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("roleAssignments").where("role","==","parent").limit(51).get());return x.code==="QUERY_NOT_APPROVED"&&x.counts.attempts===0;});
   await check("unapproved query limit denied",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("roleAssignments").where("personId","==","synthetic-person-0").limit(50).get());return x.code==="QUERY_LIMIT"&&x.counts.attempts===0;});
@@ -85,9 +85,12 @@ export async function safetyCases(source){
   await check("sampler failure redacted",async()=>{const x=await run(()=>{},()=>async()=>{throw Error("synthetic-private-value");});return x.code==="SAMPLER_FAILURE"&&!JSON.stringify(x).includes("synthetic-private-value");});
   await check("malformed report refused",async()=>{const x=await run(()=>{},()=>async()=>({results:[]}));return x.code==="REPORT_SHAPE";});
   await check("incomplete count refused",async()=>{const x=await run(()=>{},s=>async a=>{const report=await s(a);report.results[0].documentsReturned++;return report;});return x.code==="INCOMPLETE_SAMPLE";});
-  await check("expired actor facade refuses further reads",async()=>{let db;const x=await run(()=>{},s=>async a=>{db=a.db;return s(a);});try{db.collection("users");return false;}catch{return x.valid;}});
+  await check("expired actor facade refuses further reads",async()=>{let db;const x=await run(()=>{},s=>async a=>{db=a.db;return s(a);});try{await db.collection("users").doc("synthetic-uid-1").get();return false;}catch{return x.valid;}});
   await check("immutable masks and results",async()=>{const x=await run();return Object.isFrozen(x)&&Object.isFrozen(x.counts)&&Object.isFrozen(FIELD_MASKS)&&Object.isFrozen(FIELD_MASKS.users);});
   await check("10 actor cap exact",async()=>{const x=await run(()=>{},s=>s,()=>1000,10);return x.valid&&x.counts.attempts===70&&x.counts.reservedSlots===1070;});
   await check("11 actors refused",async()=>{const x=await run(()=>{},s=>s,()=>1000,11);return x.code==="PLAN_SHAPE"&&x.counts.attempts===0;});
+  await bad("second parallel query overflow",x=>{x.fixtures[0].organisationMemberships=Array.from({length:51},()=>({personId:x.plan.actors[0].personId}));},"QUERY_OVERFLOW",5);
+  await bad("first blocker preserved when both parallel queries fail",x=>{x.fixtures[0].roleAssignments=Array.from({length:51},()=>x.fixtures[0].roleAssignments[0]);x.fixtures[0].organisationMemberships=Array.from({length:52},()=>({personId:x.plan.actors[0].personId}));},"QUERY_OVERFLOW",4);
+  await check("point read of query collection rejected",async()=>{const x=await run(()=>{},()=>async({db})=>db.collection("roleAssignments").doc("synthetic-uid-0").get());return x.code==="PATH_NOT_APPROVED"&&x.counts.attempts===0;});
   return out;
 }

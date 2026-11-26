@@ -87,11 +87,26 @@ export async function verifySyntheticActors({plan,fixtures,sampler,clock}={}){
       const data=col==="authAccessReadModels"&&v!==null?Object.freeze({...v,updatedAt:Object.freeze({toMillis:()=>projectionAge})}):v;
       return Object.freeze({exists:v!==null,data:()=>data});
     }
-    const db=Object.freeze({collection(col){
+    // Reference construction must not throw after another Promise.all operand
+    // has started. Validate every descriptor inside its async get, before any
+    // fixture dispatch. The original sampler's async get wrapper then has a
+    // rejection handler attached by Promise.all for every operand.
+    async function read(col,request){
       active();
-      if(points.includes(col))return Object.freeze({doc(key){active();if(key!==keyFor(a,col))stop("PATH_NOT_APPROVED");return Object.freeze({get:()=>dispatch(col)});}});
-      if(queries.includes(col))return Object.freeze({where(field,op,value){active();if(field!=="personId"||op!=="=="||value!==a.personId)stop("QUERY_NOT_APPROVED");return Object.freeze({limit(n){active();if(n!==51)stop("QUERY_LIMIT");return Object.freeze({get:()=>dispatch(col)});}});}});
-      stop("COLLECTION_NOT_APPROVED");
+      if(!collections.includes(col))stop("COLLECTION_NOT_APPROVED");
+      if(request.kind==="point"){
+        if(!points.includes(col)||request.key!==keyFor(a,col))stop("PATH_NOT_APPROVED");
+      }else{
+        if(!queries.includes(col)||request.field!=="personId"||request.op!=="=="||request.value!==a.personId)stop("QUERY_NOT_APPROVED");
+        if(request.limit!==51)stop("QUERY_LIMIT");
+      }
+      return dispatch(col);
+    }
+    const db=Object.freeze({collection(col){
+      return Object.freeze({
+        doc(key){return Object.freeze({get:()=>read(col,{kind:"point",key})});},
+        where(field,op,value){return Object.freeze({limit(n){return Object.freeze({get:()=>read(col,{kind:"query",field,op,value,limit:n})});}});}
+      });
     }});
     try{
       const n=now(),report=await sampler({db,actors:[{uid:a.uid,role:a.role,organisationId:a.organisationId,legacySchoolId:a.legacySchoolId}],nowMs:n,maxAgeMs:config.maxAgeMs});
