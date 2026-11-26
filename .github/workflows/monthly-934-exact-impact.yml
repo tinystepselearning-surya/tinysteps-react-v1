@@ -1,0 +1,33 @@
+name: Monthly Trends exact deployment impact review
+on:
+  push:
+    branches: [docs/monthly-trends-934-impact-verification]
+permissions:
+  contents: read
+jobs:
+  impact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.22.1
+      - name: Analyze candidate against current artifact markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          candidate="ffea4e2a91dcf1d6ce2a61db4d8043f1025d3f95"
+          main="$(git rev-parse refs/remotes/origin/main)"
+          functions="$(git rev-parse refs/remotes/origin/ci/functions-production)"
+          hosting="$(git rev-parse refs/remotes/origin/ci/hosting-production)"
+          rules="$(git rev-parse refs/remotes/origin/ci/firestore-rules-production)"
+          indexes="$(git rev-parse refs/remotes/origin/ci/firestore-indexes-production)"
+          git checkout --detach "$candidate"
+          echo "Candidate: $candidate"
+          export GITHUB_OUTPUT="$RUNNER_TEMP/monthly-934-impact"
+          node scripts/resolve-deployment-impact.mjs --before "$main" --functions-before "$functions" --hosting-before "$hosting" --firestore-rules-before "$rules" --firestore-indexes-before "$indexes" --sha "$candidate"
+          cat "$GITHUB_OUTPUT"
