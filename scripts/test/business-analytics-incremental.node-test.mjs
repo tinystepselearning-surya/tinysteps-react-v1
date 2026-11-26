@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {planContributionChange,applyContributionDeltas,receiptContribution,billedContribution,inquiryContribution,childMovementContribution} from '../business-analytics-incremental.mjs';
 import {publishCertifiedFlowChange} from '../business-analytics-flow-publisher.mjs';
 
+import {prepareFlowBaseline} from '../business-analytics-flow-baseline.mjs';
+
 const root='adminStats/businessAnalyticsV1';
 const paid=(revision,receiptMonthKey='2026-10',netReceivedPaise=50000)=>receiptContribution({id:'p1',revision,receiptMonthKey,netReceivedPaise});
 test('correction moves receipt between periods, stale and duplicate events are harmless',()=>{
@@ -63,4 +65,16 @@ test('drift or missing generation aborts without writes',async()=>{
  assert.equal(counts.writes,0);
  await assert.rejects(publishCertifiedFlowChange(store,paid(1),{...opts,generation:'wrong'}),/baseline/);
  assert.equal(counts.writes,0);
+});
+
+test('baseline seed must reconcile certified totals against complete contributor ledger',()=>{
+ const annual={year:'2026',schemaVersion:1,metricDefinitionVersion:1,verificationStatus:'verified',updatedAt:stamp,
+ months:Array.from({length:12},(_,i)=>({monthKey:'2026-'+String(i+1).padStart(2,'0'),metrics:{leadEnquiries:null,newOpportunities:null,repeatEnquiries:null,billedPaise:null,receivedPaise:i===9?50000:null}}))};
+ const input={generation,sourceWatermark:'fixture-watermark',annuals:[annual],contributors:[paid(1)]};
+ const seed=prepareFlowBaseline(input);
+ assert.deepEqual(seed.counts,{years:1,months:12,contributors:1,documents:14});
+ assert.equal(seed.verificationRequired,true);
+ assert.equal(seed.documents.some(d=>d.path.endsWith('/control/active')||d.path.endsWith('/businessAnalyticsControl/active')),false);
+ assert.throws(()=>prepareFlowBaseline({...input,contributors:[]}),/Seed contribution mismatch/);
+ assert.throws(()=>prepareFlowBaseline({...input,contributors:[paid(1),paid(1)]}),/Duplicate seed contributor/);
 });
