@@ -149,7 +149,7 @@ export default function ConversionTracker() {
     const clickHandler = (event: MouseEvent) => {
       const node = findTrackableNode(event.target);
       if (!node) return;
-      if (node.closest('[data-floating-assistant="1"]')) return;
+      if (node.closest('[data-floating-assistant="1"], [data-analytics-cta-handled]')) return;
 
       const label = getCtaLabelFromElement(node);
       if (!label) return;

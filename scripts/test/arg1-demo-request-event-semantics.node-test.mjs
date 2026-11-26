@@ -14,7 +14,7 @@ test('public form records an assessment request but never a confirmed booking', 
   const whatsapp = form.indexOf('navigateToWhatsapp(whatsappWindow, whatsappUrl);', request);
   assert.ok(write >= 0 && write < lead && lead < request && request < whatsapp, 'request event must follow saved lead and precede WhatsApp handoff');
   assert.match(form.slice(request - 180, request), /classFormatPreference !== 'small_group' && submittedForm\.classFormatPreference !== 'unsure'/);
-  assert.match(form.slice(request, request + 260), /submission_id: leadRef\.id/);
+  assert.doesNotMatch(form.slice(lead, whatsapp), /submission_id|leadRef\.id/);
 });
 
 test('new request and legacy confirmed-booking event have disjoint names', () => {
@@ -22,7 +22,7 @@ test('new request and legacy confirmed-booking event have disjoint names', () =>
   assert.match(tracker, /export function trackDemoRequestReceived\(/);
   assert.match(tracker, /trackEvent\('demo_request_received'/);
   assert.match(tracker, /request_type: params\.request_type/);
-  assert.match(tracker, /submission_id: params\.submission_id/);
+  assert.doesNotMatch(tracker, /submission_id/);
   assert.match(tracker, /export function trackDemoBookingComplete\(/);
   assert.match(tracker, /trackEvent\('funnel_demo_booking_complete'/);
   assert.match(tracker, /trackEvent\('generate_lead'/);

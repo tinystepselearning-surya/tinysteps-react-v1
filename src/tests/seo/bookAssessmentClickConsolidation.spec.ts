@@ -42,13 +42,14 @@ describe('Single canonical assessment CTA event', () => {
     ]);
   });
 
-  it('does not change successful saved-lead instrumentation', () => {
-    trackGenerateLead({ form_name: 'public_assessment_form', submission_id: 'test-submission' });
+  it('preserves the saved-lead event without a submission identifier', () => {
+    trackGenerateLead({ form_name: 'public_assessment_form' });
 
     expect(trackEventMock).toHaveBeenCalledTimes(1);
     expect(trackEventMock).toHaveBeenCalledWith(
       'generate_lead',
-      expect.objectContaining({ submission_id: 'test-submission' }),
+      expect.objectContaining({ form_name: 'public_assessment_form' }),
     );
+    expect(trackEventMock.mock.calls[0][1]).not.toHaveProperty('submission_id');
   });
 });

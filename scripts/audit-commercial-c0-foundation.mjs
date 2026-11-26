@@ -102,7 +102,8 @@ requireTokens('src/lib/conversionTracking.ts', [
 requireTokens('src/lib/analytics.ts', [
   "location.hostname !== 'tinystepslearning.com'",
   'isPublicAnalyticsPath(location.pathname)',
-  "window.gtag('event', 'page_view'",
+  "trackEvent('page_view'",
+  'safeAnalyticsParameters(withMarketingContext(params))',
 ]);
 
 const lifecycle = requireTokens('functions/src/leadLifecycle.ts', [

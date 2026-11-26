@@ -10,7 +10,7 @@ import {
   setPersistence,
   type Auth,
 } from 'firebase/auth';
-import { getAnalytics, type Analytics, logEvent as fbLogEvent } from 'firebase/analytics';
+import { getAnalytics, type Analytics } from 'firebase/analytics';
 import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
 import { logFirebaseAuthKeyPresence } from './nativeAuthDiagnostics';
 
@@ -213,15 +213,6 @@ if (typeof window !== 'undefined') {
     analytics = getAnalytics(app);
   } catch {
     analytics = null;
-  }
-}
-
-export function logCustomEvent(eventName: string, data?: Record<string, unknown>) {
-  if (!analytics) return;
-  try {
-    fbLogEvent(analytics, eventName, data || {});
-  } catch {
-    // ignore
   }
 }
 

@@ -150,7 +150,6 @@ export default function PublicAssessmentForm({
       utm_campaign: attribution.utm_campaign,
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
-      urgency: form.urgency,
     });
     // mount-only event
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -169,9 +168,6 @@ export default function PublicAssessmentForm({
       utm_campaign: attribution.utm_campaign,
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
-      childAge: form.childAge,
-      mainConcern: form.mainConcern,
-      urgency: form.urgency,
       class_format_preference: form.classFormatPreference,
     });
   };
@@ -259,6 +255,11 @@ export default function PublicAssessmentForm({
     };
   };
 
+  const openWhatsAppAgain = () => {
+    trackWhatsappClick(source || 'public_assessment_form');
+    window.open(lastOpenedWaLink || waLink, '_blank', 'noopener,noreferrer');
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (submitLockRef.current || isSubmitting) return;
@@ -296,9 +297,6 @@ export default function PublicAssessmentForm({
       utm_campaign: attribution.utm_campaign,
       utm_content: attribution.utm_content,
       utm_term: attribution.utm_term,
-      childAge: submittedForm.childAge,
-      mainConcern: submittedForm.mainConcern,
-      urgency: submittedForm.urgency,
       class_format_preference: submittedForm.classFormatPreference,
     };
 
@@ -372,13 +370,11 @@ export default function PublicAssessmentForm({
         lead_type: submittedForm.classFormatPreference === 'small_group' ? 'group_interest_request' : 'parent_assessment_request',
         form_id: 'public_assessment_form',
         source: source || 'public_assessment_form',
-        submission_id: leadRef.id,
         value: 1,
       });
       if (submittedForm.classFormatPreference !== 'small_group' && submittedForm.classFormatPreference !== 'unsure') {
         trackDemoRequestReceived({
           request_type: submittedForm.contactPreference === 'phone' ? 'callback_assessment_request' : 'whatsapp_assessment_request',
-          submission_id: leadRef.id,
           source_context: source || 'public_assessment_form',
         });
       }
@@ -477,7 +473,7 @@ export default function PublicAssessmentForm({
         <p className={`mt-1.5 max-w-xl text-sm leading-5 sm:mt-2 sm:leading-5 ${NAVY_TEXT}`}>{displayedDescription}</p>
       </div>
 
-      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
+      <form data-clarity-mask="true" onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className={formClassName}>
         <div className={fieldGridClassName}>
           <div className="group space-y-1">
             <label htmlFor="assessment-parent-name" className="block text-xs font-semibold text-[#142449]">
@@ -701,11 +697,10 @@ export default function PublicAssessmentForm({
           <div className="space-y-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700" role="alert">
             <p>{submitError}</p>
             <div className="flex flex-wrap gap-2">
-              <a href={lastOpenedWaLink || waLink} target="_blank" rel="noopener noreferrer"
-                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
+              <button type="button" data-analytics-cta-handled onClick={openWhatsAppAgain}
                 className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
                 Send enquiry on WhatsApp
-              </a>
+              </button>
               <a href={PHONE_URL}
                 className="inline-flex items-center rounded-lg border border-rose-300 bg-white px-3 py-1.5 text-xs font-semibold text-rose-800">
                 Call Tiny Steps
@@ -727,15 +722,14 @@ export default function PublicAssessmentForm({
                   : 'WhatsApp was not opened automatically. Your enquiry is saved; use the options below if you would like to contact us directly.'}
             </p>
             <div className="flex flex-wrap gap-2">
-              <a
-                href={lastOpenedWaLink || waLink}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => trackWhatsappClick(source || 'public_assessment_form')}
+              <button
+                type="button"
+                data-analytics-cta-handled
+                onClick={openWhatsAppAgain}
                 className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"
               >
                 Open WhatsApp again
-              </a>
+              </button>
               <a
                 href={PHONE_URL}
                 className="inline-flex items-center rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-800 hover:bg-emerald-100"

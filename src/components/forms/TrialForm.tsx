@@ -51,7 +51,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
         source: 'trial',
         ...buildLeadAttributionPayload(),
       });
-      trackEvent('trial_form_submit', { context, childAge: data.childAge });
+      trackEvent('trial_form_submit', { context });
       trackLeadFormSubmit({
         form_name: 'trial_form',
         source_context: context,
@@ -69,7 +69,7 @@ export default function TrialForm({ compact = false, context = 'trial_form' }: {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} onFocusCapture={trackFormStartOnce} className="space-y-3">
+    <form data-clarity-mask="true" onSubmit={handleSubmit(onSubmit)} onFocusCapture={trackFormStartOnce} className="space-y-3">
       <div>
         <input className="interactive-input" placeholder="Parent name" {...register('parentName')} />
         {errors.parentName && <p className="mt-1 text-xs text-red-600">{errors.parentName.message as any}</p>}

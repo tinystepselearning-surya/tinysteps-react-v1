@@ -3,21 +3,6 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import CountUp from "@components/CountUp";
 
-/**
- * Safe analytics helper (won't break build if analytics isn't set up).
- * If you later add GA/Meta/etc, you can replace this with your real implementation.
- */
-function trackEvent(_name: string, _params?: Record<string, unknown>) {
-  try {
-    if (typeof window === "undefined") return;
-    const w = window as any;
-    if (typeof w.gtag === "function") w.gtag("event", _name, _params);
-    // else no-op
-  } catch {
-    // no-op
-  }
-}
-
 const WHATSAPP_NUMBER = "919618398383"; // no +
 
 type FormState = {

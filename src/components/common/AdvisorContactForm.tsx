@@ -67,8 +67,6 @@ export default function AdvisorContactForm({
         throw new Error('Unable to submit contact form');
       }
 
-      const result = await response.json().catch(() => null);
-
       trackLeadFormSubmit({
         form_name: 'advisor_contact_form',
         source_context: topic,
@@ -78,7 +76,6 @@ export default function AdvisorContactForm({
         source_context: topic,
         lead_channel: 'contact_form',
         lead_type: 'parent_inquiry',
-        submission_id: typeof result?.submissionId === 'string' ? result.submissionId : undefined,
       });
 
       setSubmitted(true);
@@ -109,7 +106,7 @@ export default function AdvisorContactForm({
         <p className="mt-1 text-sm text-slate-600">{description}</p>
       </div>
 
-      <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="mt-4 space-y-3">
+      <form data-clarity-mask="true" onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="mt-4 space-y-3">
         <input
           type="text"
           value={values.name}

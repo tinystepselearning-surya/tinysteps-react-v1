@@ -342,16 +342,18 @@ describe('PublicAssessmentForm analytics', () => {
       lead_type: 'parent_assessment_request',
       form_id: 'public_assessment_form',
       source: 'public_assessment_form',
-      submission_id: 'lead-123',
-      childAge: '7',
-      mainConcern: 'Blending sounds to read words',
       value: 1,
     }));
     expect(trackingMocks.trackDemoRequestReceived).toHaveBeenCalledWith(expect.objectContaining({
       request_type: 'whatsapp_assessment_request',
-      submission_id: 'lead-123',
       source_context: 'public_assessment_form',
     }));
+    for (const tracker of [trackingMocks.trackLeadFormSubmit, trackingMocks.trackGenerateLead, trackingMocks.trackDemoRequestReceived]) {
+      const [params] = tracker.mock.calls[0];
+      for (const key of ['submission_id', 'childAge', 'mainConcern', 'parentName', 'childName', 'whatsapp']) {
+        expect(params).not.toHaveProperty(key);
+      }
+    }
     expect(trackingMocks.trackDemoBookingComplete).not.toHaveBeenCalled();
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(trackingMocks.trackLeadFormError).not.toHaveBeenCalled();
@@ -401,9 +403,10 @@ describe('PublicAssessmentForm analytics', () => {
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Tiny Steps has received your enquiry'));
     expect(screen.getByRole('status')).toHaveTextContent('WhatsApp was not opened automatically');
     expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
-    const retryLink = screen.getByRole('link', { name: 'Open WhatsApp again' });
-    expect(retryLink).toHaveAttribute('target', '_blank');
-    fireEvent.click(retryLink);
+    const retryButton = screen.getByRole('button', { name: 'Open WhatsApp again' });
+    expect(retryButton).not.toHaveAttribute('href');
+    fireEvent.click(retryButton);
+    expect(globalThis.open).toHaveBeenLastCalledWith(expect.stringMatching(/^https:\/\/wa\.me\//), '_blank', 'noopener,noreferrer');
     expect(trackingMocks.trackWhatsappClick).toHaveBeenCalledTimes(1);
     expect(firestoreMocks.setDoc).toHaveBeenCalledTimes(1);
   });
@@ -452,7 +455,7 @@ describe('PublicAssessmentForm analytics', () => {
     );
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.getByRole('link', { name: 'Call Tiny Steps' })).toHaveAttribute('href', 'tel:+919618398383');
-    expect(screen.getByRole('link', { name: 'Send enquiry on WhatsApp' })).toHaveAttribute('target', '_blank');
+    expect(screen.getByRole('button', { name: 'Send enquiry on WhatsApp' })).not.toHaveAttribute('href');
   });
 
   it('prevents duplicate lead creation on double submit', async () => {

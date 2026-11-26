@@ -27,7 +27,7 @@ const ProgramLeadForm = ({ program }: { program: string }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    trackEvent('program_lead', { program, childAge: age });
+    trackEvent('program_lead', { program });
     trackLeadFormSubmit({
       form_name: 'program_lead_form',
       source_context: `program:${program}`,
@@ -41,7 +41,7 @@ const ProgramLeadForm = ({ program }: { program: string }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="space-y-3">
+    <form data-clarity-mask="true" onSubmit={handleSubmit} onFocusCapture={trackFormStartOnce} className="space-y-3">
       <input className="interactive-input" placeholder="Parent name" value={name} onChange={(e)=>setName(e.target.value)} required />
       <input className="interactive-input" placeholder="Child name" value={childName} onChange={(e)=>setChildName(e.target.value)} required />
       <input className="interactive-input" placeholder="Child age" value={age} onChange={(e)=>setAge(e.target.value)} required />
@@ -51,15 +51,17 @@ const ProgramLeadForm = ({ program }: { program: string }) => {
         Send inquiry
       </button>
       {!user && (
-        <a
-          href={whatsappHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={() => trackWhatsappClick('program_lead_form')}
-          className="block rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800"
+        <button
+          type="button"
+          data-analytics-cta-handled
+          onClick={() => {
+            trackWhatsappClick('program_lead_form');
+            window.open(whatsappHref, '_blank', 'noopener,noreferrer');
+          }}
+          className="block w-full rounded-2xl border border-gray-200 bg-white px-4 py-3 text-center text-sm font-semibold text-gray-800"
         >
           Chat on WhatsApp - opens new window
-        </a>
+        </button>
       )}
       {status === 'success' && (
         <p className="text-xs text-tiny-green-600">Thanks. We received your request and will follow up by email.</p>

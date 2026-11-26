@@ -10,7 +10,6 @@ import type {
   Course,
   Topic,
 } from '../types/models';
-import { logCustomEvent } from '../lib/firebaseConfig';
 import callFunction from '../lib/callFunctions';
 
 export interface KidRecord {
@@ -78,12 +77,6 @@ function emitLegacyFallbackTelemetry(
   const key = `${reader}:${fallbackField}:${normalizedHitCount}:${normalizedInputCount}`;
   if (legacyFallbackTelemetrySeen.has(key)) return;
   legacyFallbackTelemetrySeen.add(key);
-  logCustomEvent('legacy_reader_fallback_used', {
-    reader,
-    fallback_field: fallbackField,
-    hit_count: normalizedHitCount,
-    input_count: normalizedInputCount,
-  });
   void callFunction(
     'recordLegacyFallbackUsage',
     {

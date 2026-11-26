@@ -308,7 +308,6 @@ type FunnelLeadFormErrorParams = FunnelLeadFormParams & {
 type GenerateLeadParams = FunnelLeadFormParams & {
   lead_channel?: string;
   lead_type?: string;
-  submission_id?: string;
   form_id?: string;
   source?: string;
   value?: number;
@@ -321,7 +320,6 @@ type FunnelDemoBookingCompleteParams = FunnelBaseParams & {
 
 type FunnelDemoRequestReceivedParams = FunnelBaseParams & {
   request_type: string;
-  submission_id: string;
 };
 
 function buildLeadDetailEventParams(params: FunnelLeadFormParams, pagePath: string) {
@@ -332,10 +330,6 @@ function buildLeadDetailEventParams(params: FunnelLeadFormParams, pagePath: stri
     utm_campaign: params.utm_campaign,
     utm_content: params.utm_content,
     utm_term: params.utm_term,
-    childAge: params.childAge,
-    interest: params.interest,
-    mainConcern: params.mainConcern,
-    urgency: params.urgency,
     class_format_preference: params.class_format_preference,
   };
 }
@@ -578,7 +572,6 @@ export const trackGenerateLead = (params: GenerateLeadParams = {}) => {
     source: params.source,
     lead_channel: params.lead_channel || 'form_submit',
     lead_type: params.lead_type || 'parent_inquiry',
-    submission_id: params.submission_id,
     value: params.value,
     currency: params.currency,
     ...buildLeadDetailEventParams(params, pagePath),
@@ -648,7 +641,6 @@ export function trackDemoRequestReceived(params: FunnelDemoRequestReceivedParams
   trackEvent('demo_request_received', {
     page_path: pagePath,
     request_type: params.request_type,
-    submission_id: params.submission_id,
     funnel_name: params.funnel_name || WEBSITE_LEAD_FUNNEL_NAME,
     program: resolveProgram(params.program, pagePath),
     source_context: params.source_context || 'unknown',
