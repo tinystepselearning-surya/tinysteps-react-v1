@@ -1,4 +1,4 @@
-# P01.1-D8 — consolidated source record catalogue, revision 4
+# P01.1-D8 — consolidated source record catalogue, revision 5
 
 **Status:** source catalogue seed, not a final metadata registry. Main 701c7ec832dbe9c531964496fa09cd4a4948ddd2; 26 November 2026 IST. Draft #933 on #932. No production access, runtime changes, schema changes, data reads, migration IDs or permanent record/item IDs assigned. Reuses D1–D7 and source Rules; new helper evidence below. Live cardinality, field presence, requiredness, retention and deployed authorization remain unverified for every row.
 
@@ -44,7 +44,7 @@ Kinds: C canonical identity source; O existing operational record/configuration 
 | authAccessReadModels/{uid} | P | authorization projection | firebaseUid/personId/sourceAuthIdentityId:string; personStatus/authStatus:enum; accessActive:boolean; globalRoles:enum[]; schoolAdminOrganisationIds:string[]; authority:canonical-derived; schemaVersion:1 | R | No exact match in inventory | identity/authAccessReadModel.ts:16–62 |
 | authIdentities/{authIdentityId} | C | identity / canonical-primary | authIdentityId/personId/providerSubject:string; provider:AuthProvider; status:AuthIdentityStatus | R | No exact match in inventory | identity/contracts.ts:112–118 |
 | billingCharges/{sessionId} | O | parent financial obligation | sessionId/enrollmentId/kidId/parentId/teacherId/courseId; amount:number; currency/status; attendanceFinanceCycle; monthKey/serviceDate/serviceMonthKey; billingRateSnapshot:number; timestamps | R | 1256 | sessionRevenue.ts:490–515; D1 |
-| bulkUploadJobs/{jobId} | U | platform import workflow candidate | Admin CRUD; current producer/schema not located by exact literal search | R | 1844 | Wave0 map:70; rules:1844–1846 |
+| bulkUploadJobs/{jobId} | H | historical CSV import job | Historical adminProcessEnrollmentCSV created and updated jobs. Module removed in fec02e9c9. Rules remain. | R | 1844 | Wave0 map:70; rules:1844–1846 |
 | calendarAttendanceClaims/{claimId} | I | scheduling / occurrence reservation | child+IST date/time claim; teacher/student day reservations; exact field schema pending | R | No exact match in inventory | D1 teacherCalendarActions |
 | calendarStudentAdHocDays/{dayId} | I | scheduling / occurrence reservation | child+IST date/time claim; teacher/student day reservations; exact field schema pending | R | No exact match in inventory | D1 teacherCalendarActions |
 | calendarTeacherAdHocDays/{dayId} | I | scheduling / occurrence reservation | child+IST date/time claim; teacher/student day reservations; exact field schema pending | R | No exact match in inventory | D1 teacherCalendarActions |
@@ -118,7 +118,7 @@ Kinds: C canonical identity source; O existing operational record/configuration 
 | parentWorksheetLibrary/{worksheetId} | O | learning resource configuration | content vs catalog visibility; target child/course/parent/enrollment and status; exact schemas pending | R | 1248 | D4 |
 | parents/{parentId} | C | Wave1 permanent role profile with compatibility key usage | parent role profile metadata; personId target in Wave1 contract; legacy UID consumers remain; field-level authority and key convergence pending | R | 1364 | Wave1 IDENTITY_PROFILE_RETIREMENT_MIGRATION.md:76–87; D3/D7 |
 | password_reset_requests/{requestId} | E | authentication audit | targetUid, requestedBy, mode, success, timestamp; never expose reset links | S | No exact match in inventory | D7 |
-| paymentConfirmations/{docId} | U | payment confirmation workflow candidate | parentUid required by create Rule; Admin read/update/delete; producer and finance authority unverified | S | 1403 | Wave0 map:61; rules:1403–1406 |
+| paymentConfirmations/{docId} | H | historical parent payment confirmation | Historical ParentDashboard direct writer removed in 507a99e07. Parent create and Admin Rules remain. | S | 1403 | Wave0 map:61; rules:1403–1406 |
 | payments/{paymentId} | O | parent cash receipt | payment ID, allocations, parent/enrollment/month, amount; exact typed receipt schema pending | R | 1265 | D1/D2 |
 | people/{personId} | C | identity / canonical-primary | personId:string; kind:PersonKind; status:PersonStatus; displayName:string; countryCode?:string\|null | R | No exact match in inventory | identity/contracts.ts:104–110 |
 | personContacts/{personId} | C | identity / private teacher profile | personId:string; contacts phone/timezone nullable; staff profile bank fields restricted; exact per-record type/optionality pending | S | No exact match in inventory | identity/canonicalPrimaryTeacherProfile.ts:246–280 |
@@ -146,10 +146,10 @@ Kinds: C canonical identity source; O existing operational record/configuration 
 | students/{kidId} | L | identity compatibility and operational legacy | role/status, identity aliases and relationships vary by record; field-specific authority pending | R | 991 | D3/D7; rules; identity bridge |
 | students/{kidId}/courseProgress/{courseId} | P | learning progress projection | course-level summary; transactional event updates/bootstrap | R | 946 | D7 |
 | students/{kidId}/curriculum/{topicId} | O | individual curriculum state | status completed/in_progress, updatedAt/by, source attendance, lastSessionId, topicName, conditional courseId/courseLabel/courseName; session progress transaction writes | R | 954 | saveTeacherSessionProgress.ts:672–686 |
-| students/{kidId}/monthlyReports/{docId} | U | monthly student report candidate | status published required for parent read; teacher/Admin write permission; no producer located by exact literal search | R | 982 | rules:982–989; index source |
+| students/{kidId}/monthlyReports/{docId} | H | historical monthly student report | Historical publishWeeklyReport updated monthly aggregates. Module removed in 1e995ab8d. Rules and indexes remain. | R | 982 | rules:982–989; index source |
 | students/{kidId}/progress/{topicId} | O | individual learning progress | topic/enrollment/child references, status and educational completion; typed schema pending | R | 925 | D1/D7 |
 | students/{kidId}/progressEvents/{eventId} | E | learning progress replay evidence | eventId, course/child linkage; no synthetic progress from identity-only backfill | R | No exact match in inventory | D7 |
-| students/{kidId}/weeklyReports/{reportId} | U | weekly student report candidate | status published required for parent read; assigned teacher/Admin write permission; no producer located by exact literal search | R | 963 | rules:963–980; index source |
+| students/{kidId}/weeklyReports/{reportId} | H | historical weekly student report | Historical generateWeeklyReport and publishWeeklyReport wrote this path. Module removed in 1e995ab8d. Rules and indexes remain. | R | 963 | rules:963–980; index source |
 | teacherDailyAccess/{dailyId} | P | resource access counters | daily grain, count and last access | R | 1561 | D4 |
 | teacherEarningAdjustments/{adjustmentId} | O | teacher settlement / separate ledgers | cash payout vs noncash offset vs withholding vs adjustment; source/target earnings and amount/month evidence; exact per-record schemas pending | R | No exact match in inventory | D1/D2 |
 | teacherEarnings/{earningId} | O | teacher financial entitlement | session or demo reference; amount:number; status/currency; attendanceFinanceCycle; earnedAt; monthKey; teacherPayRateSnapshot:number | R | 1389 | sessionRevenue.ts:517–540; D1/D3 |
@@ -161,13 +161,13 @@ Kinds: C canonical identity source; O existing operational record/configuration 
 | teachers/{teacherId}/availability/{docId} | O | teacher availability configuration | fixed config doc; timezone:string, slotIntervalMinutes/minimumNoticeMinutes/bufferBetweenSessionsMinutes:number, weeklyWindows:typed array (id,weekday,startTime,endTime), updatedAt/by | R | 854 | teacherAvailability.ts:7–22; TeacherAvailabilityEditor.tsx:149–150,468–479,506 |
 | teachers/{teacherId}/blockedSlots/{blockId} | O | teacher blocked availability window | startAt/endAt Timestamp-like read into Date, reason?:string; date-scoped subscription; owner-write Rule, actual writer unknown | R | 849 | TeacherAvailabilityEditor.tsx:178–210; teacherAvailability.ts:24–29; rules:849–852 |
 | teachers/{teacherId}/earnings/{monthKey} | P | financial/attendance reporting | month grain, rollup totals or child rows; independent projection writers; exact schemas pending | R | 859 | D1/D7 |
-| teachers/{teacherId}/sessionRequests/{requestId} | O | manual request workflow | request status, startAt, enrollment/child; producer unresolved | R | 869 | D2/D5 |
+| teachers/{teacherId}/sessionRequests/{requestId} | O | manual request workflow | request status, startAt, enrollment/child. Historical teacher source producer identified. Current compatibility producer unresolved. | R | 869 | D2/D5 |
 | testimonials/{testimonialId} | O | consent-governed review content | status/source/reviewerType, parentName, optional childName/age/city, reviewText/publishedText, rating, consent flags:boolean, course/pageTags:string[], audit timestamps; public submission pending, admin moderation | S | 1175 | testimonials.ts:9–35,685–707; TestimonialsManagement.tsx:182–193 |
 | userNotificationState/{uid} | P | unread state projection | unreadMessages, lastMessageAt/updatedAt | R | No exact match in inventory | D4 |
 | usernames/{username} | I | authentication compatibility lookup | UID/email aliases; exact key/field shape pending | R | No exact match in inventory | D7 resolveLoginIdentifier |
 | users/{uid} | L | identity compatibility and operational legacy | role/status, identity aliases and relationships vary by record; field-specific authority pending | R | 768 | D3/D7; rules; identity bridge |
 | virtualClassReminderFlags/{flagId} | O | virtual occurrence reminder workflow | date, dynamic notified boolean/time fields, updatedAt/by; Admin client merge; not scheduled push delivery | R | 1818 | TodaysNotifications.tsx:1395–1398,2203–2213 |
-| whatsappInboundUnmatched/{docId} | U | historical integration workflow candidate | Admin CRUD; no current producer located; no retirement or deletion authorized | S | 1759 | Wave0 map:69; rules:1759–1761 |
+| whatsappInboundUnmatched/{docId} | H | historical Meta WhatsApp unmatched intake | Legacy webhook producer and lead trigger removed in source. Admin Rules remain. Retention, live existence and external producers unresolved. | S | 1759 | Wave0 map:69; rules:1759–1761; 8a07398e8; D13 closure |
 | internalBillingProjections/{parentId}/billingMonths/{monthKey} | P | internal billing projection | parent/month grain; transactional companion to parent monthly read model; exact fields pending | R | No exact match in inventory | parentMonthlyBillingProjectionV2.ts:382–395; D1 |
 | admins/{personId} | C | identity role profile, existing approved Wave1 target | role-specific profile; not global authorization authority; actual reader/writer key convergence pending | R | No exact match in inventory | Wave1 IDENTITY_PROFILE_RETIREMENT_MIGRATION.md:76–87; migration ledger profileMigration |
 | learningPartners/{personId} | C | identity role profile, existing approved Wave1 target | role-specific profile; assignment authority separate; actual key convergence pending | R | No exact match in inventory | Wave1 IDENTITY_PROFILE_RETIREMENT_MIGRATION.md:76–87; migration ledger profileMigration |
@@ -265,10 +265,10 @@ All 26 former Rules-only rows received targeted source or historical documentati
 | lesson_view_audit | Admin Rules permission | teacher viewer merges open/blocked/close events | audit replay, retention and privacy |
 | virtualClassReminderFlags | TodaysNotifications date query | Admin direct setDoc flags (real sessions write classSessions instead) | occurrence identity, sender status not delivery proof |
 | testimonials | testimonials library/public filtered read, Admin list | public pending submission; Admin moderation | published field privacy and consent, effective Rules |
-| teacherInquiries | Admin workspace | Admin stage/notes/close mutation; public submitter path unresolved | recruitment producer and PII retention |
-| invoices | parent useInvoices and checkout | writer unresolved | determine secondary finance authority and gateway status |
+| teacherInquiries | Admin workspace | Admin stage/notes/close mutation. Public Careers writer removed at #717. External intake unresolved. | recruitment producer and PII retention |
+| invoices | parent useInvoices and routed checkout | historical PhonePe handlers removed from source. Current writer and deployed status unresolved. | determine secondary finance authority and gateway status |
 | progress root | useData/useProgress | admin Rules permission only in this slice | producer/migration mapping; no authority assumption |
-| skillStats | parent/Admin Rules | applyTagStats helper batch, invocation unresolved | active vs legacy stats producer and idempotency |
+| skillStats | parent/Admin Rules | applyTagStats historical writer removed from recordLevelResult. Helper and destructive script remain. | active vs legacy stats producer and idempotency |
 
 Additional source paths found during tracing: useData.ts:184–195 reads attendance/{sessionId}/attendanceRecords and attendance roots; :580–584 reads curriculum root. Add to next catalogue delta after producer and Rules review; do not pretend 159 is exhaustive. Existing 198 root ledger remains scoped; no fresh runtime test, live queries or deployment. Next D10: compile targeted integrity/authorization verification matrix and source-only tests/preflight execution where environment permits; resolve remaining U and high-risk direct writer paths as evidence allows; no phase exit until live metadata, bounded data verification, cost/recovery evidence and owner review. P01.2 and M3 gates remain held.
 
@@ -279,3 +279,7 @@ Nine additional source-backed record paths incorporated, including six existing 
 ## D12 academic inventory probe delta
 
 Existing academic audit collector explicitly reads seven additional collection paths with schemaVersion field selection. Their existence and actual producer are unverified; preserve as U inventory probes, not operational or canonical records. Catalogue now 175 unique paths, 160 scoped, 15 unresolved (eight prior plus seven probes). The denominator change is discovery of previously omitted source references, not a loss of verified coverage. No audit invocation, database access or schema creation.
+
+## D13 closure delta
+
+Reclassified five historical paths with source lineage: Meta WhatsApp unmatched intake, weekly and monthly student reports, CSV import jobs and parent payment confirmations. 175 structural paths, 165 scoped, 10 unresolved (three Rules-only and seven academic probes). Read [D13 closure and acceptance evidence](P01_D13_CLOSURE_AND_BOUNDED_COLLECTOR_2026-11-26.md) for PhonePe, skill statistics, attendance and Firestore REST dependencies. No data retirement or access approval is implied.
