@@ -17,16 +17,16 @@ export async function exerciseSyntheticTransport(plan,{clock,open}){
     return new Promise(resolve=>{
       const collect=createResponseCollector(ticket);
       let stream,deadline,drain,done=false,requested=false;
-      function terminal(outcome,summary=null){
+      function terminal(outcome,summary=null,reason='LANE_REJECTED'){
         if(done)return;done=true;clearTimeout(deadline);clearTimeout(drain);active.delete(h);
         lane.settle(ticket,outcome,summary?.readTime);
-        if(!blocker&&lane.report().code)stop('LANE_REJECTED');
+        if(!blocker&&lane.report().code)stop(reason);
         if(!blocker&&summary)returned+=summary.rows;
         resolve();
       }
       const h={cancel(){
         if(done||requested)return;requested=true;cancelRequested++;
-        drain=setTimeout(()=>{terminal('unknown');try{stream?.destroy();}catch{}},2000);
+        drain=setTimeout(()=>{terminal('unknown',null,'DRAIN_TIMEOUT');try{stream?.destroy();}catch{}},2000);
         try{stream?.cancel();}catch{/* unknown until drain expires */}
       }};
       active.add(h);
@@ -35,7 +35,7 @@ export async function exerciseSyntheticTransport(plan,{clock,open}){
         stream.on('error',e=>{
           if(done)return;
           if(requested&&e?.code===1)cancelled++;
-          terminal('unknown');
+          terminal('unknown',null,'RPC_ERROR');
         });
         stream.on('data',frame=>{
           if(done||blocker)return;
@@ -47,12 +47,13 @@ export async function exerciseSyntheticTransport(plan,{clock,open}){
           let summary;try{summary=collect.finish();}catch{stop('RESPONSE_INVALID');terminal('unknown');return;}
           terminal('completed',summary);
         });
-        stream.on('close',()=>{if(!done){terminal('unknown');}});
+        stream.on('close',()=>{if(!done){terminal('unknown',null,'RPC_CLOSED');}});
         deadline=setTimeout(()=>stop('RPC_TIMEOUT'),ticket.timeoutMs);
-      }catch{terminal('unknown');}
+      }catch{terminal('unknown',null,'RPC_OPEN_FAILED');}
     });
   }
-  for(let i=0;i<plan.actors.length&&!blocker;i++){
+  const planned=lane.report().plannedActors;
+  for(let i=0;i<planned&&!blocker;i++){
     for(const col of ['authAccessReadModels','authIdentities','people']){
       if(blocker)break;await dispatch(i,col);
     }
