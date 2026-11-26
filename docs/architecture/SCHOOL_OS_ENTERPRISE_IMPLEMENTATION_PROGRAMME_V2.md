@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 61 (P01.2 offline index reconciliation utility accepted; R59 engineering baseline retained; effective on isolated merge)  
+**Version:** 2.0 programme baseline, revision 62 (P01.2 consolidated residual metadata assessment prepared; R61 offline utility and R59 engineering acceptance retained; effective on isolated merge)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted at R59 (570/570). R60 records owner-reported infrastructure readiness; R61 accepts the offline index reconciliation utility only, not P01.2 or live parity; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next gate: independent R2.2D trust and secure execution acceptance; live execution remains HOLD. Scoped offline engineering through supervised canonical composition accepted at R59 (570/570). R60 records owner-reported infrastructure readiness; R61 accepts the offline index reconciliation utility only, not P01.2 or live parity; R62 consolidates the residual metadata approval decision without executing it; all broader gates unchanged.** See [acceptance and R2 readiness handoff](design/B02_R1C_ACCEPTANCE_AND_R2_READINESS_HANDOFF.md). The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -684,6 +684,10 @@ Owner directs reuse of the existing MacBook and keyless purpose-specific access,
 
 Owner resumes implementation on the existing MacBook. Pinned source/main/index-marker blob equality confirmed. Four priority index groups contain 34 declarations and 32 exact unique definitions; two repeated definitions identified, with no inferred deployed duplication or cost effect. [Offline index evidence reconciliation](discovery/P01_PRIORITY_INDEX_EVIDENCE_RECONCILIATION.md) implements source-pinned aggregate comparison of separately approved local metadata evidence, not a cloud adapter. Owner exact candidate cd9fe9e380aacee94cd0cd1e56b1cbcbe8a6b76d, pinned Node 22.22.1, clean checkout: source-only 34/32/2, selfCheck PASS; liveVerified false and NOT_ACCEPTED expected. Tool and source blob pins matched. Scoped offline acceptance only, effective on verified isolated merge of PR #955. Prior 570 engineering tests unchanged; no cumulative count increment. No index edits or deployment, permissions, document reads, new live authorization, P01/P02/P03 gate changes or M3 exit. Remaining independent acceptance and exact private scope continue to govern. No generic full regression rerun for unchanged accepted sources.
 
+### Revision 62 — Consolidated residual metadata assessment
+
+[Residual metadata decision packet](discovery/P01_CONSOLIDATED_RESIDUAL_METADATA_ASSESSMENT.md) reuses owner-reported infrastructure findings and R61 utility. Fresh main/relevant deployment-marker/isolated source blobs match for Firestore indexes, Firestore Rules, Storage Rules and Firebase configuration; no deployed digest certified. Proposed selected residual batch cap 13 GET requests (12 without optional Hosting), zero application document/object reads, retries, pagination or mutations. Correct backup response mask to retain database UID and name; include index density/API scope and bucket ownership evidence; retain partial-result stop rules. Existing metadata-only account candidate needs separately approved narrow IAM, actual operator/resource scope and independent reviewer; neither analytics reader nor database administrator is the metadata worker. Exact authorization remains private and absent, no new live adapter or cloud requests. R61 offline utility and R59 570 tests unchanged. P01.2, independent host/trust and all other live gates HOLD. No repeated synthetic regression or provisioning. Next decision: review the selected residual batch, effective IAM and independent acceptance privately before any MacBook run.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -807,3 +811,5 @@ Owner resumes implementation on the existing MacBook. Pinned source/main/index-m
 - Revision 60 (effective on verified isolated merge): sanitized owner-reported infrastructure evidence and proposed Mac-first execution model. Documentation only; R59 570/570 engineering acceptance retained. Independent security and live gates HOLD.
 
 - Revision 61 (effective on verified isolated merge): offline index reconciliation utility, owner pinned focused validation PASS; no P01.2 acceptance or live index parity, no index edits/deployment, all existing independent and production gates HOLD.
+
+- Revision 62 (effective on verified isolated merge): consolidated residual metadata scope and corrected request contracts, no live authorization/execution, all independent and production gates HOLD.
