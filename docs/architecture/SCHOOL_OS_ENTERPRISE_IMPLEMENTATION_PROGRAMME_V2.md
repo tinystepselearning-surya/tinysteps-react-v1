@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 27 (parallel target design; D01 draft)  
+**Version:** 2.0 programme baseline, revision 28 (M01 institutional, academic and enrollment design draft)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -456,9 +456,9 @@ Owner agrees to design the replacement architecture alongside current operations
 | Package | Target scope | Design status |
 |---|---|---|
 | D01 | Identity, contact, roles, learner, guardian, household and existing profile boundaries | Initial draft produced; independent review and exact profile contracts pending |
-| D02 | Tenant, organisation, campus, membership and contextual roles | Next design package |
-| D03 | Academic catalogue, programme, course, curriculum, skills and academic year | Planned |
-| D04 | Enrollment, delivery offering, group placement, teaching assignment | Seed from revision 25/26; detailed design pending |
+| D02 | Tenant, organisation, campus, membership and contextual roles | M01 integrated draft; review pending |
+| D03 | Academic catalogue, programme, course, curriculum, skills and academic year | M01 integrated draft; review pending |
+| D04 | Enrollment, delivery offering, group placement, teaching assignment | M01 integrated draft; review pending |
 | D05 | Scheduling, plans, sessions, participants and staff | Planned |
 | D06 | Attendance, official decision, evidence and corrections | Planned |
 | D07 | Learning, assessment, observations, mastery and progress | Planned |
@@ -471,6 +471,21 @@ Packages are design views spanning the frozen 18 domains, not new competing doma
 [D01 Identity Architecture](design/D01_IDENTITY_ARCHITECTURE.md) preserves the existing core and permanent role/profile, contact, lifecycle, private and evidence stores. Proposed household membership is distinct from guardian/payer/access; path and field bindings remain unadopted. [Registry draft v0.2](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) extends the revision 26 seed to 40 record candidates, 14 detailed seeds, 82 items and 19 value sets; 26 catalogue-only records require detailed fields. Prior 43 source-backed identity fields retained. No production path creation, data capture or migration.
 
 Main has advanced 79 commits relative to the earlier source pin; direct blob equality verified seven D01-relevant artifacts (identity contracts/writer, Firestore and Storage Rules, Wave 1 ledger, profile migration contract, school authorization). No global rebaseline or live deployment claim. Further affected source dependencies must be re-pinned before implementation. Next design package is D02; independent review and existing phase and release gates remain mandatory. No new runtime/CI tests claimed.
+
+### Revision 28 — larger design milestones and M01
+
+Owner directs batching of substantial milestones with holistic checks at each checkpoint, rather than fragmented small commits presented as separate milestones. [M01 — Institutional, academic and enrollment foundations (D02–D04)](design/M01_INSTITUTIONAL_ACADEMIC_ENROLLMENT_ARCHITECTURE.md) provides one integrated entity graph, target path and ownership decisions, context authorization, academic/version and enrollment/placement lifecycle, services, query/index constraints, migration mapping and acceptance scenarios. D01 draft remains its prerequisite design view, with profile details still pending. [Registry v0.3 draft](registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json) now contains 53 proposed records, 32 detailed seeds, 207 unique items and 28 value sets; 43 source-backed identity field definitions preserved. New item definitions are proposed targets, not production schema findings.
+
+| Milestone | Scope | Status |
+|---|---|---|
+| M01 | D02–D04, reconcile with D01 | Integrated design draft, structural checks passed, independent review pending |
+| M02 | D05–D07 scheduling, sessions, attendance, learning/assessment | Next consolidated design milestone |
+| M03 | D08–D10 commerce/finance, school operations, platform foundations | Planned |
+| M04 | Cross-package consistency, unresolved fields/keys/policies, full dependency and migration design, independent approval | Planned; precedes affected implementation |
+
+Important source checks: eight current main blobs match original pinned equivalents (academic/enrollment types, school authorization/academic command, two rolling schedule files, indexes, Wave 1 ledger). Current Course/Topic interface is in models.ts, not a standalone Course.ts. School.ts and schoolCurriculum.ts reviewed. Target lifecycle does not adopt incomplete five-value Enrollment interface as exhaustive; live caller semantics include trial/paused/terminal outcomes and progression/correction. Existing schoolAdmin remains read-only. Proposed contextual grant alternative does not allocate a competing authority. Catalogue visibility and tenant-owned delivery checked explicitly. Existing school-local year/grade/section keys remain contextual, not globally unique. Registry structure, identifier uniqueness, owner and reference/enum integrity checked, and tenant field presence checked for affected root delivery records. No full main rebaseline, independent semantic review, executable validator, runtime tests, CI or live production verification.
+
+P01 acceptance and formal P02/P03/P04 and all affected implementation, security, migration, production and M3 gates unchanged. No collection creation, runtime wiring, code or production changes. M02 proceeds as design proposal only.
 
 ## 10. Change record
 
@@ -524,3 +539,5 @@ Main has advanced 79 commits relative to the earlier source pin; direct blob equ
 - Revision 26 (26 Nov 2026): owner-directed master record/item dictionary design draft and machine-readable seed added; 29 proposed records, 13 detailed, 76 items, 18 value sets, 43 source-backed field matches. Design checks only; no production access, runtime changes, identifier adoption, CI run or phase gate changes.
 
 - Revision 27 (26 Nov 2026): owner-directed parallel target design sequence D01–D10; linked initial D01 design and v0.2 dictionary extension (40 records, 14 detailed, 82 items, 19 value sets). Scoped main-drift review retained seven unchanged source artifacts; no global rebaseline. D02 next design; P01/P02/P03/P04 and M3/production gates unchanged, no code or production changes.
+
+- Revision 28 (26 Nov 2026): grouped D02–D04 into M01 and recorded larger milestone plan; registry v0.3 now 53 records, 32 detailed, 207 items and 28 value sets. Eight source blob comparisons and structural checks passed, source lifecycle/access limitations documented. Independent review, full design closure and all implementation/production gates retained. No production or runtime changes.
