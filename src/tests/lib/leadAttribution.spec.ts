@@ -143,6 +143,71 @@ describe('leadAttribution helper', () => {
     },
   );
 
+  it.each([
+    {
+      label: 'auto-tagged click ID',
+      search: '?utm_source=google&utm_medium=cpc&utm_campaign=ts_grammar_search_pilot_202611&gclid=synthetic-click',
+      expectedClickId: 'synthetic-click',
+    },
+    {
+      label: 'manual CPC UTMs without an available click ID',
+      search: '?utm_source=google&utm_medium=cpc&utm_campaign=ts_grammar_search_pilot_202611',
+      expectedClickId: undefined,
+    },
+  ])('preserves Grammar paid first touch through /book-demo: $label', ({ search, expectedClickId }) => {
+    window.history.replaceState({}, '', `/grammar${search}`);
+    const first = captureLeadAttribution();
+    expect(first).toMatchObject({
+      landingPage: '/grammar',
+      utmSource: 'google',
+      utmMedium: 'cpc',
+      utmCampaign: 'ts_grammar_search_pilot_202611',
+    });
+
+    window.history.replaceState({}, '', '/book-demo');
+    const attribution = getPublicLeadAttribution();
+    expect(attribution).toMatchObject({
+      landingPage: '/grammar',
+      sourcePath: '/book-demo',
+      acquisitionChannel: 'google_ads',
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      utm_campaign: 'ts_grammar_search_pilot_202611',
+    });
+    expect(attribution.gclid).toBe(expectedClickId);
+
+    const payload = buildPublicLeadPayload({
+      parentName: 'Synthetic Parent',
+      childName: 'Synthetic Child',
+      whatsapp: '+919999999999',
+      childAge: '7',
+      mainConcern: 'Grammar while speaking or writing',
+      classFormatPreference: 'one_to_one',
+      urgency: '',
+    }, { source: 'book_demo_page', attribution });
+
+    expect(payload).toMatchObject({
+      source: 'website',
+      sourcePath: '/book-demo',
+      programInterest: 'Grammar',
+      attribution: {
+        utm_source: 'google',
+        utm_medium: 'cpc',
+        utm_campaign: 'ts_grammar_search_pilot_202611',
+      },
+    });
+    expect(payload).not.toHaveProperty('landingPage');
+    expect(payload).not.toHaveProperty('gclid');
+
+    expect(buildLeadAttributionEnrichment(attribution)).toMatchObject({
+      landingPage: '/grammar',
+      conversionPage: '/book-demo',
+      utm_source: 'google',
+      utm_medium: 'cpc',
+      gclid: expectedClickId,
+    });
+  });
+
   it('ignores same-origin referrers as acquisition sources', () => {
     Object.defineProperty(document, 'referrer', {
       configurable: true,
