@@ -164,7 +164,7 @@ const subjectPricingRoutes = [
   {
     label: 'Reading',
     href: '/reading-classes-for-kids',
-    parentQuestion: 'Does my child need decoding, fluency or comprehension support?',
+    parentQuestion: 'Does my child read words accurately but still struggle with fluency, phrasing, or understanding a passage?',
   },
   {
     label: 'Grammar',
