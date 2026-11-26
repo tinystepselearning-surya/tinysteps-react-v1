@@ -40,6 +40,7 @@ vi.mock('../../pages/admin/LeadSourceAnalysis', () => ({
 
 import AnalyticsDashboard from '../../pages/admin/AnalyticsDashboard';
 import { analyticsMonthKeyFromDate } from '../../pages/admin/analyticsV2Metrics';
+import { businessTrendSummary, parseBusinessYear } from '../../pages/admin/monthlyBusinessAnalytics';
 
 const snapshot = (rows: Array<Record<string, unknown>> = []) => ({
   docs: rows.map((row, index) => ({ id: String(row.id || `doc-${index}`), data: () => row })),
@@ -106,7 +107,7 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
     }));
     fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
     await waitFor(() => expect(getDocLoggedMock).toHaveBeenCalledTimes(2));
-    expect(await screen.findByText(/Initial snapshot as of/)).toBeTruthy();
+    expect((await screen.findAllByText(/Initial snapshot as of/)).length).toBeGreaterThan(0);
     expect(screen.getByText(/daily closed-day refresh is not yet reflected/)).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Payments' }));
     fireEvent.click(screen.getByRole('button', { name: 'Enrollments' }));
@@ -130,6 +131,44 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
     expect(await screen.findByText(/today's activity is excluded/)).toBeTruthy();
     expect(screen.queryByText(/Initial snapshot as of/)).toBeNull();
+  });
+
+  it('keeps the detailed table collapsed, enables month inspection, and preserves the two-read budget', async () => {
+    render(<AnalyticsDashboard />);
+    await waitFor(() => expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1));
+    const year = analyticsMonthKeyFromDate(new Date()).slice(0, 4);
+    getDocLoggedMock.mockImplementation(async (label: string) => ({
+      exists: () => true,
+      data: () => ({
+        schemaVersion: 1, metricDefinitionVersion: 1, verificationStatus: 'verified',
+        updatedAt: year + '-11-20T10:00:00Z', coverageMode: 'available_records',
+        ...(label.includes('year:') ? {
+          year,
+          months: [
+            { monthKey: year + '-09', metrics: { leadEnquiries: 40, billedPaise: 200000, newAdmissions: 4, studentExits: 1 } },
+            { monthKey: year + '-10', metrics: { leadEnquiries: 60, billedPaise: 300000, newAdmissions: 6, studentExits: 2 } },
+            { monthKey: year + '-11', metrics: { leadEnquiries: 20, billedPaise: 100000, newAdmissions: 2, studentExits: 1 } },
+          ],
+        } : { activeStudents: 100, activeEnrollments: 110 }),
+      }),
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'Monthly Trends' }));
+    const breakdown = await screen.findByRole('button', { name: /Monthly breakdown/ });
+    expect(breakdown.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('table', { name: /Exact monthly leads values/ })).toBeNull();
+    const month = screen.getByRole('button', { name: 'Inspect September' });
+    fireEvent.click(month);
+    expect(month.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(breakdown);
+    expect(screen.getByRole('table', { name: /Exact monthly leads values/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Payments' }));
+    expect(screen.getByRole('button', { name: /Monthly breakdown/ }).getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByText('Class charges by service month · not cash collected')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Enrollments' }));
+    expect(screen.getByText('Current roster · all years')).toBeTruthy();
+    expect(getDocLoggedMock).toHaveBeenCalledTimes(2);
+    expect(getDocsLoggedMock).not.toHaveBeenCalled();
+    expect(getAggregateFromServerMock).toHaveBeenCalledTimes(1);
   });
 
   it('keeps Overview off every raw monthly collection', async () => {
@@ -224,5 +263,48 @@ describe('AnalyticsDashboard V3 Firestore read plan', () => {
     expect(countLabel('AnalyticsDashboardV3:month-teacher-earnings')).toBe(2);
     expect(labels()).not.toContain('AnalyticsDashboardV3:month-class-sessions');
     expect(labels()).not.toContain('AnalyticsDashboardV3:month-billing-charges');
+  });
+});
+
+describe('Monthly business trend display calculations', () => {
+  const annual = (updatedAt: string, throughDate?: string) => parseBusinessYear({
+    schemaVersion: 1, metricDefinitionVersion: 1, verificationStatus: 'verified',
+    year: '2026', updatedAt, ...(throughDate ? { throughDate, refreshMode: 'daily_closed_day' } : {}),
+    months: [
+      { monthKey: '2026-08', metrics: { leadEnquiries: 0 } },
+      { monthKey: '2026-09', metrics: { leadEnquiries: 40 } },
+      { monthKey: '2026-10', metrics: { leadEnquiries: 60 } },
+      { monthKey: '2026-11', metrics: { leadEnquiries: 20 } },
+      { monthKey: '2026-12', metrics: { leadEnquiries: 999 } },
+    ],
+  }, '2026')!;
+
+  it('keeps the partial month out of comparisons and excludes future values', () => {
+    const result = businessTrendSummary(annual('2026-11-26T13:11:47Z'), 'leadEnquiries');
+    expect(result.latest).toEqual({ monthKey: '2026-11', value: 20, partial: true });
+    expect(result.peak?.value).toBe(60);
+    expect(result.change).toBe(50);
+    expect(result.total).toBe(120);
+    expect(result.average).toBe(33);
+    expect(result.averageMonths).toBe(3);
+    expect(result.rows[0].value).toBeNull();
+    expect(result.rows[7].value).toBe(0);
+    expect(result.rows[11].value).toBeNull();
+  });
+
+  it('recognises an actual closed month boundary, but not an initial daytime snapshot on its last day', () => {
+    const closed = businessTrendSummary(annual('2026-11-30T18:29:59.999Z', '2026-11-30'), 'leadEnquiries');
+    expect(closed.latest?.partial).toBe(false);
+    expect(closed.change).toBeCloseTo(-66.6667);
+    const daytime = businessTrendSummary(annual('2026-11-30T10:00:00Z'), 'leadEnquiries');
+    expect(daytime.latest?.partial).toBe(true);
+  });
+
+  it('does not invent a zero total or percentage for missing periods', () => {
+    const result = businessTrendSummary(annual('2026-11-26T10:00:00Z'), 'billedPaise');
+    expect(result.total).toBeNull();
+    expect(result.average).toBeNull();
+    expect(result.peak).toBeNull();
+    expect(result.change).toBeNull();
   });
 });
