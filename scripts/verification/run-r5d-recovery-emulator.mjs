@@ -8,8 +8,7 @@ import {copyFileSync,mkdtempSync,mkdirSync,openSync,closeSync,readFileSync} from
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve,delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// R5-D independent exact-scope review required; do not bypass.
-throw Error('R5D_EXECUTION_REVIEW_HOLD');
+// Independently reviewed bounded experiment; R5-C owner-local PASS prerequisite satisfied.
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const project='demo-tsos-r5d-transaction',host='127.0.0.1',port='8792';
 const pin='9d43599ed6151199e8d604dc87fac51218e49e5f3a48519b1ae560bbe5e3382d';

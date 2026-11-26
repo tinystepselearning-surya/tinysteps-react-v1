@@ -7,8 +7,7 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-// R5-D independent exact-scope review required; do not bypass.
-throw Error('R5D_EXECUTION_REVIEW_HOLD');
+// Independently reviewed bounded experiment; R5-C owner-local PASS prerequisite satisfied.
 const project='demo-tsos-r5d-transaction',host='127.0.0.1',port=8792;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5D_EMULATOR_ONLY,'1');
