@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 46 (B01-B.4 isolated schema evolution prototype authorized)  
+**Version:** 2.0 programme baseline, revision 47 (B01-B.4 accepted and integrated; architecture checks next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.4 isolated schema evolution compatibility and synthetic projection. B01-A through B01-B.3 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.5 scoped automated architecture checks design and authorization. B01-A through B01-B.4 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -608,6 +608,12 @@ Next: B01-B.4 scoped Schema Evolution Engine design and authorization. Define ex
 
 Owner directs commencement of next implementation after B01-B.3 acceptance. Authorize isolated synthetic-only schema evolution compatibility and projection tooling under scoped AI-led engineering acceptance. Stable synthetic record and field IDs, explicit owner/semantic identity, consecutive version increments, retained field identity/name/definition and complete explicit per-field transition plan. Conservative additive-only contract: retain existing fields unchanged (including types, requiredness, nullability, enum values, references and meaning); allow new optional fields only, initially absent. Support explicit lossless copy of existing fields and explicit omit for new optional fields; never infer, default, convert, rename, retire, narrow, widen or delete values in this increment. Detect removal, reused identities, changed meaning, incompatible contracts, unknown/duplicate/missing plan entries and version mismatch. Validate source and projected target using B01-B.1; return immutable copied output and version/field lineage, no partial projection on errors. A valid forward projection does not imply old consumers accept newly populated fields, live migration safety or complete compatibility. Scope limited to one consecutive version pair; historical ledger, deprecation, approved transformations beyond copy/omit, consumer parity and multi-version chains remain separate review gates. Synthetic IDs are not registry reservations. Existing identity schema/migration provenance, profile retirement planner and enrollment source unchanged. No production data, registry changes, runtime imports, dependencies, CI, cloud access or migration. Verify exact candidate, cumulative pinned Node tests, scope and compatibility before isolated integration. Broader phase/security/finance/migration/production gates retained; B01-B.5 separately scoped.
 
+### Revision 47 — B01-B.4 accepted and integrated into isolated baseline
+
+Owner-operated Mac verification at exact candidate e18b97d7cf48ce0fd3bf77cafa58708b101ff8e9, Node v22.22.1: 267/267 passed, zero failed/cancelled/skipped/todo, 1117.500667 ms. Includes 66 registry, 43 typed schema, 49 configuration, 55 business rule and 54 evolution cases. Supplied Terminal evidence, not CI. Re-fetched exact source, reran 54 evolution cases and eight additional boundary probes, all passed. AI-led technical acceptance PASS under revision 46 for synthetic additive-only pairwise projection; not independent certification or production migration approval. [PR #946](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/946) merged solely into `docs/tsos-v2-p01-source-baseline` at 4f682259cb4e6721f5189c81f93fe36de52fae8c. Base advanced during testing by one documentation-only owner policy addendum at 997d732a3157c33508cbcf2205110d9c3847f751 (section 2.5 two-tier freshness/read-cost policy); inspected and retained. Post-merge comparison with tested head confirms only that programme document differs; no executable, fixture, registry or dependency inputs changed. Main unchanged during integration; no deployment, cloud operations, registry adoption or CI changes. Real schema identifier ledger, multi-version history, deprecation, reviewed complex transforms, old-consumer compatibility and migration parity remain held. All broader phase/security/finance/migration/production gates retained.
+
+Next: B01-B.5 scoped offline architecture fitness checks and cumulative test orchestration. Define explicit allowlisted file/dependency scope, deterministic diagnostics, registry and foundation verification, no runtime imports or cloud access, and incorporate section 2.5 freshness/read-cost contract into future release-check planning without pretending to certify live costs. Proposed CI wiring separately reviewed; no automatic workflow change or main deployment. No repeat B01-B.4 terminal verification unless relevant executable or registry inputs change.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -700,3 +706,5 @@ Owner directs commencement of next implementation after B01-B.3 acceptance. Auth
 - Revision 46: owner authorizes isolated additive-only schema evolution prototype; no registry adoption, live migration or broader gate waiver.
 
 - Owner policy addendum (26 November 2026): section 2.5 makes the two-tier freshness/read-cost contract explicit for P02/P03, P06–08, P10/P11 and subsequent module releases; linked execution PR #943. No change to active brick, gate status or production authorization.
+
+- Revision 47: B01-B.4 267/267 pinned Node regression, scoped AI-led acceptance PASS, PR #946 integrated into isolated baseline; only owner freshness/read-cost addendum differs from tested tree. B01-B.5 scope next; broader gates retained.
