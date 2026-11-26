@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 39 (B01-A accepted and integrated; B01-B scope next)  
+**Version:** 2.0 programme baseline, revision 40 (B01-B.1 isolated typed schema tooling authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B scoped acceptance packet and incremental engineering plan. B01-A accepted and integrated into isolated discovery baseline; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.1 isolated typed-schema tooling and synthetic verification. B01-A accepted; P01.9 and all live evidence remain open and production gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -549,6 +549,19 @@ Owner-operated Mac full checkout at tested head b76c30370aeaf1b50a958735d98dc5c6
 
 45 legacy and 24 structured fields remain unresolved; executable readiness false and independent schema review hold unchanged. Historical implementation report and prior revision entries are evidence snapshots, superseded for B01-A status by this record. P01.9, P02/P03/P04 wider gates, M3 and production safeguards remain open/held. B01-B next planning/acceptance packet: define isolated typed schema, configuration, business-rule, evolution and architecture-check increments with explicit scope, dependencies and acceptance criteria; no B01-B code authorization inferred from B01-A completion. Prioritize existing one-to-one business and compatibility; no repeat Terminal work for B01-A unless relevant code/metadata changes.
 
+### Revision 40 — B01-B progressive scoped implementation
+
+Owner directed commencement of next implementation on 26 November 2026 following B01-A acceptance. Interpret this as authorization for B01-B.1 isolated offline typed-schema tooling and synthetic verification only. Preserve B01-A accepted baseline. No global P03 activation, production access, runtime adoption, identifier allocation, configuration or business-policy activation. AI-led technical acceptance for this low-risk offline increment requires exact committed test evidence and scope/compatibility review before isolated integration; independent review of executable domain contracts, sensitive data, access, finance, migrations and all existing production gates retained.
+
+Increment sequence:
+- B01-B.1: strict synthetic typed-record validation, explicit field contracts with presence/null distinction, version and unknown-key handling, no implicit coercion, no reference existence/authorization claims. Select a small representative academic/identity-derived source slice for comparison only. Registry metadata remains design-only; 45 legacy and 24 structured fields blocked, and unresolved types/policies cannot become executable through inference. No shared-field identifier adoption. Regression suite and pinned Node 22.22.1 verification, no new dependencies or runtime imports. Separate isolated branch and draft PR; no integration before acceptance.
+- B01-B.2: configuration inheritance engine, explicit precedence and safe unknown/default behavior, synthetic fixtures only until scoped acceptance.
+- B01-B.3: pure effective-dated business-rule evaluation, version and policy conflict handling, synthetic policies only; no existing rate/attendance/billing change.
+- B01-B.4: compatibility/version evolution, explicit transformations and identifier lineage; no production migration.
+- B01-B.5: architecture fitness checks and proposed CI integration, workflow impact separately reviewed.
+
+Each subsequent increment needs scoped authorization under controlling gates; no claim of executable schema completeness or production readiness. Preserve one-to-one delivery first, current business rules, bounded read costs, and single authority per fact. No production or existing application changes.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -625,3 +638,5 @@ Owner-operated Mac full checkout at tested head b76c30370aeaf1b50a958735d98dc5c6
 - Revision 38: owner authorizes scoped AI-led B01-A acceptance and isolated hardening; corrected-head regression and technical disposition pending. No production or broader phase gate waiver.
 
 - Revision 39: B01-A corrected-head 66/66 pinned Node verification; scoped AI-led acceptance PASS and PR #940 merged only to isolated discovery branch; tested tree unchanged. B01-B scope next; all broader gates retained.
+
+- Revision 40: owner authorizes next isolated B01-B.1 tooling increment; five-step B01-B plan recorded. All broader gates retained.
