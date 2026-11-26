@@ -85,7 +85,7 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm" aria-label="Monthly business trends">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h3 className="text-lg font-semibold">Monthly business trends</h3>
-          <p className="text-sm text-slate-600">Daily closed-day snapshot (IST). Enquiries received, class charges billed and enrollment movement.</p></div>
+          <p className="text-sm text-slate-600">Saved analytics snapshot (IST). Enquiries received, class charges billed and enrollment movement.</p></div>
         <div className="flex items-center gap-2">
           <label htmlFor="business-trends-year">Year</label>
           <select id="business-trends-year" className="rounded border p-2" value={year} onChange={(e) => setYear(e.target.value)}>
@@ -101,6 +101,8 @@ export default function MonthlyBusinessTrends({ active }: { active: boolean }): 
       {error && <p role="alert" className="text-amber-800">An aggregate could not be fetched. Refresh to retry; no raw-data fallback is used.</p>}
       {!loading && !annual && <p role="status" className="text-amber-800">Verified historical analytics are not available for this year.</p>}
       {annual?.throughDate && <p className="rounded-lg bg-slate-50 p-2 text-sm">Data through <strong>{showDay(annual.throughDate)}</strong> (IST). Updated once daily; today's activity is excluded.</p>}
+      {annual && !annual.throughDate && <p className="rounded-lg bg-slate-50 p-2 text-sm">Initial snapshot as of <strong>{showTime(annual.updatedAt)}</strong> (IST). Includes activity recorded up to that time; daily closed-day refresh is not yet reflected.</p>}
+      {tab === 'enrollments' && current && !current.throughDate && <p className="text-xs text-slate-600">Student totals as of {showTime(current.updatedAt)} (IST).</p>}
       {tab === 'enrollments' && current?.throughDate && <p className="text-xs text-slate-600">Student totals as of {showDay(current.throughDate)}.</p>}
       {annual?.availableRecords && <p className="text-xs text-slate-600">Historical totals use available recorded dates. {annual.undatedRecords > 0 ? 'Some source records have missing dates or unresolved details and cannot be assigned reliably.' : 'No unresolved details were flagged in the supplied records.'}</p>}
       {tab === 'leads' && !!annual?.conflictingInquiryDates && <p className="text-xs text-slate-600">Some copies of a recorded submission disagree on the date; the earliest available inquiry date is used.</p>}
