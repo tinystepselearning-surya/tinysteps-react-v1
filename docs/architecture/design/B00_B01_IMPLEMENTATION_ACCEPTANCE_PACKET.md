@@ -1,6 +1,6 @@
-# B00 — first implementation acceptance packet (revision 32)
+# B00 — first implementation acceptance packet (revision 33)
 
-**Status:** Prepared for independent review; owner supports B00 then B01 direction. No independent signature, formal phase authorization, production access or implementation approval inferred. 26 November 2026 IST.
+**Status:** Owner review feedback recorded; partial owner decisions below. Independent review and explicit B01-A authorization remain open. No production access or implementation approval inferred. 26 November 2026 IST.
 
 ## Decision requested
 
@@ -30,6 +30,27 @@ Input: exact manifest v0.6, five shard files and immutable previous registry sna
 Deliver a read-only registry loader and structural validator with deterministic diagnostics and exit status. Load only manifest-listed relative shard paths under registry root; reject traversal, duplicate paths, malformed JSON, version/count/owner mismatches, missing files, unexpected code membership, invalid manifest Git blob hash (compute Git blob SHA-1 from exact UTF-8 bytes for current SHA format), duplicate record and item identifiers, duplicate semantic names per record, unknown refs/value sets/shared field sets, enum/type mismatch, invalid cardinality/nullability metadata, and unreviewed changes/removals relative to explicitly supplied previous snapshot. Distinguish draft structural validity from executable readiness: unknown legacy/structured fields remain holds, not executable types. Do not claim historical field types validated. Keep previous 879 items and 43 source-interface definitions stable; new IDs remain proposed.
 
 Tests: positive fixture from repository manifest; isolated synthetic negative fixtures for each validator rule including cross-shard duplicate, missing/corrupted shard, wrong owner, broken polymorphic reference, missing enum and inappropriate adoption. Test deterministic diagnostics, failure status, no mutation of fixtures. Run with pinned toolchain (current root package.json requires Node 22.22.1) and record exact command/result. Do not claim CI if not run. Integration into CI/configuration schema is later B01 work and requires review of actual workflow impacts. No need to run production/emulator tests merely for pure file validation. Existing main push deployment workflow can deploy depending on marker lineage and impact; no merge, manual deploy or CI modification authorized here. Inspect exact candidate impact before later merge.
+
+## Owner review — revision 33
+
+Owner reviewed the architecture overview and emphasized that premium one-to-one classes are the core existing business. M01 already models oneToOne separately from smallGroup and schoolProgramme, and M02 distinguishes participant grain. The following is a binding owner design priority for further review, not executable schema adoption:
+- One-to-one is a first-class direct delivery path: learner -> enrollment in a oneToOne offering -> teaching assignment and schedule plan targeting enrollment -> actual session -> exactly one learner participant -> official individual attendance, learning evidence and applicable charge/earning. No artificial learning group or group-placement record is required; no additional compulsory Firestore reads merely to support group abstractions.
+- Small-group path uses explicit learning group and effective group placement, group-level assignment/schedule, actual occurrence with verified participant roster and individual attendance/progress. Existing group-capacity and financial rules preserved until separately reviewed. Actual legacy occurrence/charge grain must be reconciled; no implicit merge/split. Both modes must support teacher reassignment, multiple courses, historical terms, timezone correctness and parent/teacher access. In-person school structures use their own appropriate context.
+- Design and test 1:1 first in affected B03/B04/B05 compatibility slices; then group and school workflows. Priority does not exclude group classes or require a change to current live delivery.
+- Existing business rules are the compatibility baseline, not immutable future policy. For V2, design advanced rules by domain, compare current behavior against proposed behavior, document rationale, exceptions, effective date, affected existing/new enrollments, impact, migration and tests. Separate owner approval before any policy change, no silent retroactive changes to attendance, agreed rates, billing/earnings, settlement, access or history. New rules initially prospective unless specific reviewed historical treatment is authorized. Maintain one authoritative writer per fact.
+
+| Checklist decision | Owner feedback |
+|---|---|
+| Same Firestore database with modular collections | Previously supported direction; not explicitly selected in latest owner checklist response; confirm formal approval |
+| Centralized master record/item dictionary | Previously supported direction; not explicitly selected in latest owner checklist response; confirm formal approval |
+| Independent business records and relationships | Confirmed |
+| Progressive development and lift-and-shift | Confirmed |
+| Preservation of business rules | Confirmed with clarification: preserve current operations, intentionally design improved V2 rules for review |
+| Multi-organisation and future multi-tenant architecture | Confirmed |
+| Security, performance and reliability standards | Confirmed |
+| B01-A isolated tooling and tests | Earlier general direction to proceed; not explicitly selected in latest owner checklist response; confirm scoped authorization |
+
+Do not interpret the five confirmed decisions as approval of the three unconfirmed items or independent engineering sign-off. The existing phase sequence and production gates remain in force.
 
 ## Approval record (open)
 
