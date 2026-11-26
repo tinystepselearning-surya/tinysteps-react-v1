@@ -1,0 +1,652 @@
+{
+  "formatVersion": 1,
+  "registryVersion": "0.7-gate-b-candidate",
+  "status": "candidate-not-adopted",
+  "sharedFieldSet": {
+    "namespace": "VAF",
+    "version": 1,
+    "ownerDomain": "identity",
+    "items": [
+      {
+        "itemId": "VAF-1001",
+        "name": "schemaVersion",
+        "type": "one",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "itemId": "VAF-1002",
+        "name": "createdAt",
+        "type": "timestamp",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "itemId": "VAF-1003",
+        "name": "updatedAt",
+        "type": "timestamp",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "itemId": "VAF-1004",
+        "name": "createdBy",
+        "type": "actorId",
+        "required": true,
+        "nullable": false
+      },
+      {
+        "itemId": "VAF-1005",
+        "name": "updatedBy",
+        "type": "actorId",
+        "required": true,
+        "nullable": false
+      }
+    ]
+  },
+  "valueSets": {
+    "activeInactive": [
+      "active",
+      "inactive"
+    ],
+    "tenantStatus": [
+      "active",
+      "suspended",
+      "closed"
+    ],
+    "member": [
+      "member"
+    ],
+    "campusCreator": [
+      "campusCreator"
+    ],
+    "campusCreate": [
+      "campus.create"
+    ],
+    "grantStatus": [
+      "active",
+      "revoked"
+    ],
+    "routeLane": [
+      "disabled",
+      "successor"
+    ],
+    "initialActive": [
+      "active"
+    ],
+    "timeZone": [
+      "Asia/Kolkata",
+      "UTC"
+    ]
+  },
+  "newRecordCodes": [
+    "OTB",
+    "VGR",
+    "AFN",
+    "AOR",
+    "OCR"
+  ],
+  "newBusinessItems": [
+    "MEM-1009",
+    "CAM-1007"
+  ],
+  "bindings": [
+    {
+      "recordCode": "TEN",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2Tenants",
+      "historicalStorage": {
+        "collectionCandidate": "tenants",
+        "sourceEvidence": "unresolved-candidate",
+        "liveVerified": false
+      },
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "direct",
+        "domain": "TSOS:B02:GATE-B:KEY:1:TEN",
+        "prefix": "ten_",
+        "components": [
+          "tenantId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "TEN-1001",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TEN-1002",
+          "name": "name",
+          "type": "text",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TEN-1003",
+          "name": "status",
+          "type": "tenantStatus",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "OTB",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2OrganisationTenantBindings",
+      "historicalStorage": null,
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "direct",
+        "domain": "TSOS:B02:GATE-B:KEY:1:OTB",
+        "prefix": "otb_",
+        "components": [
+          "organisationId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "OTB-1001",
+          "name": "organisationId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OTB-1002",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OTB-1003",
+          "name": "status",
+          "type": "activeInactive",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OTB-1004",
+          "name": "revision",
+          "type": "positiveInteger",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "TMB",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2TenantMemberships",
+      "historicalStorage": {
+        "collectionCandidate": "tenantMemberships",
+        "sourceEvidence": "unresolved-candidate",
+        "liveVerified": false
+      },
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:TMB",
+        "prefix": "tmb_",
+        "components": [
+          "tenantId",
+          "personId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "TMB-1001",
+          "name": "tenantMembershipId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TMB-1002",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TMB-1003",
+          "name": "personId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TMB-1004",
+          "name": "status",
+          "type": "activeInactive",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TMB-1005",
+          "name": "effectiveStartAt",
+          "type": "timestamp",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "TMB-1006",
+          "name": "effectiveEndAt",
+          "type": "nullableTimestamp",
+          "required": true,
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "recordCode": "MEM",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2OrganisationMemberships",
+      "historicalStorage": {
+        "collectionCandidate": "organisationMemberships",
+        "sourceEvidence": "source-contract",
+        "liveVerified": false
+      },
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:MEM",
+        "prefix": "mem_",
+        "components": [
+          "tenantId",
+          "organisationId",
+          "personId",
+          "member"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "MEM-1001",
+          "name": "organisationMembershipId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1002",
+          "name": "organisationId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1003",
+          "name": "personId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1004",
+          "name": "role",
+          "type": "member",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1005",
+          "name": "status",
+          "type": "activeInactive",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1006",
+          "name": "isPrimary",
+          "type": "boolean",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1007",
+          "name": "effectiveStartAt",
+          "type": "timestamp",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "MEM-1008",
+          "name": "effectiveEndAt",
+          "type": "nullableTimestamp",
+          "required": true,
+          "nullable": true
+        },
+        {
+          "itemId": "MEM-1009",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "VGR",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2AuthorityGrants",
+      "historicalStorage": null,
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:VGR",
+        "prefix": "vgr_",
+        "components": [
+          "tenantId",
+          "organisationId",
+          "personId",
+          "campus.create"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "VGR-1001",
+          "name": "grantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1002",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1003",
+          "name": "organisationId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1004",
+          "name": "personId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1005",
+          "name": "roleKey",
+          "type": "campusCreator",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1006",
+          "name": "action",
+          "type": "campusCreate",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1007",
+          "name": "status",
+          "type": "grantStatus",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1008",
+          "name": "effectiveStartAt",
+          "type": "timestamp",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "VGR-1009",
+          "name": "effectiveEndAt",
+          "type": "nullableTimestamp",
+          "required": true,
+          "nullable": true
+        },
+        {
+          "itemId": "VGR-1010",
+          "name": "revision",
+          "type": "positiveInteger",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "AFN",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2AuthorityFences",
+      "historicalStorage": null,
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "direct",
+        "domain": "TSOS:B02:GATE-B:KEY:1:AFN",
+        "prefix": "afn_",
+        "components": [
+          "tenantId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "AFN-1001",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "AFN-1002",
+          "name": "generation",
+          "type": "positiveInteger",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "AOR",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2ActionRoutes",
+      "historicalStorage": null,
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:AOR",
+        "prefix": "aor_",
+        "components": [
+          "tenantId",
+          "campus.create"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "AOR-1001",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "AOR-1002",
+          "name": "action",
+          "type": "campusCreate",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "AOR-1003",
+          "name": "lane",
+          "type": "routeLane",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "AOR-1004",
+          "name": "epoch",
+          "type": "positiveInteger",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "CAM",
+      "version": 1,
+      "ownerDomain": "school-partnerships",
+      "collection": "tsosV2Campuses",
+      "historicalStorage": {
+        "collectionCandidate": "campuses",
+        "sourceEvidence": "unresolved-candidate",
+        "liveVerified": false
+      },
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:CAM",
+        "prefix": "cam_",
+        "components": [
+          "tenantId",
+          "organisationId",
+          "actorPersonId",
+          "campus.create",
+          "operationId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "CAM-1001",
+          "name": "campusId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1002",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1003",
+          "name": "organisationId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1004",
+          "name": "name",
+          "type": "campusName",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1005",
+          "name": "timeZone",
+          "type": "timeZone",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1006",
+          "name": "status",
+          "type": "initialActive",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "CAM-1007",
+          "name": "revision",
+          "type": "one",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "recordCode": "OCR",
+      "version": 1,
+      "ownerDomain": "identity",
+      "collection": "tsosV2OperationReceipts",
+      "historicalStorage": null,
+      "sharedNamespace": "VAF",
+      "key": {
+        "kind": "sha256-json-tuple",
+        "domain": "TSOS:B02:GATE-B:KEY:1:OCR",
+        "prefix": "ocr_",
+        "components": [
+          "tenantId",
+          "actorPersonId",
+          "campus.create",
+          "operationId"
+        ]
+      },
+      "fields": [
+        {
+          "itemId": "OCR-1001",
+          "name": "receiptKey",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1002",
+          "name": "tenantId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1003",
+          "name": "actorPersonId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1004",
+          "name": "action",
+          "type": "campusCreate",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1005",
+          "name": "semanticHash",
+          "type": "sha256",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1006",
+          "name": "campusId",
+          "type": "id",
+          "required": true,
+          "nullable": false
+        },
+        {
+          "itemId": "OCR-1007",
+          "name": "committedRevision",
+          "type": "one",
+          "required": true,
+          "nullable": false
+        }
+      ]
+    }
+  ]
+}
