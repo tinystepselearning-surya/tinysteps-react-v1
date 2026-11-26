@@ -92,3 +92,21 @@ export function adaptWebsiteInquiryCohort({canonicalId,canonical,events,revision
   const record={contributorId:'website-cohort:'+canonical.dedupeIdentityKey.toLowerCase(),revision,facts:[...facts].map(([key,value])=>({monthKey:key.slice(0,7),metric:key.slice(8),value}))};
   return planContributionChange(null,record).ledger;
 }
+
+// Bounded per-child current roster adapter. It does not infer historical admissions or
+// interpret unverified trial/pending/legacy statuses as paid active enrollments.
+export function adaptCanonicalChildRoster({childId,enrollments,coverageComplete,transitionsResolved}) {
+  requireValue(validId(childId) && coverageComplete===true && transitionsResolved===true && Array.isArray(enrollments) && enrollments.length<=100,'Incomplete or unbounded child roster');
+  const ids=new Set(), operationalCourses=new Set(), roster=[];
+  const terminal=new Set(['completed','discontinued','expired','cancelled','canceled','archived','inactive']);
+  for(const {id,data} of enrollments){
+    requireValue(validId(id) && !ids.has(id) && data && data.enrollmentId===id && data.kidId===childId && data.studentId===childId && Array.isArray(data.kidIds) && data.kidIds.length===1 && data.kidIds[0]===childId && validId(data.courseId),'Ambiguous canonical enrollment identity');
+    ids.add(id);
+    if(terminal.has(data.status)) continue;
+    requireValue(['active','paused'].includes(data.status) && data.archived!==true && data.isArchived!==true && !data.archivedAt && !data.endedAt,'Unresolved enrollment lifecycle');
+    requireValue(!operationalCourses.has(data.courseId),'Duplicate operational child/course enrollment');
+    operationalCourses.add(data.courseId);
+    roster.push({childId,enrollmentId:id,state:data.status});
+  }
+  return roster;
+}
