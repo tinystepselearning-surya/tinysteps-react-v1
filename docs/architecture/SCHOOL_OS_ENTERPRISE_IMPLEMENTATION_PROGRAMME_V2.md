@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 54 (B02-R1B isolated compiled canonical integration authorized)  
+**Version:** 2.0 programme baseline, revision 55 (B02-R1B accepted; transport and privacy review next)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B02-R1B isolated compiled canonical integration tests and transport/privacy design review; B02-R2 remains held. B01 and B02-R1A isolated prototypes accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B02-R1C scoped offline transport feasibility and privacy enforcement review; B02-R2 remains held. B01, B02-R1A and B02-R1B isolated engineering accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -646,6 +646,14 @@ Next recommended B02-R1B: separately scope offline compiled canonical loader/par
 
 Owner directs next increment under R53. Authorize isolated tests against exact existing canonical TypeScript sources, actual locked TypeScript 5.9.3 and firebase-admin 13.7.0, real compiled CommonJS loader, ID generator, builder and principal parser, unchanged original M3 sampler and R1A fixture guard. Build only the identity dependency closure into disposable local staging, no app initialization, cloud credentials, live reads/writes or refresh call. Validate source and dependency lock pins, compiler diagnostics and positive/negative fixtures for controlled roles, canonical ID derivation, revoked/inactive grants, organisation intersection, malformed projection and source drift, overflow and field minimization. No real user records, no new role policy, no registry/runtime/Rules/CI change. Locked dependency installation if necessary is local setup only, with lifecycle scripts disabled, not live Firebase access. Verify Node 22.22.1, complete prior 368 tests and new integration tests. Document server-side field mask, exact path/query approval, transport retries/deadline/cancellation, consistency and revocation evidence design; no live adapter implementation or certification. Retain direct premium 1:1, current authorization Tier 1 and T-1 reporting; B02-R2 remains HOLD pending independent security/privacy approval, private actor/fixture budgets and actual transport evidence. P01/P02/P03/M3 and subsequent gates unchanged.
 
+### Revision 55 — B02-R1B accepted; transport and privacy enforcement review next
+
+Owner-operated Mac exact candidate 0941ad75d50a984258e4bb831a23cca87ff0bc83, Node v22.22.1: existing lockfile installation completed with lifecycle scripts disabled (794 packages); B01 unified verifier 313/313 (24 pins, executableReady false); strict combined identity suite 93/93 (55 R1A and 38 R1B, including 37 fixtures and actual compile/pin check), zero failed/cancelled/skipped/todo, duration 1314.419958 ms. Combined 406/406. No reported unhandled rejections. Actual locked TypeScript 5.9.3 and firebase-admin 13.7.0 compiled canonical source, unchanged original sampler and fixture safety guard exercised; no canonical stand-ins in R1B. Supplied terminal evidence, not CI. Re-fetched exact source and reviewed tests, nine canonical pins and B01 inventory match Git tree. Scoped offline engineering acceptance PASS under R54, not independent security certification. [PR #949](https://github.com/tinystepselearning-surya/tinysteps-react-v1/pull/949) merged solely into `docs/tsos-v2-p01-source-baseline` at c63e4f764b02be77080f8fbf7ce4830c22bbe0c1; zero file differences between tested and merged trees. Three added offline files, no existing application/dependency/registry/Rules/IAM/CI changes or production access/deployment; main unchanged during integration. Existing direct premium 1:1, current authorization Tier 1 and T-1 reporting, canonical authority and all broader gates preserved.
+
+Dependency hygiene follow-up: npm reported deprecated inflight 1.0.6, phin 3.7.1, glob 7.2.3/10.5.0 and node-domexception 1.0.0, plus skipped integrity check for existing transitive aframe Git dependency three-bmfont-text. Existing lockfile identical to main. Successful installation/test evidence does not certify dependency security. Record separate scoped dependency provenance/advisory and upgrade impact review; no unreviewed dependency changes or assertion of absence of vulnerabilities. 
+
+Next recommended B02-R1C: separately scope offline transport feasibility and privacy enforcement review against exact installed Firestore SDK APIs and dependency versions; establish server field masks, exact path/query approval enforcement, transport deadlines/cancellation/retries, stop/drain, consistency and revocation evidence, least privilege, private approval requirements and measured read budgets. Prefer existing supported mechanisms; no live adapter activation, cloud access, account changes, new IAM, Rules, runtime writes or production approval. If transport cannot satisfy the requirements, HOLD and document alternatives. Independent security/privacy review and controlled live evidence remain required for R2; P01/P02/P03/M3 and subsequent gates retained. No repeat R1B verification unless relevant executable or dependency inputs change.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -754,3 +762,5 @@ Owner directs next increment under R53. Authorize isolated tests against exact e
 - Revision 53: corrected B02-R1A 368/368 pinned regression; PR #948 integrated into isolated baseline; independent security and live verification gates retained. B02-R1B scope next.
 
 - Revision 54: owner authorizes isolated compiled canonical integration tests and transport design review, no live activation or wider gate waiver.
+
+- Revision 55: B02-R1B 406/406 pinned regression and actual compiled canonical integration accepted; PR #949 integrated; existing dependency warnings recorded for separate review. B02-R1C scope next; live and independent security gates retained.
