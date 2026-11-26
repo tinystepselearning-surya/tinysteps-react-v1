@@ -54,15 +54,15 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   add(m,'billedPaise',amount);
  }
  // Use existing identity aliases, not names. For single-child rows conflicting aliases
- // are unresolved. Multi-child records are expanded only when the array is the sole identity.
+ // and multi-child rows are unresolved rather than guessed.
  const children=new Map(),activeKids=new Set(),pausedKids=new Set();
  let activeEnrollments=0;
  for(const {id,data} of exact(enrollments,'enrollments')){
   const ids=[...new Set([str(data.kidId),str(data.studentId),...(Array.isArray(data.kidIds)?data.kidIds.map(str):[])].filter(Boolean))];
   if(ids.length!==1){issues.unresolvedEnrollmentIdentity++;continue;}
-  const child=ids[0],s=status(data.status),isActive=active.has(s)&&data.archived!==true&&data.isArchived!==true;
-  const isPaused=s==='paused'&&data.archived!==true&&data.isArchived!==true;
-  const isTerminal=terminal.has(s)||data.archived===true||data.isArchived===true;
+  const child=ids[0],s=status(data.status),isActive=active.has(s)&&data.archived!==true&&data.isArchived!==true&&!data.archivedAt;
+  const isPaused=s==='paused'&&data.archived!==true&&data.isArchived!==true&&!data.archivedAt;
+  const isTerminal=terminal.has(s)||data.archived===true||data.isArchived===true||Boolean(data.archivedAt);
   if(!isActive&&!isPaused&&!isTerminal){issues.unresolvedEnrollmentStatus++;continue;}
   if(isActive){activeKids.add(child);activeEnrollments++;}
   if(isPaused)pausedKids.add(child);
@@ -81,7 +81,7 @@ export function buildAvailableBusinessTrends({year,updatedAt,leads,inquiries,bil
   if(dated.length&&rows.every(r=>r.start))add(dated[0].start.slice(0,7),'newAdmissions');
   // Infer exit only from a dated end where no other course is retained on that day.
   // Same-day transitions are not student exits. Missing dates prevent unsafe inference.
-  if(rows.some(r=>!r.start||(r.isTerminal&&!r.end))){issues.ambiguousStudentExits++;continue;}
+  if(rows.some(r=>!r.start||(r.isTerminal&&(!r.end||r.end<r.start)))){issues.ambiguousStudentExits++;continue;}
   const ends=[...new Set(rows.filter(r=>r.isTerminal&&r.end&&!r.correction).map(r=>r.end))].sort();
   for(const end of ends){
    const retained=rows.some(r=>r.start<=end&&(!r.isTerminal||r.end>end));
