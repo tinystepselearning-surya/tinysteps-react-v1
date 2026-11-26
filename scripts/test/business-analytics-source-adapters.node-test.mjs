@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {istDateKey,sourceUpdateRevision,rupeesToPaise,adaptCanonicalReceipt,adaptParentBillingMonth,adaptWebsiteInquiryCohort} from '../business-analytics-source-adapters.mjs';
+import {istDateKey,sourceUpdateRevision,rupeesToPaise,adaptCanonicalReceipt,adaptParentBillingMonth,adaptWebsiteInquiryCohort,adaptCanonicalChildRoster} from '../business-analytics-source-adapters.mjs';
 import {planContributionChange} from '../business-analytics-incremental.mjs';
 
 const updateTime={seconds:1795687200,nanoseconds:123456000};
@@ -45,4 +45,14 @@ test('website cohort refuses incomplete or conflicting source evidence',()=>{
   assert.throws(()=>adaptWebsiteInquiryCohort({...cohort,...patch}));
  }
  assert.throws(()=>adaptWebsiteInquiryCohort({...cohort,events:[events[0],events[0],events[2]]}),/Ambiguous/);
+});
+
+const enrollment=(id,courseId,status)=>({id,data:{enrollmentId:id,kidId:'kid-1',studentId:'kid-1',kidIds:['kid-1'],courseId,status}});
+test('canonical roster keeps active and paused separately and ignores completed courses',()=>{
+ const input={childId:'kid-1',coverageComplete:true,transitionsResolved:true,enrollments:[enrollment('1','phonics','completed'),enrollment('2','grammar','active'),enrollment('3','speaking','paused')]};
+ assert.deepEqual(adaptCanonicalChildRoster(input),[{childId:'kid-1',enrollmentId:'2',state:'active'},{childId:'kid-1',enrollmentId:'3',state:'paused'}]);
+ assert.throws(()=>adaptCanonicalChildRoster({...input,transitionsResolved:false}),/Incomplete/);
+ assert.throws(()=>adaptCanonicalChildRoster({...input,enrollments:[...input.enrollments,enrollment('4','grammar','paused')]}),/Duplicate operational/);
+ assert.throws(()=>adaptCanonicalChildRoster({...input,enrollments:[enrollment('5','grammar','pending_payment')]}),/Unresolved/);
+ assert.throws(()=>adaptCanonicalChildRoster({...input,enrollments:[{...input.enrollments[1],data:{...input.enrollments[1].data,studentId:'another'}}]}),/Ambiguous/);
 });
