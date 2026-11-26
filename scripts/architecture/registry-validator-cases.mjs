@@ -57,5 +57,23 @@ export function registryCases(validate, manifest, shards, previous) {
   expect("previous snapshot hash changed",(m,s,p)=>p.blobSha="f".repeat(40),"PREVIOUS_HASH");
   check("deterministic diagnostics",()=>{const m=clone(manifest);m.shards[0].items++;m.counts.items++;assert(JSON.stringify(run(m,shards))===JSON.stringify(run(m,shards)),"non deterministic")});
   check("no mutation of input objects",()=>assert(before===JSON.stringify({manifest,shards,previous}),"input mutated"));
+  // B01-A.1: mutations exposed by the second-pass engineering audit.
+  expect("prior collection mapping change",(_,s)=>edit(s,entries[0],j=>j.records[0].storage.collectionCandidate="unreviewedPeople"),"PRIOR_RECORD_METADATA_CHANGED");
+  expect("prior record class change",(_,s)=>edit(s,entries[0],j=>j.records[0].recordClass="anything"),"PRIOR_RECORD_METADATA_CHANGED");
+  expect("prior record disposition change",(_,s)=>edit(s,entries[0],j=>j.records[0].disposition="anything"),"PRIOR_RECORD_METADATA_CHANGED");
+  expect("prior record new metadata key",(_,s)=>edit(s,entries[0],j=>j.records[0].unexpected=true),"PRIOR_RECORD_METADATA_CHANGED");
+  expect("approved profile exception cannot drift",(_,s)=>edit(s,entries[0],j=>j.records.find(r=>r.code==="CNT").sourceReference="unreviewed"),"PRIOR_RECORD_METADATA_CHANGED");
+  expect("identifier policy altered",m=>m.idPolicy="reuse all IDs","MANIFEST_GOVERNANCE");
+  expect("registry authority altered",m=>m.registryAuthority="arbitrary","MANIFEST_GOVERNANCE");
+  expect("historical source provenance absent",(_,s)=>edit(s,entries[0],j=>{const i=j.records.flatMap(r=>r.items).find(i=>i.evidence==="historical-planner-field");delete i.sourceField;delete i.sourceRecord;}),"SOURCE_BINDING");
+  expect("historical source provenance null",(_,s)=>edit(s,entries[0],j=>{const i=j.records.flatMap(r=>r.items).find(i=>i.evidence==="historical-planner-field");i.sourceField=null;i.sourceRecord=null;}),"SOURCE_BINDING");
+  expect("historical storage mapping malformed",(_,s)=>edit(s,entries[0],j=>j.records.flatMap(r=>r.items).find(i=>i.evidence==="historical-planner-field").storageFieldCandidate={unexpected:true}),"STORAGE_FIELD_SHAPE");
+  expect("inherited semantic field conflict",(m,s)=>{m.sharedFieldSets.push({id:"conflict",evidence:"synthetic",fields:[{name:"personId",type:"string",required:true}]});edit(s,entries[0],j=>j.records[0].fieldSet="conflict")},"INHERITED_FIELD_COLLISION");
+  expect("inherited storage field conflict",(m,s)=>{m.sharedFieldSets.push({id:"conflict",evidence:"synthetic",fields:[{name:"collision",type:"string",required:true}]});edit(s,entries[0],j=>{j.records[0].fieldSet="conflict";j.records[0].items[0].storageFieldCandidate="collision"})},"INHERITED_FIELD_COLLISION");
+  expect("malformed declared record code object",m=>m.shards[0].recordCodes[0]={toString:null},"SHARD_ENTRY_SHAPE");
+  expect("malformed actual record code object",(_,s)=>edit(s,entries[0],j=>j.records[0].code={toString:null}),"RECORD_SHAPE");
+  expect("malformed owner object",m=>m.shards[0].ownerDomains[0]={toString:null},"SHARD_ENTRY_SHAPE");
+  expect("malformed digest object",m=>m.shards[0].blobSha={toString:null},"SHARD_ENTRY_SHAPE");
+  expect("malformed semantic name object",(_,s)=>edit(s,entries[0],j=>j.records[0].items[0].semanticName={toString:null}),"ITEM_SHAPE");
   return cases;
 }

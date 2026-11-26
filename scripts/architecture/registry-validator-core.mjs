@@ -12,7 +12,8 @@ export function validateRegistry(manifest, readShard, previous) {
   const sortObject = x => Array.isArray(x) ? x.map(sortObject) :
     obj(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, sortObject(x[k])])) : x;
   const equal = (a, b) => JSON.stringify(sortObject(a)) === JSON.stringify(sortObject(b));
-  const setEqual = (a, b) => equal([...a].sort(), [...b].sort());
+  // Reject non-string membership values before sorting (no implicit coercion).
+  const setEqual = (a, b) => a.every(x=>typeof x==="string") && b.every(x=>typeof x==="string") && equal([...a].sort(), [...b].sort());
   const validPath = p => typeof p === "string" && /^domains\/[a-z][a-z0-9-]*\.json$/.test(p);
   const validCode = c => typeof c === "string" && /^[A-Z]{3}$/.test(c);
   const types = new Set(["id","enum","date-only","string","reference","number","boolean","timestamp","legacy-value-unvalidated","integer","structured","string-array","iana-time-zone","string-or-null"]);
@@ -32,6 +33,8 @@ export function validateRegistry(manifest, readShard, previous) {
       manifest.status !== "design-only; no allocated identifiers or executable dependencies" ||
       manifest.sourcePin !== "701c7ec832dbe9c531964496fa09cd4a4948ddd2" ||
       Object.hasOwn(manifest,"records")) fail("MANIFEST_CONTRACT","manifest");
+  if (manifest.idPolicy !== "record code and qualified item ID are proposed reservations only; no reuse after adoption; not document IDs" ||
+      manifest.registryAuthority !== "This manifest plus its five owner-domain-grouped shards are the sole editable design registry. No separate master record array. Load every shard for cross-domain validation. Blob SHAs identify this reviewed snapshot; update manifest when shard changes.") fail("MANIFEST_GOVERNANCE","manifest");
   for (const [kind, entries, map] of [["valueSets",manifest.valueSets,valueMap],["sharedFieldSets",manifest.sharedFieldSets,sharedMap]]) {
     for (const [idx,v] of arr(entries,kind).entries()) {
       const where = kind+"["+idx+"]";
@@ -58,7 +61,7 @@ export function validateRegistry(manifest, readShard, previous) {
     const owners = arr(entry.ownerDomains,where+".ownerDomains");
     const declaredCodes = arr(entry.recordCodes,where+".recordCodes");
     if (!owners.length || owners.some(o=>!str(o)) || !declaredCodes.length || declaredCodes.some(c=>!validCode(c)) ||
-        !integer(entry.records) || !integer(entry.items) || !/^[a-f0-9]{40}$/.test(entry.blobSha??"")) fail("SHARD_ENTRY_SHAPE",where);
+        !integer(entry.records) || !integer(entry.items) || (typeof entry.blobSha!=="string" || !/^[a-f0-9]{40}$/.test(entry.blobSha))) fail("SHARD_ENTRY_SHAPE",where);
     unique(owners,where+".ownerDomains");
     unique(declaredCodes,where+".recordCodes");
     for (const owner of owners) { if(ownerSet.has(owner)) fail("DUPLICATE_OWNER_GROUP",where); ownerSet.add(owner); }
@@ -96,13 +99,19 @@ export function validateRegistry(manifest, readShard, previous) {
         if (!obj(i)||typeof i.itemId!=="string"||!new RegExp("^"+r.code+"-\\d{4}$").test(i.itemId)) { fail("ITEM_ID",iloc); continue; }
         if (itemMap.has(i.itemId)) fail("DUPLICATE_ITEM",i.itemId);
         itemMap.set(i.itemId,i);
-        if (requiredText.some(k=>!str(i[k])) || !/^[A-Za-z][A-Za-z0-9]*$/.test(i.semanticName??"") ||
+        if (requiredText.some(k=>!str(i[k])) || (typeof i.semanticName!=="string" || !/^[A-Za-z][A-Za-z0-9]*$/.test(i.semanticName)) ||
             !types.has(i.dataType)||!evidenceTypes.has(i.evidence)||
             !["1","0..1"].includes(i.cardinality)||typeof i.nullable!=="boolean"||
             (i.dataType==="string-or-null"&&!i.nullable)) fail("ITEM_SHAPE",i.itemId);
         if (i.lifecycle!=="proposed") fail("PREMATURE_ADOPTION",i.itemId);
         if (i.ownerDomain!==r.ownerDomain) fail("ITEM_OWNER",i.itemId);
-        if (i.evidence==="source" && (!str(i.sourceField)||!str(i.sourceRecord))) fail("SOURCE_BINDING",i.itemId);
+        if (["source","candidate-mapping","historical-planner-field"].includes(i.evidence) &&
+            (!str(i.sourceField)||!str(i.sourceRecord)||!str(i.storageFieldCandidate))) fail("SOURCE_BINDING",i.itemId);
+        if (i.evidence==="proposed" && (i.sourceField!==null||i.sourceRecord!==null)) fail("SOURCE_BINDING",i.itemId);
+        if (i.storageFieldCandidate!==null && !str(i.storageFieldCandidate)) fail("STORAGE_FIELD_SHAPE",i.itemId);
+        const inherited=sharedMap.get(r.fieldSet);
+        if (Array.isArray(inherited?.fields) && inherited.fields.some(f=>obj(f)&&str(f.name)&&
+            (f.name===i.semanticName||f.name===i.storageFieldCandidate))) fail("INHERITED_FIELD_COLLISION",i.itemId);
         if (i.valueSet!==null && (!valueMap.has(i.valueSet)||i.dataType!=="enum")) fail("VALUE_SET_REFERENCE",i.itemId);
         if (i.sourceValueSet!=null && !valueMap.has(i.sourceValueSet)) fail("SOURCE_VALUE_SET_REFERENCE",i.itemId);
         if (i.dataType==="enum" && i.valueSet===null && !(i.itemId==="ENR-1004" && i.sourceValueSet==="legacyEnrollmentStatus")) fail("ENUM_WITHOUT_SET",i.itemId);
@@ -139,6 +148,16 @@ export function validateRegistry(manifest, readShard, previous) {
         if (!obj(r)||!Array.isArray(r.items)) { fail("PREVIOUS_SHAPE","previous.records"); continue; }
         const next=recordMap.get(r.code);
         if (!next||next.name!==r.name||next.ownerDomain!==r.ownerDomain) fail("PRIOR_RECORD_CHANGED",String(r.code));
+        // Exact v0.5 -> reviewed v0.6 profile seed exceptions (M04, revision 31).
+        // All other prior record-level metadata must remain identical.
+        const metadata = record => Object.fromEntries(Object.entries(record).filter(([key])=>key!=="items"));
+        const expected=metadata(r);
+        if (["CNT","PLC","LDT","FPR","PPR","LPP","APR","SPR","LRM","LPV"].includes(r.code)) {
+          expected.sourceReference="scripts/migrations/wave1-identity-profile-retirement-lib.mjs";
+          expected.detailStatus="seed";
+          if (["CNT","PLC","LDT","SPR","LRM","LPV"].includes(r.code)) expected.fieldSet="profileMigrationAuditV1";
+        }
+        if (next && !equal(expected,metadata(next))) fail("PRIOR_RECORD_METADATA_CHANGED",String(r.code));
         priorCount+=r.items.length;
         for (const i of r.items) if (!obj(i)||!equal(i,itemMap.get(i.itemId))) fail("PRIOR_ITEM_CHANGED",String(i?.itemId));
       }
