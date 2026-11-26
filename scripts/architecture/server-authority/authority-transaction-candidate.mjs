@@ -100,14 +100,17 @@ export function createAuthorityTransactionCandidate(host){
     check(++attempts===1);const first=Timestamp.now(),read=pointReader(tx,12);
     const e=await evidence(read,a,p,first),id=campusIdentity(p,e.actor);
     const receiptPath=specs.OCR[0]+'/'+id.receiptKey,campusPath=specs.CAM[0]+'/'+id.campusId;
+    const stillAuthorized=()=>check(verifyDecisionTimes({first,second:Timestamp.now(),elapsedNs:process.hrtime.bigint()-started,dispatchLimitNs,intervals:e.intervals}));
     const rr=await read(receiptPath);let receipt;
-    try{receipt=receiptState(rr,p,e.actor,id)}catch{return status('integrity-denied')}
-    if(receipt&&receipt.semanticHash!==id.semanticHash)return status('conflict');
-    if(receipt&&receipt.campusId!==id.campusId)return status('integrity-denied');
+    try{receipt=receiptState(rr,p,e.actor,id)}catch{stillAuthorized();return status('integrity-denied')}
+    if(receipt&&receipt.semanticHash!==id.semanticHash){stillAuthorized();return status('conflict')}
+    if(receipt&&receipt.campusId!==id.campusId){stillAuthorized();return status('integrity-denied')}
     const target=await read(campusPath);
-    if(receipt){try{if(!matchingCampus(target,p,id))return status('integrity-denied')}catch{return status('integrity-denied')}}
-    else if(target!==null)return status('integrity-denied');
-    const second=Timestamp.now();check(verifyDecisionTimes({first,second,elapsedNs:process.hrtime.bigint()-started,dispatchLimitNs,intervals:e.intervals}));
+    let consistent=true;
+    if(receipt){try{consistent=matchingCampus(target,p,id)}catch{consistent=false}}
+    else if(target!==null)consistent=false;
+    stillAuthorized();
+    if(!consistent)return status('integrity-denied');
     if(receipt)return committed(id.campusId);
     if(mode==='recover')return status('indeterminate');
     const audit=stamp(e.actor);staged=true;
