@@ -1,12 +1,16 @@
 // Owner-local, fixed demo project launcher; never a production operator.
 // Retains its own temporary directory/logs for review. No delete RPC or file removal.
 import assert from 'node:assert/strict';
-import {spawn,spawnSync} from 'node:child_process';
+import {spawnSync} from 'node:child_process';
+import {createOwnedGroups,waitBounded} from './r5a-owned-process-groups.mjs';
 import {createHash} from 'node:crypto';
 import {copyFileSync,mkdtempSync,mkdirSync,openSync,closeSync,readFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,join,resolve,delimiter} from 'node:path';
 import {fileURLToPath} from 'node:url';
+// Intentional release gate: H03 isolation and installed transport tests are unresolved.
+// Do not remove this guard until the independent review approves a subsequent candidate.
+throw Error('R5A_EXECUTION_HOLD_ISOLATION_AND_REVIEW_REQUIRED');
 const root=fileURLToPath(new URL('../../',import.meta.url));
 const project='demo-tsos-r5-transaction',host='127.0.0.1',port='8789';
 const pin='9d43599ed6151199e8d604dc87fac51218e49e5f3a48519b1ae560bbe5e3382d';
@@ -44,35 +48,13 @@ copyFileSync(resolve(process.argv[2]),jar);
 assert.equal(createHash('sha256').update(readFileSync(jar)).digest('hex'),pin,'EMULATOR_CHECKSUM_MISMATCH');
 console.log('R5-A local-only checkout: '+head.stdout.trim());
 console.log('Verified Firestore emulator 1.19.8 checksum; local logs retained in '+work);
-const children=[];
+const groups=createOwnedGroups();
 let interrupted=false;
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
 function start(program,args,childEnv,stdio){
-  const child=spawn(program,args,{cwd:root,env:childEnv,stdio,detached:true});
-  const item={child,done:false,result:null,completion:null};
-  item.completion=new Promise(resolve=>{
-    function finish(result){if(item.done)return;item.done=true;item.result=result;resolve(result);}
-    child.once('error',()=>finish({code:null,signal:'SPAWN_FAILED'}));
-    child.once('exit',(code,signal)=>finish({code,signal}));
-  });
-  children.push(item);return item;
+  return groups.start(program,args,{cwd:root,env:childEnv,stdio});
 }
-function signal(item,sig){
-  if(!item.done&&item.child.pid){
-    try{process.kill(-item.child.pid,sig);}catch(e){if(e.code!=='ESRCH')throw e;}
-  }
-}
-async function waitBounded(item,ms){
-  let timer;
-  try{return await Promise.race([item.completion,new Promise(resolve=>{timer=setTimeout(()=>resolve(null),ms);})]);}
-  finally{clearTimeout(timer);}
-}
-async function stop(item){
-  if(item.done)return;
-  signal(item,'SIGTERM');
-  if(!await waitBounded(item,2000)){signal(item,'SIGKILL');assert.ok(await waitBounded(item,2000),'LOCAL_PROCESS_REAP_FAILED');}
-}
-function interrupt(){interrupted=true;for(const item of children)signal(item,'SIGTERM');}
+function interrupt(){interrupted=true;groups.interrupt();}
 process.on('SIGINT',interrupt);process.on('SIGTERM',interrupt);
 const log=openSync(join(work,'emulator.log'),'wx',0o600);
 try{
@@ -88,13 +70,16 @@ try{
   assert.ok(ready&&!interrupted&&!emulator.done,'LOCAL_EMULATOR_NOT_READY');
   const test=start(process.execPath,['--unhandled-rejections=strict','--test','scripts/verification/r5a-transaction-emulator.node-test.mjs'],
     {...env,TSOS_R5_EMULATOR_ONLY:'1',FIRESTORE_EMULATOR_HOST:host+':'+port,GCLOUD_PROJECT:project},['ignore','inherit','inherit']);
-  const result=await waitBounded(test,180000);
+  const result=await waitBounded(test.completion,180000);
   assert.ok(result&&result.code===0&&!result.signal&&!interrupted&&!emulator.done,'LOCAL_PROBE_FAILED_OR_TIMED_OUT');
-  // Test subprocess is reaped before stopping the isolated emulator. No data cleanup.
-  await stop(emulator);
-  assert.deepEqual(listeners(),[],'LOCAL_PORT_NOT_RELEASED');
-  console.log('=== R5-A LOCAL EMULATOR CHECKS COMPLETED ===');
+  // No PASS until all groups have been checked and the port released.
 }finally{
-  try{for(const item of children.slice().reverse())await stop(item);}
-  finally{closeSync(log);process.off('SIGINT',interrupt);process.off('SIGTERM',interrupt);}
+  const failures=[];
+  try{await groups.cleanupAll();}catch(err){failures.push(err);}
+  try{assert.deepEqual(listeners(),[],'LOCAL_PORT_NOT_RELEASED');}catch(err){failures.push(err);}
+  try{closeSync(log);}catch(err){failures.push(err);}
+  process.off('SIGINT',interrupt);process.off('SIGTERM',interrupt);
+  if(failures.length)throw new AggregateError(failures,'LOCAL_SUPERVISOR_CLEANUP_FAILED');
 }
+assert.ok(!interrupted,'LOCAL_PROBE_INTERRUPTED');
+console.log('=== R5-A LOCAL EMULATOR CHECKS COMPLETED ===');

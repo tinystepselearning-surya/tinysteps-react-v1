@@ -7,6 +7,8 @@ import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {dirname,join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+// Intentional independent-review HOLD, also on direct worker invocation.
+throw Error('R5A_EXECUTION_HOLD_ISOLATION_AND_REVIEW_REQUIRED');
 const project='demo-tsos-r5-transaction',host='127.0.0.1',port=8789;
 const database='projects/'+project+'/databases/(default)',parent=database+'/documents/';
 assert.equal(process.env.TSOS_R5_EMULATOR_ONLY,'1');
