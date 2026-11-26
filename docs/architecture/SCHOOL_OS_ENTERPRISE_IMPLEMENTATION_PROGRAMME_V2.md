@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 45 (B01-B.3 accepted and integrated; schema evolution next)  
+**Version:** 2.0 programme baseline, revision 46 (B01-B.4 isolated schema evolution prototype authorized)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -23,7 +23,7 @@ This document is the proposed cross-wave execution programme, extending rather t
 
 Until a reviewed architecture decision record (ADR) explicitly amends a v1 contract, the existing contract and more restrictive safety gate prevail. Adoption of this document does not authorize production data changes, rule cutovers, deployment, deletion, or external tenant onboarding. If a future discovery conflicts with this plan, update the relevant ADR, dependencies, acceptance criteria and tracker before implementation. No retrospective reinterpretation of pass criteria.
 
-**Next executable brick: B01-B.4 scoped Schema Evolution Engine design and authorization. B01-A through B01-B.3 accepted in isolated baseline; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
+**Next executable brick: B01-B.4 isolated schema evolution compatibility and synthetic projection. B01-A through B01-B.3 accepted; all broader gates unchanged.** The immediate preschool operational track is P09-A; it can proceed after its scoped data/security prerequisites, not after the whole programme.
 
 ## 1. Evidence-based baseline
 
@@ -590,6 +590,10 @@ Owner-operated Mac verification at exact candidate d83ba448af368e9a4214d406d4a7e
 
 Next: B01-B.4 scoped Schema Evolution Engine design and authorization. Define explicit version compatibility, stable synthetic field identity, additive optional fields, rejection of destructive/narrowing changes, reviewed transformations and lineage using synthetic fixtures only; no actual migration, registry identifier adoption or data writes. B01-B.5 separately scoped. No repeat B01-B.3 terminal verification unless relevant code/metadata changes.
 
+### Revision 46 — B01-B.4 scoped Schema Evolution Engine prototype
+
+Owner directs commencement of next implementation after B01-B.3 acceptance. Authorize isolated synthetic-only schema evolution compatibility and projection tooling under scoped AI-led engineering acceptance. Stable synthetic record and field IDs, explicit owner/semantic identity, consecutive version increments, retained field identity/name/definition and complete explicit per-field transition plan. Conservative additive-only contract: retain existing fields unchanged (including types, requiredness, nullability, enum values, references and meaning); allow new optional fields only, initially absent. Support explicit lossless copy of existing fields and explicit omit for new optional fields; never infer, default, convert, rename, retire, narrow, widen or delete values in this increment. Detect removal, reused identities, changed meaning, incompatible contracts, unknown/duplicate/missing plan entries and version mismatch. Validate source and projected target using B01-B.1; return immutable copied output and version/field lineage, no partial projection on errors. A valid forward projection does not imply old consumers accept newly populated fields, live migration safety or complete compatibility. Scope limited to one consecutive version pair; historical ledger, deprecation, approved transformations beyond copy/omit, consumer parity and multi-version chains remain separate review gates. Synthetic IDs are not registry reservations. Existing identity schema/migration provenance, profile retirement planner and enrollment source unchanged. No production data, registry changes, runtime imports, dependencies, CI, cloud access or migration. Verify exact candidate, cumulative pinned Node tests, scope and compatibility before isolated integration. Broader phase/security/finance/migration/production gates retained; B01-B.5 separately scoped.
+
 ## 10. Change record
 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
@@ -678,3 +682,5 @@ Next: B01-B.4 scoped Schema Evolution Engine design and authorization. Define ex
 - Revision 44: owner authorizes isolated effective-dated business rule prototype; no runtime policy adoption or wider gate waiver.
 
 - Revision 45: B01-B.3 213/213 pinned Node regression, scoped AI-led acceptance PASS, PR #945 integrated into isolated baseline; tested tree unchanged. B01-B.4 scope next; broader gates retained.
+
+- Revision 46: owner authorizes isolated additive-only schema evolution prototype; no registry adoption, live migration or broader gate waiver.
