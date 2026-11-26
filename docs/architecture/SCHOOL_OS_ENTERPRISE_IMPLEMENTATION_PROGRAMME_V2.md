@@ -1,6 +1,6 @@
 # Tiny Steps School OS v2 — Enterprise Architecture & Progressive Implementation Programme
 
-**Version:** 2.0 programme baseline, revision 2 (proposed evidence update)  
+**Version:** 2.0 programme baseline, revision 3 (proposed evidence update)  
 **Date:** 26 November 2026 (IST)  
 **Status:** Proposed for owner review; implementation roadmap, not production cutover approval  
 **Audited source:** `main` at [701c7ec832dbe9c531964496fa09cd4a4948ddd2](https://github.com/tinystepselearning-surya/tinysteps-react-v1/commit/701c7ec832dbe9c531964496fa09cd4a4948ddd2)  
@@ -357,7 +357,7 @@ Maintain this table as the authoritative programme status index. Each brick has 
 
 | ID | Status at this baseline | Next action |
 |---|---|---|
-| P01 | IN PROGRESS / scoped source evidence verified | [P01 source baseline, 26 Nov](discovery/P01_SOURCE_BASELINE_2026-11-26.md); complete P01.1 inventory; P01.2 and live P01.3 HOLD |
+| P01 | IN PROGRESS / scoped source evidence verified | [P01.1-A baseline](discovery/P01_SOURCE_BASELINE_2026-11-26.md); [P01.1-B role/automation topology](discovery/P01_AUTH_AUTOMATION_TOPOLOGY_2026-11-26.md); complete P01.1-C and source field catalogue; P01.2/live P01.3 HOLD |
 | P02 | PROPOSED | Review ADRs and v1 alignment after discovery |
 | P03 | PROPOSED | Confirm existing schemas, seed registry |
 | P04 | HOLD / IN PROGRESS | M3 approved role-canary/freshness gate, no broad switch |
@@ -403,3 +403,5 @@ The research supports principles, not a claim of exact proprietary Epic schemas 
 - Revision 1 (26 Nov 2026): consolidated v1 evidence, research, 12-phase programme, preschool accelerated track, hold gates, acceptance metrics, next read-only brick. Decisions proposed pending review. No live database audit or production change claimed.
 
 - Revision 2 (26 Nov 2026): linked scoped P01.1 source evidence and P01.3 source path seed; P01 remains IN PROGRESS, live metadata and samples HOLD. M3 gates unchanged. No production release or completed-phase claim.
+
+- Revision 3 (26 Nov 2026): P01.1-B adds scoped role/authorization, seven scheduled definitions, 28 trigger roots, integrations, PR overlap and proposed metadata approval plan. P01.1 incomplete, live and merge gates remain HOLD; M3 ledger unchanged.
