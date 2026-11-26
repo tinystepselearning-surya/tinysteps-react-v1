@@ -1,4 +1,4 @@
-name: TSOS V2 isolated D13 verification
+name: TSOS V2 isolated P01 verification
 on:
   push:
     branches: [docs/tsos-v2-d13-isolated-verification]
@@ -20,7 +20,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          candidate="a5a6555c7cd956d12875c16d1953ae62e81f4148"
+          candidate="459b353a82813ec9921443a9b33031b83ff2cd8c"
           main="$(git rev-parse refs/remotes/origin/main)"
           functions="$(git rev-parse refs/remotes/origin/ci/functions-production)"
           hosting="$(git rev-parse refs/remotes/origin/ci/hosting-production)"
@@ -33,13 +33,13 @@ jobs:
           for result in functions_deployment_required=false functions_full_deployment=false functions_targets= functions_retired_targets= hosting_changed=false firestore_rules_changed=false firestore_indexes_changed=false; do
             grep -Fx "$result" "$GITHUB_OUTPUT"
           done
-  pinned-finance-emulator:
+  measured-fixtures:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: a5a6555c7cd956d12875c16d1953ae62e81f4148
+          ref: 459b353a82813ec9921443a9b33031b83ff2cd8c
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -49,25 +49,10 @@ jobs:
           distribution: temurin
           java-version: '21'
       - run: npm ci --ignore-scripts --no-audit --no-fund
-      - run: npm ci --prefix functions --ignore-scripts --include=dev --no-audit --no-fund
-      - name: Run only the 45 finance cases with the repository's pinned emulator
-        env:
-          M3_FINANCE_EMULATOR_ONLY: '1'
-          FIRESTORE_EMULATOR_HOST: '127.0.0.1:8787'
-          GCLOUD_PROJECT: demo-tinysteps-finance-consistency
+      - name: Measure bounded reads, reconciliation and recovery
         shell: bash
         run: |
           set -euo pipefail
           unset FIREBASE_TOKEN GOOGLE_APPLICATION_CREDENTIALS
-          jar="$RUNNER_TEMP/finance-emulator.jar"
-          curl --fail --location --retry 3 https://storage.googleapis.com/firebase-preview-drop/emulator/cloud-firestore-emulator-v1.19.8.jar -o "$jar"
-          echo "9d43599ed6151199e8d604dc87fac51218e49e5f3a48519b1ae560bbe5e3382d  $jar" | sha256sum --check
-          java -jar "$jar" --host 127.0.0.1 --port 8787 --project_id demo-tinysteps-finance-consistency --single_project_mode true --single_project_mode_error true > "$RUNNER_TEMP/tsos-finance-emulator.log" 2>&1 &
-          emulator_pid=$!
-          trap 'kill "$emulator_pid" 2>/dev/null || true' EXIT
-          for attempt in $(seq 1 60); do
-            if node -e 'const s=require("node:net").connect(8787,"127.0.0.1");s.on("connect",()=>{s.end();process.exit(0)});s.on("error",()=>process.exit(1));s.setTimeout(500,()=>process.exit(1))'; then break; fi
-            sleep 1
-            if [ "$attempt" = 60 ]; then cat "$RUNNER_TEMP/tsos-finance-emulator.log"; exit 1; fi
-          done
-          ./node_modules/.bin/vitest run --config functions/test/firestoreFinance/vitest.config.ts functions/test/milestone3FirestoreFinanceEmulator.spec.ts functions/test/milestone3FirestoreFinanceCompatibility.spec.ts
+          node -e 'const fs=require("node:fs");fs.writeFileSync("firebase.p01.local.json",JSON.stringify({emulators:{firestore:{host:"127.0.0.1",port:8787},ui:{enabled:false}}}))'
+          npx --yes firebase-tools@15.37.0 emulators:exec --config firebase.p01.local.json --project demo-tsos-p01-evidence --only firestore 'FIRESTORE_EMULATOR_HOST=127.0.0.1:8787 GCLOUD_PROJECT=demo-tsos-p01-evidence node scripts/discovery/p01-measured-evidence.mjs'
