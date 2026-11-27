@@ -60,11 +60,14 @@ describe('web analytics privacy', () => {
       page_location: 'https://tinystepslearning.com/pricing?utm_source=school-fair',
       page_referrer: 'https://example.test/',
     };
-    expect(gtag).toHaveBeenCalledWith('config', expect.any(String), {
-      send_page_view: false, ...expected,
+    expect(gtag).toHaveBeenCalledWith('config', 'G-5RMQVF1HGD', {
+      send_page_view: false,
+      allow_google_signals: false,
+      allow_ad_personalization_signals: false,
+      ...expected,
     });
     expect(gtag).toHaveBeenLastCalledWith('event', 'page_view', expect.objectContaining({
-      ...expected, page_path: '/pricing',
+      ...expected, page_path: '/pricing', send_to: 'G-5RMQVF1HGD',
     }));
   });
 
@@ -79,7 +82,8 @@ describe('web analytics privacy', () => {
     });
     const [, , params] = gtag.mock.lastCall!;
     expect(params).toMatchObject({ form_name: 'public_assessment_form', value: 1 });
-    for (const key of ['unexpected_field', 'send_to', 'user_id', 'item_id', 'event_callback']) {
+    expect(params.send_to).toBe('G-5RMQVF1HGD');
+    for (const key of ['unexpected_field', 'user_id', 'item_id', 'event_callback']) {
       expect(params).not.toHaveProperty(key);
     }
     expect(JSON.stringify(params)).not.toMatch(/Synthetic Private Name|G-UNAPPROVED|invalid\.test/);
@@ -140,5 +144,46 @@ describe('web analytics privacy', () => {
       form_name: 'public_assessment_form',
       value: 1,
     });
+  });
+
+  it('routes all approved web events to B even if a stale build variable specifies A', async () => {
+    vi.stubEnv('VITE_GA_MEASUREMENT_ID', 'G-J3TTBH8CN9');
+    const { trackPageView, trackEvent } = await import('../../lib/analytics');
+    trackPageView('/pricing');
+    trackEvent('book_assessment_click', { location: 'header', send_to: 'G-J3TTBH8CN9' });
+    const configs = gtag.mock.calls.filter(([command]) => command === 'config');
+    const events = gtag.mock.calls.filter(([command]) => command === 'event');
+    expect(configs).toHaveLength(1);
+    expect(configs[0][1]).toBe('G-5RMQVF1HGD');
+    expect(events).toHaveLength(2);
+    expect(events.every(([, , params]) => params.send_to === 'G-5RMQVF1HGD')).toBe(true);
+    expect(JSON.stringify(gtag.mock.calls)).not.toContain('G-J3TTBH8CN9');
+  });
+
+  it('deduplicates query-only route updates and suppresses explicit collection on portal and play surfaces', async () => {
+    const { trackPageView, trackEvent } = await import('../../lib/analytics');
+    trackPageView('/pricing');
+    vi.stubGlobal('location', new URL('https://tinystepslearning.com/pricing?book=1'));
+    trackPageView('/pricing?book=1');
+    vi.stubGlobal('location', new URL('https://tinystepslearning.com/parent/profile'));
+    trackPageView('/parent/profile');
+    trackEvent('generate_lead', { value: 1 });
+    expect((window as unknown as Record<string, unknown>)['ga-disable-G-5RMQVF1HGD']).toBe(true);
+    vi.stubGlobal('location', new URL('https://tinystepslearning.com/free-letter-tracing-game-for-kids'));
+    trackPageView('/free-letter-tracing-game-for-kids');
+    trackEvent('letter_tracing_item_complete', { item_id: 'a' });
+    expect(gtag.mock.calls.filter(([command]) => command === 'event')).toHaveLength(1);
+    vi.stubGlobal('location', new URL('https://tinystepslearning.com/pricing'));
+    trackPageView('/pricing');
+    expect((window as unknown as Record<string, unknown>)['ga-disable-G-5RMQVF1HGD']).toBe(false);
+    expect(gtag.mock.calls.filter(([command]) => command === 'event')).toHaveLength(2);
+  });
+
+  it('does not start the web collector inside a native Capacitor runtime', async () => {
+    vi.stubGlobal('Capacitor', { isNativePlatform: () => true });
+    const { trackPageView, trackEvent } = await import('../../lib/analytics');
+    trackPageView('/pricing');
+    trackEvent('generate_lead', { value: 1 });
+    expect(gtag).not.toHaveBeenCalled();
   });
 });
