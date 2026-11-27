@@ -206,9 +206,11 @@ export const getRegionalFunctions = (region: string): Functions => {
   return client;
 };
 
-// Analytics (browser only)
+// Preserve existing native-shell behavior. Public browser analytics is owned
+// exclusively by the explicit collector in analytics.ts. Keep the app registration
+// and all other Firebase services unchanged.
 let analytics: Analytics | null = null;
-if (typeof window !== 'undefined') {
+if (isNativeCapacitorRuntime()) {
   try {
     analytics = getAnalytics(app);
   } catch {
