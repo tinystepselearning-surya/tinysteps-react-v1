@@ -1,0 +1,12 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
+import {timestampParts,compareTimestamps,intervalContains,verifyDecisionTimes} from './timestamp-boundary-candidate.mjs';
+const require=createRequire(new URL('../../../functions/package.json',import.meta.url));
+const {Timestamp,FieldValue}=require('firebase-admin/firestore');
+const ts=(n)=>new Timestamp(1700000000,n);
+test('actual SDK timestamp and nanosecond ordering',()=>{assert.deepEqual(timestampParts(ts(1)),{seconds:1700000000,nanoseconds:1});assert.equal(compareTimestamps(ts(1),ts(2)),-1);assert.equal(compareTimestamps(ts(2),ts(1)),1);assert.equal(compareTimestamps(ts(1),ts(1)),0)});
+test('reject timestamps represented by Date, object, string, sentinel, undefined',()=>{for(const x of [new Date(),{seconds:1700000000,nanoseconds:1},'2023-11-14',FieldValue.serverTimestamp(),null,undefined])assert.throws(()=>timestampParts(x))});
+test('strict half-open nanosecond interval',()=>{assert.equal(intervalContains(ts(1),ts(3),ts(0)),false);assert.ok(intervalContains(ts(1),ts(3),ts(1)));assert.ok(intervalContains(ts(1),ts(3),ts(2)));assert.equal(intervalContains(ts(1),ts(3),ts(3)),false)});
+test('nullable end only, reject zero or reversed intervals',()=>{assert.ok(intervalContains(ts(1),null,ts(2)));assert.throws(()=>intervalContains(ts(2),ts(2),ts(2)));assert.throws(()=>intervalContains(ts(3),ts(2),ts(2)));assert.throws(()=>intervalContains(ts(1),undefined,ts(2)))});
+test('validate both observations and monotonic dispatch deadline',()=>{const good={first:ts(1),second:ts(2),elapsedNs:1n,dispatchLimitNs:10n,intervals:Array.from({length:3},()=>({start:ts(1),end:ts(3)}))};assert.ok(verifyDecisionTimes(good));assert.equal(verifyDecisionTimes({...good,second:ts(0)}),false);assert.equal(verifyDecisionTimes({...good,second:ts(3)}),false);assert.equal(verifyDecisionTimes({...good,elapsedNs:10n}),false);assert.equal(verifyDecisionTimes({...good,intervals:good.intervals.slice(1)}),false)});

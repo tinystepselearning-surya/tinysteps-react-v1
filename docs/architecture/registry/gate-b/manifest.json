@@ -1,0 +1,47 @@
+{
+  "formatVersion": 1,
+  "registryVersion": "0.7-gate-b-candidate",
+  "status": "candidate-not-adopted",
+  "base": {
+    "path": "docs/architecture/registry/TSOS_V2_MASTER_RECORD_ITEM_REGISTRY_DRAFT.json",
+    "blobSha": "7f0464dfb6b79a22ddfa43d412081b13930f04c3",
+    "registryVersion": "0.6-draft",
+    "shards": [
+      {
+        "path": "docs/architecture/registry/domains/identity-institutional.json",
+        "blobSha": "f4f0efc8e54b749148f5b54e1b1d37ee807e5ee1"
+      },
+      {
+        "path": "docs/architecture/registry/domains/academic-delivery.json",
+        "blobSha": "3d661e8dd3bc09feed5b666a7ebf7fc0648f8601"
+      },
+      {
+        "path": "docs/architecture/registry/domains/learning-resources.json",
+        "blobSha": "c20fbafee877e47fea59a25f2033e19d9213900a"
+      },
+      {
+        "path": "docs/architecture/registry/domains/commerce-operations.json",
+        "blobSha": "d5a8f9bf9dae3c3f875a243522bb3c782784be32"
+      },
+      {
+        "path": "docs/architecture/registry/domains/platform.json",
+        "blobSha": "1f116526d1bbd9017dbcd26aaed0277766e5079d"
+      }
+    ]
+  },
+  "overlay": {
+    "path": "docs/architecture/registry/gate-b/physical-bindings-v1.json",
+    "blobSha": "8f847298f5abd8e9e79c9fcbe66945771b4aa22f"
+  },
+  "counts": {
+    "records": 134,
+    "businessItems": 1000,
+    "sharedItems": 5,
+    "bindings": 9
+  },
+  "approval": {
+    "source": "a83f088ec4cdc8a3405ef3d943342cf848b12f66",
+    "programmeRevision": 65,
+    "preAdoption": "dynamic-path classification pending"
+  }
+}
